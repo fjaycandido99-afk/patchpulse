@@ -1,0 +1,61 @@
+'use client'
+
+import { useState, useTransition } from 'react'
+import { toggleBookmark } from '@/app/(main)/actions/bookmarks'
+
+type BookmarkButtonProps = {
+  entityType: 'patch' | 'news'
+  entityId: string
+  initialBookmarked: boolean
+}
+
+export function BookmarkButton({
+  entityType,
+  entityId,
+  initialBookmarked,
+}: BookmarkButtonProps) {
+  const [isBookmarked, setIsBookmarked] = useState(initialBookmarked)
+  const [isPending, startTransition] = useTransition()
+
+  function handleClick() {
+    const previousState = isBookmarked
+    setIsBookmarked(!isBookmarked)
+
+    startTransition(async () => {
+      const result = await toggleBookmark(entityType, entityId)
+
+      if (result.error) {
+        setIsBookmarked(previousState)
+      } else if (result.bookmarked !== undefined) {
+        setIsBookmarked(result.bookmarked)
+      }
+    })
+  }
+
+  return (
+    <button
+      onClick={handleClick}
+      disabled={isPending}
+      aria-label={isBookmarked ? 'Remove bookmark' : 'Add bookmark'}
+      className={`rounded-lg border p-2 transition-colors disabled:opacity-50 ${
+        isBookmarked
+          ? 'border-primary bg-primary/10 text-primary'
+          : 'border-input bg-background text-muted-foreground hover:bg-accent hover:text-foreground'
+      }`}
+    >
+      <svg
+        className="h-5 w-5"
+        fill={isBookmarked ? 'currentColor' : 'none'}
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
+        />
+      </svg>
+    </button>
+  )
+}
