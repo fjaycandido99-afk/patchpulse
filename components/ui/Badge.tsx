@@ -2,6 +2,7 @@ import { ReactNode } from 'react'
 
 type BadgeVariant =
   | 'default'
+  | 'secondary'
   | 'patch'
   | 'news'
   | 'major'
@@ -21,6 +22,7 @@ type BadgeProps = {
 
 const variantStyles: Record<BadgeVariant, string> = {
   default: 'text-zinc-200',
+  secondary: 'text-zinc-400',
   patch: 'text-blue-300/90',
   news: 'text-emerald-300/90',
   major: 'text-red-300/90',

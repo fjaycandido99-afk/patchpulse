@@ -17,6 +17,7 @@ export async function processPatchSummary(
   // Validate and clamp values
   return {
     summary_tldr: (result.summary_tldr || '').slice(0, 280),
+    ai_insight: (result.ai_insight || '').slice(0, 120),
     key_changes: (result.key_changes || []).slice(0, 8).map((kc) => ({
       category: (kc.category || 'General').slice(0, 50),
       change: (kc.change || '').slice(0, 100),

@@ -6,7 +6,13 @@ type Props = {
 }
 
 export async function WhatsNew({ gameId }: Props) {
-  const summary = await getWhatsNewSummary(gameId)
+  let summary = null
+  try {
+    summary = await getWhatsNewSummary(gameId)
+  } catch {
+    // AI service unavailable, skip this section
+    return null
+  }
 
   if (!summary) {
     return null

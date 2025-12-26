@@ -10,19 +10,27 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.2",
+    "@simplewebauthn/browser": "^13.2.2",
+    "@simplewebauthn/server": "^13.2.2",
+    "@simplewebauthn/types": "^12.0.0",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.45.4",
+    "clsx": "^2.1.1",
     "lucide-react": "^0.454.0",
     "next": "^16.1.0",
     "next-pwa": "^5.6.0",
+    "openai": "^6.15.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "stripe": "^20.1.0",
+    "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "autoprefixer": "^10.4.20",
+    "dotenv": "^17.2.3",
     "eslint": "^8",
     "eslint-config-next": "14.2.18",
     "postcss": "^8",

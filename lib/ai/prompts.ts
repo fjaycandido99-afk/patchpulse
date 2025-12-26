@@ -18,6 +18,7 @@ ${rawText}
 Return JSON with this schema:
 {
   "summary_tldr": "string (max 280 chars)",
+  "ai_insight": "string (max 120 chars) - a punchy insight about why this patch matters",
   "key_changes": [{"category": "string", "change": "string"}],
   "tags": ["balance|bugfix|content|performance|ui|audio|matchmaking|security|economy|quality-of-life|other"],
   "impact_score": "integer 1-10 (how much gameplay changes; 10 = meta-shifting)",
@@ -27,6 +28,7 @@ Return JSON with this schema:
 
 Guidance:
 - summary_tldr: plain-English, 1–2 sentences, max 280 characters.
+- ai_insight: One punchy sentence (max 120 chars) explaining the most important takeaway. Examples: "Major nerfs to top-tier weapons shake up the meta", "Performance fixes should reduce stuttering on older GPUs", "New content adds 10+ hours of gameplay".
 - key_changes: array of {category, change} objects. Max 8 items. Each change max 80 chars.
 - tags: choose 1–4 from the allowed list.
 - impact_score: use evidence in text; if mostly bugfixes, keep <=4.
@@ -78,6 +80,7 @@ Output ONLY valid JSON, no markdown or explanation.`
 // Type definitions for AI responses
 export type PatchSummaryResult = {
   summary_tldr: string
+  ai_insight: string
   key_changes: Array<{ category: string; change: string }>
   tags: string[]
   impact_score: number
@@ -141,4 +144,113 @@ export type WhatsNewResult = {
   summary: string
   patchCount: number
   newsCount: number
+}
+
+// Return to Game Matcher - Check if a patch addresses why the user paused
+export const RETURN_MATCH_SYSTEM = `You are a helpful gaming assistant that determines if a game patch addresses the reason a player stopped playing.
+Rules:
+- Be precise about matching the pause reason to actual patch content.
+- Only claim a match if the patch specifically addresses the issue.
+- Consider partial matches (patch improves but doesn't fully resolve the issue).
+- Output must follow the JSON schema exactly.`
+
+export function getReturnMatchPrompt(
+  gameName: string,
+  pauseReason: string,
+  patchTitle: string,
+  patchSummary: string,
+  keyChanges: Array<{ category: string; change: string }> | null
+): string {
+  const changesText = keyChanges && keyChanges.length > 0
+    ? keyChanges.map(c => `- [${c.category}] ${c.change}`).join('\n')
+    : 'No detailed changes available'
+
+  return `TASK: Determine if this patch might bring the player back to the game.
+
+GAME: ${gameName}
+PLAYER'S REASON FOR PAUSING: "${pauseReason}"
+
+PATCH: ${patchTitle}
+SUMMARY: ${patchSummary}
+KEY CHANGES:
+${changesText}
+
+Return JSON with this schema:
+{
+  "is_match": "boolean (true if patch addresses the pause reason)",
+  "confidence": "float 0-1 (how confident the patch addresses the issue)",
+  "match_type": "'direct' | 'partial' | 'related' | 'none'",
+  "reason": "string (max 150 chars - explain why/how the patch helps, or why it doesn't match)",
+  "call_to_action": "string (max 80 chars - encouraging message if it's a match, null if not)"
+}
+
+Match Types:
+- "direct": Patch specifically fixes the exact issue mentioned
+- "partial": Patch improves the situation but may not fully resolve it
+- "related": Patch touches on related areas that might help
+- "none": No meaningful connection between pause reason and patch
+
+Examples:
+- Pause: "Too many bugs/crashes" + Patch fixes stability = direct match
+- Pause: "Stuck on difficult part" + Patch adds difficulty options = direct match
+- Pause: "Waiting for DLC" + New DLC released = direct match
+- Pause: "Lost interest" + Major content update = partial match
+- Pause: "Not enough time" + Any patch = none (can't fix real-life constraints)
+
+Output ONLY valid JSON, no markdown or explanation.`
+}
+
+export type ReturnMatchResult = {
+  is_match: boolean
+  confidence: number
+  match_type: 'direct' | 'partial' | 'related' | 'none'
+  reason: string
+  call_to_action: string | null
+}
+
+// Patch Source URL Discovery - Find official patch notes page
+export const SOURCE_URL_DISCOVERY_SYSTEM = `You are a research assistant that finds official patch notes URLs for games.
+Rules:
+- Only return official sources (Steam, Epic, publisher websites, official game sites).
+- Prioritize the most direct link to the specific patch notes.
+- Never return fan sites, forums, or third-party aggregators.
+- If you cannot find an official source, return null.`
+
+export function getSourceUrlDiscoveryPrompt(
+  gameName: string,
+  patchTitle: string,
+  publishedDate?: string
+): string {
+  const dateHint = publishedDate ? ` (published around ${publishedDate})` : ''
+
+  return `TASK: Find the official patch notes URL for this game update.
+
+GAME: ${gameName}
+PATCH: ${patchTitle}${dateHint}
+
+Search for the official patch notes page. Look for:
+1. Steam Community announcements (store.steampowered.com or steamcommunity.com)
+2. Official game website patch notes section
+3. Publisher's official news/patch notes page
+4. Epic Games Store news (if Epic exclusive)
+
+Return JSON with this schema:
+{
+  "source_url": "string or null (the official patch notes URL)",
+  "source_name": "string or null (e.g., 'Steam', 'Official Website', 'Epic Games')",
+  "confidence": "float 0-1 (how confident this is the correct official source)"
+}
+
+Important:
+- Only return URLs from official sources, never fan sites or forums.
+- If multiple sources exist, prefer the publisher's official site over Steam.
+- If you cannot find an official source, return {"source_url": null, "source_name": null, "confidence": 0}.
+
+Output ONLY valid JSON, no markdown or explanation.`
+}
+
+export type SourceUrlDiscoveryResult = {
+  source_url: string | null
+  source_name: string | null
+  confidence: number
 }

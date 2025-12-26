@@ -2,8 +2,10 @@ import Anthropic from '@anthropic-ai/sdk'
 import {
   PATCH_SUMMARY_SYSTEM,
   NEWS_SUMMARY_SYSTEM,
+  SOURCE_URL_DISCOVERY_SYSTEM,
   getPatchSummaryPrompt,
   getNewsSummaryPrompt,
+  getSourceUrlDiscoveryPrompt,
 } from './prompts'
 
 // ============================================================================
@@ -12,6 +14,7 @@ import {
 
 export type PatchAIResult = {
   summary_tldr: string
+  ai_insight: string
   key_changes: Array<{ category: string; change: string }>
   tags: string[]
   impact_score: number
@@ -25,6 +28,12 @@ export type NewsAIResult = {
   topics: string[]
   is_rumor: boolean
   confidence?: number
+}
+
+export type SourceUrlDiscoveryResult = {
+  source_url: string | null
+  source_name: string | null
+  confidence: number
 }
 
 // ============================================================================
@@ -93,4 +102,43 @@ export async function runNewsAI(input: {
   )
   const raw = await callClaude(NEWS_SUMMARY_SYSTEM, prompt)
   return parseJSON<NewsAIResult>(raw)
+}
+
+export async function discoverPatchSourceUrl(input: {
+  gameName: string
+  patchTitle: string
+  publishedDate?: string
+}): Promise<SourceUrlDiscoveryResult> {
+  const prompt = getSourceUrlDiscoveryPrompt(
+    input.gameName,
+    input.patchTitle,
+    input.publishedDate
+  )
+
+  // Use web search to find the official patch notes URL
+  const response = await anthropic.messages.create({
+    model: MODEL,
+    max_tokens: 512,
+    system: SOURCE_URL_DISCOVERY_SYSTEM,
+    tools: [
+      {
+        type: 'web_search_20250305',
+        name: 'web_search',
+        max_uses: 3,
+      },
+    ],
+    messages: [{ role: 'user', content: prompt }],
+  })
+
+  // Extract text response
+  const textBlock = response.content.find((c) => c.type === 'text')
+  if (!textBlock || textBlock.type !== 'text') {
+    return { source_url: null, source_name: null, confidence: 0 }
+  }
+
+  try {
+    return parseJSON<SourceUrlDiscoveryResult>(textBlock.text)
+  } catch {
+    return { source_url: null, source_name: null, confidence: 0 }
+  }
 }

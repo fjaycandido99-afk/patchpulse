@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { getBookmarkedPatches, getBookmarkedNews } from './queries'
 import { MediaCard } from '@/components/media/MediaCard'
-import { Badge, ImpactBadge } from '@/components/ui/Badge'
+import { Badge, ImpactBadge } from '@/components/ui/badge'
 import { MetaRow } from '@/components/ui/MetaRow'
 import { formatDate } from '@/lib/dates'
 

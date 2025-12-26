@@ -1,0 +1,675 @@
+name,slug,platforms,genre,is_live_service,mvp_eligible,support_tier,curated_exception,cover_url
+Counter-Strike 2,counter-strike-2,"PC",FPS,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/730/header.jpg
+Dota 2,dota-2,"PC",MOBA,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/570/header.jpg
+PUBG: BATTLEGROUNDS,pubg,"PC,PlayStation,Xbox",Battle Royale,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/578080/header.jpg
+Apex Legends,apex-legends,"PC,PlayStation,Xbox,Switch",Battle Royale,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1172470/header.jpg
+Grand Theft Auto V,gta-v,"PC,PlayStation,Xbox",Action,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/271590/header.jpg
+Rust,rust,"PC",Survival,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/252490/header.jpg
+Tom Clancy's Rainbow Six Siege,rainbow-six-siege,"PC,PlayStation,Xbox",FPS,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/359550/header.jpg
+Destiny 2,destiny-2,"PC,PlayStation,Xbox",Looter Shooter,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1085660/header.jpg
+Team Fortress 2,team-fortress-2,"PC",FPS,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/440/header.jpg
+ARK: Survival Evolved,ark-survival-evolved,"PC,PlayStation,Xbox,Switch",Survival,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/346110/header.jpg
+Warframe,warframe,"PC,PlayStation,Xbox,Switch",Action RPG,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/230410/header.jpg
+Path of Exile,path-of-exile,"PC,PlayStation,Xbox",Action RPG,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/238960/header.jpg
+Dead by Daylight,dead-by-daylight,"PC,PlayStation,Xbox,Switch",Horror,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/381210/header.jpg
+Rocket League,rocket-league,"PC,PlayStation,Xbox,Switch",Sports,true,true,full,true,https://cdn.cloudflare.steamstatic.com/steam/apps/252950/header.jpg
+The Elder Scrolls Online,elder-scrolls-online,"PC,PlayStation,Xbox",MMORPG,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/306130/header.jpg
+War Thunder,war-thunder,"PC,PlayStation,Xbox",Simulation,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/236390/header.jpg
+Terraria,terraria,"PC,PlayStation,Xbox,Switch,Mobile",Sandbox,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/105600/header.jpg
+Euro Truck Simulator 2,euro-truck-simulator-2,"PC",Simulation,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/227300/header.jpg
+Elden Ring,elden-ring,"PC,PlayStation,Xbox",Action RPG,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1245620/header.jpg
+Monster Hunter: World,monster-hunter-world,"PC,PlayStation,Xbox",Action RPG,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/582010/header.jpg
+Hunt: Showdown,hunt-showdown,"PC,PlayStation,Xbox",FPS,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/594650/header.jpg
+Escape from Tarkov,escape-from-tarkov,"PC",FPS,true,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co1irs.jpg
+Sea of Thieves,sea-of-thieves,"PC,Xbox",Adventure,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1172620/header.jpg
+NARAKA: BLADEPOINT,naraka-bladepoint,"PC,PlayStation,Xbox",Battle Royale,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1203220/header.jpg
+Baldur's Gate 3,baldurs-gate-3,"PC,PlayStation,Xbox",RPG,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1086940/header.jpg
+Lost Ark,lost-ark,"PC",MMORPG,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1599340/header.jpg
+New World,new-world,"PC",MMORPG,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1063730/header.jpg
+The Witcher 3: Wild Hunt,witcher-3,"PC,PlayStation,Xbox,Switch",RPG,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/292030/header.jpg
+Cyberpunk 2077,cyberpunk-2077,"PC,PlayStation,Xbox",RPG,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1091500/header.jpg
+Hogwarts Legacy,hogwarts-legacy,"PC,PlayStation,Xbox,Switch",Action RPG,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/990080/header.jpg
+Palworld,palworld,"PC,Xbox",Survival,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1623730/header.jpg
+Lethal Company,lethal-company,"PC",Horror,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1966720/header.jpg
+Helldivers 2,helldivers-2,"PC,PlayStation",Action,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/553850/header.jpg
+Stardew Valley,stardew-valley,"PC,PlayStation,Xbox,Switch,Mobile",Simulation,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/413150/header.jpg
+Valheim,valheim,"PC,Xbox",Survival,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/892970/header.jpg
+Among Us,among-us,"PC,PlayStation,Xbox,Switch,Mobile",Party,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/945360/header.jpg
+Phasmophobia,phasmophobia,"PC",Horror,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/739630/header.jpg
+Satisfactory,satisfactory,"PC",Simulation,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/526870/header.jpg
+Deep Rock Galactic,deep-rock-galactic,"PC,PlayStation,Xbox",FPS,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/548430/header.jpg
+Hades,hades,"PC,PlayStation,Xbox,Switch",Roguelike,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1145360/header.jpg
+Hades II,hades-2,"PC",Roguelike,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1145350/header.jpg
+Risk of Rain 2,risk-of-rain-2,"PC,PlayStation,Xbox,Switch",Roguelike,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/632360/header.jpg
+Rimworld,rimworld,"PC",Simulation,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/294100/header.jpg
+Cities: Skylines,cities-skylines,"PC,PlayStation,Xbox,Switch",Simulation,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/255710/header.jpg
+Cities: Skylines II,cities-skylines-2,"PC,PlayStation,Xbox",Simulation,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/949230/header.jpg
+Civilization VI,civilization-6,"PC,PlayStation,Xbox,Switch",Strategy,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/289070/header.jpg
+Total War: WARHAMMER III,total-war-warhammer-3,"PC",Strategy,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1142710/header.jpg
+Crusader Kings III,crusader-kings-3,"PC,PlayStation,Xbox",Strategy,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1158310/header.jpg
+Europa Universalis IV,europa-universalis-4,"PC",Strategy,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/236850/header.jpg
+Hearts of Iron IV,hearts-of-iron-4,"PC",Strategy,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/394360/header.jpg
+Stellaris,stellaris,"PC,PlayStation,Xbox",Strategy,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/281990/header.jpg
+Age of Empires II: Definitive Edition,age-of-empires-2-de,"PC,Xbox",Strategy,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/813780/header.jpg
+Age of Empires IV,age-of-empires-4,"PC,Xbox",Strategy,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1466860/header.jpg
+Starcraft II,starcraft-2,"PC",Strategy,true,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co1rs4.jpg
+Company of Heroes 3,company-of-heroes-3,"PC",Strategy,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1677280/header.jpg
+FIFA 24,ea-fc-24,"PC,PlayStation,Xbox,Switch",Sports,true,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co6p5e.jpg
+NBA 2K24,nba-2k24,"PC,PlayStation,Xbox,Switch",Sports,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2338770/header.jpg
+Madden NFL 24,madden-nfl-24,"PC,PlayStation,Xbox",Sports,true,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co6hxv.jpg
+F1 23,f1-23,"PC,PlayStation,Xbox",Racing,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2108330/header.jpg
+Forza Horizon 5,forza-horizon-5,"PC,Xbox",Racing,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1551360/header.jpg
+Gran Turismo 7,gran-turismo-7,"PlayStation",Racing,true,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co3dq5.jpg
+Assetto Corsa Competizione,assetto-corsa-competizione,"PC,PlayStation,Xbox",Racing,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/805550/header.jpg
+iRacing,iracing,"PC",Racing,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/266410/header.jpg
+Resident Evil 4 (2023),resident-evil-4-2023,"PC,PlayStation,Xbox",Horror,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2050650/header.jpg
+Resident Evil Village,resident-evil-village,"PC,PlayStation,Xbox",Horror,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1196590/header.jpg
+The Last of Us Part I,last-of-us-part-1,"PC,PlayStation",Action,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1888930/header.jpg
+God of War Ragnarok,god-of-war-ragnarok,"PC,PlayStation",Action,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2322010/header.jpg
+God of War (2018),god-of-war-2018,"PC,PlayStation",Action,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1593500/header.jpg
+Horizon Zero Dawn,horizon-zero-dawn,"PC,PlayStation",Action RPG,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1151640/header.jpg
+Horizon Forbidden West,horizon-forbidden-west,"PC,PlayStation",Action RPG,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2420110/header.jpg
+Spider-Man Remastered,spider-man-remastered,"PC,PlayStation",Action,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1817070/header.jpg
+Spider-Man: Miles Morales,spider-man-miles-morales,"PC,PlayStation",Action,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1817190/header.jpg
+Ghost of Tsushima,ghost-of-tsushima,"PC,PlayStation",Action,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2215430/header.jpg
+Sekiro: Shadows Die Twice,sekiro,"PC,PlayStation,Xbox",Action,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/814380/header.jpg
+Dark Souls III,dark-souls-3,"PC,PlayStation,Xbox",Action RPG,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/374320/header.jpg
+Dark Souls Remastered,dark-souls-remastered,"PC,PlayStation,Xbox,Switch",Action RPG,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/570940/header.jpg
+Bloodborne,bloodborne,"PlayStation",Action RPG,false,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co1rba.jpg
+Armored Core VI,armored-core-6,"PC,PlayStation,Xbox",Action,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1888160/header.jpg
+Final Fantasy XIV,final-fantasy-14,"PC,PlayStation,Xbox",MMORPG,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/39210/header.jpg
+Final Fantasy XVI,final-fantasy-16,"PC,PlayStation",Action RPG,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2515020/header.jpg
+Final Fantasy VII Rebirth,final-fantasy-7-rebirth,"PlayStation",Action RPG,false,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co6bcc.jpg
+Final Fantasy VII Remake,final-fantasy-7-remake,"PC,PlayStation",Action RPG,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1462040/header.jpg
+Dragon's Dogma 2,dragons-dogma-2,"PC,PlayStation,Xbox",Action RPG,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2054970/header.jpg
+Monster Hunter Rise,monster-hunter-rise,"PC,PlayStation,Xbox,Switch",Action RPG,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1446780/header.jpg
+Street Fighter 6,street-fighter-6,"PC,PlayStation,Xbox",Fighting,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1364780/header.jpg
+Tekken 8,tekken-8,"PC,PlayStation,Xbox",Fighting,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1778820/header.jpg
+Mortal Kombat 1,mortal-kombat-1,"PC,PlayStation,Xbox,Switch",Fighting,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1971870/header.jpg
+Guilty Gear Strive,guilty-gear-strive,"PC,PlayStation,Xbox",Fighting,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1384160/header.jpg
+Dragon Ball FighterZ,dragon-ball-fighterz,"PC,PlayStation,Xbox,Switch",Fighting,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/678950/header.jpg
+Granblue Fantasy Versus: Rising,granblue-fantasy-versus-rising,"PC,PlayStation",Fighting,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2157560/header.jpg
+Persona 5 Royal,persona-5-royal,"PC,PlayStation,Xbox,Switch",RPG,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1687950/header.jpg
+Persona 3 Reload,persona-3-reload,"PC,PlayStation,Xbox",RPG,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2161700/header.jpg
+Metaphor: ReFantazio,metaphor-refantazio,"PC,PlayStation,Xbox",RPG,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2679460/header.jpg
+Like a Dragon: Infinite Wealth,like-a-dragon-infinite-wealth,"PC,PlayStation,Xbox",RPG,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2072450/header.jpg
+Yakuza: Like a Dragon,yakuza-like-a-dragon,"PC,PlayStation,Xbox",RPG,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1235140/header.jpg
+Diablo IV,diablo-4,"PC,PlayStation,Xbox",Action RPG,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2344520/header.jpg
+Diablo II: Resurrected,diablo-2-resurrected,"PC,PlayStation,Xbox,Switch",Action RPG,true,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co2q5e.jpg
+World of Warcraft,world-of-warcraft,"PC",MMORPG,true,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co2l7z.jpg
+Hearthstone,hearthstone,"PC,Mobile",Card Game,true,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co2dpf.jpg
+Overwatch 2,overwatch-2,"PC,PlayStation,Xbox,Switch",FPS,true,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co5tkh.jpg
+Starfield,starfield,"PC,Xbox",RPG,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1716740/header.jpg
+The Elder Scrolls V: Skyrim,skyrim,"PC,PlayStation,Xbox,Switch",RPG,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/489830/header.jpg
+Fallout 4,fallout-4,"PC,PlayStation,Xbox",RPG,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/377160/header.jpg
+Fallout 76,fallout-76,"PC,PlayStation,Xbox",MMORPG,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1151340/header.jpg
+No Man's Sky,no-mans-sky,"PC,PlayStation,Xbox,Switch",Survival,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/275850/header.jpg
+Subnautica,subnautica,"PC,PlayStation,Xbox,Switch",Survival,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/264710/header.jpg
+The Forest,the-forest,"PC,PlayStation",Survival,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/242760/header.jpg
+Sons of the Forest,sons-of-the-forest,"PC",Survival,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1326470/header.jpg
+V Rising,v-rising,"PC,PlayStation",Survival,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1604030/header.jpg
+Grounded,grounded,"PC,Xbox",Survival,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/962130/header.jpg
+Raft,raft,"PC",Survival,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/648800/header.jpg
+Green Hell,green-hell,"PC,PlayStation,Xbox,Switch",Survival,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/815370/header.jpg
+7 Days to Die,7-days-to-die,"PC,PlayStation,Xbox",Survival,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/251570/header.jpg
+DayZ,dayz,"PC,PlayStation,Xbox",Survival,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/221100/header.jpg
+Enshrouded,enshrouded,"PC",Survival,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1203620/header.jpg
+Astroneer,astroneer,"PC,PlayStation,Xbox,Switch",Survival,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/361420/header.jpg
+Sunkenland,sunkenland,"PC",Survival,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2080690/header.jpg
+Core Keeper,core-keeper,"PC,PlayStation,Xbox,Switch",Survival,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1621690/header.jpg
+Hollow Knight,hollow-knight,"PC,PlayStation,Xbox,Switch",Metroidvania,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/367520/header.jpg
+Hollow Knight: Silksong,hollow-knight-silksong,"PC,PlayStation,Xbox,Switch",Metroidvania,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1030300/header.jpg
+Celeste,celeste,"PC,PlayStation,Xbox,Switch",Platformer,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/504230/header.jpg
+Cuphead,cuphead,"PC,PlayStation,Xbox,Switch",Platformer,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/268910/header.jpg
+Dead Cells,dead-cells,"PC,PlayStation,Xbox,Switch,Mobile",Roguelike,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/588650/header.jpg
+Slay the Spire,slay-the-spire,"PC,PlayStation,Xbox,Switch,Mobile",Roguelike,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/646570/header.jpg
+Vampire Survivors,vampire-survivors,"PC,Xbox,Switch,Mobile",Roguelike,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1794680/header.jpg
+Cult of the Lamb,cult-of-the-lamb,"PC,PlayStation,Xbox,Switch",Roguelike,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1313140/header.jpg
+Enter the Gungeon,enter-the-gungeon,"PC,PlayStation,Xbox,Switch",Roguelike,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/311690/header.jpg
+Returnal,returnal,"PC,PlayStation",Roguelike,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1649240/header.jpg
+Inscryption,inscryption,"PC,PlayStation",Card Game,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1092790/header.jpg
+Balatro,balatro,"PC,PlayStation,Xbox,Switch,Mobile",Card Game,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2379780/header.jpg
+Marvel Snap,marvel-snap,"PC,Mobile",Card Game,true,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co581c.jpg
+Yu-Gi-Oh! Master Duel,yugioh-master-duel,"PC,PlayStation,Xbox,Switch,Mobile",Card Game,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1449850/header.jpg
+Legends of Runeterra,legends-of-runeterra,"PC,Mobile",Card Game,true,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co23rz.jpg
+Magic: The Gathering Arena,mtg-arena,"PC,Mobile",Card Game,true,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co1t8o.jpg
+Gwent: The Witcher Card Game,gwent,"PC,Mobile",Card Game,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1284410/header.jpg
+It Takes Two,it-takes-two,"PC,PlayStation,Xbox,Switch",Adventure,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1426210/header.jpg
+A Way Out,a-way-out,"PC,PlayStation,Xbox",Adventure,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1222700/header.jpg
+Unravel Two,unravel-two,"PC,PlayStation,Xbox,Switch",Platformer,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1225570/header.jpg
+Portal 2,portal-2,"PC,PlayStation,Xbox",Puzzle,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/620/header.jpg
+Left 4 Dead 2,left-4-dead-2,"PC,Xbox",FPS,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/550/header.jpg
+Back 4 Blood,back-4-blood,"PC,PlayStation,Xbox",FPS,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/924970/header.jpg
+World War Z,world-war-z,"PC,PlayStation,Xbox,Switch",Action,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/699130/header.jpg
+Payday 2,payday-2,"PC,PlayStation,Xbox,Switch",FPS,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/218620/header.jpg
+Payday 3,payday-3,"PC,PlayStation,Xbox",FPS,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1272080/header.jpg
+GTFO,gtfo,"PC",FPS,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/493520/header.jpg
+The Outlast Trials,outlast-trials,"PC,PlayStation,Xbox",Horror,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1304930/header.jpg
+Killing Floor 2,killing-floor-2,"PC,PlayStation,Xbox",FPS,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/232090/header.jpg
+Warhammer 40K: Darktide,warhammer-40k-darktide,"PC,Xbox",FPS,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1361210/header.jpg
+Warhammer: Vermintide 2,warhammer-vermintide-2,"PC,PlayStation,Xbox",FPS,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/552500/header.jpg
+Ready or Not,ready-or-not,"PC",FPS,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1144200/header.jpg
+Ground Branch,ground-branch,"PC",FPS,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/16900/header.jpg
+Squad,squad,"PC",FPS,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/393380/header.jpg
+Hell Let Loose,hell-let-loose,"PC,PlayStation,Xbox",FPS,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/686810/header.jpg
+Post Scriptum,post-scriptum,"PC",FPS,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/736220/header.jpg
+Insurgency: Sandstorm,insurgency-sandstorm,"PC,PlayStation,Xbox",FPS,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/581320/header.jpg
+Arma 3,arma-3,"PC",FPS,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/107410/header.jpg
+Arma Reforger,arma-reforger,"PC,Xbox",FPS,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1874880/header.jpg
+Rising Storm 2: Vietnam,rising-storm-2-vietnam,"PC",FPS,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/418460/header.jpg
+Battlefield 2042,battlefield-2042,"PC,PlayStation,Xbox",FPS,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1517290/header.jpg
+Battlefield V,battlefield-5,"PC,PlayStation,Xbox",FPS,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1238810/header.jpg
+Battlefield 1,battlefield-1,"PC,PlayStation,Xbox",FPS,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1238840/header.jpg
+Titanfall 2,titanfall-2,"PC,PlayStation,Xbox",FPS,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1237970/header.jpg
+The Division 2,the-division-2,"PC,PlayStation,Xbox",Looter Shooter,true,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co1ivi.jpg
+Borderlands 3,borderlands-3,"PC,PlayStation,Xbox",Looter Shooter,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/397540/header.jpg
+Tiny Tina's Wonderlands,tiny-tinas-wonderlands,"PC,PlayStation,Xbox",Looter Shooter,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1286680/header.jpg
+Outriders,outriders,"PC,PlayStation,Xbox",Looter Shooter,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/680420/header.jpg
+Remnant II,remnant-2,"PC,PlayStation,Xbox",Looter Shooter,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1282100/header.jpg
+Remnant: From the Ashes,remnant-from-the-ashes,"PC,PlayStation,Xbox",Looter Shooter,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/617290/header.jpg
+Doom Eternal,doom-eternal,"PC,PlayStation,Xbox,Switch",FPS,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/782330/header.jpg
+Wolfenstein II: The New Colossus,wolfenstein-2,"PC,PlayStation,Xbox,Switch",FPS,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/612880/header.jpg
+Metro Exodus,metro-exodus,"PC,PlayStation,Xbox",FPS,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/412020/header.jpg
+S.T.A.L.K.E.R. 2,stalker-2,"PC,Xbox",FPS,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1643320/header.jpg
+Atomic Heart,atomic-heart,"PC,PlayStation,Xbox",FPS,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/668580/header.jpg
+Control,control,"PC,PlayStation,Xbox,Switch",Action,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/870780/header.jpg
+Alan Wake 2,alan-wake-2,"PC,PlayStation,Xbox",Horror,false,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co6cl4.jpg
+Lies of P,lies-of-p,"PC,PlayStation,Xbox",Action RPG,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1627720/header.jpg
+Lords of the Fallen (2023),lords-of-the-fallen-2023,"PC,PlayStation,Xbox",Action RPG,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1501750/header.jpg
+Wo Long: Fallen Dynasty,wo-long-fallen-dynasty,"PC,PlayStation,Xbox",Action RPG,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1448440/header.jpg
+Nioh 2,nioh-2,"PC,PlayStation",Action RPG,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1325200/header.jpg
+Code Vein,code-vein,"PC,PlayStation,Xbox",Action RPG,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/678960/header.jpg
+Sifu,sifu,"PC,PlayStation,Xbox,Switch",Action,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2138710/header.jpg
+Ghostrunner,ghostrunner,"PC,PlayStation,Xbox,Switch",Action,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1139900/header.jpg
+Ghostrunner 2,ghostrunner-2,"PC,PlayStation,Xbox",Action,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2144740/header.jpg
+Hi-Fi Rush,hi-fi-rush,"PC,PlayStation,Xbox",Action,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1817230/header.jpg
+Ultrakill,ultrakill,"PC",FPS,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1229490/header.jpg
+DUSK,dusk,"PC,Switch",FPS,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/519860/header.jpg
+Amid Evil,amid-evil,"PC",FPS,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/673130/header.jpg
+Prodeus,prodeus,"PC,PlayStation,Xbox,Switch",FPS,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/964800/header.jpg
+Warhammer 40K: Space Marine 2,warhammer-40k-space-marine-2,"PC,PlayStation,Xbox",Action,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2183900/header.jpg
+Star Wars Jedi: Survivor,star-wars-jedi-survivor,"PC,PlayStation,Xbox",Action,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1774580/header.jpg
+Star Wars Jedi: Fallen Order,star-wars-jedi-fallen-order,"PC,PlayStation,Xbox",Action,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1172380/header.jpg
+Star Wars Battlefront II,star-wars-battlefront-2,"PC,PlayStation,Xbox",FPS,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1237950/header.jpg
+Star Wars: Squadrons,star-wars-squadrons,"PC,PlayStation,Xbox",Simulation,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1222730/header.jpg
+Halo Infinite,halo-infinite,"PC,Xbox",FPS,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1240440/header.jpg
+Halo: The Master Chief Collection,halo-mcc,"PC,Xbox",FPS,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/976730/header.jpg
+Gears 5,gears-5,"PC,Xbox",Action,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1097840/header.jpg
+Microsoft Flight Simulator,microsoft-flight-simulator,"PC,Xbox",Simulation,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1250410/header.jpg
+Elite Dangerous,elite-dangerous,"PC,PlayStation,Xbox",Simulation,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/359320/header.jpg
+Star Citizen,star-citizen,"PC",Simulation,true,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co5jym.jpg
+X4: Foundations,x4-foundations,"PC",Simulation,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/392160/header.jpg
+Kerbal Space Program,kerbal-space-program,"PC,PlayStation,Xbox",Simulation,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/220200/header.jpg
+Kerbal Space Program 2,kerbal-space-program-2,"PC",Simulation,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/954850/header.jpg
+American Truck Simulator,american-truck-simulator,"PC",Simulation,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/270880/header.jpg
+Farming Simulator 22,farming-simulator-22,"PC,PlayStation,Xbox",Simulation,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1248130/header.jpg
+Snowrunner,snowrunner,"PC,PlayStation,Xbox,Switch",Simulation,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1465360/header.jpg
+Train Sim World 4,train-sim-world-4,"PC,PlayStation,Xbox",Simulation,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2362411/header.jpg
+Planet Zoo,planet-zoo,"PC",Simulation,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/703080/header.jpg
+Planet Coaster,planet-coaster,"PC,PlayStation,Xbox",Simulation,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/493340/header.jpg
+Jurassic World Evolution 2,jurassic-world-evolution-2,"PC,PlayStation,Xbox,Switch",Simulation,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1244460/header.jpg
+Two Point Hospital,two-point-hospital,"PC,PlayStation,Xbox,Switch",Simulation,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/535930/header.jpg
+Two Point Campus,two-point-campus,"PC,PlayStation,Xbox,Switch",Simulation,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1649080/header.jpg
+Oxygen Not Included,oxygen-not-included,"PC",Simulation,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/457140/header.jpg
+Frostpunk,frostpunk,"PC,PlayStation,Xbox",Simulation,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/323190/header.jpg
+Frostpunk 2,frostpunk-2,"PC",Simulation,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1601580/header.jpg
+Factorio,factorio,"PC,Switch",Simulation,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/427520/header.jpg
+Dyson Sphere Program,dyson-sphere-program,"PC",Simulation,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1366540/header.jpg
+Shapez,shapez,"PC",Puzzle,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1318690/header.jpg
+Mindustry,mindustry,"PC,Mobile",Strategy,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1127400/header.jpg
+Against the Storm,against-the-storm,"PC",Strategy,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1336490/header.jpg
+Manor Lords,manor-lords,"PC",Strategy,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1363080/header.jpg
+Farthest Frontier,farthest-frontier,"PC",Strategy,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1044720/header.jpg
+Going Medieval,going-medieval,"PC",Strategy,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1029780/header.jpg
+Foundation,foundation,"PC",Strategy,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/690830/header.jpg
+Banished,banished,"PC",Strategy,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/242920/header.jpg
+Anno 1800,anno-1800,"PC",Strategy,true,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co1u7w.jpg
+Tropico 6,tropico-6,"PC,PlayStation,Xbox,Switch",Strategy,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/492720/header.jpg
+Northgard,northgard,"PC,PlayStation,Xbox,Switch,Mobile",Strategy,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/466560/header.jpg
+Dune: Spice Wars,dune-spice-wars,"PC",Strategy,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1605220/header.jpg
+Homeworld 3,homeworld-3,"PC",Strategy,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1840080/header.jpg
+Ashes of the Singularity,ashes-of-the-singularity,"PC",Strategy,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/507490/header.jpg
+They Are Billions,they-are-billions,"PC",Strategy,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/644930/header.jpg
+Creeper World 4,creeper-world-4,"PC",Strategy,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/848480/header.jpg
+XCOM 2,xcom-2,"PC,PlayStation,Xbox",Strategy,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/268500/header.jpg
+Phoenix Point,phoenix-point,"PC,PlayStation,Xbox",Strategy,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/839770/header.jpg
+Jagged Alliance 3,jagged-alliance-3,"PC",Strategy,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1084160/header.jpg
+Wartales,wartales,"PC,PlayStation,Xbox,Switch",Strategy,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1527950/header.jpg
+Battle Brothers,battle-brothers,"PC,Switch",Strategy,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/365360/header.jpg
+Darkest Dungeon,darkest-dungeon,"PC,PlayStation,Xbox,Switch,Mobile",Roguelike,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/262060/header.jpg
+Darkest Dungeon II,darkest-dungeon-2,"PC,PlayStation,Xbox,Switch",Roguelike,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1940340/header.jpg
+BATTLETECH,battletech,"PC",Strategy,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/637090/header.jpg
+MechWarrior 5: Mercenaries,mechwarrior-5,"PC,PlayStation,Xbox",Action,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/784080/header.jpg
+Satisfactory,satisfactory,"PC",Simulation,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/526870/header.jpg
+Stationeers,stationeers,"PC",Simulation,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/544550/header.jpg
+Space Engineers,space-engineers,"PC,Xbox",Simulation,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/244850/header.jpg
+Empyrion,empyrion-galactic-survival,"PC",Survival,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/383120/header.jpg
+Captain of Industry,captain-of-industry,"PC",Simulation,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1594320/header.jpg
+Workers & Resources: Soviet Republic,workers-resources,"PC",Simulation,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/784150/header.jpg
+Timberborn,timberborn,"PC",Simulation,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1062090/header.jpg
+Songs of Syx,songs-of-syx,"PC",Strategy,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1162750/header.jpg
+Kingdoms Reborn,kingdoms-reborn,"PC",Strategy,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1307890/header.jpg
+Patron,patron,"PC",Strategy,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1538570/header.jpg
+Settlement Survival,settlement-survival,"PC",Strategy,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1309950/header.jpg
+Diplomacy is Not an Option,diplomacy-is-not-an-option,"PC",Strategy,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1272320/header.jpg
+The Riftbreaker,riftbreaker,"PC,PlayStation,Xbox,Switch",Strategy,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/780310/header.jpg
+Rogue Tower,rogue-tower,"PC",Strategy,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1843760/header.jpg
+Bloons TD 6,bloons-td-6,"PC,PlayStation,Xbox,Switch,Mobile",Strategy,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/960090/header.jpg
+Kingdom Two Crowns,kingdom-two-crowns,"PC,PlayStation,Xbox,Switch",Strategy,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/701160/header.jpg
+They Are Billions,they-are-billions,"PC",Strategy,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/644930/header.jpg
+Orcs Must Die! 3,orcs-must-die-3,"PC,PlayStation,Xbox",Strategy,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1522820/header.jpg
+Dungeon Defenders: Going Rogue,dungeon-defenders-going-rogue,"PC",Strategy,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1401510/header.jpg
+Soulstone Survivors,soulstone-survivors,"PC",Roguelike,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2066020/header.jpg
+Brotato,brotato,"PC,Switch,Mobile",Roguelike,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1942280/header.jpg
+20 Minutes Till Dawn,20-minutes-till-dawn,"PC,Switch,Mobile",Roguelike,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1966900/header.jpg
+Nova Drift,nova-drift,"PC",Roguelike,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/858210/header.jpg
+Gunfire Reborn,gunfire-reborn,"PC,PlayStation,Xbox,Switch,Mobile",Roguelike,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1217060/header.jpg
+Roboquest,roboquest,"PC,Xbox",Roguelike,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/692890/header.jpg
+Wizard of Legend,wizard-of-legend,"PC,PlayStation,Xbox,Switch",Roguelike,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/445980/header.jpg
+Noita,noita,"PC",Roguelike,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/881100/header.jpg
+Loop Hero,loop-hero,"PC,Switch,Mobile",Roguelike,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1282730/header.jpg
+Monster Train,monster-train,"PC,Switch",Roguelike,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1102190/header.jpg
+Gordian Quest,gordian-quest,"PC",Roguelike,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/981430/header.jpg
+Griftlands,griftlands,"PC,Switch",Roguelike,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/601840/header.jpg
+Roguebook,roguebook,"PC,PlayStation,Xbox,Switch",Roguelike,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1076200/header.jpg
+Across the Obelisk,across-the-obelisk,"PC",Roguelike,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1385380/header.jpg
+Arcanium,arcanium,"PC",Roguelike,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1056360/header.jpg
+Tainted Grail: Conquest,tainted-grail-conquest,"PC",Roguelike,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1199030/header.jpg
+Fights in Tight Spaces,fights-in-tight-spaces,"PC,PlayStation,Xbox,Switch",Roguelike,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1265820/header.jpg
+Neon Abyss,neon-abyss,"PC,PlayStation,Xbox,Switch",Roguelike,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/788100/header.jpg
+Skul: The Hero Slayer,skul-hero-slayer,"PC,PlayStation,Xbox,Switch",Roguelike,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1147560/header.jpg
+Crown Trick,crown-trick,"PC,Switch",Roguelike,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1000010/header.jpg
+Curse of the Dead Gods,curse-of-the-dead-gods,"PC,PlayStation,Xbox,Switch",Roguelike,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1123770/header.jpg
+Going Under,going-under,"PC,PlayStation,Xbox,Switch",Roguelike,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1154810/header.jpg
+Dreamscaper,dreamscaper,"PC,Switch",Roguelike,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1040420/header.jpg
+Spelunky 2,spelunky-2,"PC,PlayStation,Xbox,Switch",Roguelike,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/418530/header.jpg
+Disc Room,disc-room,"PC,Switch",Action,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/839550/header.jpg
+Downwell,downwell,"PC,PlayStation,Switch,Mobile",Action,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/360740/header.jpg
+Geometry Dash,geometry-dash,"PC,Mobile",Platformer,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/322170/header.jpg
+Super Meat Boy,super-meat-boy,"PC,PlayStation,Xbox,Switch",Platformer,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/40800/header.jpg
+Super Meat Boy Forever,super-meat-boy-forever,"PC,PlayStation,Xbox,Switch",Platformer,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/581660/header.jpg
+Shovel Knight,shovel-knight,"PC,PlayStation,Xbox,Switch",Platformer,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/250760/header.jpg
+Ori and the Will of the Wisps,ori-will-of-the-wisps,"PC,Xbox,Switch",Platformer,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1057090/header.jpg
+Ori and the Blind Forest,ori-blind-forest,"PC,Xbox,Switch",Platformer,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/387290/header.jpg
+Metroid Dread,metroid-dread,"Switch",Metroidvania,false,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co3sa4.jpg
+Blasphemous 2,blasphemous-2,"PC,PlayStation,Xbox,Switch",Metroidvania,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2114740/header.jpg
+Blasphemous,blasphemous,"PC,PlayStation,Xbox,Switch",Metroidvania,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/774361/header.jpg
+Salt and Sanctuary,salt-and-sanctuary,"PC,PlayStation,Xbox,Switch",Metroidvania,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/283640/header.jpg
+Salt and Sacrifice,salt-and-sacrifice,"PC,PlayStation",Metroidvania,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1437400/header.jpg
+Bloodstained: Ritual of the Night,bloodstained-ritual-of-the-night,"PC,PlayStation,Xbox,Switch",Metroidvania,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/692850/header.jpg
+The Messenger,the-messenger,"PC,PlayStation,Xbox,Switch",Metroidvania,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/764790/header.jpg
+Axiom Verge 2,axiom-verge-2,"PC,PlayStation,Switch",Metroidvania,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1698020/header.jpg
+F-Zero 99,f-zero-99,"Switch",Racing,true,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co6quc.jpg
+Mario Kart 8 Deluxe,mario-kart-8-deluxe,"Switch",Racing,true,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co23jc.jpg
+Splatoon 3,splatoon-3,"Switch",Action,true,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co4vbh.jpg
+Super Smash Bros. Ultimate,super-smash-bros-ultimate,"Switch",Fighting,false,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co2255.jpg
+The Legend of Zelda: Tears of the Kingdom,zelda-tears-of-the-kingdom,"Switch",Adventure,false,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co5vmg.jpg
+Animal Crossing: New Horizons,animal-crossing-new-horizons,"Switch",Simulation,true,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co3wls.jpg
+Pokemon Scarlet & Violet,pokemon-scarlet-violet,"Switch",RPG,true,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co5vmp.jpg
+Fire Emblem Engage,fire-emblem-engage,"Switch",Strategy,false,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co5vbt.jpg
+Xenoblade Chronicles 3,xenoblade-chronicles-3,"Switch",RPG,false,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co4prz.jpg
+League of Legends,league-of-legends,"PC",MOBA,true,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co49wj.jpg
+Valorant,valorant,"PC",FPS,true,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co2mvt.jpg
+Fortnite,fortnite,"PC,PlayStation,Xbox,Switch,Mobile",Battle Royale,true,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co3wk8.jpg
+Genshin Impact,genshin-impact,"PC,PlayStation,Mobile",Action RPG,true,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co3p2d.jpg
+Honkai: Star Rail,honkai-star-rail,"PC,PlayStation,Mobile",Turn-based RPG,true,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co5w3k.jpg
+Zenless Zone Zero,zenless-zone-zero,"PC,PlayStation,Mobile",Action RPG,true,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co7m8u.jpg
+Call of Duty: Warzone,call-of-duty-warzone,"PC,PlayStation,Xbox",Battle Royale,true,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co2ket.jpg
+Call of Duty: Modern Warfare III,call-of-duty-mw3-2023,"PC,PlayStation,Xbox",FPS,true,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co6xi4.jpg
+Call of Duty: Modern Warfare II,call-of-duty-mw2-2022,"PC,PlayStation,Xbox",FPS,true,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co5psk.jpg
+Minecraft,minecraft,"PC,PlayStation,Xbox,Switch,Mobile",Sandbox,true,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co49x5.jpg
+Roblox,roblox,"PC,Xbox,Mobile",Platform,true,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co1rog.jpg
+The Binding of Isaac: Rebirth,binding-of-isaac-rebirth,"PC,PlayStation,Xbox,Switch",Roguelike,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/250900/header.jpg
+Dont Starve Together,dont-starve-together,"PC,PlayStation,Xbox,Switch",Survival,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/322330/header.jpg
+Undertale,undertale,"PC,PlayStation,Xbox,Switch",RPG,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/391540/header.jpg
+Deltarune,deltarune,"PC,PlayStation,Xbox,Switch",RPG,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1671210/header.jpg
+FTL: Faster Than Light,ftl-faster-than-light,"PC,Mobile",Roguelike,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/212680/header.jpg
+Into the Breach,into-the-breach,"PC,Switch,Mobile",Strategy,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/590380/header.jpg
+Papers Please,papers-please,"PC,Mobile",Puzzle,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/239030/header.jpg
+Return of the Obra Dinn,return-of-the-obra-dinn,"PC,PlayStation,Xbox,Switch",Puzzle,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/653530/header.jpg
+Outer Wilds,outer-wilds,"PC,PlayStation,Xbox,Switch",Adventure,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/753640/header.jpg
+Disco Elysium,disco-elysium,"PC,PlayStation,Xbox,Switch",RPG,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/632470/header.jpg
+Tunic,tunic,"PC,PlayStation,Xbox,Switch",Action Adventure,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/553420/header.jpg
+Deaths Door,deaths-door,"PC,PlayStation,Xbox,Switch",Action Adventure,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/894020/header.jpg
+Rain World,rain-world,"PC,PlayStation,Switch",Adventure,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/312520/header.jpg
+Baba Is You,baba-is-you,"PC,Switch,Mobile",Puzzle,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/736260/header.jpg
+Hotline Miami,hotline-miami,"PC,PlayStation,Switch",Action,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/219150/header.jpg
+Hotline Miami 2: Wrong Number,hotline-miami-2,"PC,PlayStation,Switch",Action,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/274170/header.jpg
+Hyper Light Drifter,hyper-light-drifter,"PC,PlayStation,Xbox,Switch",Action RPG,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/257850/header.jpg
+Inside,inside,"PC,PlayStation,Xbox,Switch",Puzzle Platformer,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/304430/header.jpg
+Limbo,limbo,"PC,PlayStation,Xbox,Switch,Mobile",Puzzle Platformer,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/48000/header.jpg
+Little Nightmares,little-nightmares,"PC,PlayStation,Xbox,Switch",Horror,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/424840/header.jpg
+Little Nightmares II,little-nightmares-2,"PC,PlayStation,Xbox,Switch",Horror,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/860510/header.jpg
+Spiritfarer,spiritfarer,"PC,PlayStation,Xbox,Switch",Adventure,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/972660/header.jpg
+Firewatch,firewatch,"PC,PlayStation,Xbox,Switch",Adventure,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/383870/header.jpg
+The Stanley Parable: Ultra Deluxe,stanley-parable-ultra-deluxe,"PC,PlayStation,Xbox,Switch",Adventure,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1703340/header.jpg
+What Remains of Edith Finch,what-remains-of-edith-finch,"PC,PlayStation,Xbox,Switch",Adventure,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/501300/header.jpg
+Night in the Woods,night-in-the-woods,"PC,PlayStation,Xbox,Switch",Adventure,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/481510/header.jpg
+Darkwood,darkwood,"PC,PlayStation,Xbox,Switch",Horror,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/274520/header.jpg
+SOMA,soma,"PC,PlayStation,Xbox",Horror,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/282140/header.jpg
+Amnesia: The Bunker,amnesia-the-bunker,"PC,PlayStation,Xbox",Horror,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1944430/header.jpg
+Visage,visage,"PC,PlayStation,Xbox",Horror,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/594330/header.jpg
+Layers of Fear,layers-of-fear,"PC,PlayStation,Xbox,Switch",Horror,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1128300/header.jpg
+Project Zomboid,project-zomboid,"PC",Survival,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/108600/header.jpg
+Kenshi,kenshi,"PC",RPG,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/233860/header.jpg
+Mount and Blade II: Bannerlord,mount-blade-2-bannerlord,"PC,PlayStation,Xbox",RPG,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/261550/header.jpg
+Barotrauma,barotrauma,"PC",Survival,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/602960/header.jpg
+Starbound,starbound,"PC",Sandbox,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/211820/header.jpg
+Human: Fall Flat,human-fall-flat,"PC,PlayStation,Xbox,Switch",Puzzle,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/477160/header.jpg
+Gang Beasts,gang-beasts,"PC,PlayStation,Xbox,Switch",Party,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/285900/header.jpg
+Stick Fight: The Game,stick-fight-the-game,"PC,Switch",Party,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/674940/header.jpg
+Ultimate Chicken Horse,ultimate-chicken-horse,"PC,PlayStation,Xbox,Switch",Party,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/386940/header.jpg
+SpeedRunners,speedrunners,"PC,PlayStation,Xbox,Switch",Racing,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/207140/header.jpg
+Party Animals,party-animals,"PC,PlayStation,Xbox",Party,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1260320/header.jpg
+Golf With Your Friends,golf-with-your-friends,"PC,PlayStation,Xbox,Switch",Sports,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/431240/header.jpg
+Pummel Party,pummel-party,"PC",Party,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/880940/header.jpg
+PlateUp,plateup,"PC,PlayStation,Xbox,Switch",Simulation,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1599600/header.jpg
+Overcooked! All You Can Eat,overcooked-all-you-can-eat,"PC,PlayStation,Xbox,Switch",Party,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1243830/header.jpg
+Unrailed,unrailed,"PC,PlayStation,Xbox,Switch",Party,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1016920/header.jpg
+Content Warning,content-warning,"PC",Horror,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2881650/header.jpg
+Supermarket Simulator,supermarket-simulator,"PC",Simulation,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2670630/header.jpg
+Dave the Diver,dave-the-diver,"PC,PlayStation,Switch",Adventure,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1868140/header.jpg
+Dredge,dredge,"PC,PlayStation,Xbox,Switch",Adventure,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1562430/header.jpg
+Another Crabs Treasure,another-crabs-treasure,"PC,PlayStation,Xbox,Switch",Action RPG,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1887840/header.jpg
+Sea of Stars,sea-of-stars,"PC,PlayStation,Xbox,Switch",RPG,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1244090/header.jpg
+Chained Echoes,chained-echoes,"PC,PlayStation,Xbox,Switch",RPG,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1229240/header.jpg
+Citizen Sleeper,citizen-sleeper,"PC,PlayStation,Xbox,Switch",RPG,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1578650/header.jpg
+Bomb Rush Cyberfunk,bomb-rush-cyberfunk,"PC,PlayStation,Xbox,Switch",Action,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1353230/header.jpg
+Tinykin,tinykin,"PC,PlayStation,Xbox,Switch",Platformer,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1599020/header.jpg
+Chicory: A Colorful Tale,chicory-a-colorful-tale,"PC,PlayStation,Switch",Adventure,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1123450/header.jpg
+Untitled Goose Game,untitled-goose-game,"PC,PlayStation,Xbox,Switch",Puzzle,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/837470/header.jpg
+A Short Hike,a-short-hike,"PC,PlayStation,Xbox,Switch",Adventure,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1055540/header.jpg
+Luck be a Landlord,luck-be-a-landlord,"PC,Switch,Mobile",Roguelike,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1404850/header.jpg
+Backpack Hero,backpack-hero,"PC,Switch",Roguelike,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1970580/header.jpg
+Stacklands,stacklands,"PC",Card Game,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1948280/header.jpg
+Buckshot Roulette,buckshot-roulette,"PC",Horror,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2835570/header.jpg
+Halls of Torment,halls-of-torment,"PC",Roguelike,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2218750/header.jpg
+Children of Morta,children-of-morta,"PC,PlayStation,Xbox,Switch",Roguelike,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/330020/header.jpg
+Moonlighter,moonlighter,"PC,PlayStation,Xbox,Switch",Roguelike,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/606150/header.jpg
+My Time at Portia,my-time-at-portia,"PC,PlayStation,Xbox,Switch",Simulation,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/666140/header.jpg
+My Time at Sandrock,my-time-at-sandrock,"PC,PlayStation,Xbox,Switch",Simulation,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1084600/header.jpg
+Beat Saber,beat-saber,"PC",VR Rhythm,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/620980/header.jpg
+Blade and Sorcery,blade-and-sorcery,"PC",VR Action,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/629730/header.jpg
+Boneworks,boneworks,"PC",VR Action,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/823500/header.jpg
+Bonelab,bonelab,"PC",VR Action,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1592190/header.jpg
+Half-Life: Alyx,half-life-alyx,"PC",VR FPS,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/546560/header.jpg
+Pavlov VR,pavlov-vr,"PC",VR FPS,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/555160/header.jpg
+VRChat,vrchat,"PC",VR Social,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/438100/header.jpg
+Gorilla Tag,gorilla-tag,"PC",VR Party,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1533390/header.jpg
+Songs of Conquest,songs-of-conquest,"PC",Strategy,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/867210/header.jpg
+Old World,old-world,"PC",Strategy,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/597180/header.jpg
+Humankind,humankind,"PC",Strategy,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1124300/header.jpg
+Octopath Traveler II,octopath-traveler-2,"PC,PlayStation,Switch",RPG,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1971650/header.jpg
+Triangle Strategy,triangle-strategy,"PC,Switch",Strategy RPG,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1850510/header.jpg
+Dicey Dungeons,dicey-dungeons,"PC,Switch,Mobile",Roguelike,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/861540/header.jpg
+One Step From Eden,one-step-from-eden,"PC,PlayStation,Xbox,Switch",Roguelike,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/960690/header.jpg
+Bad North,bad-north,"PC,PlayStation,Xbox,Switch,Mobile",Strategy,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/688420/header.jpg
+Pico Park,pico-park,"PC,Switch",Party,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1509960/header.jpg
+Getting Over It with Bennett Foddy,getting-over-it,"PC,Mobile",Platformer,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/240720/header.jpg
+Jump King,jump-king,"PC,PlayStation,Xbox,Switch",Platformer,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1061090/header.jpg
+Pogostuck,pogostuck,"PC",Platformer,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/688130/header.jpg
+Only Up,only-up,"PC",Platformer,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2381590/header.jpg
+I Wanna Be The Guy,i-wanna-be-the-guy,"PC",Platformer,false,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co1y6h.jpg
+Katana ZERO,katana-zero,"PC,PlayStation,Xbox,Switch",Action,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/460950/header.jpg
+Neon White,neon-white,"PC,PlayStation,Switch",Action,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1533420/header.jpg
+Broforce,broforce,"PC,PlayStation,Switch",Action,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/274190/header.jpg
+Anger Foot,anger-foot,"PC",Action,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1978590/header.jpg
+Turbo Overkill,turbo-overkill,"PC,PlayStation,Xbox,Switch",FPS,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1328350/header.jpg
+Selaco,selaco,"PC",FPS,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1592280/header.jpg
+Wrath: Aeon of Ruin,wrath-aeon-of-ruin,"PC,PlayStation,Xbox,Switch",FPS,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1000410/header.jpg
+Graven,graven,"PC",FPS,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1371690/header.jpg
+Gloomwood,gloomwood,"PC",Stealth,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1150760/header.jpg
+Signalis,signalis,"PC,PlayStation,Xbox,Switch",Horror,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1262350/header.jpg
+Norco,norco,"PC,PlayStation,Switch",Adventure,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1221250/header.jpg
+Roadwarden,roadwarden,"PC,Switch",RPG,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1155970/header.jpg
+The Case of the Golden Idol,case-of-the-golden-idol,"PC,Switch",Puzzle,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1677770/header.jpg
+Voices of the Void,voices-of-the-void,"PC",Horror,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2377550/header.jpg
+Iron Lung,iron-lung,"PC",Horror,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1846170/header.jpg
+Suika Game,suika-game,"PC,Switch",Puzzle,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2683020/header.jpg
+Lethal Company,lethal-company,"PC",Horror,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1966720/header.jpg
+Webbed,webbed,"PC,Switch",Adventure,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1390350/header.jpg
+Eastward,eastward,"PC,Switch",Adventure,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/977880/header.jpg
+Cassette Beasts,cassette-beasts,"PC,PlayStation,Xbox,Switch",RPG,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1321440/header.jpg
+Coromon,coromon,"PC,Switch,Mobile",RPG,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1218210/header.jpg
+Temtem,temtem,"PC,PlayStation,Xbox,Switch",RPG,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/745920/header.jpg
+Boyfriend Dungeon,boyfriend-dungeon,"PC,Switch",Roguelike,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/674930/header.jpg
+Unpacking,unpacking,"PC,PlayStation,Xbox,Switch",Puzzle,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1135690/header.jpg
+Wobbly Life,wobbly-life,"PC,PlayStation,Xbox,Switch",Sandbox,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1211020/header.jpg
+Slime Rancher 2,slime-rancher-2,"PC,Xbox",Simulation,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1657630/header.jpg
+Slime Rancher,slime-rancher,"PC,PlayStation,Xbox,Switch",Simulation,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/433340/header.jpg
+Subnautica: Below Zero,subnautica-below-zero,"PC,PlayStation,Xbox,Switch",Survival,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/848450/header.jpg
+Wandersong,wandersong,"PC,PlayStation,Switch",Adventure,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/530320/header.jpg
+Later Alligator,later-alligator,"PC,Switch",Adventure,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/966320/header.jpg
+Frog Detective 3,frog-detective-3,"PC,Switch",Adventure,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1292030/header.jpg
+Peglin,peglin,"PC,Switch",Roguelike,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1296610/header.jpg
+Against the Storm,against-the-storm,"PC",Strategy,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1336490/header.jpg
+Wildfrost,wildfrost,"PC,Switch",Roguelike,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1811990/header.jpg
+Cobalt Core,cobalt-core,"PC,Switch",Roguelike,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2179850/header.jpg
+Slice and Dice,slice-and-dice,"PC,Mobile",Roguelike,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1775490/header.jpg
+Shogun Showdown,shogun-showdown,"PC",Roguelike,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2084000/header.jpg
+Void Stranger,void-stranger,"PC",Puzzle,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2121980/header.jpg
+Patrick Parabox,patricks-parabox,"PC,PlayStation,Xbox,Switch",Puzzle,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1260520/header.jpg
+Cocoon,cocoon,"PC,PlayStation,Xbox,Switch",Puzzle,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1497440/header.jpg
+Viewfinder,viewfinder,"PC,PlayStation",Puzzle,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1382070/header.jpg
+Islets,islets,"PC,PlayStation,Xbox,Switch",Metroidvania,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1669420/header.jpg
+Pronty,pronty,"PC,Switch",Metroidvania,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1250080/header.jpg
+Aeterna Noctis,aeterna-noctis,"PC,PlayStation,Xbox,Switch",Metroidvania,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1517970/header.jpg
+Haiku the Robot,haiku-the-robot,"PC,Switch",Metroidvania,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1353620/header.jpg
+Gato Roboto,gato-roboto,"PC,Switch",Metroidvania,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/916730/header.jpg
+The Last Faith,the-last-faith,"PC,PlayStation,Xbox,Switch",Metroidvania,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1274600/header.jpg
+9 Years of Shadows,9-years-of-shadows,"PC,Switch",Metroidvania,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1733560/header.jpg
+Ultros,ultros,"PC,PlayStation",Metroidvania,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1709770/header.jpg
+Animal Well,animal-well,"PC,PlayStation,Switch",Metroidvania,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/813230/header.jpg
+1000xResist,1000xresist,"PC,Switch",Adventure,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1675830/header.jpg
+Lorelei and the Laser Eyes,lorelei-and-the-laser-eyes,"PC,Switch",Puzzle,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2008920/header.jpg
+Arco,arco,"PC",RPG,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2366970/header.jpg
+Thank Goodness Youre Here,thank-goodness-youre-here,"PC,PlayStation,Switch",Adventure,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2366980/header.jpg
+Neva,neva,"PC,PlayStation,Xbox,Switch",Action,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1443490/header.jpg
+Crow Country,crow-country,"PC,PlayStation,Xbox",Horror,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1996010/header.jpg
+Mouthwashing,mouthwashing,"PC",Horror,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2475490/header.jpg
+Demonschool,demonschool,"PC,PlayStation,Xbox,Switch",Strategy RPG,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1900480/header.jpg
+Tactical Breach Wizards,tactical-breach-wizards,"PC",Strategy,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1043810/header.jpg
+Caves of Qud,caves-of-qud,"PC",Roguelike,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/333640/header.jpg
+Cogmind,cogmind,"PC",Roguelike,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/722730/header.jpg
+Dwarf Fortress,dwarf-fortress,"PC",Simulation,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/975370/header.jpg
+Cataclysm: Dark Days Ahead,cataclysm-dda,"PC",Roguelike,true,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co24xm.jpg
+ADOM,adom,"PC",Roguelike,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/333300/header.jpg
+Tales of Maj Eyal,tales-of-maj-eyal,"PC",Roguelike,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/259680/header.jpg
+Stoneshard,stoneshard,"PC",Roguelike,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/625960/header.jpg
+Jupiter Hell,jupiter-hell,"PC",Roguelike,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/811320/header.jpg
+Streets of Rogue 2,streets-of-rogue-2,"PC",Roguelike,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2140820/header.jpg
+Streets of Rogue,streets-of-rogue,"PC,PlayStation,Xbox,Switch",Roguelike,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/512900/header.jpg
+Dungeon Crawl Stone Soup,dungeon-crawl-stone-soup,"PC",Roguelike,true,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co1ygq.jpg
+Vagante,vagante,"PC,PlayStation,Xbox,Switch",Roguelike,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/323220/header.jpg
+Crawl,crawl,"PC,PlayStation,Xbox,Switch",Action,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/293780/header.jpg
+TowerFall Ascension,towerfall-ascension,"PC,PlayStation,Xbox,Switch",Action,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/251470/header.jpg
+Samurai Gunn 2,samurai-gunn-2,"PC,Switch",Action,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1397790/header.jpg
+Rivals of Aether,rivals-of-aether,"PC,Xbox,Switch",Fighting,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/383980/header.jpg
+Rivals 2,rivals-2,"PC",Fighting,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2217000/header.jpg
+Brawlhalla,brawlhalla,"PC,PlayStation,Xbox,Switch,Mobile",Fighting,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/291550/header.jpg
+MultiVersus,multiversus,"PC,PlayStation,Xbox",Fighting,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1818750/header.jpg
+Nickelodeon All-Star Brawl 2,nickelodeon-all-star-brawl-2,"PC,PlayStation,Xbox,Switch",Fighting,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2015460/header.jpg
+Them's Fightin' Herds,thems-fightin-herds,"PC,PlayStation,Xbox,Switch",Fighting,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/574980/header.jpg
+Skullgirls 2nd Encore,skullgirls-2nd-encore,"PC,PlayStation,Xbox,Switch",Fighting,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/245170/header.jpg
+Lethal League Blaze,lethal-league-blaze,"PC,PlayStation,Xbox,Switch",Fighting,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/553310/header.jpg
+Footsies,footsies,"PC",Fighting,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1344740/header.jpg
+Pocket Bravery,pocket-bravery,"PC",Fighting,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1586380/header.jpg
+Breakers Collection,breakers-collection,"PC,PlayStation,Xbox,Switch",Fighting,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1746170/header.jpg
+Art of Rally,art-of-rally,"PC,PlayStation,Xbox,Switch",Racing,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/550320/header.jpg
+RACE,road-96,"PC,PlayStation,Xbox,Switch",Adventure,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1466640/header.jpg
+Distance,distance,"PC,PlayStation,Switch",Racing,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/233610/header.jpg
+Inertial Drift,inertial-drift,"PC,PlayStation,Xbox,Switch",Racing,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1184480/header.jpg
+GRIP: Combat Racing,grip-combat-racing,"PC,PlayStation,Xbox,Switch",Racing,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/396900/header.jpg
+Wreckfest,wreckfest,"PC,PlayStation,Xbox,Switch",Racing,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/228380/header.jpg
+BeamNG.drive,beamng-drive,"PC",Simulation,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/284160/header.jpg
+My Summer Car,my-summer-car,"PC",Simulation,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/516750/header.jpg
+Jalopy,jalopy,"PC",Simulation,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/446020/header.jpg
+Car Mechanic Simulator 2021,car-mechanic-simulator-2021,"PC,PlayStation,Xbox,Switch",Simulation,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1190000/header.jpg
+House Flipper 2,house-flipper-2,"PC,PlayStation,Xbox",Simulation,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1190970/header.jpg
+House Flipper,house-flipper,"PC,PlayStation,Xbox,Switch",Simulation,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/613100/header.jpg
+PowerWash Simulator,powerwash-simulator,"PC,PlayStation,Xbox,Switch",Simulation,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1290000/header.jpg
+Viscera Cleanup Detail,viscera-cleanup-detail,"PC",Simulation,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/246900/header.jpg
+PC Building Simulator 2,pc-building-simulator-2,"PC",Simulation,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1525750/header.jpg
+The Long Dark,the-long-dark,"PC,PlayStation,Xbox,Switch",Survival,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/305620/header.jpg
+Stranded Deep,stranded-deep,"PC,PlayStation,Xbox,Switch",Survival,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/313120/header.jpg
+SCUM,scum,"PC",Survival,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/513710/header.jpg
+Icarus,icarus,"PC",Survival,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1149460/header.jpg
+Abiotic Factor,abiotic-factor,"PC",Survival,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/427410/header.jpg
+Soulmask,soulmask,"PC",Survival,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2646460/header.jpg
+Nightingale,nightingale,"PC",Survival,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1928980/header.jpg
+Once Human,once-human,"PC",Survival,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2139460/header.jpg
+Horizon Call of the Mountain,horizon-call-of-the-mountain,"PlayStation",VR Action,false,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co5rnq.jpg
+Synth Riders,synth-riders,"PC",VR Rhythm,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/885000/header.jpg
+Pistol Whip,pistol-whip,"PC",VR Rhythm,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1079800/header.jpg
+SUPERHOT VR,superhot-vr,"PC",VR FPS,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/617830/header.jpg
+SUPERHOT,superhot,"PC,PlayStation,Xbox,Switch",FPS,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/322500/header.jpg
+SUPERHOT: MIND CONTROL DELETE,superhot-mind-control-delete,"PC,PlayStation,Xbox,Switch",FPS,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/690040/header.jpg
+Robo Recall,robo-recall,"PC",VR FPS,false,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co1xpj.jpg
+Lone Echo,lone-echo,"PC",VR Adventure,false,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co1udn.jpg
+The Walking Dead: Saints and Sinners,walking-dead-saints-sinners,"PC",VR Action,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/916840/header.jpg
+Arizona Sunshine,arizona-sunshine,"PC",VR FPS,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/342180/header.jpg
+Green Hell VR,green-hell-vr,"PC",VR Survival,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1782330/header.jpg
+Walkabout Mini Golf,walkabout-mini-golf,"PC",VR Sports,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1408230/header.jpg
+Eleven Table Tennis,eleven-table-tennis,"PC",VR Sports,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/488310/header.jpg
+Thrill of the Fight,thrill-of-the-fight,"PC",VR Sports,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/494150/header.jpg
+Until You Fall,until-you-fall,"PC,PlayStation",VR Action,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/858260/header.jpg
+Moss,moss,"PC,PlayStation",VR Adventure,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/846470/header.jpg
+Moss: Book II,moss-book-2,"PC,PlayStation",VR Adventure,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1903750/header.jpg
+I Expect You To Die,i-expect-you-to-die,"PC",VR Puzzle,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/587430/header.jpg
+Zenith: The Last City,zenith-the-last-city,"PC",VR MMORPG,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1403370/header.jpg
+Resident Evil 4 VR,resident-evil-4-vr,"PC",VR Horror,false,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co4gm8.jpg
+Propagation: Paradise Hotel,propagation-paradise-hotel,"PC",VR Horror,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2086960/header.jpg
+Into the Radius,into-the-radius,"PC",VR Survival,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1012790/header.jpg
+Ghosts of Tabor,ghosts-of-tabor,"PC",VR FPS,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1957780/header.jpg
+After the Fall,after-the-fall,"PC",VR FPS,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/751630/header.jpg
+Zero Caliber,zero-caliber,"PC",VR FPS,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/877200/header.jpg
+Contractors,contractors-vr,"PC",VR FPS,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/963930/header.jpg
+Onward,onward-vr,"PC",VR FPS,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/496240/header.jpg
+Population: One,population-one,"PC",VR Battle Royale,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/691260/header.jpg
+Echo VR,echo-vr,"PC",VR Sports,true,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co1ude.jpg
+Demeo,demeo,"PC,PlayStation,Xbox,Switch",VR Strategy,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1484280/header.jpg
+Kayak VR: Mirage,kayak-vr-mirage,"PC,PlayStation",VR Sports,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1683340/header.jpg
+The Room VR: A Dark Matter,the-room-vr,"PC,PlayStation",VR Puzzle,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1104380/header.jpg
+Red Matter 2,red-matter-2,"PC",VR Adventure,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1777700/header.jpg
+Song in the Smoke,song-in-the-smoke,"PC,PlayStation",VR Survival,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1518750/header.jpg
+Compound,compound-vr,"PC",VR FPS,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/615120/header.jpg
+Hot Dogs Horseshoes and Hand Grenades,h3vr,"PC",VR FPS,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/450540/header.jpg
+Potionomics,potionomics,"PC",Simulation,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1874490/header.jpg
+Strange Horticulture,strange-horticulture,"PC,Switch",Puzzle,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1574580/header.jpg
+Potion Craft,potion-craft,"PC,PlayStation,Xbox,Switch",Simulation,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1210320/header.jpg
+Potion Permit,potion-permit,"PC,PlayStation,Xbox,Switch",Simulation,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1337760/header.jpg
+Wylde Flowers,wylde-flowers,"PC,Switch",Simulation,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1419607/header.jpg
+Roots of Pacha,roots-of-pacha,"PC,PlayStation,Xbox,Switch",Simulation,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1245560/header.jpg
+Coral Island,coral-island,"PC,PlayStation,Xbox,Switch",Simulation,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1158160/header.jpg
+Sun Haven,sun-haven,"PC,Switch",Simulation,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1432860/header.jpg
+Travellers Rest,travellers-rest,"PC",Simulation,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1139980/header.jpg
+Bear and Breakfast,bear-and-breakfast,"PC,Switch",Simulation,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1136370/header.jpg
+Spirittea,spirittea,"PC,PlayStation,Xbox,Switch",Simulation,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1931160/header.jpg
+Littlewood,littlewood,"PC,Switch",Simulation,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/894940/header.jpg
+Graveyard Keeper,graveyard-keeper,"PC,PlayStation,Xbox,Switch,Mobile",Simulation,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/599140/header.jpg
+Spiritfarer: Farewell Edition,spiritfarer-farewell,"PC,PlayStation,Xbox,Switch",Adventure,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/972660/header.jpg
+Dorfromantik,dorfromantik,"PC,Switch",Puzzle,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1455840/header.jpg
+TOEM,toem,"PC,PlayStation,Switch",Adventure,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1307580/header.jpg
+Minute of Islands,minute-of-islands,"PC,PlayStation,Xbox,Switch",Adventure,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1059310/header.jpg
+Genesis Noir,genesis-noir,"PC,PlayStation,Xbox,Switch",Adventure,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/735290/header.jpg
+Backbone,backbone,"PC,PlayStation,Xbox,Switch",Adventure,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/865610/header.jpg
+Mutazione,mutazione,"PC,PlayStation,Switch",Adventure,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1080750/header.jpg
+Old Mans Journey,old-mans-journey,"PC,PlayStation,Switch,Mobile",Adventure,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/581270/header.jpg
+Gris,gris,"PC,PlayStation,Switch,Mobile",Platformer,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/683320/header.jpg
+Abzu,abzu,"PC,PlayStation,Xbox,Switch",Adventure,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/384190/header.jpg
+Journey,journey,"PC,PlayStation",Adventure,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/638230/header.jpg
+Flower,flower,"PC,PlayStation",Adventure,false,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co1x78.jpg
+Sky: Children of the Light,sky-children-of-the-light,"PC,PlayStation,Switch,Mobile",Adventure,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2325290/header.jpg
+Rime,rime,"PC,PlayStation,Xbox,Switch",Adventure,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/493200/header.jpg
+Fe,fe,"PC,PlayStation,Xbox,Switch",Adventure,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/327050/header.jpg
+Lost Ember,lost-ember,"PC,PlayStation,Xbox,Switch",Adventure,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/563840/header.jpg
+Arise: A Simple Story,arise-a-simple-story,"PC,PlayStation,Xbox,Switch",Adventure,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/866140/header.jpg
+Jusant,jusant,"PC,PlayStation,Xbox",Adventure,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1977170/header.jpg
+Viewfinder,viewfinder-game,"PC,PlayStation",Puzzle,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1382070/header.jpg
+The Talos Principle 2,talos-principle-2,"PC,PlayStation,Xbox",Puzzle,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/835960/header.jpg
+The Talos Principle,talos-principle,"PC,PlayStation,Xbox,Switch,Mobile",Puzzle,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/257510/header.jpg
+The Witness,the-witness,"PC,PlayStation,Xbox",Puzzle,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/210970/header.jpg
+Antichamber,antichamber,"PC",Puzzle,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/219890/header.jpg
+Superliminal,superliminal,"PC,PlayStation,Xbox,Switch",Puzzle,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1049410/header.jpg
+Maquette,maquette,"PC,PlayStation",Puzzle,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/762840/header.jpg
+Manifold Garden,manifold-garden,"PC,PlayStation,Xbox,Switch",Puzzle,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/473950/header.jpg
+Fez,fez,"PC,PlayStation,Xbox,Switch",Puzzle Platformer,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/224760/header.jpg
+Braid,braid,"PC,PlayStation,Xbox",Puzzle Platformer,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/26800/header.jpg
+Braid Anniversary Edition,braid-anniversary-edition,"PC,PlayStation,Xbox,Switch",Puzzle Platformer,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/499180/header.jpg
+The Swapper,the-swapper,"PC,PlayStation,Xbox,Switch",Puzzle,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/231160/header.jpg
+World of Goo,world-of-goo,"PC,Switch,Mobile",Puzzle,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/22000/header.jpg
+World of Goo 2,world-of-goo-2,"PC,Switch",Puzzle,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2562680/header.jpg
+Human Resource Machine,human-resource-machine,"PC,Switch,Mobile",Puzzle,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/375820/header.jpg
+7 Billion Humans,7-billion-humans,"PC,Switch,Mobile",Puzzle,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/792100/header.jpg
+Opus Magnum,opus-magnum,"PC",Puzzle,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/558990/header.jpg
+Infinifactory,infinifactory,"PC",Puzzle,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/300570/header.jpg
+SpaceChem,spacechem,"PC",Puzzle,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/92800/header.jpg
+Shenzhen I/O,shenzhen-io,"PC",Puzzle,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/504210/header.jpg
+TIS-100,tis-100,"PC",Puzzle,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/370360/header.jpg
+Exapunks,exapunks,"PC",Puzzle,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/716490/header.jpg
+Last Call BBS,last-call-bbs,"PC",Puzzle,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1511780/header.jpg
+Hacknet,hacknet,"PC",Puzzle,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/365450/header.jpg
+Uplink,uplink,"PC",Puzzle,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1510/header.jpg
+Nerts! Online,nerts-online,"PC",Card Game,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1131190/header.jpg
+Tabletop Simulator,tabletop-simulator,"PC",Simulation,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/286160/header.jpg
+Wingspan,wingspan,"PC,Switch",Card Game,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1054490/header.jpg
+Root,root-board-game,"PC,Switch",Strategy,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/965580/header.jpg
+Gloomhaven,gloomhaven,"PC",Strategy RPG,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/780290/header.jpg
+Terraforming Mars,terraforming-mars,"PC,Mobile",Strategy,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/800270/header.jpg
+Spirit Island,spirit-island,"PC",Strategy,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1236720/header.jpg
+Scythe,scythe-digital,"PC,Mobile",Strategy,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/718560/header.jpg
+Black Myth: Wukong,black-myth-wukong,"PC,PlayStation",Action RPG,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2358720/header.jpg
+Stellar Blade,stellar-blade,"PlayStation",Action,false,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co7kgs.jpg
+Senuas Saga: Hellblade II,hellblade-2,"PC,Xbox",Action Adventure,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2461850/header.jpg
+Skull and Bones,skull-and-bones,"PC,PlayStation,Xbox",Action,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2627380/header.jpg
+Granblue Fantasy: Relink,granblue-fantasy-relink,"PC,PlayStation",Action RPG,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/881020/header.jpg
+Prince of Persia: The Lost Crown,prince-of-persia-lost-crown,"PC,PlayStation,Xbox,Switch",Metroidvania,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2310680/header.jpg
+Dead Space Remake,dead-space-remake,"PC,PlayStation,Xbox",Horror,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1693980/header.jpg
+The Finals,the-finals,"PC,PlayStation,Xbox",FPS,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2073850/header.jpg
+Warhammer 40K: Rogue Trader,warhammer-40k-rogue-trader,"PC",RPG,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2186680/header.jpg
+Suicide Squad: Kill the Justice League,suicide-squad-ktjl,"PC,PlayStation,Xbox",Action,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/315210/header.jpg
+Avatar: Frontiers of Pandora,avatar-frontiers-of-pandora,"PC,PlayStation,Xbox",Action Adventure,false,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co6lix.jpg
+Like a Dragon Gaiden,like-a-dragon-gaiden,"PC,PlayStation,Xbox",Action,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2375550/header.jpg
+Pacific Drive,pacific-drive,"PC,PlayStation",Survival,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1458140/header.jpg
+Banishers: Ghosts of New Eden,banishers-ghosts-new-eden,"PC,PlayStation,Xbox",Action RPG,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1708100/header.jpg
+Alone in the Dark,alone-in-the-dark-2024,"PC,PlayStation,Xbox",Horror,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1760670/header.jpg
+Rise of the Ronin,rise-of-the-ronin,"PlayStation",Action RPG,false,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co7ei8.jpg
+Eiyuden Chronicle: Hundred Heroes,eiyuden-chronicle,"PC,PlayStation,Xbox,Switch",RPG,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1658280/header.jpg
+Sand Land,sand-land,"PC,PlayStation,Xbox",Action RPG,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1979440/header.jpg
+Unicorn Overlord,unicorn-overlord,"PlayStation,Xbox,Switch",Strategy RPG,false,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co7fb1.jpg
+No Rest for the Wicked,no-rest-for-the-wicked,"PC",Action RPG,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1371980/header.jpg
+Hades II,hades-2,"PC",Roguelike,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1145350/header.jpg
+Splatoon 3,splatoon-3,"Switch",Shooter,true,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co4s51.jpg
+Super Mario Bros. Wonder,mario-bros-wonder,"Switch",Platformer,false,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co6ozt.jpg
+Pikmin 4,pikmin-4,"Switch",Strategy,false,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co6co9.jpg
+Princess Peach: Showtime!,princess-peach-showtime,"Switch",Platformer,false,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co7gpt.jpg
+Paper Mario: The Thousand-Year Door,paper-mario-ttyd,"Switch",RPG,false,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co7h9p.jpg
+Luigi's Mansion 2 HD,luigis-mansion-2-hd,"Switch",Adventure,false,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co7h9q.jpg
+Fire Emblem Engage,fire-emblem-engage,"Switch",Strategy RPG,false,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co5l0w.jpg
+Persona 5 Tactica,persona-5-tactica,"PC,PlayStation,Xbox,Switch",Strategy RPG,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2254740/header.jpg
+Persona 3 Reload,persona-3-reload,"PC,PlayStation,Xbox",RPG,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2161700/header.jpg
+Indiana Jones and the Great Circle,indiana-jones-great-circle,"PC,Xbox",Action Adventure,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2677660/header.jpg
+S.T.A.L.K.E.R. 2,stalker-2,"PC,Xbox",FPS,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1643320/header.jpg
+Path of Exile 2,path-of-exile-2,"PC",Action RPG,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2694490/header.jpg
+Delta Force,delta-force-2024,"PC,PlayStation,Xbox",FPS,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2217000/header.jpg
+Marvel Rivals,marvel-rivals,"PC,PlayStation,Xbox",FPS,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2767030/header.jpg
+Wuthering Waves,wuthering-waves,"PC,PlayStation,Mobile",Action RPG,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2384920/header.jpg
+Zenless Zone Zero,zenless-zone-zero,"PC,PlayStation,Mobile",Action RPG,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2881280/header.jpg
+Dragon Age: The Veilguard,dragon-age-veilguard,"PC,PlayStation,Xbox",RPG,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1845910/header.jpg
+Silent Hill 2 Remake,silent-hill-2-remake,"PC,PlayStation",Horror,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2124490/header.jpg
+Call of Duty: Black Ops 6,call-of-duty-bo6,"PC,PlayStation,Xbox",FPS,true,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co8cbc.jpg
+Space Marine 2,warhammer-40k-space-marine-2,"PC,PlayStation,Xbox",Action,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2183900/header.jpg
+Star Wars Outlaws,star-wars-outlaws,"PC,PlayStation,Xbox",Action Adventure,false,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co7rhx.jpg
+Assassins Creed Shadows,assassins-creed-shadows,"PC,PlayStation,Xbox",Action RPG,false,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co7rhx.jpg
+Monster Hunter Wilds,monster-hunter-wilds,"PC,PlayStation,Xbox",Action RPG,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2246340/header.jpg
+GTA 6,gta-6,"PlayStation,Xbox",Action,true,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co7lhd.jpg
+Death Stranding 2,death-stranding-2,"PlayStation",Action Adventure,false,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co7v96.jpg
+Ghost of Yotei,ghost-of-yotei,"PlayStation",Action,false,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co8fkg.jpg
+DOOM: The Dark Ages,doom-dark-ages,"PC,PlayStation,Xbox",FPS,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/3017860/header.jpg
+Fable,fable-2025,"PC,Xbox",RPG,false,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co5vly.jpg
+Avowed,avowed,"PC,Xbox",RPG,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2181290/header.jpg
+Civilization VII,civilization-7,"PC,PlayStation,Xbox,Switch",Strategy,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1295660/header.jpg
+Elden Ring: Nightreign,elden-ring-nightreign,"PC,PlayStation,Xbox",Action RPG,true,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2817020/header.jpg
+Borderlands 4,borderlands-4,"PC,PlayStation,Xbox",Looter Shooter,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/2968290/header.jpg
+Judas,judas,"PC,PlayStation,Xbox",FPS,false,true,full,true,https://images.igdb.com/igdb/image/upload/t_cover_big/co7fmz.jpg
+Hollow Knight: Silksong,hollow-knight-silksong,"PC,PlayStation,Xbox,Switch",Metroidvania,false,true,full,false,https://cdn.cloudflare.steamstatic.com/steam/apps/1030300/header.jpg

@@ -39,42 +39,53 @@ export async function getBookmarkedPatches(): Promise<BookmarkedPatch[]> {
     return []
   }
 
-  const { data, error } = await supabase
+  // First get the bookmarks
+  const { data: bookmarks, error: bookmarksError } = await supabase
     .from('bookmarks')
-    .select(`
-      id,
-      entity_id,
-      created_at,
-      patch:patch_notes!entity_id(
-        id,
-        title,
-        summary_tldr,
-        published_at,
-        impact_score,
-        game:games(id, name, cover_url)
-      )
-    `)
+    .select('id, entity_id, created_at')
     .eq('user_id', user.id)
     .eq('entity_type', 'patch')
     .order('created_at', { ascending: false })
 
-  if (error) {
-    console.error('Error fetching bookmarked patches:', error)
+  if (bookmarksError || !bookmarks || bookmarks.length === 0) {
+    if (bookmarksError) console.error('Error fetching bookmarks:', bookmarksError)
     return []
   }
 
+  // Then fetch the patches separately
+  const patchIds = bookmarks.map(b => b.entity_id)
+  const { data: patches, error: patchesError } = await supabase
+    .from('patch_notes')
+    .select(`
+      id,
+      title,
+      summary_tldr,
+      published_at,
+      impact_score,
+      games(id, name, cover_url)
+    `)
+    .in('id', patchIds)
+
+  if (patchesError) {
+    console.error('Error fetching patches:', patchesError)
+    return []
+  }
+
+  // Create a map for quick lookup
+  const patchMap = new Map(patches?.map(p => [p.id, p]) || [])
+
   const results: BookmarkedPatch[] = []
 
-  for (const item of data || []) {
-    const patchData = Array.isArray(item.patch) ? item.patch[0] : item.patch
+  for (const bookmark of bookmarks) {
+    const patchData = patchMap.get(bookmark.entity_id)
     if (!patchData) continue
 
-    const gameData = Array.isArray(patchData.game) ? patchData.game[0] : patchData.game
+    const gameData = Array.isArray(patchData.games) ? patchData.games[0] : patchData.games
 
     results.push({
-      id: item.id,
-      entity_id: item.entity_id,
-      created_at: item.created_at,
+      id: bookmark.id,
+      entity_id: bookmark.entity_id,
+      created_at: bookmark.created_at,
       patch: {
         id: patchData.id,
         title: patchData.title,
@@ -100,42 +111,53 @@ export async function getBookmarkedNews(): Promise<BookmarkedNews[]> {
     return []
   }
 
-  const { data, error } = await supabase
+  // First get the bookmarks
+  const { data: bookmarks, error: bookmarksError } = await supabase
     .from('bookmarks')
-    .select(`
-      id,
-      entity_id,
-      created_at,
-      news:news_items!entity_id(
-        id,
-        title,
-        summary,
-        published_at,
-        is_rumor,
-        game:games(id, name, cover_url)
-      )
-    `)
+    .select('id, entity_id, created_at')
     .eq('user_id', user.id)
     .eq('entity_type', 'news')
     .order('created_at', { ascending: false })
 
-  if (error) {
-    console.error('Error fetching bookmarked news:', error)
+  if (bookmarksError || !bookmarks || bookmarks.length === 0) {
+    if (bookmarksError) console.error('Error fetching bookmarks:', bookmarksError)
     return []
   }
 
+  // Then fetch the news items separately
+  const newsIds = bookmarks.map(b => b.entity_id)
+  const { data: newsItems, error: newsError } = await supabase
+    .from('news_items')
+    .select(`
+      id,
+      title,
+      summary,
+      published_at,
+      is_rumor,
+      games(id, name, cover_url)
+    `)
+    .in('id', newsIds)
+
+  if (newsError) {
+    console.error('Error fetching news:', newsError)
+    return []
+  }
+
+  // Create a map for quick lookup
+  const newsMap = new Map(newsItems?.map(n => [n.id, n]) || [])
+
   const results: BookmarkedNews[] = []
 
-  for (const item of data || []) {
-    const newsData = Array.isArray(item.news) ? item.news[0] : item.news
+  for (const bookmark of bookmarks) {
+    const newsData = newsMap.get(bookmark.entity_id)
     if (!newsData) continue
 
-    const gameData = Array.isArray(newsData.game) ? newsData.game[0] : newsData.game
+    const gameData = Array.isArray(newsData.games) ? newsData.games[0] : newsData.games
 
     results.push({
-      id: item.id,
-      entity_id: item.entity_id,
-      created_at: item.created_at,
+      id: bookmark.id,
+      entity_id: bookmark.entity_id,
+      created_at: bookmark.created_at,
       news: {
         id: newsData.id,
         title: newsData.title,

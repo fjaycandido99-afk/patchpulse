@@ -2,7 +2,7 @@
 
 import { createAdminClient } from '@/lib/supabase/admin'
 
-export type JobType = 'PATCH_SUMMARY' | 'NEWS_SUMMARY'
+export type JobType = 'PATCH_SUMMARY' | 'NEWS_SUMMARY' | 'DISCOVER_SEASONAL' | 'RETURN_MATCH' | 'DISCOVER_RELEASES'
 
 // Queue a new AI job
 export async function queueAIJob(

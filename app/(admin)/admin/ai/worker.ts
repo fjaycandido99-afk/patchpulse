@@ -1,9 +1,14 @@
 import { createClient as createSupabaseServerClient } from '@/lib/supabase/server'
-import { runNewsAI, runPatchAI } from '@/lib/ai/provider'
+import { runNewsAI, runPatchAI, discoverPatchSourceUrl } from '@/lib/ai/provider'
+import { fetchOGImage } from '@/lib/ai/og-image-fetcher'
+import { discoverSeasonalArtwork } from '@/lib/ai/seasonal-discovery'
+import { processReturnMatchesForPatch } from '@/lib/ai/return-matcher'
+import { discoverUpcomingReleases } from '@/lib/ai/release-discovery'
+import { createSeasonalEvent } from '@/lib/images/seasonal'
 
 type JobRow = {
   id: string
-  job_type: 'PATCH_SUMMARY' | 'NEWS_SUMMARY'
+  job_type: 'PATCH_SUMMARY' | 'NEWS_SUMMARY' | 'DISCOVER_SEASONAL' | 'RETURN_MATCH' | 'DISCOVER_RELEASES'
   entity_id: string
   attempts: number
 }
@@ -59,6 +64,18 @@ export async function processAIJobsBatch(batchSize = 5) {
         await processNewsJob(supabase, job.entity_id)
       }
 
+      if (job.job_type === 'DISCOVER_SEASONAL') {
+        await processSeasonalJob(supabase, job.entity_id)
+      }
+
+      if (job.job_type === 'RETURN_MATCH') {
+        await processReturnMatchJob(job.entity_id)
+      }
+
+      if (job.job_type === 'DISCOVER_RELEASES') {
+        await processReleaseDiscoveryJob(supabase, job.entity_id)
+      }
+
       // 3) Mark done
       await supabase
         .from('ai_jobs')
@@ -83,11 +100,10 @@ export async function processAIJobsBatch(batchSize = 5) {
   return { processed }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function processPatchJob(supabase: any, entityId: string) {
   const { data: patchRow, error: patchErr } = await supabase
     .from('patch_notes')
-    .select('id, title, raw_text, game:games(name)')
+    .select('id, title, raw_text, source_url, published_at, game:games(name)')
     .eq('id', entityId)
     .single()
 
@@ -107,28 +123,79 @@ async function processPatchJob(supabase: any, entityId: string) {
   })
 
   const summary_tldr = (ai.summary_tldr ?? '').slice(0, 280)
+  const ai_insight = (ai.ai_insight ?? '').slice(0, 120)
   const key_changes = ai.key_changes ?? []
   const tags = sanitizeList(ai.tags, 4)
   const impact_score = clampInt(Number(ai.impact_score ?? 5), 1, 10)
+
+  // If source_url is missing, try to discover it with AI
+  let discoveredSourceUrl: string | null = patchRow.source_url
+  let sourceName: string | null = null
+
+  if (!discoveredSourceUrl) {
+    try {
+      const sourceResult = await discoverPatchSourceUrl({
+        gameName,
+        patchTitle: patchRow.title,
+        publishedDate: patchRow.published_at,
+      })
+
+      if (sourceResult.source_url && sourceResult.confidence >= 0.6) {
+        discoveredSourceUrl = sourceResult.source_url
+        sourceName = sourceResult.source_name
+        console.log(`Discovered source URL for patch ${patchRow.title}: ${discoveredSourceUrl} (${sourceName})`)
+      }
+    } catch (err) {
+      // Source URL discovery failed, not critical
+      console.warn('Source URL discovery failed:', err)
+    }
+  }
 
   const { error: updErr } = await supabase
     .from('patch_notes')
     .update({
       summary_tldr,
+      ai_insight: ai_insight || null,
       key_changes,
       tags,
       impact_score,
+      ...(discoveredSourceUrl && !patchRow.source_url ? { source_url: discoveredSourceUrl } : {}),
     })
     .eq('id', patchRow.id)
 
   if (updErr) throw updErr
+
+  // Queue a RETURN_MATCH job to check if this patch addresses anyone's pause reason
+  await supabase
+    .from('ai_jobs')
+    .upsert(
+      {
+        job_type: 'RETURN_MATCH',
+        entity_id: entityId, // patch_id
+        status: 'pending',
+      },
+      {
+        onConflict: 'job_type,entity_id',
+        ignoreDuplicates: true,
+      }
+    )
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// Process return matching for a patch - check against all paused games
+async function processReturnMatchJob(patchId: string) {
+  const result = await processReturnMatchesForPatch(patchId)
+
+  if (result.errors.length > 0) {
+    console.warn(`Return match job had ${result.errors.length} errors:`, result.errors.slice(0, 3))
+  }
+
+  console.log(`Return match job created ${result.matchesCreated} suggestions for patch ${patchId}`)
+}
+
 async function processNewsJob(supabase: any, entityId: string) {
   const { data: newsRow, error: newsErr } = await supabase
     .from('news_items')
-    .select('id, title, source_name, source_url, summary, game:games(name)')
+    .select('id, title, source_name, source_url, summary, image_url, game:games(name)')
     .eq('id', entityId)
     .single()
 
@@ -155,6 +222,20 @@ async function processNewsJob(supabase: any, entityId: string) {
   const topics = sanitizeList(ai.topics, 3)
   const is_rumor = Boolean(ai.is_rumor)
 
+  // Fetch OG image if we don't have one and have a source URL
+  let imageUrl: string | null = newsRow.image_url
+  if (!imageUrl && newsRow.source_url) {
+    try {
+      const ogResult = await fetchOGImage(newsRow.source_url)
+      if (ogResult.imageUrl) {
+        imageUrl = ogResult.imageUrl
+        console.log(`Fetched OG image for news "${newsRow.title}": ${imageUrl}`)
+      }
+    } catch (err) {
+      console.warn('Failed to fetch OG image:', err)
+    }
+  }
+
   const { error: updErr } = await supabase
     .from('news_items')
     .update({
@@ -162,8 +243,104 @@ async function processNewsJob(supabase: any, entityId: string) {
       why_it_matters,
       topics,
       is_rumor,
+      ...(imageUrl && !newsRow.image_url ? { image_url: imageUrl } : {}),
     })
     .eq('id', newsRow.id)
 
   if (updErr) throw updErr
+}
+
+async function processSeasonalJob(supabase: any, entityId: string) {
+  // entityId is the game_id for seasonal discovery
+  const { data: gameRow, error: gameErr } = await supabase
+    .from('games')
+    .select('id, name, genre, is_live_service')
+    .eq('id', entityId)
+    .single()
+
+  if (gameErr || !gameRow) throw gameErr ?? new Error('Game not found')
+
+  // Run AI discovery
+  const result = await discoverSeasonalArtwork({
+    gameName: gameRow.name,
+    gameId: gameRow.id,
+    gameGenre: gameRow.genre,
+    isLiveService: gameRow.is_live_service,
+  })
+
+  if (!result.found || result.events.length === 0) {
+    // No events found, update discovery queue status
+    await supabase
+      .from('seasonal_discovery_queue')
+      .update({
+        status: 'not_found',
+        search_results: result,
+        last_attempt_at: new Date().toISOString(),
+      })
+      .eq('game_id', entityId)
+      .eq('status', 'searching')
+
+    return
+  }
+
+  // Create seasonal events for each discovered event
+  let createdCount = 0
+  for (const event of result.events) {
+    // Skip low confidence events
+    if (event.confidence < 0.5) continue
+
+    try {
+      const created = await createSeasonalEvent({
+        gameId: entityId,
+        eventName: event.eventName,
+        eventType: event.eventType,
+        startDate: event.startDate,
+        endDate: event.endDate,
+        coverUrl: event.coverUrl ?? undefined,
+        logoUrl: event.logoUrl ?? undefined,
+        heroUrl: event.heroUrl ?? undefined,
+        brandColor: event.brandColor ?? undefined,
+        sourceUrl: event.sourceUrl ?? undefined,
+        confidenceScore: event.confidence,
+      })
+
+      if (created) createdCount++
+    } catch {
+      // Ignore duplicate events (unique constraint)
+    }
+  }
+
+  // Update discovery queue
+  await supabase
+    .from('seasonal_discovery_queue')
+    .update({
+      status: createdCount > 0 ? 'found' : 'not_found',
+      search_results: result,
+      last_attempt_at: new Date().toISOString(),
+    })
+    .eq('game_id', entityId)
+    .eq('status', 'searching')
+}
+
+async function processReleaseDiscoveryJob(supabase: any, entityId: string) {
+  // entityId is the game_id for release discovery
+  const { data: gameRow, error: gameErr } = await supabase
+    .from('games')
+    .select('id, name')
+    .eq('id', entityId)
+    .single()
+
+  if (gameErr || !gameRow) throw gameErr ?? new Error('Game not found')
+
+  // Run AI discovery
+  const result = await discoverUpcomingReleases({
+    gameName: gameRow.name,
+    gameId: gameRow.id,
+  })
+
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to discover releases')
+  }
+
+  // Result is automatically saved to database by discoverUpcomingReleases
 }

@@ -1,4 +1,4 @@
-import { ReactNode } from 'react'
+import { ReactNode, CSSProperties } from 'react'
 
 type CardVariant = 'default' | 'subtle'
 
@@ -7,6 +7,7 @@ type CardProps = {
   variant?: CardVariant
   clickable?: boolean
   className?: string
+  style?: CSSProperties
 }
 
 const variantStyles: Record<CardVariant, string> = {
@@ -19,6 +20,7 @@ export function Card({
   variant = 'default',
   clickable = false,
   className = '',
+  style,
 }: CardProps) {
   const baseStyles = 'rounded-lg border p-4 transition-colors'
   const clickableStyles = clickable
@@ -28,6 +30,7 @@ export function Card({
   return (
     <div
       className={`${baseStyles} ${variantStyles[variant]} ${clickableStyles} ${className}`}
+      style={style}
     >
       {children}
     </div>

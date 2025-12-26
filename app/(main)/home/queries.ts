@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { batchGetSeasonalImages, type SeasonalImage } from '@/lib/images/seasonal'
 
 type FollowedGame = {
   id: string
@@ -6,6 +7,22 @@ type FollowedGame = {
   slug: string
   cover_url: string | null
   platforms: string[]
+}
+
+export type Platform = {
+  id: string
+  name: string
+  icon_url: string | null
+  color: string | null
+  sort_order: number
+}
+
+type GameInfo = {
+  name: string
+  slug: string
+  cover_url: string | null
+  logo_url?: string | null
+  brand_color?: string | null
 }
 
 type PatchNote = {
@@ -18,11 +35,7 @@ type PatchNote = {
   key_changes: any
   tags: string[]
   impact_score: number
-  games: {
-    name: string
-    slug: string
-    cover_url: string | null
-  } | null
+  games: GameInfo | null
 }
 
 type NewsItem = {
@@ -36,11 +49,7 @@ type NewsItem = {
   why_it_matters: string | null
   topics: string[]
   is_rumor: boolean
-  games: {
-    name: string
-    slug: string
-    cover_url: string | null
-  } | null
+  games: GameInfo | null
 }
 
 type BacklogItem = {
@@ -67,16 +76,77 @@ type WishlistItem = {
   } | null
 }
 
+export type UpcomingReleaseItem = {
+  id: string
+  title: string
+  release_date: string | null
+  release_type: string
+  game: { name: string; slug: string; cover_url: string | null }
+}
+
 export type HomeFeed = {
   followedGames: FollowedGame[]
   topPatches: PatchNote[]
   latestNews: NewsItem[]
   backlogNudge: BacklogItem | null
-  upcomingWishlist: WishlistItem[]
+  upcomingReleases: UpcomingReleaseItem[]
+  gamePlatforms: Map<string, Platform[]>
+  seasonalImages: Map<string, SeasonalImage>
+}
+
+export type NewsItemSimple = {
+  id: string
+  game_id: string | null
+  title: string
+  published_at: string
+  source_name: string | null
+  source_url: string | null
+  summary: string | null
+  is_rumor: boolean
+  games: {
+    name: string
+    slug: string
+  } | null
+}
+
+export async function getLatestNews(limit = 5): Promise<NewsItemSimple[]> {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) return []
+
+  const { data: userGames } = await supabase
+    .from('user_games')
+    .select('game_id')
+    .eq('user_id', user.id)
+
+  const followedGameIds = userGames?.map((ug) => ug.game_id) || []
+
+  if (followedGameIds.length === 0) return []
+
+  const { data: news } = await supabase
+    .from('news_items')
+    .select('id, game_id, title, published_at, source_name, source_url, summary, is_rumor, games(name, slug)')
+    .in('game_id', followedGameIds)
+    .order('published_at', { ascending: false })
+    .limit(limit)
+
+  return (news || []).map((item) => {
+    const gameData = item.games as unknown
+    return {
+      ...item,
+      games: Array.isArray(gameData) ? (gameData[0] as { name: string; slug: string } | null) : (gameData as { name: string; slug: string } | null),
+    }
+  }) as NewsItemSimple[]
 }
 
 export async function getHomeFeed(): Promise<HomeFeed> {
   const supabase = await createClient()
+  const emptyPlatforms = new Map<string, Platform[]>()
+  const emptySeasonalImages = new Map<string, SeasonalImage>()
 
   const {
     data: { user },
@@ -88,7 +158,9 @@ export async function getHomeFeed(): Promise<HomeFeed> {
       topPatches: [],
       latestNews: [],
       backlogNudge: null,
-      upcomingWishlist: [],
+      upcomingReleases: [],
+      gamePlatforms: emptyPlatforms,
+      seasonalImages: emptySeasonalImages,
     }
   }
 
@@ -110,25 +182,65 @@ export async function getHomeFeed(): Promise<HomeFeed> {
       topPatches: [],
       latestNews: [],
       backlogNudge: null,
-      upcomingWishlist: [],
+      upcomingReleases: [],
+      gamePlatforms: emptyPlatforms,
+      seasonalImages: emptySeasonalImages,
     }
   }
 
+  // Fetch patches with game info including logo
   const { data: patches } = await supabase
     .from('patch_notes')
-    .select('*, games(name, slug, cover_url)')
+    .select('*, games(name, slug, cover_url, logo_url, brand_color)')
     .in('game_id', followedGameIds)
     .order('impact_score', { ascending: false })
     .order('published_at', { ascending: false })
     .limit(6)
 
+  // Fetch news with game info including logo
   const { data: news } = await supabase
     .from('news_items')
-    .select('*, games(name, slug, cover_url)')
+    .select('*, games(name, slug, cover_url, logo_url, brand_color)')
     .in('game_id', followedGameIds)
     .order('is_rumor', { ascending: true })
     .order('published_at', { ascending: false })
     .limit(8)
+
+  // Fetch platforms for followed games (gracefully handle if table doesn't exist)
+  let gamePlatforms = new Map<string, Platform[]>()
+  try {
+    const { data: platformData } = await supabase
+      .from('game_platforms')
+      .select(`
+        game_id,
+        platforms (
+          id,
+          name,
+          icon_url,
+          color,
+          sort_order
+        )
+      `)
+      .in('game_id', followedGameIds)
+
+    if (platformData) {
+      for (const item of platformData as any[]) {
+        const gameId = item.game_id as string
+        if (!gamePlatforms.has(gameId)) {
+          gamePlatforms.set(gameId, [])
+        }
+        if (item.platforms) {
+          gamePlatforms.get(gameId)!.push(item.platforms as Platform)
+        }
+      }
+      // Sort platforms
+      for (const [, platforms] of gamePlatforms) {
+        platforms.sort((a, b) => a.sort_order - b.sort_order)
+      }
+    }
+  } catch {
+    // Table doesn't exist yet, use empty map
+  }
 
   const { data: backlogData } = await (supabase as any)
     .from('backlog_items')
@@ -140,18 +252,49 @@ export async function getHomeFeed(): Promise<HomeFeed> {
     .limit(1)
     .single()
 
-  const { data: wishlistData } = await (supabase as any)
-    .from('wishlist_items')
-    .select('id, game_id, games!inner(name, slug, cover_url, release_date)')
-    .eq('user_id', user.id)
-    .not('games.release_date', 'is', null)
-    .limit(5)
+  // Get upcoming releases for followed games
+  let upcomingReleases: Array<{
+    id: string
+    title: string
+    release_date: string | null
+    release_type: string
+    game: { name: string; slug: string; cover_url: string | null }
+  }> = []
+  try {
+    const { data: releasesData } = await supabase
+      .from('upcoming_releases')
+      .select('id, title, release_date, release_type, games!inner(name, slug, cover_url)')
+      .in('game_id', followedGameIds)
+      .or(`release_date.gte.${new Date().toISOString().split('T')[0]},release_date.is.null`)
+      .order('release_date', { ascending: true, nullsFirst: false })
+      .limit(5)
+
+    upcomingReleases = (releasesData || []).map((r) => ({
+      id: r.id,
+      title: r.title,
+      release_date: r.release_date,
+      release_type: r.release_type,
+      game: r.games as unknown as { name: string; slug: string; cover_url: string | null },
+    }))
+  } catch {
+    // Table doesn't exist yet
+  }
+
+  // Fetch seasonal images for all followed games
+  let seasonalImages = new Map<string, SeasonalImage>()
+  try {
+    seasonalImages = await batchGetSeasonalImages(followedGameIds)
+  } catch {
+    // Table might not exist yet, use empty map
+  }
 
   return {
     followedGames,
     topPatches: patches || [],
     latestNews: news || [],
     backlogNudge: backlogData || null,
-    upcomingWishlist: wishlistData || [],
+    upcomingReleases,
+    gamePlatforms,
+    seasonalImages,
   }
 }

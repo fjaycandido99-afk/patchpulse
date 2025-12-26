@@ -7,6 +7,17 @@ type MetaRowProps = {
   className?: string
 }
 
+// Check if a string looks like a date (contains patterns like "Dec", "2024", etc.)
+function looksLikeDate(text: string): boolean {
+  const datePatterns = [
+    /\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b/i,
+    /\b\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}\b/,
+    /\b\d{4}\b/,
+    /\b(today|yesterday|ago)\b/i,
+  ]
+  return datePatterns.some(pattern => pattern.test(text))
+}
+
 export function MetaRow({
   items,
   separator = '·',
@@ -28,16 +39,23 @@ export function MetaRow({
     <div
       className={`flex flex-wrap items-center gap-x-2 gap-y-1 text-zinc-400 ${sizeStyles} ${className}`}
     >
-      {filteredItems.map((item, index) => (
-        <span key={index} className="inline-flex items-center gap-2">
-          {index > 0 && (
-            <span className="text-zinc-600" aria-hidden="true">
-              {separator}
+      {filteredItems.map((item, index) => {
+        const isDate = typeof item === 'string' && looksLikeDate(item)
+        const isFirst = index === 0
+
+        return (
+          <span key={index} className="inline-flex items-center gap-2">
+            {index > 0 && (
+              <span className="text-zinc-600" aria-hidden="true">
+                {separator}
+              </span>
+            )}
+            <span className={`${isDate ? 'text-zinc-500' : ''} ${isFirst ? 'font-medium' : ''}`}>
+              {item}
             </span>
-          )}
-          <span>{item}</span>
-        </span>
-      ))}
+          </span>
+        )
+      })}
     </div>
   )
 }

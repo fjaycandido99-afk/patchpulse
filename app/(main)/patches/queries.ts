@@ -1,10 +1,21 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 
+type Platform = {
+  id: string
+  name: string
+  icon_url: string | null
+}
+
 type Game = {
   id: string
   name: string
   slug: string
+  logo_url: string | null
+  brand_color: string | null
+  cover_url: string | null
+  hero_url?: string | null
+  platforms: Platform[]
 }
 
 type PatchListItem = {
@@ -14,6 +25,7 @@ type PatchListItem = {
   summary_tldr: string | null
   tags: string[]
   impact_score: number
+  source_url: string | null
   game: Game
 }
 
@@ -25,6 +37,7 @@ type PatchDetail = {
   raw_text: string | null
   summary_tldr: string | null
   key_changes: unknown
+  ai_insight: string | null
   tags: string[]
   impact_score: number
   created_at: string
@@ -48,9 +61,201 @@ type PatchesListResult = {
   page: number
   pageSize: number
   hasMore: boolean
+  total: number
 }
 
 const PAGE_SIZE = 12
+
+// Featured patches for carousel (most recent major patches)
+export type FeaturedPatch = PatchListItem & {
+  ai_insight?: string | null
+}
+
+export async function getFeaturedPatches(limit = 5): Promise<FeaturedPatch[]> {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  let query = supabase
+    .from('patch_notes')
+    .select(
+      `
+      id,
+      title,
+      published_at,
+      summary_tldr,
+      ai_insight,
+      tags,
+      impact_score,
+      source_url,
+      games!inner(
+        id,
+        name,
+        slug,
+        logo_url,
+        brand_color,
+        cover_url,
+        hero_url,
+        game_platforms(
+          platforms(id, name, icon_url)
+        )
+      )
+    `
+    )
+    .gte('impact_score', 7) // Only significant patches
+    .order('published_at', { ascending: false })
+    .limit(limit)
+
+  if (user) {
+    const { data: userGames } = await supabase
+      .from('user_games')
+      .select('game_id')
+      .eq('user_id', user.id)
+
+    if (userGames && userGames.length > 0) {
+      const followedGameIds = userGames.map((ug) => ug.game_id)
+      query = query.in('game_id', followedGameIds)
+    }
+  }
+
+  const { data, error } = await query
+
+  if (error) {
+    console.error('Error fetching featured patches:', error)
+    return []
+  }
+
+  return (data || []).map((patch) => {
+    const gameData = patch.games as unknown as {
+      id: string
+      name: string
+      slug: string
+      logo_url: string | null
+      brand_color: string | null
+      cover_url: string | null
+      hero_url?: string | null
+      game_platforms: Array<{ platforms: Platform | null }>
+    }
+
+    const platforms: Platform[] = gameData.game_platforms
+      ?.map((gp) => gp.platforms)
+      .filter((p): p is Platform => p !== null) || []
+
+    return {
+      id: patch.id,
+      title: patch.title,
+      published_at: patch.published_at,
+      summary_tldr: patch.summary_tldr,
+      tags: patch.tags || [],
+      impact_score: patch.impact_score,
+      source_url: patch.source_url,
+      ai_insight: (patch as { ai_insight?: string | null }).ai_insight || null,
+      game: {
+        id: gameData.id,
+        name: gameData.name,
+        slug: gameData.slug,
+        logo_url: gameData.logo_url,
+        brand_color: gameData.brand_color,
+        cover_url: gameData.cover_url,
+        hero_url: gameData.hero_url,
+        platforms,
+      },
+    }
+  })
+}
+
+// Get biggest changes (major impact patches)
+export async function getBiggestChanges(limit = 6): Promise<PatchListItem[]> {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  let query = supabase
+    .from('patch_notes')
+    .select(
+      `
+      id,
+      title,
+      published_at,
+      summary_tldr,
+      tags,
+      impact_score,
+      source_url,
+      games!inner(
+        id,
+        name,
+        slug,
+        logo_url,
+        brand_color,
+        cover_url,
+        game_platforms(
+          platforms(id, name, icon_url)
+        )
+      )
+    `
+    )
+    .gte('impact_score', 8) // Only major patches
+    .order('published_at', { ascending: false })
+    .limit(limit)
+
+  if (user) {
+    const { data: userGames } = await supabase
+      .from('user_games')
+      .select('game_id')
+      .eq('user_id', user.id)
+
+    if (userGames && userGames.length > 0) {
+      const followedGameIds = userGames.map((ug) => ug.game_id)
+      query = query.in('game_id', followedGameIds)
+    }
+  }
+
+  const { data, error } = await query
+
+  if (error) {
+    console.error('Error fetching biggest changes:', error)
+    return []
+  }
+
+  return (data || []).map((patch) => {
+    const gameData = patch.games as unknown as {
+      id: string
+      name: string
+      slug: string
+      logo_url: string | null
+      brand_color: string | null
+      cover_url: string | null
+      game_platforms: Array<{ platforms: Platform | null }>
+    }
+
+    const platforms: Platform[] = gameData.game_platforms
+      ?.map((gp) => gp.platforms)
+      .filter((p): p is Platform => p !== null) || []
+
+    return {
+      id: patch.id,
+      title: patch.title,
+      published_at: patch.published_at,
+      summary_tldr: patch.summary_tldr,
+      tags: patch.tags || [],
+      impact_score: patch.impact_score,
+      source_url: patch.source_url,
+      game: {
+        id: gameData.id,
+        name: gameData.name,
+        slug: gameData.slug,
+        logo_url: gameData.logo_url,
+        brand_color: gameData.brand_color,
+        cover_url: gameData.cover_url,
+        platforms,
+      },
+    }
+  })
+}
 
 function getImpactScoreRange(importance: 'major' | 'medium' | 'minor'): [number, number] {
   switch (importance) {
@@ -139,7 +344,18 @@ export async function getPatchesList(
       summary_tldr,
       tags,
       impact_score,
-      games!inner(id, name, slug)
+      source_url,
+      games!inner(
+        id,
+        name,
+        slug,
+        logo_url,
+        brand_color,
+        cover_url,
+        game_platforms(
+          platforms(id, name, icon_url)
+        )
+      )
     `,
       { count: 'exact' }
     )
@@ -180,18 +396,45 @@ export async function getPatchesList(
       page,
       pageSize: PAGE_SIZE,
       hasMore: false,
+      total: 0,
     }
   }
 
-  const items: PatchListItem[] = (data || []).map((patch) => ({
-    id: patch.id,
-    title: patch.title,
-    published_at: patch.published_at,
-    summary_tldr: patch.summary_tldr,
-    tags: patch.tags,
-    impact_score: patch.impact_score,
-    game: patch.games as unknown as Game,
-  }))
+  const items: PatchListItem[] = (data || []).map((patch) => {
+    const gameData = patch.games as unknown as {
+      id: string
+      name: string
+      slug: string
+      logo_url: string | null
+      brand_color: string | null
+      cover_url: string | null
+      game_platforms: Array<{ platforms: Platform | null }>
+    }
+
+    // Extract platforms from the nested junction table
+    const platforms: Platform[] = gameData.game_platforms
+      ?.map((gp) => gp.platforms)
+      .filter((p): p is Platform => p !== null) || []
+
+    return {
+      id: patch.id,
+      title: patch.title,
+      published_at: patch.published_at,
+      summary_tldr: patch.summary_tldr,
+      tags: patch.tags,
+      impact_score: patch.impact_score,
+      source_url: patch.source_url,
+      game: {
+        id: gameData.id,
+        name: gameData.name,
+        slug: gameData.slug,
+        logo_url: gameData.logo_url,
+        brand_color: gameData.brand_color,
+        cover_url: gameData.cover_url,
+        platforms,
+      },
+    }
+  })
 
   const totalCount = count || 0
   const hasMore = offset + items.length < totalCount
@@ -201,6 +444,7 @@ export async function getPatchesList(
     page,
     pageSize: PAGE_SIZE,
     hasMore,
+    total: totalCount,
   }
 }
 
@@ -218,10 +462,11 @@ export async function getPatchById(patchId: string): Promise<PatchDetail> {
       raw_text,
       summary_tldr,
       key_changes,
+      ai_insight,
       tags,
       impact_score,
       created_at,
-      games!inner(id, name, slug)
+      games!inner(id, name, slug, logo_url, brand_color, cover_url, hero_url)
     `
     )
     .eq('id', patchId)
@@ -239,9 +484,44 @@ export async function getPatchById(patchId: string): Promise<PatchDetail> {
     raw_text: data.raw_text,
     summary_tldr: data.summary_tldr,
     key_changes: data.key_changes,
+    ai_insight: (data as { ai_insight?: string | null }).ai_insight || null,
     tags: data.tags,
     impact_score: data.impact_score,
     created_at: data.created_at,
     game: data.games as unknown as Game,
   }
+}
+
+export type RelatedPatch = {
+  id: string
+  title: string
+  published_at: string
+  impact_score: number
+  game_name: string
+}
+
+export async function getRelatedPatches(
+  patchId: string,
+  gameId: string,
+  tags: string[],
+  limit = 4
+): Promise<RelatedPatch[]> {
+  const supabase = await createClient()
+
+  // Get patches from the same game
+  const { data } = await supabase
+    .from('patch_notes')
+    .select('id, title, published_at, impact_score, games!inner(name)')
+    .eq('game_id', gameId)
+    .neq('id', patchId)
+    .order('published_at', { ascending: false })
+    .limit(limit)
+
+  return (data || []).map((item) => ({
+    id: item.id,
+    title: item.title,
+    published_at: item.published_at,
+    impact_score: item.impact_score,
+    game_name: (item.games as unknown as { name: string }).name,
+  }))
 }
