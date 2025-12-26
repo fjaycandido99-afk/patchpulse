@@ -1,6 +1,6 @@
 'use client'
 
-import { Home, Newspaper, Library, Bookmark, User, Sparkles, Brain } from 'lucide-react'
+import { Home, Newspaper, Library, User, Sparkles, Brain, Bell } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
@@ -19,9 +19,19 @@ export function DesktopSidebar({ counts }: DesktopSidebarProps) {
   return (
     <aside className="hidden md:fixed md:inset-y-0 md:flex md:w-64 md:flex-col">
       <div className="flex flex-col gap-y-5 border-r border-border bg-background px-6 py-8">
-        <div className="flex h-10 items-center gap-2">
-          <Sparkles className="h-5 w-5 text-primary" />
-          <h1 className="text-xl font-bold tracking-tight">PatchPulse</h1>
+        <div className="flex items-center justify-between">
+          <Link href="/home" className="flex h-10 items-center gap-2 hover:opacity-80 transition-opacity">
+            <Sparkles className="h-5 w-5 text-primary" />
+            <h1 className="text-xl font-bold tracking-tight">PatchPulse</h1>
+          </Link>
+          <button
+            className="relative p-2 rounded-lg hover:bg-white/5 transition-colors"
+            title="Notifications"
+          >
+            <Bell className="h-5 w-5 text-muted-foreground" />
+            {/* Notification dot - show when there are unread notifications */}
+            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
+          </button>
         </div>
 
         <nav className="flex flex-1 flex-col gap-y-1">
@@ -46,13 +56,6 @@ export function DesktopSidebar({ counts }: DesktopSidebarProps) {
             href="/backlog"
             badge={counts?.unreadBacklog}
             badgeLabel="unread"
-          />
-          <NavItem
-            icon={Bookmark}
-            label="Saved"
-            href="/bookmarks"
-            badge={counts?.savedUpdates}
-            badgeLabel="saved"
           />
           <NavItem icon={User} label="Profile" href="/profile" />
 

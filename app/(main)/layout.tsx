@@ -1,4 +1,6 @@
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
+import { Bell } from 'lucide-react'
 import { getSession } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
 import { MobileNav } from '@/components/layout/MobileNav'
@@ -57,9 +59,20 @@ export default async function MainLayout({
       <main className="flex-1 pb-20 md:ml-64 md:pb-0">
         {/* Mobile header with search */}
         <header className="sticky top-0 z-40 md:hidden bg-background border-b border-white/10">
-          <div className="flex items-center justify-between gap-3 px-4 py-3">
-            <h1 className="text-lg font-bold tracking-tight flex-shrink-0">PatchPulse</h1>
-            <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between gap-2 px-4 py-3">
+            <div className="flex items-center gap-2">
+              <Link href="/home" className="text-lg font-bold tracking-tight flex-shrink-0 hover:opacity-80 transition-opacity">
+                PatchPulse
+              </Link>
+              <button
+                className="relative p-1.5 rounded-lg hover:bg-white/5 transition-colors"
+                title="Notifications"
+              >
+                <Bell className="h-4 w-4 text-muted-foreground" />
+                <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 bg-red-500 rounded-full" />
+              </button>
+            </div>
+            <div className="flex items-center gap-2">
               <SearchBar className="w-auto" />
               <ProfileAvatar
                 avatarUrl={userProfile.avatarUrl}

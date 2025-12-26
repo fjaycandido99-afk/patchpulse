@@ -97,16 +97,3 @@ function NavItem({ icon: Icon, label, href, badge }: NavItemConfig) {
   )
 }
 
-// Safe area padding for iOS
-const safeAreaStyle = `
-  .safe-area-pb {
-    padding-bottom: env(safe-area-inset-bottom, 0);
-  }
-`
-
-// Inject safe area style
-if (typeof document !== 'undefined') {
-  const style = document.createElement('style')
-  style.textContent = safeAreaStyle
-  document.head.appendChild(style)
-}

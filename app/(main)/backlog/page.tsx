@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
-import { Star, Gamepad2 } from 'lucide-react'
+import Link from 'next/link'
+import { Star, Gamepad2, Bookmark, ChevronRight } from 'lucide-react'
 import { getBacklogBoard, getFollowedGamesForBacklogPicker } from './queries'
 import { getFollowedGames, getBacklogGames, getFavoriteGames } from '../profile/actions'
 import { AddToBacklogPanel } from '@/components/backlog/AddToBacklogPanel'
@@ -72,11 +73,17 @@ export default async function LibraryPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const [board, followedGamesForPicker, followedGames, backlogGames] = await Promise.all([
+  const [board, followedGamesForPicker, followedGames, backlogGames, bookmarksCount] = await Promise.all([
     getBacklogBoard(),
     getFollowedGamesForBacklogPicker(),
     getFollowedGames(),
     getBacklogGames(),
+    // Get bookmarks count
+    supabase
+      .from('bookmarks')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user?.id || '')
+      .then(({ count }) => count || 0),
   ])
 
   // Get favorite game IDs from profile
@@ -102,14 +109,34 @@ export default async function LibraryPage() {
   return (
     <>
       {/* Mobile View */}
-      <MobileLibraryView
-        board={board}
-        followedGames={followedGames}
-        backlogGames={backlogGames}
-        favoriteGames={favoriteGames}
-        favoriteGameIds={favoriteGameIds}
-        followedGamesForPicker={followedGamesForPicker}
-      />
+      <div className="md:hidden">
+        {/* Saved Updates Link */}
+        {bookmarksCount > 0 && (
+          <Link
+            href="/bookmarks"
+            className="flex items-center justify-between p-4 mb-4 rounded-xl border border-amber-500/20 bg-gradient-to-r from-amber-500/10 to-transparent"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center">
+                <Bookmark className="w-5 h-5 text-amber-400" />
+              </div>
+              <div>
+                <p className="font-medium text-sm">Saved Updates</p>
+                <p className="text-xs text-muted-foreground">{bookmarksCount} saved items</p>
+              </div>
+            </div>
+            <ChevronRight className="w-5 h-5 text-muted-foreground" />
+          </Link>
+        )}
+        <MobileLibraryView
+          board={board}
+          followedGames={followedGames}
+          backlogGames={backlogGames}
+          favoriteGames={favoriteGames}
+          favoriteGameIds={favoriteGameIds}
+          followedGamesForPicker={followedGamesForPicker}
+        />
+      </div>
 
       {/* Desktop View */}
       <div className="hidden md:block space-y-8">
@@ -122,6 +149,25 @@ export default async function LibraryPage() {
 
         {/* Add to Backlog */}
         <AddToBacklogPanel games={followedGamesForPicker} />
+
+        {/* Saved Updates Link */}
+        {bookmarksCount > 0 && (
+          <Link
+            href="/bookmarks"
+            className="flex items-center justify-between p-4 rounded-xl border border-amber-500/20 bg-gradient-to-r from-amber-500/10 to-transparent hover:border-amber-500/40 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center">
+                <Bookmark className="w-5 h-5 text-amber-400" />
+              </div>
+              <div>
+                <p className="font-medium">Saved Updates</p>
+                <p className="text-sm text-muted-foreground">{bookmarksCount} bookmarked patches & news</p>
+              </div>
+            </div>
+            <ChevronRight className="w-5 h-5 text-muted-foreground" />
+          </Link>
+        )}
 
       {/* Collapsible: Favorite Games */}
       <CollapsibleSection

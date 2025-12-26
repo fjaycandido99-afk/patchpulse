@@ -138,11 +138,11 @@ export default async function NewsDetailPage({
             <Zap className="w-4 h-4" style={{ color: brandColor }} />
             <h3 className="font-semibold text-sm">Quick Impact</h3>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="flex gap-6">
             <div className="flex items-center gap-2">
-              <Trophy className="w-4 h-4 text-amber-400" />
+              <Trophy className="w-4 h-4 text-amber-400 flex-shrink-0" />
               <div>
-                <p className="text-xs text-muted-foreground">Competitive</p>
+                <p className="text-[11px] text-muted-foreground">Competitive</p>
                 <p className="text-sm font-medium">
                   {news.topics.some(t => ['ranked', 'competitive', 'esports', 'tournament'].includes(t.toLowerCase()))
                     ? 'High'
@@ -151,9 +151,9 @@ export default async function NewsDetailPage({
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Users className="w-4 h-4 text-blue-400" />
+              <Users className="w-4 h-4 text-blue-400 flex-shrink-0" />
               <div>
-                <p className="text-xs text-muted-foreground">Casual</p>
+                <p className="text-[11px] text-muted-foreground">Casual</p>
                 <p className="text-sm font-medium">
                   {news.topics.some(t => ['update', 'content', 'event', 'season'].includes(t.toLowerCase()))
                     ? 'High'
@@ -253,22 +253,22 @@ export default async function NewsDetailPage({
         {/* Related News Section */}
         {relatedNews.length > 0 && (
           <section className="space-y-4 pt-4 border-t border-border">
-            <h2 className="text-lg font-semibold">
+            <h2 className="text-base font-semibold">
               {news.game ? `More ${news.game.name} News` : 'Related News'}
             </h2>
-            <div className="grid gap-3">
+            <div className="grid gap-2">
               {relatedNews.map((item) => (
                 <Link
                   key={item.id}
                   href={`/news/${item.id}`}
-                  className="group flex items-center justify-between gap-4 p-3 rounded-lg border border-border bg-card/50 hover:bg-card hover:border-primary/30 transition-all"
+                  className="group flex items-center justify-between gap-3 p-4 rounded-xl border border-border bg-card/50 hover:bg-card active:bg-card/80 hover:border-primary/30 transition-all"
                 >
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-sm truncate group-hover:text-primary transition-colors">
+                    <h3 className="font-medium text-sm line-clamp-2 group-hover:text-primary transition-colors">
                       {item.title}
                     </h3>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {item.game_name && `${item.game_name} • `}
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {item.game_name && `${item.game_name} · `}
                       {formatDate(item.published_at)}
                     </p>
                   </div>
