@@ -1,6 +1,6 @@
 #!/usr/bin/env npx tsx
 /**
- * Fetch gaming news from RSS feeds
+ * Fetch gaming news from RSS feeds with OG images
  *
  * Run: npx tsx scripts/fetch-news.ts
  */
@@ -11,6 +11,65 @@ import * as path from 'path'
 import Parser from 'rss-parser'
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') })
+
+// Fetch OG image from a URL
+async function fetchOGImage(url: string): Promise<string | null> {
+  try {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 8000)
+
+    const response = await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; PatchPulseBot/1.0)',
+        'Accept': 'text/html',
+      },
+    })
+
+    clearTimeout(timeoutId)
+
+    if (!response.ok) return null
+
+    const html = await response.text()
+
+    // Extract OG image
+    const patterns = [
+      /<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i,
+      /<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:image["']/i,
+      /<meta[^>]*name=["']twitter:image["'][^>]*content=["']([^"']+)["']/i,
+      /<meta[^>]*content=["']([^"']+)["'][^>]*name=["']twitter:image["']/i,
+    ]
+
+    for (const pattern of patterns) {
+      const match = html.match(pattern)
+      if (match && match[1]) {
+        let imageUrl = match[1]
+          .replace(/&amp;/g, '&')
+          .replace(/&quot;/g, '"')
+
+        // Handle relative URLs
+        if (imageUrl.startsWith('//')) {
+          imageUrl = 'https:' + imageUrl
+        } else if (imageUrl.startsWith('/')) {
+          const urlObj = new URL(url)
+          imageUrl = `${urlObj.origin}${imageUrl}`
+        }
+
+        // Validate URL
+        try {
+          new URL(imageUrl)
+          return imageUrl
+        } catch {
+          continue
+        }
+      }
+    }
+
+    return null
+  } catch (error) {
+    return null
+  }
+}
 
 const parser = new Parser()
 
@@ -225,6 +284,10 @@ async function main() {
         // Try to match a game
         const gameMatch = matchGame(title, content)
 
+        // Fetch OG image from article
+        process.stdout.write(`  Fetching: ${title.substring(0, 40)}... `)
+        const imageUrl = await fetchOGImage(link)
+
         // Insert the news item
         const { error } = await supabase
           .from('news_items')
@@ -233,6 +296,7 @@ async function main() {
             title: title,
             source_name: source.name,
             source_url: link,
+            image_url: imageUrl,
             summary: content.slice(0, 2000),
             published_at: item.pubDate ? new Date(item.pubDate).toISOString() : new Date().toISOString(),
             topics: [],
@@ -240,16 +304,17 @@ async function main() {
           })
 
         if (error) {
-          console.error(`  Error: ${error.message}`)
+          console.error(`Error: ${error.message}`)
           continue
         }
 
         totalAdded++
+        const imageStatus = imageUrl ? '🖼️' : '📝'
         if (gameMatch) {
           totalMatched++
-          console.log(`  + ${title.substring(0, 50)}... -> ${gameMatch.name}`)
+          console.log(`${imageStatus} -> ${gameMatch.name}`)
         } else {
-          console.log(`  + ${title.substring(0, 50)}... (no game match)`)
+          console.log(`${imageStatus} (no game match)`)
         }
       }
     } catch (error) {
