@@ -22,7 +22,7 @@ export default async function AdminDashboard() {
         </Link>
       </header>
 
-      <nav className="grid gap-4 sm:grid-cols-3">
+      <nav className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <AdminCard
           href="/admin/games"
           title="Games"
@@ -37,6 +37,11 @@ export default async function AdminDashboard() {
           href="/admin/news"
           title="News"
           description="Publish news items and announcements"
+        />
+        <AdminCard
+          href="/admin/ai"
+          title="AI Processing"
+          description="Manage AI job queue and processing"
         />
       </nav>
 

@@ -41,7 +41,7 @@ export async function updateProfile(data: {
   }
 
   const { error } = await supabase
-    .from('profiles')
+    .from('user_profiles')
     .update(updates)
     .eq('id', user.id)
 
@@ -101,7 +101,7 @@ export async function uploadAvatar(formData: FormData) {
 
   // Update profile with new avatar URL
   const { error: updateError } = await supabase
-    .from('profiles')
+    .from('user_profiles')
     .update({ avatar_url: urlData.publicUrl })
     .eq('id', user.id)
 
@@ -128,7 +128,7 @@ export async function updateFavoriteGames(gameIds: string[]) {
   }
 
   const { error } = await supabase
-    .from('profiles')
+    .from('user_profiles')
     .update({ favorite_game_ids: gameIds })
     .eq('id', user.id)
 

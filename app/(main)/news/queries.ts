@@ -148,6 +148,28 @@ export async function getUpcomingReleases(): Promise<UpcomingRelease[]> {
   }
 }
 
+// Top story type for hero section
+export type TopStory = {
+  id: string
+  title: string
+  published_at: string
+  summary: string | null
+  why_it_matters: string | null
+  topics: string[]
+  is_rumor: boolean
+  source_name: string | null
+  image_url: string | null
+  game: {
+    id: string
+    name: string
+    slug: string
+    cover_url: string | null
+    hero_url: string | null
+    logo_url: string | null
+    brand_color: string | null
+  } | null
+}
+
 // Grouped news types
 export type GroupedNewsItem = {
   id: string
@@ -160,6 +182,9 @@ export type GroupedNewsItem = {
   source_name: string | null
   source_url: string | null
   is_new: boolean
+  image_url: string | null
+  game_cover_url: string | null
+  game_hero_url: string | null
 }
 
 export type GameNewsGroup = {
@@ -179,6 +204,56 @@ export type GroupedNewsResult = {
   groups: GameNewsGroup[]
   lastVisit: string | null
   newItemsCount: number
+  topStories: TopStory[]
+}
+
+// Get top stories for hero section (most recent important news)
+export async function getTopStories(limit = 2): Promise<TopStory[]> {
+  const supabase = await createClient()
+
+  // Get recent important news (prioritize non-rumors, major topics)
+  const { data, error } = await supabase
+    .from('news_items')
+    .select(`
+      id,
+      title,
+      published_at,
+      summary,
+      why_it_matters,
+      topics,
+      is_rumor,
+      source_name,
+      image_url,
+      games(id, name, slug, cover_url, hero_url, logo_url, brand_color)
+    `)
+    .eq('is_rumor', false)
+    .order('published_at', { ascending: false })
+    .limit(limit * 3) // Fetch more to filter
+
+  if (error || !data) {
+    return []
+  }
+
+  // Prioritize news with major topics
+  const majorTopics = ['Launch', 'DLC', 'Beta', 'Season', 'Update', 'Esports']
+  const sorted = [...data].sort((a, b) => {
+    const aHasMajor = a.topics?.some((t: string) => majorTopics.includes(t)) ? 1 : 0
+    const bHasMajor = b.topics?.some((t: string) => majorTopics.includes(t)) ? 1 : 0
+    return bHasMajor - aHasMajor
+  })
+
+  return sorted.slice(0, limit).map((item) => ({
+    id: item.id,
+    title: item.title,
+    published_at: item.published_at,
+    summary: item.summary,
+    why_it_matters: item.why_it_matters,
+    topics: item.topics || [],
+    is_rumor: item.is_rumor,
+    source_name: item.source_name,
+    image_url: item.image_url,
+    game: item.games as unknown as TopStory['game'],
+  }))
 }
 
 // Get news grouped by game with unread tracking
@@ -193,24 +268,18 @@ export async function getNewsGroupedByGame(params: {
     data: { user },
   } = await supabase.auth.getUser()
 
-  if (!user) {
-    return { groups: [], lastVisit: null, newItemsCount: 0 }
+  // Get user's last visit time (optional)
+  let lastVisit: string | null = null
+  if (user) {
+    const { data: profileData } = await supabase
+      .from('user_profiles')
+      .select('updated_at')
+      .eq('id', user.id)
+      .single()
+    lastVisit = profileData?.updated_at || null
   }
 
-  // Get user's last visit time and followed games
-  const [profileResult, userGamesResult] = await Promise.all([
-    supabase.from('profiles').select('last_news_visit_at').eq('id', user.id).single(),
-    supabase.from('user_games').select('game_id').eq('user_id', user.id),
-  ])
-
-  const lastVisit = profileResult.data?.last_news_visit_at || null
-  const followedGameIds = userGamesResult.data?.map((ug) => ug.game_id) || []
-
-  if (followedGameIds.length === 0) {
-    return { groups: [], lastVisit, newItemsCount: 0 }
-  }
-
-  // Fetch news with game info
+  // Fetch ALL news with game info (not just followed games)
   let query = supabase
     .from('news_items')
     .select(`
@@ -223,10 +292,10 @@ export async function getNewsGroupedByGame(params: {
       is_rumor,
       source_name,
       source_url,
+      image_url,
       game_id,
-      games!inner(id, name, slug, logo_url, cover_url, brand_color)
+      games(id, name, slug, logo_url, cover_url, hero_url, brand_color)
     `)
-    .in('game_id', followedGameIds)
     .order('published_at', { ascending: false })
     .limit(limit)
 
@@ -238,12 +307,25 @@ export async function getNewsGroupedByGame(params: {
 
   if (error || !newsItems) {
     console.error('Error fetching grouped news:', error)
-    return { groups: [], lastVisit, newItemsCount: 0 }
+    return { groups: [], lastVisit, newItemsCount: 0, topStories: [] }
   }
 
-  // Group by game
+  // Fetch top stories in parallel
+  const topStories = await getTopStories(2)
+
+  // Group by game (use "general" for news without a game)
   const gameMap = new Map<string, GameNewsGroup>()
   let newItemsCount = 0
+
+  // Default "General News" group for items without a game
+  const generalGame = {
+    id: 'general',
+    name: 'General Gaming',
+    slug: 'general',
+    logo_url: null,
+    cover_url: null,
+    brand_color: '#6366f1',
+  }
 
   for (const item of newsItems) {
     const gameData = item.games as unknown as {
@@ -252,8 +334,9 @@ export async function getNewsGroupedByGame(params: {
       slug: string
       logo_url: string | null
       cover_url: string | null
+      hero_url: string | null
       brand_color: string | null
-    }
+    } | null
 
     const isNew = lastVisit ? new Date(item.published_at) > new Date(lastVisit) : true
 
@@ -270,17 +353,23 @@ export async function getNewsGroupedByGame(params: {
       source_name: item.source_name,
       source_url: item.source_url,
       is_new: isNew,
+      image_url: item.image_url,
+      game_cover_url: gameData?.cover_url || null,
+      game_hero_url: gameData?.hero_url || null,
     }
 
-    if (!gameMap.has(gameData.id)) {
-      gameMap.set(gameData.id, {
-        game: gameData,
+    const groupKey = gameData?.id || 'general'
+    const groupGame = gameData || generalGame
+
+    if (!gameMap.has(groupKey)) {
+      gameMap.set(groupKey, {
+        game: groupGame,
         unreadCount: 0,
         items: [],
       })
     }
 
-    const group = gameMap.get(gameData.id)!
+    const group = gameMap.get(groupKey)!
     group.items.push(newsItem)
     if (isNew) group.unreadCount++
   }
@@ -292,7 +381,7 @@ export async function getNewsGroupedByGame(params: {
     return bDate.getTime() - aDate.getTime()
   })
 
-  return { groups, lastVisit, newItemsCount }
+  return { groups, lastVisit, newItemsCount, topStories }
 }
 
 // Update last visit timestamp
@@ -369,10 +458,6 @@ export async function getNewsList(
 ): Promise<NewsListResult> {
   const supabase = await createClient()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
   const { gameId, topic, includeRumors = false, page = 1 } = params
   const offset = (page - 1) * PAGE_SIZE
 
@@ -395,21 +480,11 @@ export async function getNewsList(
       { count: 'exact' }
     )
 
+  // Filter by specific game if provided
   if (gameId) {
     query = query.eq('game_id', gameId)
-  } else if (user) {
-    const { data: userGames } = await supabase
-      .from('user_games')
-      .select('game_id')
-      .eq('user_id', user.id)
-
-    if (userGames && userGames.length > 0) {
-      const followedGameIds = userGames.map((ug) => ug.game_id)
-      query = query.or(
-        `game_id.in.(${followedGameIds.join(',')}),game_id.is.null`
-      )
-    }
   }
+  // Otherwise show ALL news (not filtered by followed games)
 
   if (topic) {
     query = query.contains('topics', [topic])

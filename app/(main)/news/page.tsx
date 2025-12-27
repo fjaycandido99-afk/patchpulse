@@ -37,6 +37,7 @@ export default async function NewsPage({
         includeRumors={includeRumors}
         followedGames={filtersData.followedGames}
         upcomingReleases={upcomingReleases}
+        topStories={groupedNews.topStories}
       />
     </div>
   )

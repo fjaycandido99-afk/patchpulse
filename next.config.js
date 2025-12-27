@@ -24,6 +24,52 @@ const nextConfig = {
         hostname: 'cdn.cloudflare.steamstatic.com',
         pathname: '/steam/apps/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'cdn.akamai.steamstatic.com',
+        pathname: '/steam/apps/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'jewqsavlifeivsywhhqo.supabase.co',
+        pathname: '/storage/v1/object/public/**',
+      },
+      // Blizzard CDN (Overwatch, Diablo, WoW, etc.)
+      {
+        protocol: 'https',
+        hostname: 'blz-contentstack-images.akamaized.net',
+        pathname: '/**',
+      },
+      // Epic Games CDN (Fortnite, etc.)
+      {
+        protocol: 'https',
+        hostname: 'cdn2.unrealengine.com',
+        pathname: '/**',
+      },
+      // Riot CDN (League of Legends, Valorant, etc.)
+      {
+        protocol: 'https',
+        hostname: 'images.contentstack.io',
+        pathname: '/**',
+      },
+      // miHoYo CDN (Genshin, Honkai, etc.)
+      {
+        protocol: 'https',
+        hostname: 'fastcdn.hoyoverse.com',
+        pathname: '/**',
+      },
+      // Wikipedia (fallback for non-Steam games)
+      {
+        protocol: 'https',
+        hostname: 'upload.wikimedia.org',
+        pathname: '/**',
+      },
+      // RAWG (game database images)
+      {
+        protocol: 'https',
+        hostname: 'media.rawg.io',
+        pathname: '/**',
+      },
     ],
   },
   // Empty turbopack config to acknowledge webpack configs from plugins

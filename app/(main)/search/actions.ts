@@ -30,19 +30,30 @@ export async function discoverAndAddGame(searchQuery: string): Promise<DiscoverG
     }
   }
 
-  // Check rate limit (3 per day)
   const adminClient = createAdminClient()
 
-  const { count } = await adminClient
-    .from('game_discovery_attempts')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', user.id)
-    .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+  // Check if user is Pro (no limits for Pro users)
+  const { data: profile } = await adminClient
+    .from('user_profiles')
+    .select('is_pro')
+    .eq('id', user.id)
+    .single()
 
-  if (count && count >= 3) {
-    return {
-      success: false,
-      message: 'Daily limit reached (3 games/day). Try again tomorrow!',
+  const isPro = profile?.is_pro === true
+
+  // Check rate limit (3 per day for free users, unlimited for Pro)
+  if (!isPro) {
+    const { count } = await adminClient
+      .from('game_discovery_attempts')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+
+    if (count && count >= 3) {
+      return {
+        success: false,
+        message: 'Daily limit reached (3 games/day). Upgrade to Pro for unlimited!',
+      }
     }
   }
 
@@ -66,11 +77,26 @@ export async function discoverAndAddGame(searchQuery: string): Promise<DiscoverG
   }
 
   if (result.success && result.game) {
+    // Auto-follow the discovered game for the user
+    await adminClient
+      .from('user_followed_games')
+      .upsert({
+        user_id: user.id,
+        game_id: result.game.id,
+        notify_patches: true,
+        notify_news: true,
+      }, {
+        onConflict: 'user_id,game_id',
+        ignoreDuplicates: true,
+      })
+
     revalidatePath('/search')
+    revalidatePath('/home')
+    revalidatePath('/backlog')
     return {
       success: true,
       game: result.game,
-      message: `${result.game.name} has been added!`,
+      message: `${result.game.name} has been added to your library!`,
     }
   }
 

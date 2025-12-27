@@ -1,0 +1,142 @@
+'use server'
+
+import Parser from 'rss-parser'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { queueAIJob } from '@/lib/ai/jobs'
+
+const parser = new Parser({
+  customFields: {
+    item: ['description'],
+  },
+})
+
+type SteamFeedItem = {
+  title: string
+  link: string
+  pubDate: string
+  content: string
+  contentSnippet: string
+}
+
+// Fetch Steam news/patches for a game
+export async function fetchSteamPatches(steamAppId: number, gameId: string, gameName: string) {
+  const feedUrl = `https://store.steampowered.com/feeds/news/app/${steamAppId}`
+
+  try {
+    const feed = await parser.parseURL(feedUrl)
+    const supabase = createAdminClient()
+
+    let addedCount = 0
+
+    for (const item of feed.items as SteamFeedItem[]) {
+      // Skip non-patch items (look for keywords)
+      const title = item.title?.toLowerCase() || ''
+      const isPatch = title.includes('update') ||
+                      title.includes('patch') ||
+                      title.includes('hotfix') ||
+                      title.includes('fix') ||
+                      title.includes('version') ||
+                      title.includes('changelog')
+
+      if (!isPatch) continue
+
+      // Check if we already have this patch (by source_url OR similar title)
+      const { data: existingByUrl } = await supabase
+        .from('patch_notes')
+        .select('id')
+        .eq('source_url', item.link)
+        .single()
+
+      if (existingByUrl) continue
+
+      // Also check by similar title for the same game (prevent duplicates from different sources)
+      const { data: existingByTitle } = await supabase
+        .from('patch_notes')
+        .select('id, title')
+        .eq('game_id', gameId)
+        .ilike('title', `%${item.title?.slice(0, 50) || ''}%`)
+        .limit(1)
+
+      if (existingByTitle && existingByTitle.length > 0) continue
+
+      // Extract raw text from content
+      const rawText = item.contentSnippet || item.content || ''
+
+      if (rawText.length < 50) continue // Skip too-short entries
+
+      // Insert the patch
+      const { data: newPatch, error } = await supabase
+        .from('patch_notes')
+        .insert({
+          game_id: gameId,
+          title: item.title || `${gameName} Update`,
+          source_url: item.link,
+          raw_text: rawText.slice(0, 10000), // Limit raw text size
+          published_at: item.pubDate ? new Date(item.pubDate).toISOString() : new Date().toISOString(),
+          summary_tldr: 'Processing...',
+          impact_score: 5,
+          tags: [],
+          key_changes: [],
+        })
+        .select('id')
+        .single()
+
+      if (error) {
+        console.error(`Failed to insert patch for ${gameName}:`, error)
+        continue
+      }
+
+      // Queue AI processing
+      if (newPatch) {
+        await queueAIJob('PATCH_SUMMARY', newPatch.id)
+        addedCount++
+      }
+    }
+
+    return { success: true, addedCount }
+  } catch (error) {
+    console.error(`Failed to fetch Steam patches for app ${steamAppId}:`, error)
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
+  }
+}
+
+// Fetch patches for all games with Steam App IDs
+export async function fetchAllSteamPatches() {
+  const supabase = createAdminClient()
+
+  // Get games with Steam App IDs
+  const { data: games, error } = await supabase
+    .from('games')
+    .select('id, name, steam_app_id')
+    .not('steam_app_id', 'is', null)
+    .limit(50) // Process in batches
+
+  if (error || !games) {
+    return { success: false, error: error?.message || 'No games found' }
+  }
+
+  let totalAdded = 0
+  const errors: string[] = []
+
+  for (const game of games) {
+    if (!game.steam_app_id) continue
+
+    const result = await fetchSteamPatches(game.steam_app_id, game.id, game.name)
+
+    if (result.success) {
+      totalAdded += result.addedCount || 0
+    } else {
+      errors.push(`${game.name}: ${result.error}`)
+    }
+
+    // Small delay between requests to avoid rate limiting
+    await new Promise(resolve => setTimeout(resolve, 500))
+  }
+
+  return {
+    success: true,
+    totalAdded,
+    gamesChecked: games.length,
+    errors: errors.length > 0 ? errors : undefined
+  }
+}

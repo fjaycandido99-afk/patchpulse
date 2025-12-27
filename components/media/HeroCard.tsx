@@ -171,8 +171,8 @@ export function HeroCard({
 
   return (
     <div className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 transition-all duration-300 hover:border-white/20 hover:shadow-xl hover:shadow-black/40 gradient-border">
-      {/* Background Image */}
-      <div className="relative aspect-[16/9] sm:aspect-[21/9] lg:aspect-[24/9] w-full">
+      {/* Background Image - Compact sizing */}
+      <div className="relative aspect-[2.5/1] sm:aspect-[3/1] lg:aspect-[3.5/1] w-full">
         {imageUrl ? (
           <Image
             src={imageUrl}

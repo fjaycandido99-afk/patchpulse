@@ -1,7 +1,9 @@
 'use server'
 
+import OpenAI from 'openai'
 import Anthropic from '@anthropic-ai/sdk'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { searchSteamAppId, getSteamImageUrls } from '@/lib/fetchers/steam-images'
 
 // ============================================================================
 // TYPES
@@ -95,15 +97,25 @@ Output ONLY valid JSON, no markdown or explanation.`
 }
 
 // ============================================================================
-// AI PROVIDER
+// AI PROVIDERS
 // ============================================================================
 
+// OpenAI (primary - no web search but reliable)
+let _openai: OpenAI | null = null
+function getOpenAIClient() {
+  if (!_openai) _openai = new OpenAI()
+  return _openai
+}
+
+// Anthropic (fallback with web search when credits available)
 let _anthropic: Anthropic | null = null
-function getClient() {
+function getAnthropicClient() {
   if (!_anthropic) _anthropic = new Anthropic()
   return _anthropic
 }
-const MODEL = 'claude-sonnet-4-20250514'
+
+const OPENAI_MODEL = 'gpt-4o'
+const ANTHROPIC_MODEL = 'claude-sonnet-4-20250514'
 
 function parseJSON<T>(text: string): T {
   let cleaned = text.trim()
@@ -116,6 +128,62 @@ function parseJSON<T>(text: string): T {
     cleaned = cleaned.slice(0, -3)
   }
   return JSON.parse(cleaned.trim()) as T
+}
+
+// ============================================================================
+// AI DISCOVERY FUNCTIONS
+// ============================================================================
+
+// Try Anthropic with web search first, fall back to OpenAI
+async function discoverWithAI(searchQuery: string): Promise<AIGameData> {
+  // Try Anthropic with web search if API key is available
+  if (process.env.ANTHROPIC_API_KEY) {
+    try {
+      const response = await getAnthropicClient().messages.create({
+        model: ANTHROPIC_MODEL,
+        max_tokens: 1024,
+        system: GAME_DISCOVERY_SYSTEM,
+        tools: [
+          {
+            type: 'web_search_20250305',
+            name: 'web_search',
+            max_uses: 5,
+          },
+        ],
+        messages: [{ role: 'user', content: getGameDiscoveryPrompt(searchQuery) }],
+      })
+
+      const textBlock = response.content.find((c) => c.type === 'text')
+      if (textBlock && textBlock.type === 'text') {
+        return parseJSON<AIGameData>(textBlock.text)
+      }
+    } catch (error) {
+      // Check if it's a credit balance error
+      const errorMessage = error instanceof Error ? error.message : ''
+      if (errorMessage.includes('credit balance') || errorMessage.includes('402')) {
+        console.log('Anthropic credits low, falling back to OpenAI')
+      } else {
+        console.error('Anthropic error, falling back to OpenAI:', error)
+      }
+    }
+  }
+
+  // Fallback to OpenAI (no web search, uses training data)
+  const response = await getOpenAIClient().chat.completions.create({
+    model: OPENAI_MODEL,
+    max_tokens: 1024,
+    messages: [
+      { role: 'system', content: GAME_DISCOVERY_SYSTEM },
+      { role: 'user', content: getGameDiscoveryPrompt(searchQuery) },
+    ],
+  })
+
+  const content = response.choices[0]?.message?.content
+  if (!content) {
+    throw new Error('No response from OpenAI')
+  }
+
+  return parseJSON<AIGameData>(content)
 }
 
 // ============================================================================
@@ -163,29 +231,9 @@ export async function discoverGame(searchQuery: string): Promise<GameDiscoveryRe
     }
   }
 
-  // Call Claude with web search to find game data
+  // Use AI to discover game data
   try {
-    const response = await getClient().messages.create({
-      model: MODEL,
-      max_tokens: 1024,
-      system: GAME_DISCOVERY_SYSTEM,
-      tools: [
-        {
-          type: 'web_search_20250305',
-          name: 'web_search',
-          max_uses: 5,
-        },
-      ],
-      messages: [{ role: 'user', content: getGameDiscoveryPrompt(searchQuery) }],
-    })
-
-    // Extract text response
-    const textBlock = response.content.find((c) => c.type === 'text')
-    if (!textBlock || textBlock.type !== 'text') {
-      return { success: false, confidence: 0, error: 'No response from AI' }
-    }
-
-    const aiData = parseJSON<AIGameData>(textBlock.text)
+    const aiData = await discoverWithAI(searchQuery)
 
     // Low confidence - return for review
     if (aiData.confidence < 0.5 || !aiData.name) {
@@ -232,19 +280,39 @@ export async function discoverGame(searchQuery: string): Promise<GameDiscoveryRe
       }
     }
 
-    // Auto-add the game
+    // Try to find Steam App ID and get reliable images
+    let steamAppId: number | null = null
+    let steamImages: { cover_url: string; hero_url: string; logo_url: string } | null = null
+
+    try {
+      steamAppId = await searchSteamAppId(aiData.name)
+      if (steamAppId) {
+        const urls = getSteamImageUrls(steamAppId)
+        steamImages = {
+          cover_url: urls.cover_url,
+          hero_url: urls.hero_url,
+          logo_url: urls.logo_url,
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to fetch Steam images:', e)
+    }
+
+    // Auto-add the game (prefer Steam images over AI-provided URLs)
     const { data: newGame, error: insertError } = await supabase
       .from('games')
       .insert({
         name: aiData.name,
         slug: aiData.slug,
-        cover_url: aiData.cover_url,
-        logo_url: aiData.logo_url,
+        cover_url: steamImages?.cover_url || aiData.cover_url,
+        logo_url: steamImages?.logo_url || aiData.logo_url,
+        hero_url: steamImages?.hero_url || null,
         brand_color: aiData.brand_color,
         platforms: aiData.platforms,
         release_date: aiData.release_date,
         genre: aiData.genre,
         is_live_service: aiData.is_live_service,
+        steam_app_id: steamAppId,
         support_tier: 'partial', // New AI-discovered games start as partial support
         mvp_eligible: false,
       })

@@ -21,8 +21,8 @@ export default async function ProfilePage() {
   }
 
   const { data: profile } = await supabase
-    .from('profiles')
-    .select('username, avatar_url, display_name, bio, created_at')
+    .from('user_profiles')
+    .select('avatar_url, display_name, bio, created_at')
     .eq('id', user.id)
     .single()
 
@@ -54,7 +54,7 @@ export default async function ProfilePage() {
       <ProfileHeader
         userId={user.id}
         email={user.email || ''}
-        username={profile?.username || null}
+        username={null}
         displayName={profile?.display_name || null}
         avatarUrl={profile?.avatar_url || null}
         bio={profile?.bio || null}

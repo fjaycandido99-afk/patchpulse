@@ -74,11 +74,8 @@ export type FeaturedPatch = PatchListItem & {
 export async function getFeaturedPatches(limit = 5): Promise<FeaturedPatch[]> {
   const supabase = await createClient()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  let query = supabase
+  // Show ALL featured patches (not filtered by followed games)
+  const { data, error } = await supabase
     .from('patch_notes')
     .select(
       `
@@ -107,20 +104,6 @@ export async function getFeaturedPatches(limit = 5): Promise<FeaturedPatch[]> {
     .gte('impact_score', 7) // Only significant patches
     .order('published_at', { ascending: false })
     .limit(limit)
-
-  if (user) {
-    const { data: userGames } = await supabase
-      .from('user_games')
-      .select('game_id')
-      .eq('user_id', user.id)
-
-    if (userGames && userGames.length > 0) {
-      const followedGameIds = userGames.map((ug) => ug.game_id)
-      query = query.in('game_id', followedGameIds)
-    }
-  }
-
-  const { data, error } = await query
 
   if (error) {
     console.error('Error fetching featured patches:', error)
@@ -170,11 +153,8 @@ export async function getFeaturedPatches(limit = 5): Promise<FeaturedPatch[]> {
 export async function getBiggestChanges(limit = 6): Promise<PatchListItem[]> {
   const supabase = await createClient()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  let query = supabase
+  // Show ALL major patches (not filtered by followed games)
+  const { data, error } = await supabase
     .from('patch_notes')
     .select(
       `
@@ -192,6 +172,7 @@ export async function getBiggestChanges(limit = 6): Promise<PatchListItem[]> {
         logo_url,
         brand_color,
         cover_url,
+        hero_url,
         game_platforms(
           platforms(id, name, icon_url)
         )
@@ -201,20 +182,6 @@ export async function getBiggestChanges(limit = 6): Promise<PatchListItem[]> {
     .gte('impact_score', 8) // Only major patches
     .order('published_at', { ascending: false })
     .limit(limit)
-
-  if (user) {
-    const { data: userGames } = await supabase
-      .from('user_games')
-      .select('game_id')
-      .eq('user_id', user.id)
-
-    if (userGames && userGames.length > 0) {
-      const followedGameIds = userGames.map((ug) => ug.game_id)
-      query = query.in('game_id', followedGameIds)
-    }
-  }
-
-  const { data, error } = await query
 
   if (error) {
     console.error('Error fetching biggest changes:', error)
@@ -229,6 +196,7 @@ export async function getBiggestChanges(limit = 6): Promise<PatchListItem[]> {
       logo_url: string | null
       brand_color: string | null
       cover_url: string | null
+      hero_url?: string | null
       game_platforms: Array<{ platforms: Platform | null }>
     }
 
@@ -251,6 +219,7 @@ export async function getBiggestChanges(limit = 6): Promise<PatchListItem[]> {
         logo_url: gameData.logo_url,
         brand_color: gameData.brand_color,
         cover_url: gameData.cover_url,
+        hero_url: gameData.hero_url,
         platforms,
       },
     }
@@ -327,10 +296,6 @@ export async function getPatchesList(
 ): Promise<PatchesListResult> {
   const supabase = await createClient()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
   const { gameId, tag, importance, page = 1 } = params
   const offset = (page - 1) * PAGE_SIZE
 
@@ -352,6 +317,7 @@ export async function getPatchesList(
         logo_url,
         brand_color,
         cover_url,
+        hero_url,
         game_platforms(
           platforms(id, name, icon_url)
         )
@@ -360,18 +326,9 @@ export async function getPatchesList(
       { count: 'exact' }
     )
 
+  // Filter by specific game if provided, otherwise show ALL patches
   if (gameId) {
     query = query.eq('game_id', gameId)
-  } else if (user) {
-    const { data: userGames } = await supabase
-      .from('user_games')
-      .select('game_id')
-      .eq('user_id', user.id)
-
-    if (userGames && userGames.length > 0) {
-      const followedGameIds = userGames.map((ug) => ug.game_id)
-      query = query.in('game_id', followedGameIds)
-    }
   }
 
   if (tag) {
@@ -408,6 +365,7 @@ export async function getPatchesList(
       logo_url: string | null
       brand_color: string | null
       cover_url: string | null
+      hero_url?: string | null
       game_platforms: Array<{ platforms: Platform | null }>
     }
 
@@ -431,6 +389,7 @@ export async function getPatchesList(
         logo_url: gameData.logo_url,
         brand_color: gameData.brand_color,
         cover_url: gameData.cover_url,
+        hero_url: gameData.hero_url,
         platforms,
       },
     }
