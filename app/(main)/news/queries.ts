@@ -207,11 +207,11 @@ export type GroupedNewsResult = {
   topStories: TopStory[]
 }
 
-// Get top stories for hero section (most recent important news)
+// Get top stories for hero section (most recent important news WITH game images)
 export async function getTopStories(limit = 2): Promise<TopStory[]> {
   const supabase = await createClient()
 
-  // Get recent important news (prioritize non-rumors, major topics)
+  // Get recent important news that have a game (so they'll have images)
   const { data, error } = await supabase
     .from('news_items')
     .select(`
@@ -224,9 +224,11 @@ export async function getTopStories(limit = 2): Promise<TopStory[]> {
       is_rumor,
       source_name,
       image_url,
-      games(id, name, slug, cover_url, hero_url, logo_url, brand_color)
+      game_id,
+      games!inner(id, name, slug, cover_url, hero_url, logo_url, brand_color)
     `)
     .eq('is_rumor', false)
+    .not('game_id', 'is', null) // Only news with a game (so we have images)
     .order('published_at', { ascending: false })
     .limit(limit * 3) // Fetch more to filter
 
@@ -234,9 +236,15 @@ export async function getTopStories(limit = 2): Promise<TopStory[]> {
     return []
   }
 
-  // Prioritize news with major topics
+  // Prioritize news with major topics and games that have hero images
   const majorTopics = ['Launch', 'DLC', 'Beta', 'Season', 'Update', 'Esports']
   const sorted = [...data].sort((a, b) => {
+    // First prioritize items with hero images
+    const aHasHero = (a.games as any)?.hero_url ? 2 : 0
+    const bHasHero = (b.games as any)?.hero_url ? 2 : 0
+    if (aHasHero !== bHasHero) return bHasHero - aHasHero
+
+    // Then prioritize major topics
     const aHasMajor = a.topics?.some((t: string) => majorTopics.includes(t)) ? 1 : 0
     const bHasMajor = b.topics?.some((t: string) => majorTopics.includes(t)) ? 1 : 0
     return bHasMajor - aHasMajor
