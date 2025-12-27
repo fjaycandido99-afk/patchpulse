@@ -3,7 +3,11 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { createAdminClient } from '@/lib/supabase/admin'
 
-const anthropic = new Anthropic()
+let _anthropic: Anthropic | null = null
+function getClient() {
+  if (!_anthropic) _anthropic = new Anthropic()
+  return _anthropic
+}
 
 type DiscoveredRelease = {
   title: string
@@ -32,7 +36,7 @@ export async function discoverUpcomingReleases(input: {
   try {
     const currentDate = new Date().toISOString().split('T')[0]
 
-    const response = await anthropic.messages.create({
+    const response = await getClient().messages.create({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 2000,
       messages: [

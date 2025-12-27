@@ -1,13 +1,15 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Bell } from 'lucide-react'
 import { getSession } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
 import { MobileNav } from '@/components/layout/MobileNav'
 import { DesktopSidebar } from '@/components/layout/DesktopSidebar'
 import { SearchBar } from '@/components/layout/SearchBar'
 import { ProfileAvatar } from '@/components/layout/ProfileAvatar'
+import { NotificationBell } from '@/components/notifications/NotificationBell'
+import { ToastProvider } from '@/components/notifications/ToastProvider'
 import { getSidebarCounts } from '@/lib/sidebar-data'
+import { getNotificationStats } from '@/lib/notifications'
 
 export default async function MainLayout({
   children,
@@ -37,8 +39,11 @@ export default async function MainLayout({
     avatarUrl: profile.avatar_url as string | null,
   }
 
-  // Fetch sidebar counts for live indicators
-  const sidebarCounts = await getSidebarCounts()
+  // Fetch sidebar counts and notification stats for live indicators
+  const [sidebarCounts, notificationStats] = await Promise.all([
+    getSidebarCounts(),
+    getNotificationStats(),
+  ])
 
   // Convert sidebar counts to mobile nav badges
   const navBadges: Record<string, { count?: number; dot?: boolean }> = {}
@@ -53,56 +58,52 @@ export default async function MainLayout({
   }
 
   return (
-    <div className="flex min-h-screen">
-      <DesktopSidebar counts={sidebarCounts} />
+    <ToastProvider userId={user.id}>
+      <div className="flex min-h-screen">
+        <DesktopSidebar counts={sidebarCounts} notificationStats={notificationStats} />
 
-      <main className="flex-1 pb-20 md:ml-64 md:pb-0">
-        {/* Mobile header with search */}
-        <header className="sticky top-0 z-40 md:hidden bg-background border-b border-white/10">
-          <div className="flex items-center justify-between gap-2 px-4 py-3">
-            <div className="flex items-center gap-2">
-              <Link href="/home" className="text-lg font-bold tracking-tight flex-shrink-0 hover:opacity-80 transition-opacity">
-                PatchPulse
-              </Link>
-              <button
-                className="relative p-1.5 rounded-lg hover:bg-white/5 transition-colors"
-                title="Notifications"
-              >
-                <Bell className="h-4 w-4 text-muted-foreground" />
-                <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 bg-red-500 rounded-full" />
-              </button>
+        <main className="flex-1 pb-20 md:ml-64 md:pb-0">
+          {/* Mobile header with search */}
+          <header className="sticky top-0 z-40 md:hidden bg-background border-b border-white/10">
+            <div className="flex items-center justify-between gap-2 px-4 py-3">
+              <div className="flex items-center gap-2">
+                <Link href="/home" className="text-lg font-bold tracking-tight flex-shrink-0 hover:opacity-80 transition-opacity">
+                  PatchPulse
+                </Link>
+                <NotificationBell initialStats={notificationStats} size="sm" />
+              </div>
+              <div className="flex items-center gap-2">
+                <SearchBar className="w-auto" />
+                <ProfileAvatar
+                  avatarUrl={userProfile.avatarUrl}
+                  displayName={userProfile.displayName}
+                  size="sm"
+                />
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <SearchBar className="w-auto" />
-              <ProfileAvatar
-                avatarUrl={userProfile.avatarUrl}
-                displayName={userProfile.displayName}
-                size="sm"
-              />
+          </header>
+
+          {/* Desktop search in header area */}
+          <header className="hidden md:block sticky top-0 z-40 bg-background/95 backdrop-blur-xl border-b border-white/10">
+            <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
+              <div className="flex items-center justify-end gap-4">
+                <SearchBar className="w-72" />
+                <ProfileAvatar
+                  avatarUrl={userProfile.avatarUrl}
+                  displayName={userProfile.displayName}
+                  size="md"
+                />
+              </div>
             </div>
+          </header>
+
+          <div className="mx-auto h-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+            {children}
           </div>
-        </header>
+        </main>
 
-        {/* Desktop search in header area */}
-        <header className="hidden md:block sticky top-0 z-40 bg-background/95 backdrop-blur-xl border-b border-white/10">
-          <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-end gap-4">
-              <SearchBar className="w-72" />
-              <ProfileAvatar
-                avatarUrl={userProfile.avatarUrl}
-                displayName={userProfile.displayName}
-                size="md"
-              />
-            </div>
-          </div>
-        </header>
-
-        <div className="mx-auto h-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-          {children}
-        </div>
-      </main>
-
-      <MobileNav badges={navBadges} />
-    </div>
+        <MobileNav badges={navBadges} />
+      </div>
+    </ToastProvider>
   )
 }

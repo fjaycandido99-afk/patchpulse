@@ -1,9 +1,18 @@
 import Anthropic from '@anthropic-ai/sdk'
 
-// Initialize Anthropic client
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-})
+// Lazy initialize Anthropic client to avoid build-time errors
+let anthropic: Anthropic | null = null
+
+function getClient(): Anthropic {
+  if (!anthropic) {
+    const apiKey = process.env.ANTHROPIC_API_KEY
+    if (!apiKey) {
+      throw new Error('ANTHROPIC_API_KEY is not set')
+    }
+    anthropic = new Anthropic({ apiKey })
+  }
+  return anthropic
+}
 
 export type AIModel = 'claude-3-haiku-20240307' | 'claude-sonnet-4-20250514'
 
@@ -27,7 +36,7 @@ export async function generateCompletion(
     temperature = 0.7
   } = options
 
-  const response = await anthropic.messages.create({
+  const response = await getClient().messages.create({
     model,
     max_tokens: maxTokens,
     system: systemPrompt,
@@ -54,7 +63,7 @@ export async function generateJSON<T>(
     temperature = 0.3
   } = options
 
-  const response = await anthropic.messages.create({
+  const response = await getClient().messages.create({
     model,
     max_tokens: maxTokens,
     system: systemPrompt + '\n\nRespond with valid JSON only. No markdown, no explanation, just the JSON object.',
@@ -91,4 +100,4 @@ export async function generateEmbedding(text: string): Promise<number[]> {
   return Array(8).fill(0).map((_, i) => Math.sin(hash * (i + 1)) * 0.5 + 0.5)
 }
 
-export { anthropic }
+export { getClient as anthropic }

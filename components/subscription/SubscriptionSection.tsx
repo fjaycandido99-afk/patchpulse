@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Crown, Check, Loader2, RotateCcw, ExternalLink } from 'lucide-react'
 import { UsageBar } from './UpgradePrompt'
+import { restorePurchases, isNative } from '@/lib/capacitor/purchases'
 
 type SubscriptionInfo = {
   plan: 'free' | 'pro'
@@ -39,15 +40,10 @@ export function SubscriptionSection({ subscription }: Props) {
     setRestoreMessage(null)
 
     try {
-      // This would be called from the iOS app with the receipt
-      // For web, we just check the current subscription status
-      const response = await fetch('/api/subscriptions/restore', {
-        method: 'POST',
-      })
+      // Use native StoreKit restore on iOS, web API otherwise
+      const result = await restorePurchases()
 
-      const data = await response.json()
-
-      if (data.restored) {
+      if (result.success) {
         setRestoreMessage({
           type: 'success',
           text: 'Purchases restored successfully!',
@@ -57,7 +53,7 @@ export function SubscriptionSection({ subscription }: Props) {
       } else {
         setRestoreMessage({
           type: 'error',
-          text: data.message || 'No purchases to restore',
+          text: result.error || 'No purchases to restore',
         })
       }
     } catch {

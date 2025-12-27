@@ -1,6 +1,6 @@
 'use client'
 
-import { Home, Newspaper, Library, User, Brain } from 'lucide-react'
+import { Home, Newspaper, Library, User, Brain, Crown } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
@@ -15,12 +15,13 @@ type NavItemConfig = {
   label: string
   href: string
   badge?: NavBadge
+  isPro?: boolean
 }
 
 const navItems: NavItemConfig[] = [
   { icon: Home, label: 'Home', href: '/home' },
   { icon: Newspaper, label: 'News', href: '/news' },
-  { icon: Brain, label: 'Insights', href: '/insights' },
+  { icon: Brain, label: 'Insights', href: '/insights', isPro: true },
   { icon: Library, label: 'Library', href: '/backlog' },
   { icon: User, label: 'Profile', href: '/profile' },
 ]
@@ -41,7 +42,7 @@ export function MobileNav({ badges }: { badges?: Record<string, NavBadge> }) {
   )
 }
 
-function NavItem({ icon: Icon, label, href, badge }: NavItemConfig) {
+function NavItem({ icon: Icon, label, href, badge, isPro }: NavItemConfig) {
   const pathname = usePathname()
   const isActive = pathname === href || pathname.startsWith(href + '/')
 
@@ -63,8 +64,15 @@ function NavItem({ icon: Icon, label, href, badge }: NavItemConfig) {
           className={`h-6 w-6 transition-all duration-200 ${isActive ? 'stroke-[2.5]' : 'stroke-[1.5]'}`}
         />
 
-        {/* Badge */}
-        {badge && (badge.count || badge.dot) && (
+        {/* Pro indicator - small crown */}
+        {isPro && (
+          <span className="absolute -top-1 -right-2 flex items-center justify-center w-4 h-4 rounded-full bg-gradient-to-r from-primary/80 to-violet-500/80 border border-primary/50">
+            <Crown className="w-2.5 h-2.5 text-white" />
+          </span>
+        )}
+
+        {/* Badge (number) */}
+        {badge && (badge.count || badge.dot) && !isPro && (
           <span
             className={`
               absolute -top-1 -right-1.5 flex items-center justify-center

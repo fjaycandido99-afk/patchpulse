@@ -5,6 +5,12 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { WHATS_NEW_SYSTEM, getWhatsNewPrompt, WhatsNewResult } from './prompts'
 
+let _anthropic: Anthropic | null = null
+function getClient() {
+  if (!_anthropic) _anthropic = new Anthropic()
+  return _anthropic
+}
+
 const CACHE_DURATION_HOURS = 24
 
 type CachedSummary = {
@@ -131,9 +137,7 @@ async function generateWhatsNewSummary(
 
   // Call AI to generate summary
   try {
-    const anthropic = new Anthropic()
-
-    const response = await anthropic.messages.create({
+    const response = await getClient().messages.create({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 600,
       system: WHATS_NEW_SYSTEM,

@@ -40,11 +40,15 @@ export type SourceUrlDiscoveryResult = {
 // PROVIDER IMPLEMENTATION (Anthropic Claude)
 // ============================================================================
 
-const anthropic = new Anthropic()
+let _anthropic: Anthropic | null = null
+function getClient() {
+  if (!_anthropic) _anthropic = new Anthropic()
+  return _anthropic
+}
 const MODEL = 'claude-sonnet-4-20250514'
 
 async function callClaude(system: string, userPrompt: string): Promise<string> {
-  const response = await anthropic.messages.create({
+  const response = await getClient().messages.create({
     model: MODEL,
     max_tokens: 1024,
     system,
@@ -116,7 +120,7 @@ export async function discoverPatchSourceUrl(input: {
   )
 
   // Use web search to find the official patch notes URL
-  const response = await anthropic.messages.create({
+  const response = await getClient().messages.create({
     model: MODEL,
     max_tokens: 512,
     system: SOURCE_URL_DISCOVERY_SYSTEM,

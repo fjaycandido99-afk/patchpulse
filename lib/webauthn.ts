@@ -7,7 +7,7 @@ import {
 import type {
   PublicKeyCredentialCreationOptionsJSON,
   PublicKeyCredentialRequestOptionsJSON,
-} from '@simplewebauthn/types'
+} from '@simplewebauthn/browser'
 
 const CREDENTIAL_KEY = 'patchpulse_biometric_credential'
 const USER_EMAIL_KEY = 'patchpulse_biometric_email'

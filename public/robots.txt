@@ -1,0 +1,12 @@
+# PatchPulse Robots.txt
+
+User-agent: *
+Allow: /
+
+# Disallow admin and API routes
+Disallow: /admin
+Disallow: /api/
+Disallow: /dev
+
+# Sitemap (add when ready)
+# Sitemap: https://patchpulse.app/sitemap.xml

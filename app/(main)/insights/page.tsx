@@ -6,6 +6,7 @@ import { PlayRecommendations } from '@/components/ai/PlayRecommendations'
 import { NewsDigest } from '@/components/ai/NewsDigest'
 import { Brain, Crown, Sparkles } from 'lucide-react'
 import Link from 'next/link'
+import { ProBadge } from '@/components/ui/ProBadge'
 
 export const metadata: Metadata = {
   title: 'PatchPulse Insights',
@@ -28,12 +29,7 @@ export default async function InsightsPage() {
       <div>
         <div className="flex items-center gap-3">
           <h1 className="text-3xl font-bold tracking-tight">PatchPulse Insights</h1>
-          {isPro && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium">
-              <Crown className="w-3 h-3" />
-              Pro
-            </span>
-          )}
+          {isPro && <ProBadge />}
         </div>
         <p className="mt-2 text-muted-foreground">
           Personalized gaming intelligence powered by PatchPulse

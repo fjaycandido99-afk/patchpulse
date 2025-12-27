@@ -6,14 +6,18 @@ import {
   type ReturnMatchResult,
 } from './prompts'
 
-const anthropic = new Anthropic()
+let _anthropic: Anthropic | null = null
+function getClient() {
+  if (!_anthropic) _anthropic = new Anthropic()
+  return _anthropic
+}
 const MODEL = 'claude-sonnet-4-20250514'
 
 // Confidence threshold for auto-suggestions
 const AUTO_SUGGEST_THRESHOLD = 0.6
 
 async function callClaude(system: string, userPrompt: string): Promise<string> {
-  const response = await anthropic.messages.create({
+  const response = await getClient().messages.create({
     model: MODEL,
     max_tokens: 512,
     system,

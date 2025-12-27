@@ -50,7 +50,7 @@ SELECT
   ur.release_type,
   ur.release_date,
   ur.is_confirmed,
-  g.name as game_name
+  g.name as game_name1
 FROM upcoming_releases ur
 JOIN games g ON g.id = ur.game_id
 ORDER BY ur.release_date;

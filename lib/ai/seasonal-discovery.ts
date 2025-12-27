@@ -66,7 +66,11 @@ Return structured JSON with your findings.`
 // PROVIDER
 // ============================================================================
 
-const anthropic = new Anthropic()
+let _anthropic: Anthropic | null = null
+function getClient() {
+  if (!_anthropic) _anthropic = new Anthropic()
+  return _anthropic
+}
 const MODEL = 'claude-sonnet-4-20250514'
 
 async function callClaude(
@@ -74,7 +78,7 @@ async function callClaude(
   userPrompt: string,
   maxTokens: number = 2048
 ): Promise<string> {
-  const response = await anthropic.messages.create({
+  const response = await getClient().messages.create({
     model: MODEL,
     max_tokens: maxTokens,
     system,

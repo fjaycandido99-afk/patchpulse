@@ -98,7 +98,11 @@ Output ONLY valid JSON, no markdown or explanation.`
 // AI PROVIDER
 // ============================================================================
 
-const anthropic = new Anthropic()
+let _anthropic: Anthropic | null = null
+function getClient() {
+  if (!_anthropic) _anthropic = new Anthropic()
+  return _anthropic
+}
 const MODEL = 'claude-sonnet-4-20250514'
 
 function parseJSON<T>(text: string): T {
@@ -161,7 +165,7 @@ export async function discoverGame(searchQuery: string): Promise<GameDiscoveryRe
 
   // Call Claude with web search to find game data
   try {
-    const response = await anthropic.messages.create({
+    const response = await getClient().messages.create({
       model: MODEL,
       max_tokens: 1024,
       system: GAME_DISCOVERY_SYSTEM,

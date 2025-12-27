@@ -310,12 +310,90 @@
     @apply opacity-100;
   }
 
+  /* Toast progress bar shrink */
+  @keyframes shrink-width {
+    from {
+      width: 100%;
+    }
+    to {
+      width: 0%;
+    }
+  }
+
+  .animate-shrink-width {
+    animation: shrink-width linear forwards;
+  }
+
+  /* Notification bell animations */
+  @keyframes ping-slow {
+    0% {
+      transform: scale(1);
+      opacity: 0.75;
+    }
+    50% {
+      transform: scale(1.5);
+      opacity: 0;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 0;
+    }
+  }
+
+  .animate-ping-slow {
+    animation: ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+  }
+
+  @keyframes wiggle {
+    0%, 100% {
+      transform: rotate(0deg);
+    }
+    15% {
+      transform: rotate(-12deg);
+    }
+    30% {
+      transform: rotate(10deg);
+    }
+    45% {
+      transform: rotate(-8deg);
+    }
+    60% {
+      transform: rotate(6deg);
+    }
+    75% {
+      transform: rotate(-4deg);
+    }
+  }
+
+  .animate-wiggle {
+    animation: wiggle 0.8s ease-in-out infinite;
+    animation-delay: 2s;
+  }
+
+  @keyframes gradient-x {
+    0%, 100% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+  }
+
+  .animate-gradient-x {
+    background-size: 200% 200%;
+    animation: gradient-x 3s ease infinite;
+  }
+
   /* Reduced motion */
   @media (prefers-reduced-motion: reduce) {
     .skeleton,
     .pull-spinner,
     .page-enter,
-    .animate-pulse-soft {
+    .animate-pulse-soft,
+    .animate-ping-slow,
+    .animate-wiggle,
+    .animate-gradient-x,
+    .animate-shrink-width {
       animation: none;
     }
 
