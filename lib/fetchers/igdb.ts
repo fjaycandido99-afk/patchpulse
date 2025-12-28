@@ -143,3 +143,141 @@ export async function batchSearchIgdb(gameNames: string[]): Promise<Map<string, 
 
   return results
 }
+
+export type IgdbGame = {
+  id: number
+  name: string
+  slug: string
+  summary?: string
+  first_release_date?: number
+  cover?: { image_id: string }
+  screenshots?: { image_id: string }[]
+  genres?: { name: string }[]
+  platforms?: { name: string; abbreviation?: string }[]
+  involved_companies?: { company: { name: string }; developer: boolean }[]
+  category?: number
+}
+
+// Get newly released games from IGDB (last 30 days)
+export async function getNewReleasesFromIgdb(limit = 20): Promise<IgdbGame[]> {
+  try {
+    const token = await getAccessToken()
+
+    const now = Math.floor(Date.now() / 1000)
+    const thirtyDaysAgo = now - (30 * 24 * 60 * 60)
+
+    const response = await fetch('https://api.igdb.com/v4/games', {
+      method: 'POST',
+      headers: {
+        'Client-ID': TWITCH_CLIENT_ID,
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'text/plain',
+      },
+      body: `
+        fields id, name, slug, summary, first_release_date,
+               cover.image_id, screenshots.image_id,
+               genres.name, platforms.name, platforms.abbreviation,
+               involved_companies.company.name, involved_companies.developer,
+               category;
+        where first_release_date >= ${thirtyDaysAgo}
+          & first_release_date <= ${now}
+          & category = 0
+          & cover != null
+          & hypes > 5;
+        sort first_release_date desc;
+        limit ${limit};
+      `,
+    })
+
+    if (!response.ok) {
+      console.error('IGDB new releases failed:', response.status)
+      return []
+    }
+
+    return await response.json()
+  } catch (error) {
+    console.error('IGDB new releases error:', error)
+    return []
+  }
+}
+
+// Get upcoming games from IGDB (next 90 days)
+export async function getUpcomingFromIgdb(limit = 20): Promise<IgdbGame[]> {
+  try {
+    const token = await getAccessToken()
+
+    const now = Math.floor(Date.now() / 1000)
+    const ninetyDaysLater = now + (90 * 24 * 60 * 60)
+
+    const response = await fetch('https://api.igdb.com/v4/games', {
+      method: 'POST',
+      headers: {
+        'Client-ID': TWITCH_CLIENT_ID,
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'text/plain',
+      },
+      body: `
+        fields id, name, slug, summary, first_release_date,
+               cover.image_id, screenshots.image_id,
+               genres.name, platforms.name, platforms.abbreviation,
+               involved_companies.company.name, involved_companies.developer,
+               category;
+        where first_release_date >= ${now}
+          & first_release_date <= ${ninetyDaysLater}
+          & category = 0
+          & cover != null
+          & hypes > 10;
+        sort first_release_date asc;
+        limit ${limit};
+      `,
+    })
+
+    if (!response.ok) {
+      console.error('IGDB upcoming failed:', response.status)
+      return []
+    }
+
+    return await response.json()
+  } catch (error) {
+    console.error('IGDB upcoming error:', error)
+    return []
+  }
+}
+
+// Convert IGDB game to our database format
+export function igdbToGameRecord(igdb: IgdbGame) {
+  const developer = igdb.involved_companies?.find(c => c.developer)?.company?.name || null
+  const genres = igdb.genres?.map(g => g.name) || []
+  const platforms = igdb.platforms?.map(p => p.abbreviation || p.name) || []
+
+  // Normalize platform names
+  const normalizedPlatforms = platforms.map(p => {
+    const lower = p.toLowerCase()
+    if (lower.includes('pc') || lower === 'win' || lower === 'windows') return 'PC'
+    if (lower.includes('ps5') || lower.includes('playstation 5')) return 'PS5'
+    if (lower.includes('ps4') || lower.includes('playstation 4')) return 'PS4'
+    if (lower.includes('xbox') && lower.includes('x')) return 'Xbox Series X|S'
+    if (lower.includes('xbox') && lower.includes('one')) return 'Xbox One'
+    if (lower.includes('switch')) return 'Nintendo Switch'
+    return p
+  }).filter((v, i, a) => a.indexOf(v) === i) // unique
+
+  return {
+    name: igdb.name,
+    slug: igdb.slug,
+    description: igdb.summary || null,
+    developer,
+    genre: genres[0] || null,
+    platforms: normalizedPlatforms,
+    release_date: igdb.first_release_date
+      ? new Date(igdb.first_release_date * 1000).toISOString().split('T')[0]
+      : null,
+    cover_url: igdb.cover?.image_id
+      ? `https://images.igdb.com/igdb/image/upload/t_cover_big_2x/${igdb.cover.image_id}.jpg`
+      : null,
+    hero_url: igdb.screenshots?.[0]?.image_id
+      ? `https://images.igdb.com/igdb/image/upload/t_screenshot_big/${igdb.screenshots[0].image_id}.jpg`
+      : null,
+    igdb_id: igdb.id,
+  }
+}
