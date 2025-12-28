@@ -20,7 +20,6 @@ type GroupedNewsFeedProps = {
   newItemsCount: number
   includeRumors: boolean
   followedGames: Game[]
-  upcomingReleases: UpcomingRelease[]
   topStories: TopStory[]
 }
 
@@ -417,7 +416,6 @@ export function GroupedNewsFeed({
   newItemsCount,
   includeRumors,
   followedGames,
-  upcomingReleases,
   topStories,
 }: GroupedNewsFeedProps) {
   const [expandedGames, setExpandedGames] = useState<Set<string>>(() => {
@@ -498,11 +496,6 @@ export function GroupedNewsFeed({
           )}
         </section>
       )}
-
-      <SectionDivider title="Upcoming" icon={Calendar} />
-
-      {/* 2. UPCOMING GAMES IMAGE STRIP */}
-      <UpcomingGamesStrip releases={upcomingReleases} />
 
       <SectionDivider title="Your Games" icon={Gamepad2} />
 

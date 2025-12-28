@@ -8,6 +8,7 @@ import { SearchBar } from '@/components/layout/SearchBar'
 import { ProfileAvatar } from '@/components/layout/ProfileAvatar'
 import { NotificationBell } from '@/components/notifications/NotificationBell'
 import { ToastProvider } from '@/components/notifications/ToastProvider'
+import { SpotlightProvider } from '@/components/games'
 import { getSidebarCounts } from '@/lib/sidebar-data'
 import { getNotificationStats } from '@/lib/notifications'
 
@@ -59,8 +60,9 @@ export default async function MainLayout({
 
   return (
     <ToastProvider userId={user.id}>
-      <div className="flex min-h-screen">
-        <DesktopSidebar counts={sidebarCounts} notificationStats={notificationStats} />
+      <SpotlightProvider>
+        <div className="flex min-h-screen">
+          <DesktopSidebar counts={sidebarCounts} notificationStats={notificationStats} />
 
         <main className="flex-1 pb-20 md:ml-64 md:pb-0">
           {/* Mobile header with search */}
@@ -102,8 +104,9 @@ export default async function MainLayout({
           </div>
         </main>
 
-        <MobileNav badges={navBadges} />
-      </div>
+          <MobileNav badges={navBadges} />
+        </div>
+      </SpotlightProvider>
     </ToastProvider>
   )
 }

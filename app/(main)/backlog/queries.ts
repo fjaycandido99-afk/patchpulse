@@ -410,6 +410,163 @@ export async function getReturnSuggestions(): Promise<ReturnSuggestion[]> {
   })
 }
 
+export type FollowedGameWithActivity = {
+  id: string
+  name: string
+  slug: string
+  cover_url: string | null
+  latestPatch: {
+    id: string
+    title: string
+    published_at: string
+  } | null
+  patchCount: number
+  inBacklog: boolean
+}
+
+export async function getFollowedGamesWithActivity(): Promise<FollowedGameWithActivity[]> {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return []
+  }
+
+  // Get followed games
+  const { data: userGamesData, error: userGamesError } = await supabase
+    .from('user_games')
+    .select('games(id, name, slug, cover_url)')
+    .eq('user_id', user.id)
+
+  if (userGamesError || !userGamesData) {
+    return []
+  }
+
+  const games = userGamesData
+    .map((ug) => ug.games as unknown as Game)
+    .filter(Boolean)
+
+  if (games.length === 0) {
+    return []
+  }
+
+  const gameIds = games.map((g) => g.id)
+
+  // Get backlog status
+  const { data: backlogData } = await supabase
+    .from('backlog_items')
+    .select('game_id')
+    .eq('user_id', user.id)
+    .in('game_id', gameIds)
+
+  const backlogGameIds = new Set(backlogData?.map((b) => b.game_id) || [])
+
+  // Get latest patches for each game (last 30 days)
+  const thirtyDaysAgo = new Date()
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+
+  const { data: patchesData } = await supabase
+    .from('patch_notes')
+    .select('id, game_id, title, published_at')
+    .in('game_id', gameIds)
+    .gte('published_at', thirtyDaysAgo.toISOString())
+    .order('published_at', { ascending: false })
+
+  // Create patch map
+  const patchMap = new Map<string, { latest: { id: string; title: string; published_at: string } | null; count: number }>()
+
+  for (const gameId of gameIds) {
+    patchMap.set(gameId, { latest: null, count: 0 })
+  }
+
+  if (patchesData) {
+    for (const patch of patchesData) {
+      const existing = patchMap.get(patch.game_id)!
+      if (!existing.latest) {
+        existing.latest = {
+          id: patch.id,
+          title: patch.title,
+          published_at: patch.published_at,
+        }
+      }
+      existing.count++
+    }
+  }
+
+  // Build result with activity
+  const result: FollowedGameWithActivity[] = games.map((game) => {
+    const patchInfo = patchMap.get(game.id) || { latest: null, count: 0 }
+    return {
+      id: game.id,
+      name: game.name,
+      slug: game.slug,
+      cover_url: game.cover_url,
+      latestPatch: patchInfo.latest,
+      patchCount: patchInfo.count,
+      inBacklog: backlogGameIds.has(game.id),
+    }
+  })
+
+  // Sort: games with recent patches first, then by name
+  result.sort((a, b) => {
+    if (a.latestPatch && !b.latestPatch) return -1
+    if (!a.latestPatch && b.latestPatch) return 1
+    if (a.latestPatch && b.latestPatch) {
+      return new Date(b.latestPatch.published_at).getTime() - new Date(a.latestPatch.published_at).getTime()
+    }
+    return a.name.localeCompare(b.name)
+  })
+
+  return result
+}
+
+export type GameActivity = {
+  recentPatches: {
+    id: string
+    title: string
+    published_at: string
+    summary_tldr: string | null
+  }[]
+  recentNews: {
+    id: string
+    title: string
+    published_at: string
+    summary: string | null
+  }[]
+}
+
+export async function getGameActivity(gameId: string): Promise<GameActivity> {
+  const supabase = await createClient()
+
+  const ninetyDaysAgo = new Date()
+  ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90)
+
+  const [patchesResult, newsResult] = await Promise.all([
+    supabase
+      .from('patch_notes')
+      .select('id, title, published_at, summary_tldr')
+      .eq('game_id', gameId)
+      .gte('published_at', ninetyDaysAgo.toISOString())
+      .order('published_at', { ascending: false })
+      .limit(10),
+    supabase
+      .from('news')
+      .select('id, title, published_at, summary')
+      .eq('game_id', gameId)
+      .gte('published_at', ninetyDaysAgo.toISOString())
+      .order('published_at', { ascending: false })
+      .limit(10),
+  ])
+
+  return {
+    recentPatches: patchesResult.data || [],
+    recentNews: newsResult.data || [],
+  }
+}
+
 export async function getFollowedGamesForBacklogPicker(): Promise<
   FollowedGameForPicker[]
 > {

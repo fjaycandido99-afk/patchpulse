@@ -171,8 +171,8 @@ export function HeroCard({
 
   return (
     <div className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 transition-all duration-300 hover:border-white/20 hover:shadow-xl hover:shadow-black/40 gradient-border">
-      {/* Background Image - Compact sizing */}
-      <div className="relative aspect-[2.5/1] sm:aspect-[3/1] lg:aspect-[3.5/1] w-full">
+      {/* Background Image - Very compact on mobile */}
+      <div className="relative aspect-[2/1] sm:aspect-[2.5/1] lg:aspect-[3/1] w-full">
         {imageUrl ? (
           <Image
             src={imageUrl}
@@ -193,8 +193,8 @@ export function HeroCard({
         <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-transparent to-transparent" />
       </div>
 
-      {/* Content Overlay */}
-      <div className="absolute inset-0 flex flex-col justify-end p-4 sm:p-6 lg:p-8">
+      {/* Content Overlay - Tighter padding on mobile */}
+      <div className="absolute inset-0 flex flex-col justify-end p-3 sm:p-6 lg:p-8">
         {/* Top Row: Badges + Game Info + Platforms */}
         <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
           <div className="flex flex-wrap items-center gap-3">
@@ -241,23 +241,23 @@ export function HeroCard({
           </div>
         </div>
 
-        {/* Title */}
+        {/* Title - Smaller on mobile */}
         <Link href={href} className="block group/title">
-          <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold leading-tight tracking-tight text-white line-clamp-2 group-hover/title:text-zinc-100 transition-colors">
+          <h2 className="text-base sm:text-2xl lg:text-3xl font-bold leading-tight tracking-tight text-white line-clamp-2 group-hover/title:text-zinc-100 transition-colors">
             {title}
           </h2>
         </Link>
 
-        {/* Description - Reframed for meaning */}
+        {/* Description - Hidden on mobile */}
         {summary && (
-          <p className="mt-2 text-sm sm:text-base text-zinc-200/90 line-clamp-2 max-w-3xl leading-relaxed">
+          <p className="hidden sm:block mt-2 text-sm sm:text-base text-zinc-200/90 line-clamp-2 max-w-3xl leading-relaxed">
             {summary}
           </p>
         )}
 
-        {/* Impact Meters - Only for patches */}
+        {/* Impact Meters - Hidden on mobile */}
         {type === 'patch' && impactMeter && (
-          <div className="mt-4 flex flex-col gap-2 p-3 rounded-lg bg-black/40 backdrop-blur-sm border border-white/10 w-fit">
+          <div className="hidden sm:flex mt-4 flex-col gap-2 p-3 rounded-lg bg-black/40 backdrop-blur-sm border border-white/10 w-fit">
             <ImpactMeter
               label="Meta Impact"
               icon="🎯"
@@ -273,66 +273,37 @@ export function HeroCard({
           </div>
         )}
 
-        {/* Affected Systems - Expandable on mobile */}
+        {/* Affected Systems - Hidden on mobile */}
         {affectedSystems && affectedSystems.length > 0 && (
-          <div className="mt-4">
+          <div className="hidden sm:block mt-4">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-xs font-medium text-zinc-500 uppercase tracking-wide">Affected Systems</span>
-              {hasMoreSystems && (
-                <button
-                  onClick={() => setShowAllSystems(!showAllSystems)}
-                  className="sm:hidden flex items-center gap-1 text-xs text-zinc-400 hover:text-white transition-colors"
-                >
-                  {showAllSystems ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                  {showAllSystems ? 'Less' : `+${affectedSystems.length - 3}`}
-                </button>
-              )}
             </div>
             <div className="flex flex-wrap gap-2">
-              {/* Mobile: show limited, Desktop: show all */}
-              <div className="flex flex-wrap gap-2 sm:hidden">
-                {visibleSystems.map((system) => (
-                  <AffectedSystemTag key={system} system={system} />
-                ))}
-              </div>
-              <div className="hidden sm:flex sm:flex-wrap gap-2">
-                {affectedSystems.map((system) => (
-                  <AffectedSystemTag key={system} system={system} />
-                ))}
-              </div>
+              {affectedSystems.map((system) => (
+                <AffectedSystemTag key={system} system={system} />
+              ))}
             </div>
           </div>
         )}
 
-        {/* Action Buttons */}
+        {/* Action Buttons - Desktop only */}
         {showActions && (
-          <div className="mt-4 flex flex-wrap gap-2">
-            {/* Mobile: AI Summary first */}
-            <div className="contents sm:hidden">
-              <Link href={href}>
-                <ActionButton icon={Sparkles} label="AI Summary" variant="primary" />
-              </Link>
-              <Link href={href}>
-                <ActionButton icon={FileText} label="View Full Patch" />
-              </Link>
-            </div>
-            {/* Desktop: Full Patch first */}
-            <div className="hidden sm:contents">
-              <Link href={href}>
-                <ActionButton icon={FileText} label="View Full Patch" variant="primary" />
-              </Link>
-              <Link href={href}>
-                <ActionButton icon={Sparkles} label="AI Summary" />
-              </Link>
-              <ActionButton
-                icon={GitCompare}
-                label="Compare Last Patch"
-                onClick={(e) => {
-                  e.preventDefault()
-                  // Future: Open comparison modal
-                }}
-              />
-            </div>
+          <div className="hidden sm:flex mt-4 flex-wrap gap-2">
+            <Link href={href}>
+              <ActionButton icon={FileText} label="View Full Patch" variant="primary" />
+            </Link>
+            <Link href={href}>
+              <ActionButton icon={Sparkles} label="AI Summary" />
+            </Link>
+            <ActionButton
+              icon={GitCompare}
+              label="Compare Last Patch"
+              onClick={(e) => {
+                e.preventDefault()
+                // Future: Open comparison modal
+              }}
+            />
           </div>
         )}
 

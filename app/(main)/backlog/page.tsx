@@ -1,13 +1,13 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
-import { Star, Gamepad2, Bookmark, ChevronRight } from 'lucide-react'
-import { getBacklogBoard, getFollowedGamesForBacklogPicker } from './queries'
+import { Star, Gamepad2, Bookmark, ChevronRight, Eye } from 'lucide-react'
+import { getBacklogBoard, getFollowedGamesForBacklogPicker, getFollowedGamesWithActivity } from './queries'
 import { getFollowedGames, getBacklogGames, getFavoriteGames } from '../profile/actions'
 import { AddToBacklogPanel } from '@/components/backlog/AddToBacklogPanel'
 import { BacklogCard } from '@/components/backlog/BacklogCard'
 import { CollapsibleSection } from '@/components/library/CollapsibleSection'
-import { FavoriteGamesContent } from '@/components/library/FavoriteGamesContent'
-import { FollowedGamesContent } from '@/components/library/FollowedGamesContent'
+import { WatchlistSection } from '@/components/library/WatchlistSection'
+import { ShowcaseSection } from '@/components/library/ShowcaseSection'
 import { MobileLibraryView } from '@/components/library/MobileLibraryView'
 import { relativeDaysText } from '@/lib/dates'
 
@@ -73,10 +73,11 @@ export default async function LibraryPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const [board, followedGamesForPicker, followedGames, backlogGames, bookmarksCount] = await Promise.all([
+  const [board, followedGamesForPicker, followedGames, followedGamesWithActivity, backlogGames, bookmarksCount] = await Promise.all([
     getBacklogBoard(),
     getFollowedGamesForBacklogPicker(),
     getFollowedGames(),
+    getFollowedGamesWithActivity(),
     getBacklogGames(),
     // Get bookmarks count
     supabase
@@ -131,10 +132,12 @@ export default async function LibraryPage() {
         <MobileLibraryView
           board={board}
           followedGames={followedGames}
+          followedGamesWithActivity={followedGamesWithActivity}
           backlogGames={backlogGames}
           favoriteGames={favoriteGames}
           favoriteGameIds={favoriteGameIds}
           followedGamesForPicker={followedGamesForPicker}
+          allGames={allGames}
         />
       </div>
 
@@ -169,33 +172,31 @@ export default async function LibraryPage() {
           </Link>
         )}
 
-      {/* Collapsible: Favorite Games */}
+      {/* Favorite Games - Showcase Style */}
       <CollapsibleSection
         id="favorites"
-        title="Favorite Games"
+        title="Favorites"
         icon={<Star className="h-5 w-5 text-amber-400 fill-amber-400" />}
         count={favoriteGames.length}
-        defaultOpen={false}
+        defaultOpen={favoriteGames.length > 0}
       >
-        <FavoriteGamesContent
+        <ShowcaseSection
           favoriteGames={favoriteGames}
           allGames={allGames}
           maxFavorites={5}
         />
       </CollapsibleSection>
 
-      {/* Collapsible: Followed Games */}
+      {/* Followed Games - Watchlist Style */}
       <CollapsibleSection
         id="followed"
-        title="Followed Games"
-        icon={<Gamepad2 className="h-5 w-5 text-blue-400" />}
-        count={followedGames.filter(g => !backlogGames.some(bg => bg.id === g.id)).length}
-        defaultOpen={false}
+        title="Watchlist"
+        icon={<Eye className="h-5 w-5 text-blue-400" />}
+        count={followedGamesWithActivity.filter(g => !g.inBacklog).length}
+        defaultOpen={followedGamesWithActivity.some(g => g.latestPatch !== null)}
       >
-        <FollowedGamesContent
-          followedGames={followedGames}
-          backlogGames={backlogGames}
-          favoriteGameIds={favoriteGameIds}
+        <WatchlistSection
+          games={followedGamesWithActivity.filter(g => !g.inBacklog)}
         />
       </CollapsibleSection>
 

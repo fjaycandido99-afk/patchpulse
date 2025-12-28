@@ -132,7 +132,7 @@ export default async function SearchPage({
                 {results.games.map((game) => (
                   <Link
                     key={game.id}
-                    href={`/patches?game=${game.id}`}
+                    href={`/backlog/${game.id}`}
                     className="flex items-center gap-3 p-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 transition-all"
                   >
                     {game.cover_url ? (
@@ -148,7 +148,7 @@ export default async function SearchPage({
                     )}
                     <div className="min-w-0 flex-1">
                       <h3 className="font-medium truncate">{game.name}</h3>
-                      <p className="text-xs text-muted-foreground">View patches</p>
+                      <p className="text-xs text-muted-foreground">View game details</p>
                     </div>
                   </Link>
                 ))}

@@ -84,12 +84,40 @@ export type UpcomingReleaseItem = {
   game: { name: string; slug: string; cover_url: string | null }
 }
 
+export type UpcomingGame = {
+  id: string
+  name: string
+  slug: string
+  cover_url: string | null
+  hero_url: string | null
+  release_date: string | null
+  days_until: number | null
+  platforms: string[]
+  genre: string | null
+  is_live_service: boolean
+}
+
+export type NewReleaseGame = {
+  id: string
+  name: string
+  slug: string
+  cover_url: string | null
+  hero_url: string | null
+  release_date: string
+  days_since: number
+  platforms: string[]
+  genre: string | null
+  is_live_service: boolean
+}
+
 export type HomeFeed = {
   followedGames: FollowedGame[]
   topPatches: PatchNote[]
   latestNews: NewsItem[]
   backlogNudge: BacklogItem | null
   upcomingReleases: UpcomingReleaseItem[]
+  upcomingGames: UpcomingGame[]
+  newReleases: NewReleaseGame[]
   gamePlatforms: Map<string, Platform[]>
   seasonalImages: Map<string, SeasonalImage>
 }
@@ -159,6 +187,8 @@ export async function getHomeFeed(): Promise<HomeFeed> {
       latestNews: [],
       backlogNudge: null,
       upcomingReleases: [],
+      upcomingGames: [],
+      newReleases: [],
       gamePlatforms: emptyPlatforms,
       seasonalImages: emptySeasonalImages,
     }
@@ -176,6 +206,70 @@ export async function getHomeFeed(): Promise<HomeFeed> {
 
   const followedGameIds = followedGames.map((g) => g.id)
 
+  // Fetch upcoming games (releasing within 1 year) and new releases (last 30 days)
+  // These are global, not filtered by followed games
+  const today = new Date()
+  const oneYearFromNow = new Date(today)
+  oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1)
+  const thirtyDaysAgo = new Date(today)
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+
+  const todayStr = today.toISOString().split('T')[0]
+  const oneYearStr = oneYearFromNow.toISOString().split('T')[0]
+  const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0]
+
+  // Fetch upcoming games (future releases within 1 year)
+  const { data: upcomingGamesData } = await supabase
+    .from('games')
+    .select('id, name, slug, cover_url, hero_url, release_date, platforms, genre, is_live_service')
+    .gt('release_date', todayStr)
+    .lte('release_date', oneYearStr)
+    .order('release_date', { ascending: true })
+    .limit(15)
+
+  const upcomingGames: UpcomingGame[] = (upcomingGamesData || []).map(game => {
+    const releaseDate = game.release_date ? new Date(game.release_date) : null
+    const daysUntil = releaseDate ? Math.ceil((releaseDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)) : null
+    return {
+      id: game.id,
+      name: game.name,
+      slug: game.slug,
+      cover_url: game.cover_url,
+      hero_url: game.hero_url,
+      release_date: game.release_date,
+      days_until: daysUntil,
+      platforms: game.platforms || [],
+      genre: game.genre,
+      is_live_service: game.is_live_service || false,
+    }
+  })
+
+  // Fetch new releases (released in last 30 days)
+  const { data: newReleasesData } = await supabase
+    .from('games')
+    .select('id, name, slug, cover_url, hero_url, release_date, platforms, genre, is_live_service')
+    .gte('release_date', thirtyDaysAgoStr)
+    .lte('release_date', todayStr)
+    .order('release_date', { ascending: false })
+    .limit(15)
+
+  const newReleases: NewReleaseGame[] = (newReleasesData || []).map(game => {
+    const releaseDate = new Date(game.release_date)
+    const daysSince = Math.floor((today.getTime() - releaseDate.getTime()) / (1000 * 60 * 60 * 24))
+    return {
+      id: game.id,
+      name: game.name,
+      slug: game.slug,
+      cover_url: game.cover_url,
+      hero_url: game.hero_url,
+      release_date: game.release_date,
+      days_since: daysSince,
+      platforms: game.platforms || [],
+      genre: game.genre,
+      is_live_service: game.is_live_service || false,
+    }
+  })
+
   if (followedGameIds.length === 0) {
     return {
       followedGames: [],
@@ -183,6 +277,8 @@ export async function getHomeFeed(): Promise<HomeFeed> {
       latestNews: [],
       backlogNudge: null,
       upcomingReleases: [],
+      upcomingGames,
+      newReleases,
       gamePlatforms: emptyPlatforms,
       seasonalImages: emptySeasonalImages,
     }
@@ -294,6 +390,8 @@ export async function getHomeFeed(): Promise<HomeFeed> {
     latestNews: news || [],
     backlogNudge: backlogData || null,
     upcomingReleases,
+    upcomingGames,
+    newReleases,
     gamePlatforms,
     seasonalImages,
   }

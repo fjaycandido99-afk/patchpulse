@@ -1,7 +1,23 @@
 import { createAdminClient } from '@/lib/supabase/admin'
+import { searchIgdbGame } from './igdb'
 
 // Steam CDN URL patterns
 const STEAM_CDN = 'https://cdn.akamai.steamstatic.com/steam/apps'
+
+// Known Steam App IDs for games that might have wrong slugs
+const KNOWN_STEAM_IDS: Record<string, number> = {
+  'destiny 2': 1085660,
+  'destiny 2: renegades': 3186540,
+  'destiny 2 renegades': 3186540,
+  'octopath traveler': 921570,
+  'octopath traveler ii': 1971650,
+  'octopath traveler 2': 1971650,
+  'monster hunter wilds': 2246340,
+  'path of exile 2': 2694490,
+  'marvel rivals': 2767030,
+  'phantom blade zero': 4115450,
+  'phantom blade 0': 4115450,
+}
 
 export function getSteamImageUrls(steamAppId: number) {
   return {
@@ -82,7 +98,7 @@ export async function updateGameImages(gameId: string, steamAppId: number) {
     return { success: false, error: error.message }
   }
 
-  return { success: true, updated: Object.keys(updates) }
+  return { success: true, source: 'steam', updated: Object.keys(updates) }
 }
 
 // Backfill images for all games with steam_app_id
@@ -139,6 +155,20 @@ export async function backfillSteamImages(limit = 50, forceRefresh = false) {
 
 // Search Steam for a game and get its app ID
 export async function searchSteamAppId(gameName: string): Promise<number | null> {
+  const lowerName = gameName.toLowerCase()
+
+  // Check known Steam IDs first
+  if (KNOWN_STEAM_IDS[lowerName]) {
+    return KNOWN_STEAM_IDS[lowerName]
+  }
+
+  // Check partial matches in known IDs
+  for (const [key, appId] of Object.entries(KNOWN_STEAM_IDS)) {
+    if (lowerName.includes(key) || key.includes(lowerName)) {
+      return appId
+    }
+  }
+
   try {
     // Use Steam's search API (unofficial but works)
     const searchUrl = `https://store.steampowered.com/api/storesearch/?term=${encodeURIComponent(gameName)}&cc=us&l=en`
@@ -162,6 +192,39 @@ export async function searchSteamAppId(gameName: string): Promise<number | null>
   } catch (error) {
     console.error('Steam search error:', error)
     return null
+  }
+}
+
+// Update game with IGDB image using dynamic API search
+async function updateGameWithIgdb(gameId: string, gameName: string) {
+  try {
+    // Use IGDB API to search for the game and get cover
+    const igdbResult = await searchIgdbGame(gameName)
+
+    if (!igdbResult?.cover_url) {
+      return { success: false, error: 'No IGDB cover found for this game' }
+    }
+
+    const supabase = createAdminClient()
+    const { error } = await supabase
+      .from('games')
+      .update({ cover_url: igdbResult.cover_url })
+      .eq('id', gameId)
+
+    if (error) {
+      return { success: false, error: error.message }
+    }
+
+    return {
+      success: true,
+      source: 'igdb',
+      updated: ['cover_url'],
+      igdbName: igdbResult.name,
+      igdbId: igdbResult.id
+    }
+  } catch (error) {
+    console.error('IGDB update error:', error)
+    return { success: false, error: 'IGDB API error' }
   }
 }
 
@@ -191,10 +254,168 @@ export async function discoverAndUpdateGameImages(gameId: string, gameName: stri
     }
   }
 
-  if (!steamAppId) {
-    return { success: false, error: 'Game not found on Steam' }
+  // If found on Steam, try to update with Steam images
+  if (steamAppId) {
+    const steamResult = await updateGameImages(gameId, steamAppId)
+    // If Steam images found, return success
+    if (steamResult.success) {
+      return steamResult
+    }
+    // If Steam images not found (404), fall through to IGDB
   }
 
-  // Update images
-  return updateGameImages(gameId, steamAppId)
+  // Fallback to IGDB for games not on Steam OR when Steam images don't exist
+  const igdbResult = await updateGameWithIgdb(gameId, gameName)
+  if (igdbResult.success) {
+    return igdbResult
+  }
+
+  return { success: false, error: 'Game not found on Steam or IGDB' }
+}
+
+// Force update all games using IGDB API only (ignores Steam)
+// Use this when you want accurate cover art from IGDB
+export async function updateAllGamesFromIgdb(limit = 50) {
+  const supabase = createAdminClient()
+
+  // Get all games - prioritize upcoming/new releases
+  const today = new Date()
+  const oneYearFromNow = new Date(today)
+  oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1)
+  const thirtyDaysAgo = new Date(today)
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+
+  const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0]
+  const oneYearStr = oneYearFromNow.toISOString().split('T')[0]
+
+  // Get upcoming and recent games
+  const { data: games } = await supabase
+    .from('games')
+    .select('id, name, cover_url')
+    .or(`release_date.gte.${thirtyDaysAgoStr},release_date.lte.${oneYearStr}`)
+    .order('release_date', { ascending: true })
+    .limit(limit)
+
+  if (!games || games.length === 0) {
+    return { success: true, message: 'No games to update', updated: 0, failed: 0, results: [] }
+  }
+
+  let updated = 0
+  let failed = 0
+  const results: Array<{
+    name: string
+    success: boolean
+    error?: string
+    igdbMatch?: string
+  }> = []
+
+  for (const game of games) {
+    // Force IGDB only - no Steam fallback
+    const result = await updateGameWithIgdb(game.id, game.name)
+
+    if (result.success) {
+      updated++
+      results.push({
+        name: game.name,
+        success: true,
+        igdbMatch: result.igdbName
+      })
+    } else {
+      failed++
+      results.push({ name: game.name, success: false, error: result.error })
+    }
+
+    // Delay to avoid IGDB rate limiting
+    await new Promise(resolve => setTimeout(resolve, 300))
+  }
+
+  return {
+    success: true,
+    source: 'igdb-only',
+    gamesChecked: games.length,
+    updated,
+    failed,
+    results
+  }
+}
+
+// Discover and update images for ALL games missing covers
+// This searches Steam for each game to find the app ID
+export async function discoverAllGameImages(limit = 50) {
+  const supabase = createAdminClient()
+
+  // Get games that need images - prioritize upcoming/new releases
+  const today = new Date()
+  const oneYearFromNow = new Date(today)
+  oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1)
+  const thirtyDaysAgo = new Date(today)
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+
+  const todayStr = today.toISOString().split('T')[0]
+  const oneYearStr = oneYearFromNow.toISOString().split('T')[0]
+  const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0]
+
+  // First get upcoming and recent games
+  const { data: priorityGames } = await supabase
+    .from('games')
+    .select('id, name, steam_app_id, cover_url')
+    .or(`release_date.gte.${thirtyDaysAgoStr},release_date.lte.${oneYearStr}`)
+    .order('release_date', { ascending: true })
+    .limit(limit)
+
+  // Then get any other games missing covers
+  const { data: otherGames } = await supabase
+    .from('games')
+    .select('id, name, steam_app_id, cover_url')
+    .is('cover_url', null)
+    .limit(limit)
+
+  // Combine and deduplicate
+  const allGames = [...(priorityGames || []), ...(otherGames || [])]
+  const uniqueGames = Array.from(new Map(allGames.map(g => [g.id, g])).values())
+    .slice(0, limit)
+
+  if (uniqueGames.length === 0) {
+    return { success: true, message: 'No games need image updates', updated: 0, failed: 0, results: [] }
+  }
+
+  let updated = 0
+  let failed = 0
+  const results: Array<{
+    name: string
+    success: boolean
+    error?: string
+    source?: string
+    igdbMatch?: string
+  }> = []
+
+  for (const game of uniqueGames) {
+    // Always try to update - don't skip any games
+    const result = await discoverAndUpdateGameImages(game.id, game.name)
+
+    if (result.success) {
+      updated++
+      const igdbMatch = 'igdbName' in result ? (result as { igdbName?: string }).igdbName : undefined
+      results.push({
+        name: game.name,
+        success: true,
+        source: result.source,
+        igdbMatch
+      })
+    } else {
+      failed++
+      results.push({ name: game.name, success: false, error: result.error })
+    }
+
+    // Delay to avoid rate limiting Steam/IGDB APIs
+    await new Promise(resolve => setTimeout(resolve, 500))
+  }
+
+  return {
+    success: true,
+    gamesChecked: uniqueGames.length,
+    updated,
+    failed,
+    results,
+  }
 }

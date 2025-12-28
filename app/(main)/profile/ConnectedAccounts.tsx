@@ -3,6 +3,23 @@
 import { useState, useTransition } from 'react'
 import { Gamepad2, Plus, X, Loader2, ExternalLink, Check, Clock, AlertCircle } from 'lucide-react'
 import { type ConnectedAccount, type Provider, addManualAccount, disconnectAccount } from './actions'
+import {
+  SteamIcon,
+  XboxIcon,
+  PlayStationIcon,
+  EpicIcon,
+  BattleNetIcon,
+  RiotIcon
+} from '@/components/ui/StoreLinkButtons'
+
+const PROVIDER_ICONS: Record<Provider, React.ComponentType<{ className?: string }>> = {
+  steam: SteamIcon,
+  xbox: XboxIcon,
+  psn: PlayStationIcon,
+  epic: EpicIcon,
+  battlenet: BattleNetIcon,
+  riot: RiotIcon,
+}
 
 const PROVIDERS: { id: Provider; name: string; color: string; hasOAuth: boolean }[] = [
   { id: 'steam', name: 'Steam', color: 'bg-[#1b2838]', hasOAuth: true },
@@ -124,9 +141,10 @@ export function ConnectedAccounts({ accounts }: Props) {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className={`relative h-10 w-10 rounded-lg ${provider.color} flex items-center justify-center`}>
-                    <span className="text-xs font-bold text-white">
-                      {provider.name.slice(0, 2).toUpperCase()}
-                    </span>
+                    {(() => {
+                      const Icon = PROVIDER_ICONS[provider.id]
+                      return <Icon className="h-5 w-5 text-white" />
+                    })()}
                     {/* Status indicator */}
                     {isConnected && (
                       <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-green-500 border-2 border-card flex items-center justify-center">
@@ -220,9 +238,10 @@ export function ConnectedAccounts({ accounts }: Props) {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className={`relative h-10 w-10 rounded-lg ${provider.color} flex items-center justify-center`}>
-                      <span className="text-xs font-bold text-white">
-                        {provider.name.slice(0, 2).toUpperCase()}
-                      </span>
+                      {(() => {
+                        const Icon = PROVIDER_ICONS[provider.id]
+                        return <Icon className="h-5 w-5 text-white" />
+                      })()}
                       {/* Status indicator */}
                       {isConnected && (
                         <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-green-500 border-2 border-card flex items-center justify-center">

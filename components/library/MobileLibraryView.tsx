@@ -1,13 +1,16 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Star, Gamepad2, ChevronDown, Plus, Search, X, Play, Pause, Check, Library, Eye } from 'lucide-react'
+import { Star, Gamepad2, ChevronDown, Plus, Search, X, Play, Pause, Check, Library, Eye, FileText, Clock } from 'lucide-react'
 import { MobileLibraryHeader } from './MobileLibraryHeader'
 import { SegmentedControl } from './SegmentedControl'
 import { FloatingActionButton } from './FloatingActionButton'
 import { MobileGameCard } from './MobileGameCard'
 import Image from 'next/image'
+import Link from 'next/link'
 import { addToBacklogWithStatus, searchGamesForBacklog, followAndAddToBacklog } from '@/app/(main)/backlog/actions'
+import { updateFavoriteGames } from '@/app/(main)/profile/actions'
+import { relativeDaysText } from '@/lib/dates'
 
 type BacklogStatus = 'playing' | 'paused' | 'backlog' | 'finished' | 'dropped'
 
@@ -46,13 +49,29 @@ type GameData = {
   cover_url: string | null
 }
 
+type FollowedGameWithActivity = {
+  id: string
+  name: string
+  slug: string
+  cover_url: string | null
+  latestPatch: {
+    id: string
+    title: string
+    published_at: string
+  } | null
+  patchCount: number
+  inBacklog: boolean
+}
+
 type MobileLibraryViewProps = {
   board: Record<BacklogStatus, BacklogItem[]>
   followedGames: GameData[]
+  followedGamesWithActivity: FollowedGameWithActivity[]
   backlogGames: GameData[]
   favoriteGames: GameData[]
   favoriteGameIds: string[]
   followedGamesForPicker: FollowedGame[]
+  allGames: GameData[]
 }
 
 const SECTION_CONFIG = [
@@ -66,10 +85,12 @@ const SECTION_CONFIG = [
 export function MobileLibraryView({
   board,
   followedGames,
+  followedGamesWithActivity,
   backlogGames,
   favoriteGames,
   favoriteGameIds,
   followedGamesForPicker,
+  allGames,
 }: MobileLibraryViewProps) {
   const [mode, setMode] = useState<'my-games' | 'discover'>('my-games')
   const [searchQuery, setSearchQuery] = useState('')
@@ -77,6 +98,12 @@ export function MobileLibraryView({
   const [expandedSections, setExpandedSections] = useState<Set<string>>(() => {
     // Default: expand sections with items
     const expanded = new Set<string>()
+    // Expand favorites if there are any
+    if (favoriteGames.length > 0) expanded.add('favorites')
+    // Expand followed if there are followed games not in backlog
+    const followedOnly = followedGames.filter(g => !backlogGames.some(bg => bg.id === g.id))
+    if (followedOnly.length > 0) expanded.add('followed')
+    // Expand backlog sections with items
     SECTION_CONFIG.forEach(({ key }) => {
       if (board[key].length > 0) expanded.add(key)
     })
@@ -136,7 +163,7 @@ export function MobileLibraryView({
 
       {mode === 'my-games' ? (
         <div className="px-4 space-y-4">
-          {/* Favorites Section */}
+          {/* Favorites Section - Showcase Style */}
           <CollapsibleMobileSection
             title="Favorites"
             icon={<Star className="h-4 w-4 text-amber-400 fill-amber-400" />}
@@ -146,48 +173,24 @@ export function MobileLibraryView({
             isEmpty={favoriteGames.length === 0}
             emptyText="Pin up to 5 games"
           >
-            {favoriteGames.length > 0 ? (
-              <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
-                {favoriteGames.map(game => (
-                  <MiniGameCard
-                    key={game.id}
-                    title={game.name}
-                    imageUrl={game.cover_url}
-                    href={`/games/${game.slug}`}
-                  />
-                ))}
-              </div>
-            ) : (
-              <SuggestedGames
-                games={followedGames.slice(0, 3)}
-                onAdd={(id) => console.log('Add favorite:', id)}
-              />
-            )}
+            <MobileShowcaseGrid
+              favoriteGames={favoriteGames}
+              allGames={allGames}
+              favoriteGameIds={favoriteGameIds}
+            />
           </CollapsibleMobileSection>
 
-          {/* Followed Games Section */}
+          {/* Watchlist Section - Activity-focused */}
           <CollapsibleMobileSection
-            title="Followed"
+            title="Watchlist"
             icon={<Eye className="h-4 w-4 text-blue-400" />}
-            count={followedGames.filter(g => !backlogGames.some(bg => bg.id === g.id)).length}
+            count={followedGamesWithActivity.filter(g => !g.inBacklog).length}
             isOpen={expandedSections.has('followed')}
             onToggle={() => toggleSection('followed')}
-            isEmpty={followedGames.length === 0}
+            isEmpty={followedGamesWithActivity.filter(g => !g.inBacklog).length === 0}
             emptyText="Follow games to track updates"
           >
-            <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
-              {followedGames
-                .filter(g => !backlogGames.some(bg => bg.id === g.id))
-                .slice(0, 6)
-                .map(game => (
-                  <MiniGameCard
-                    key={game.id}
-                    title={game.name}
-                    imageUrl={game.cover_url}
-                    href={`/games/${game.slug}`}
-                  />
-                ))}
-            </div>
+            <MobileWatchlistGrid games={followedGamesWithActivity.filter(g => !g.inBacklog)} />
           </CollapsibleMobileSection>
 
           {/* Backlog Sections */}
@@ -518,5 +521,266 @@ function AddGameModal({
         </div>
       </div>
     </div>
+  )
+}
+
+// Mobile Showcase Grid for Favorites
+function MobileShowcaseGrid({
+  favoriteGames,
+  allGames,
+  favoriteGameIds,
+}: {
+  favoriteGames: GameData[]
+  allGames: GameData[]
+  favoriteGameIds: string[]
+}) {
+  const [showPicker, setShowPicker] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<string[]>(favoriteGameIds)
+  const [isSaving, setIsSaving] = useState(false)
+
+  if (favoriteGames.length === 0 && !showPicker) {
+    return (
+      <div className="text-center py-4">
+        <button
+          onClick={() => setShowPicker(true)}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 text-sm font-medium border border-amber-500/20 transition-colors"
+        >
+          <Plus className="h-4 w-4" />
+          Add Favorites
+        </button>
+      </div>
+    )
+  }
+
+  const handleToggleGame = (gameId: string) => {
+    setSelectedIds(prev => {
+      if (prev.includes(gameId)) {
+        return prev.filter(id => id !== gameId)
+      }
+      if (prev.length >= 5) return prev
+      return [...prev, gameId]
+    })
+  }
+
+  const handleSave = async () => {
+    setIsSaving(true)
+    await updateFavoriteGames(selectedIds)
+    setIsSaving(false)
+    setShowPicker(false)
+  }
+
+  if (showPicker) {
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-muted-foreground">{selectedIds.length}/5 selected</span>
+          <button onClick={() => setShowPicker(false)} className="text-xs text-muted-foreground">
+            Cancel
+          </button>
+        </div>
+
+        {selectedIds.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {selectedIds.map(id => {
+              const game = allGames.find(g => g.id === id) || favoriteGames.find(g => g.id === id)
+              if (!game) return null
+              return (
+                <button
+                  key={id}
+                  onClick={() => handleToggleGame(id)}
+                  className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-amber-500/10 text-xs"
+                >
+                  <Star className="h-3 w-3 text-amber-400 fill-amber-400" />
+                  <span className="truncate max-w-20">{game.name}</span>
+                  <X className="h-3 w-3" />
+                </button>
+              )
+            })}
+          </div>
+        )}
+
+        <div className="max-h-32 overflow-y-auto space-y-1">
+          {allGames.filter(g => !selectedIds.includes(g.id)).map(game => (
+            <button
+              key={game.id}
+              onClick={() => handleToggleGame(game.id)}
+              disabled={selectedIds.length >= 5}
+              className="w-full flex items-center gap-2 p-2 rounded-lg hover:bg-muted transition-colors disabled:opacity-50 text-left"
+            >
+              <div className="relative h-8 w-6 rounded overflow-hidden flex-shrink-0">
+                {game.cover_url ? (
+                  <Image src={game.cover_url} alt="" fill className="object-cover" sizes="24px" />
+                ) : (
+                  <div className="absolute inset-0 bg-muted" />
+                )}
+              </div>
+              <span className="flex-1 text-xs truncate">{game.name}</span>
+            </button>
+          ))}
+        </div>
+
+        <button
+          onClick={handleSave}
+          disabled={isSaving}
+          className="w-full py-2 rounded-lg bg-amber-500 text-white text-sm font-medium disabled:opacity-50"
+        >
+          {isSaving ? 'Saving...' : 'Save Favorites'}
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-3">
+      {/* Showcase grid */}
+      <div className="grid grid-cols-3 gap-3">
+        {favoriteGames.map((game, index) => (
+          <Link key={game.id} href={`/backlog/${game.id}`} className="group">
+            <div className="relative aspect-[3/4] rounded-xl overflow-hidden bg-muted ring-2 ring-amber-500/30">
+              {game.cover_url ? (
+                <Image src={game.cover_url} alt={game.name} fill className="object-cover" sizes="100px" />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Gamepad2 className="h-6 w-6 text-muted-foreground" />
+                </div>
+              )}
+              <div className="absolute top-1.5 left-1.5 h-5 w-5 rounded-full bg-amber-500 flex items-center justify-center">
+                <span className="text-[10px] font-bold text-white">{index + 1}</span>
+              </div>
+              <div className="absolute top-1.5 right-1.5">
+                <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400 drop-shadow" />
+              </div>
+            </div>
+            <p className="mt-1.5 text-xs font-medium text-center truncate">{game.name}</p>
+          </Link>
+        ))}
+
+        {/* Add slot if less than 5 */}
+        {favoriteGames.length < 5 && (
+          <button
+            onClick={() => setShowPicker(true)}
+            className="aspect-[3/4] rounded-xl border-2 border-dashed border-border hover:border-amber-500/50 flex flex-col items-center justify-center gap-1 transition-colors"
+          >
+            <Plus className="h-5 w-5 text-muted-foreground" />
+            <span className="text-[10px] text-muted-foreground">Add</span>
+          </button>
+        )}
+      </div>
+
+      {/* Edit button */}
+      {favoriteGames.length > 0 && (
+        <button
+          onClick={() => setShowPicker(true)}
+          className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+        >
+          Edit favorites
+        </button>
+      )}
+    </div>
+  )
+}
+
+// Mobile Watchlist Grid with Activity
+function MobileWatchlistGrid({ games }: { games: FollowedGameWithActivity[] }) {
+  if (games.length === 0) {
+    return (
+      <div className="text-center py-4">
+        <Link
+          href="/releases"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 text-sm font-medium border border-blue-500/20 transition-colors"
+        >
+          Browse New Releases
+        </Link>
+      </div>
+    )
+  }
+
+  const withActivity = games.filter(g => g.latestPatch !== null)
+  const quiet = games.filter(g => g.latestPatch === null)
+
+  return (
+    <div className="space-y-3">
+      {/* Games with activity */}
+      {withActivity.length > 0 && (
+        <>
+          <div className="flex items-center gap-1.5 text-xs text-emerald-400">
+            <FileText className="h-3 w-3" />
+            <span>{withActivity.length} with recent updates</span>
+          </div>
+          <div className="space-y-2">
+            {withActivity.map(game => (
+              <MobileWatchlistCard key={game.id} game={game} />
+            ))}
+          </div>
+        </>
+      )}
+
+      {/* Quiet games */}
+      {quiet.length > 0 && (
+        <>
+          {withActivity.length > 0 && (
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground pt-1">
+              <Clock className="h-3 w-3" />
+              <span>{quiet.length} quiet</span>
+            </div>
+          )}
+          <div className="space-y-2">
+            {quiet.map(game => (
+              <MobileWatchlistCard key={game.id} game={game} />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+// Individual watchlist card
+function MobileWatchlistCard({ game }: { game: FollowedGameWithActivity }) {
+  const hasActivity = game.latestPatch !== null
+
+  return (
+    <Link
+      href={`/backlog/${game.id}`}
+      className="relative flex gap-3 p-3 rounded-xl border border-border bg-card/50 hover:bg-card transition-colors"
+    >
+      {/* Cover */}
+      <div className="relative h-14 w-10 flex-shrink-0 rounded-lg overflow-hidden bg-muted">
+        {game.cover_url ? (
+          <Image src={game.cover_url} alt={game.name} fill className="object-cover" sizes="40px" />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Gamepad2 className="h-4 w-4 text-muted-foreground" />
+          </div>
+        )}
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 min-w-0 flex flex-col justify-center">
+        <h3 className="text-sm font-medium truncate">{game.name}</h3>
+
+        {hasActivity ? (
+          <div className="mt-1 flex items-center gap-2">
+            <span className="flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-full">
+              <FileText className="h-2.5 w-2.5" />
+              {game.patchCount} update{game.patchCount !== 1 ? 's' : ''}
+            </span>
+            <span className="text-[10px] text-muted-foreground">
+              {relativeDaysText(game.latestPatch!.published_at)}
+            </span>
+          </div>
+        ) : (
+          <p className="mt-1 text-[10px] text-muted-foreground flex items-center gap-1">
+            <Clock className="h-2.5 w-2.5" />
+            No recent updates
+          </p>
+        )}
+      </div>
+
+      {/* Activity dot */}
+      {hasActivity && (
+        <div className="absolute top-2 right-2 h-2 w-2 rounded-full bg-emerald-400" />
+      )}
+    </Link>
   )
 }

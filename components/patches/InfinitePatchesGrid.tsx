@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { ExternalLink, Loader2, Sparkles } from 'lucide-react'
+import { ExternalLink, Loader2, Sparkles, Gamepad2 } from 'lucide-react'
 import { loadMorePatches } from '@/app/(main)/home/actions'
 import { relativeDaysText } from '@/lib/dates'
 
@@ -84,10 +84,10 @@ function HeroPatchCard({ patch, priority = false }: { patch: PatchItem; priority
   return (
     <Link
       href={`/patches/${patch.id}`}
-      className="group relative overflow-hidden rounded-2xl border border-white/10 bg-black/40 block"
+      className="group relative overflow-hidden rounded-xl sm:rounded-2xl border border-white/10 bg-black/40 block"
     >
-      {/* Hero Image - More compact sizing */}
-      <div className="relative aspect-[2.5/1] lg:aspect-[3/1]">
+      {/* Hero Image - Compact on mobile */}
+      <div className="relative aspect-[2/1] sm:aspect-[2.5/1] lg:aspect-[3/1]">
         {heroImage ? (
           <Image
             src={heroImage}
@@ -110,11 +110,11 @@ function HeroPatchCard({ patch, priority = false }: { patch: PatchItem; priority
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
 
         {/* Content on Image */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 lg:p-6">
+        <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4 lg:p-6">
           {/* Game Logo + Name */}
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
             {patch.game.logo_url && (
-              <div className="relative w-6 h-6 rounded overflow-hidden bg-white/10 backdrop-blur-sm">
+              <div className="relative w-5 h-5 sm:w-6 sm:h-6 rounded overflow-hidden bg-white/10 backdrop-blur-sm">
                 <Image
                   src={patch.game.logo_url}
                   alt={patch.game.name}
@@ -124,56 +124,75 @@ function HeroPatchCard({ patch, priority = false }: { patch: PatchItem; priority
                 />
               </div>
             )}
-            <span className="text-xs text-zinc-300 font-medium">{patch.game.name}</span>
+            <span className="text-[11px] sm:text-xs text-zinc-300 font-medium">{patch.game.name}</span>
           </div>
 
           {/* Patch Title */}
-          <h3 className="text-lg lg:text-2xl font-bold leading-tight text-white line-clamp-2 group-hover:text-primary transition-colors">
+          <h3 className="text-sm sm:text-lg lg:text-2xl font-bold leading-tight text-white line-clamp-2 group-hover:text-primary transition-colors">
             {patch.title}
           </h3>
         </div>
 
         {/* Importance Badge - Top Right */}
-        <span className={`absolute top-3 right-3 rounded-full px-3 py-1 text-xs font-semibold border backdrop-blur-sm ${impact.bg} ${impact.text} ${impact.border}`}>
+        <span className={`absolute top-2 right-2 sm:top-3 sm:right-3 rounded-full px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-semibold border backdrop-blur-sm ${impact.bg} ${impact.text} ${impact.border}`}>
           {impact.label}
         </span>
       </div>
 
-      {/* Meta Section */}
-      <div className="p-4 lg:p-5 space-y-3">
-        {/* Summary */}
+      {/* Meta Section - Compact on mobile */}
+      <div className="p-3 sm:p-4 lg:p-5 space-y-2 sm:space-y-3">
+        {/* Summary - Hidden on mobile */}
         {patch.summary_tldr && (
-          <p className="text-sm text-zinc-300 line-clamp-2">
+          <p className="hidden sm:block text-sm text-zinc-300 line-clamp-2">
             {patch.summary_tldr}
           </p>
         )}
 
-        {/* Tags */}
+        {/* Tags - Fewer on mobile */}
         {patch.tags.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {patch.tags.slice(0, 4).map((tag) => {
+          <div className="flex flex-wrap gap-1.5 sm:gap-2">
+            {patch.tags.slice(0, 2).map((tag) => {
               const style = getTagStyle(tag)
               return (
                 <span
                   key={tag}
-                  className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium border ${style.bg} ${style.text} ${style.border}`}
+                  className={`rounded-full px-2 py-0.5 text-[10px] sm:text-[11px] font-medium border ${style.bg} ${style.text} ${style.border}`}
                 >
                   {tag}
                 </span>
               )
             })}
-            {patch.tags.length > 4 && (
-              <span className="rounded-full px-2 py-0.5 text-[11px] text-zinc-400 bg-white/5 border border-white/10">
-                +{patch.tags.length - 4}
+            {patch.tags.length > 2 && (
+              <span className="sm:hidden rounded-full px-1.5 py-0.5 text-[10px] text-zinc-400 bg-white/5 border border-white/10">
+                +{patch.tags.length - 2}
               </span>
             )}
+            {/* Show more tags on desktop */}
+            <span className="hidden sm:contents">
+              {patch.tags.slice(2, 4).map((tag) => {
+                const style = getTagStyle(tag)
+                return (
+                  <span
+                    key={tag}
+                    className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium border ${style.bg} ${style.text} ${style.border}`}
+                  >
+                    {tag}
+                  </span>
+                )
+              })}
+              {patch.tags.length > 4 && (
+                <span className="rounded-full px-2 py-0.5 text-[11px] text-zinc-400 bg-white/5 border border-white/10">
+                  +{patch.tags.length - 4}
+                </span>
+              )}
+            </span>
           </div>
         )}
 
         {/* Footer */}
-        <div className="flex items-center justify-between text-xs text-zinc-400 pt-1">
+        <div className="flex items-center justify-between text-[11px] sm:text-xs text-zinc-400 pt-1">
           <span>{relativeDaysText(patch.published_at)}</span>
-          <div className="flex items-center gap-4">
+          <div className="hidden sm:flex items-center gap-4">
             <span className="flex items-center gap-1.5 text-zinc-400 hover:text-white transition-colors">
               <Sparkles className="w-3.5 h-3.5" />
               AI Summary
@@ -200,17 +219,17 @@ function CompactPatchCard({ patch }: { patch: PatchItem }) {
   return (
     <Link
       href={`/patches/${patch.id}`}
-      className="group relative overflow-hidden rounded-xl border border-white/10 bg-black/40 block"
+      className="group relative overflow-hidden rounded-lg sm:rounded-xl border border-white/10 bg-black/40 block active:scale-[0.98] transition-transform"
     >
-      {/* Image - Compact sizing */}
-      <div className="relative aspect-[2/1]">
+      {/* Image - Very compact on mobile */}
+      <div className="relative aspect-[2.5/1] sm:aspect-[2/1]">
         {heroImage ? (
           <Image
             src={heroImage}
             alt={patch.title}
             fill
             className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-            sizes="(max-width: 768px) 100vw, 400px"
+            sizes="(max-width: 768px) 50vw, 400px"
           />
         ) : (
           <div
@@ -225,35 +244,36 @@ function CompactPatchCard({ patch }: { patch: PatchItem }) {
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent" />
 
         {/* Content on Image */}
-        <div className="absolute bottom-0 left-0 right-0 p-3 lg:p-4">
-          <p className="text-[11px] text-zinc-300 mb-1 font-medium">{patch.game.name}</p>
-          <h3 className="text-sm lg:text-base font-semibold leading-tight text-white line-clamp-2 group-hover:text-primary transition-colors">
+        <div className="absolute bottom-0 left-0 right-0 p-2.5 sm:p-3 lg:p-4">
+          <p className="text-[10px] sm:text-[11px] text-zinc-300 mb-0.5 sm:mb-1 font-medium">{patch.game.name}</p>
+          <h3 className="text-xs sm:text-sm lg:text-base font-semibold leading-tight text-white line-clamp-2 group-hover:text-primary transition-colors">
             {patch.title}
           </h3>
         </div>
 
         {/* Importance Badge */}
-        <span className={`absolute top-2.5 right-2.5 rounded-full px-2 py-0.5 text-[10px] font-semibold border backdrop-blur-sm ${impact.bg} ${impact.text} ${impact.border}`}>
+        <span className={`absolute top-2 right-2 sm:top-2.5 sm:right-2.5 rounded-full px-1.5 sm:px-2 py-0.5 text-[9px] sm:text-[10px] font-semibold border backdrop-blur-sm ${impact.bg} ${impact.text} ${impact.border}`}>
           {impact.label}
         </span>
       </div>
 
-      {/* Meta Section */}
-      <div className="p-3 lg:p-4 space-y-2">
+      {/* Meta Section - Minimal on mobile */}
+      <div className="p-2.5 sm:p-3 lg:p-4 space-y-1.5 sm:space-y-2">
+        {/* Summary hidden on mobile */}
         {patch.summary_tldr && (
-          <p className="text-xs text-zinc-400 line-clamp-2">
+          <p className="hidden sm:block text-xs text-zinc-400 line-clamp-2">
             {patch.summary_tldr}
           </p>
         )}
 
         {patch.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {patch.tags.slice(0, 3).map((tag) => {
+          <div className="flex flex-wrap gap-1 sm:gap-1.5">
+            {patch.tags.slice(0, 2).map((tag) => {
               const style = getTagStyle(tag)
               return (
                 <span
                   key={tag}
-                  className={`rounded-full px-2 py-0.5 text-[10px] font-medium border ${style.bg} ${style.text} ${style.border}`}
+                  className={`rounded-full px-1.5 sm:px-2 py-0.5 text-[9px] sm:text-[10px] font-medium border ${style.bg} ${style.text} ${style.border}`}
                 >
                   {tag}
                 </span>
@@ -262,11 +282,66 @@ function CompactPatchCard({ patch }: { patch: PatchItem }) {
           </div>
         )}
 
-        <div className="flex items-center justify-between text-[11px] text-zinc-500">
+        <div className="flex items-center justify-between text-[10px] sm:text-[11px] text-zinc-500">
           <span>{relativeDaysText(patch.published_at)}</span>
-          {patch.source_url && (
-            <ExternalLink className="w-3 h-3" />
+        </div>
+      </div>
+    </Link>
+  )
+}
+
+// Mobile compact list item - matches News page style
+function MobilePatchListItem({ patch }: { patch: PatchItem }) {
+  const thumbnail = patch.game.hero_url || patch.game.cover_url
+  const impact = getImpactStyle(patch.impact_score)
+
+  return (
+    <Link
+      href={`/patches/${patch.id}`}
+      className="group flex gap-3 p-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 active:scale-[0.98] transition-all"
+    >
+      {/* Thumbnail - 80x80 like News */}
+      <div className="relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-zinc-900">
+        {thumbnail ? (
+          <Image
+            src={thumbnail}
+            alt=""
+            fill
+            className="object-cover"
+            sizes="80px"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-zinc-800 to-zinc-900">
+            <Gamepad2 className="w-6 h-6 text-zinc-700" />
+          </div>
+        )}
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
+        {/* Title */}
+        <h3 className="font-medium text-sm leading-snug line-clamp-2 group-hover:text-primary transition-colors">
+          {patch.title}
+        </h3>
+
+        {/* Meta row */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Impact badge */}
+          <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold ${impact.bg} ${impact.text} border ${impact.border}`}>
+            {impact.label}
+          </span>
+
+          {/* First tag */}
+          {patch.tags[0] && (
+            <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${getTagStyle(patch.tags[0]).bg} ${getTagStyle(patch.tags[0]).text}`}>
+              {patch.tags[0]}
+            </span>
           )}
+
+          <span className="text-[11px] text-muted-foreground">{relativeDaysText(patch.published_at)}</span>
+
+          <span className="text-muted-foreground/40">·</span>
+          <span className="text-[11px] text-muted-foreground truncate">{patch.game.name}</span>
         </div>
       </div>
     </Link>
@@ -359,52 +434,62 @@ export function InfinitePatchesGrid({
   const otherPatches = patches.filter(p => p.impact_score < 8)
 
   return (
-    <div className="space-y-6">
-      {/* Major Patches - Full Width Hero Cards */}
-      {majorPatches.length > 0 && (
-        <div className="space-y-4">
-          {majorPatches.map((patch, idx) => (
-            <HeroPatchCard key={patch.id} patch={patch} priority={idx < 2} />
-          ))}
-        </div>
-      )}
+    <div className="space-y-4 sm:space-y-6">
+      {/* MOBILE: Compact list view - matches News page style */}
+      <div className="sm:hidden space-y-2">
+        {patches.map((patch) => (
+          <MobilePatchListItem key={patch.id} patch={patch} />
+        ))}
+      </div>
 
-      {/* Section Divider */}
-      {majorPatches.length > 0 && otherPatches.length > 0 && (
-        <div className="flex items-center gap-3 py-2">
-          <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-          <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">More Updates</span>
-          <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-        </div>
-      )}
+      {/* DESKTOP: Card-based layout */}
+      <div className="hidden sm:block space-y-6">
+        {/* Major Patches - Full Width Hero Cards */}
+        {majorPatches.length > 0 && (
+          <div className="space-y-4">
+            {majorPatches.map((patch, idx) => (
+              <HeroPatchCard key={patch.id} patch={patch} priority={idx < 2} />
+            ))}
+          </div>
+        )}
 
-      {/* Medium/Minor Patches - Grid Layout */}
-      {otherPatches.length > 0 && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {otherPatches.map((patch) => (
-            <CompactPatchCard key={patch.id} patch={patch} />
-          ))}
-        </div>
-      )}
+        {/* Section Divider */}
+        {majorPatches.length > 0 && otherPatches.length > 0 && (
+          <div className="flex items-center gap-3 py-2">
+            <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+            <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">More Updates</span>
+            <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+          </div>
+        )}
+
+        {/* Medium/Minor Patches - Grid Layout */}
+        {otherPatches.length > 0 && (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {otherPatches.map((patch) => (
+              <CompactPatchCard key={patch.id} patch={patch} />
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Load more trigger */}
       <div ref={loadMoreRef} className="flex justify-center py-4">
         {isLoading && (
           <div className="flex items-center gap-2 text-muted-foreground">
-            <Loader2 className="h-5 w-5 animate-spin" />
-            <span className="text-sm">Loading more patches...</span>
+            <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
+            <span className="text-xs sm:text-sm">Loading more...</span>
           </div>
         )}
         {hasMore && !isLoading && (
           <button
             onClick={loadMore}
-            className="px-6 py-2.5 rounded-lg border border-white/10 bg-white/5 text-sm font-medium hover:bg-white/10 transition-colors"
+            className="px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg border border-white/10 bg-white/5 text-xs sm:text-sm font-medium hover:bg-white/10 active:scale-[0.98] transition-all"
           >
             Load More
           </button>
         )}
         {!hasMore && patches.length > 0 && (
-          <p className="text-sm text-zinc-500">All patches loaded</p>
+          <p className="text-xs sm:text-sm text-zinc-500">All patches loaded</p>
         )}
       </div>
     </div>

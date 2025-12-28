@@ -1,7 +1,8 @@
 import Link from 'next/link'
-import { Search, Sparkles } from 'lucide-react'
-import { getPatchFiltersData, getPatchesList } from '../patches/queries'
-import { getHomeFeed, type Platform } from './queries'
+import Image from 'next/image'
+import { Search, Sparkles, Gamepad2 } from 'lucide-react'
+import { getPatchesList } from '../patches/queries'
+import { getHomeFeed, type Platform, type UpcomingGame, type NewReleaseGame } from './queries'
 import { getStalePlayingGames, getReturnSuggestions } from '../backlog/queries'
 import type { SeasonalImage } from '@/lib/images/seasonal'
 import { HeroCard } from '@/components/media/HeroCard'
@@ -17,30 +18,8 @@ import { formatDate, relativeDaysText } from '@/lib/dates'
 import { InstallHint } from '@/components/ui/InstallHint'
 import { InfinitePatchesGrid } from '@/components/patches/InfinitePatchesGrid'
 import { HeadlinesSection } from './HeadlinesSection'
+import { HomeGameStrip } from './HomeGameStrip'
 
-type SearchParams = {
-  game?: string
-  tag?: string
-  importance?: string
-  page?: string
-}
-
-function buildUrl(
-  base: Record<string, string | undefined>,
-  updates: Record<string, string | undefined>
-): string {
-  const params = new URLSearchParams()
-
-  const merged = { ...base, ...updates }
-
-  if (merged.game) params.set('game', merged.game)
-  if (merged.tag) params.set('tag', merged.tag)
-  if (merged.importance) params.set('importance', merged.importance)
-  if (merged.page && merged.page !== '1') params.set('page', merged.page)
-
-  const query = params.toString()
-  return query ? `/home?${query}` : '/home'
-}
 
 // Helper to get platforms for a game
 function getPlatformsForGame(gameId: string, platformMap: Map<string, Platform[]>): Platform[] {
@@ -92,45 +71,13 @@ function inferAffectedSystems(patch: { title: string; summary_tldr?: string | nu
   return systems.slice(0, 5)
 }
 
-export default async function HomePage({
-  searchParams,
-}: {
-  searchParams: Promise<SearchParams>
-}) {
-  const params = await searchParams
-  const gameId = params.game
-  const tag = params.tag
-  const importance = params.importance as
-    | 'major'
-    | 'medium'
-    | 'minor'
-    | undefined
-  const page = params.page ? parseInt(params.page, 10) : 1
-
-  const [filtersData, patchesResult, feed, staleGames, returnSuggestions] = await Promise.all([
-    getPatchFiltersData(),
-    getPatchesList({
-      gameId,
-      tag,
-      importance:
-        importance && ['major', 'medium', 'minor'].includes(importance)
-          ? importance
-          : undefined,
-      page,
-    }),
+export default async function HomePage() {
+  const [patchesResult, feed, staleGames, returnSuggestions] = await Promise.all([
+    getPatchesList({ page: 1 }),
     getHomeFeed(),
     getStalePlayingGames(14),
     getReturnSuggestions(),
   ])
-
-  const currentFilters = {
-    game: gameId,
-    tag: tag,
-    importance: importance,
-    page: undefined,
-  }
-
-  const hasFilters = gameId || tag || importance
 
   // Create hero items for carousel (top patches + news)
   const heroItems: Array<{ type: 'patch' | 'news'; data: any }> = []
@@ -144,251 +91,182 @@ export default async function HomePage({
   return (
     <>
       <InstallHint />
-      <div className="space-y-6 sm:space-y-8 page-enter">
-        {/* For You Section - Personalized header */}
-        <section className="space-y-4">
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-violet-500/20 to-purple-500/20 border border-violet-500/30">
-              <Sparkles className="w-4 h-4 text-violet-400" />
-              <span className="text-sm font-medium text-violet-300">For You</span>
-            </div>
-            <span className="text-xs text-zinc-500">Based on games you follow</span>
+      <div className="space-y-5 sm:space-y-8 page-enter">
+        {/* Mobile: Compact "For You" header */}
+        <section className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gradient-to-r from-violet-500/20 to-purple-500/20 border border-violet-500/30">
+            <Sparkles className="w-3.5 h-3.5 text-violet-400" />
+            <span className="text-xs font-medium text-violet-300">For You</span>
           </div>
+          <span className="text-[11px] text-zinc-500 hidden sm:inline">Based on games you follow</span>
         </section>
 
-        {/* Hero Carousel */}
-        {heroItems.length > 0 && (
-          <section>
-            <HeroCarousel autoPlayInterval={6000}>
-              {heroItems.map((heroItem, index) => (
-                heroItem.type === 'patch' ? (
-                  <HeroCard
-                    key={`patch-${heroItem.data.id}`}
-                    href={`/patches/${heroItem.data.id}`}
-                    title={heroItem.data.title}
-                    summary={heroItem.data.summary_tldr}
-                    imageUrl={getSeasonalCoverUrl(heroItem.data.game_id, heroItem.data.games?.cover_url, feed.seasonalImages)}
-                    fallbackTitle={heroItem.data.games?.name}
-                    type="patch"
-                    showActions={index === 0}
-                    impactMeter={{
-                      meta: heroItem.data.impact_score,
-                      casual: Math.max(2, Math.round(heroItem.data.impact_score * 0.7)),
-                    }}
-                    affectedSystems={inferAffectedSystems(heroItem.data)}
-                    game={{
-                      name: heroItem.data.games?.name || 'Unknown Game',
-                      logoUrl: getSeasonalLogoUrl(heroItem.data.game_id, heroItem.data.games?.logo_url, feed.seasonalImages),
-                      platforms: getPlatformsForGame(heroItem.data.game_id, feed.gamePlatforms),
-                    }}
-                    badges={
-                      <>
-                        <Badge variant="patch" size="md">Patch</Badge>
-                        <ImpactBadge score={heroItem.data.impact_score} size="md" />
-                      </>
-                    }
-                    metaLeft={
-                      <MetaRow
-                        items={[
-                          heroItem.data.games?.name,
-                          formatDate(heroItem.data.published_at),
-                        ]}
-                        size="sm"
-                      />
-                    }
-                  />
-                ) : (
-                  <HeroCard
-                    key={`news-${heroItem.data.id}`}
-                    href={`/news/${heroItem.data.id}`}
-                    title={heroItem.data.title}
-                    summary={heroItem.data.summary}
-                    imageUrl={heroItem.data.game_id ? getSeasonalCoverUrl(heroItem.data.game_id, heroItem.data.games?.cover_url, feed.seasonalImages) : heroItem.data.games?.cover_url}
-                    fallbackTitle={heroItem.data.games?.name || 'Gaming News'}
-                    type="news"
-                    game={heroItem.data.game_id ? {
-                      name: heroItem.data.games?.name || 'General',
-                      logoUrl: getSeasonalLogoUrl(heroItem.data.game_id, heroItem.data.games?.logo_url, feed.seasonalImages),
-                      platforms: getPlatformsForGame(heroItem.data.game_id, feed.gamePlatforms),
-                    } : undefined}
-                    badges={
-                      <>
-                        <Badge variant="news" size="md">News</Badge>
-                        {heroItem.data.is_rumor && (
-                          <Badge variant="rumor" size="md">Rumor</Badge>
-                        )}
-                      </>
-                    }
-                    metaLeft={
-                      <MetaRow
-                        items={[
-                          heroItem.data.games?.name || 'General',
-                          heroItem.data.source_name,
-                          formatDate(heroItem.data.published_at),
-                        ]}
-                        size="sm"
-                      />
-                    }
-                  />
-                )
-              ))}
-            </HeroCarousel>
+        {/* Mobile-First: Game Strips at Top */}
+        {/* New Releases */}
+        {feed.newReleases.length > 0 && (
+          <section className="mt-4">
+            <Link href="/releases" className="flex items-center justify-between mb-2 group">
+              <h2 className="text-sm font-semibold text-white group-hover:text-primary transition-colors">New Releases</h2>
+              <span className="text-xs text-muted-foreground group-hover:text-primary transition-colors">View all →</span>
+            </Link>
+            <HomeGameStrip games={feed.newReleases} type="new" />
           </section>
         )}
 
-        {/* Main Content + Sidebar Layout */}
+        {/* Coming Soon */}
+        {feed.upcomingGames.length > 0 && (
+          <section className="mt-4">
+            <Link href="/upcoming" className="flex items-center justify-between mb-2 group">
+              <h2 className="text-sm font-semibold text-white group-hover:text-primary transition-colors">Coming Soon</h2>
+              <span className="text-xs text-muted-foreground group-hover:text-primary transition-colors">View all →</span>
+            </Link>
+            <HomeGameStrip games={feed.upcomingGames} type="upcoming" />
+          </section>
+        )}
+
+        {/* Hero Carousel - Desktop only, mobile gets compact list */}
+        {heroItems.length > 0 && (
+          <>
+            {/* Desktop: Full carousel */}
+            <section className="hidden sm:block">
+              <HeroCarousel autoPlayInterval={6000}>
+                {heroItems.map((heroItem, index) => (
+                  heroItem.type === 'patch' ? (
+                    <HeroCard
+                      key={`patch-${heroItem.data.id}`}
+                      href={`/patches/${heroItem.data.id}`}
+                      title={heroItem.data.title}
+                      summary={heroItem.data.summary_tldr}
+                      imageUrl={getSeasonalCoverUrl(heroItem.data.game_id, heroItem.data.games?.cover_url, feed.seasonalImages)}
+                      fallbackTitle={heroItem.data.games?.name}
+                      type="patch"
+                      showActions={index === 0}
+                      impactMeter={{
+                        meta: heroItem.data.impact_score,
+                        casual: Math.max(2, Math.round(heroItem.data.impact_score * 0.7)),
+                      }}
+                      affectedSystems={inferAffectedSystems(heroItem.data)}
+                      game={{
+                        name: heroItem.data.games?.name || 'Unknown Game',
+                        logoUrl: getSeasonalLogoUrl(heroItem.data.game_id, heroItem.data.games?.logo_url, feed.seasonalImages),
+                        platforms: getPlatformsForGame(heroItem.data.game_id, feed.gamePlatforms),
+                      }}
+                      badges={
+                        <>
+                          <Badge variant="patch" size="md">Patch</Badge>
+                          <ImpactBadge score={heroItem.data.impact_score} size="md" />
+                        </>
+                      }
+                      metaLeft={
+                        <MetaRow
+                          items={[
+                            heroItem.data.games?.name,
+                            formatDate(heroItem.data.published_at),
+                          ]}
+                          size="sm"
+                        />
+                      }
+                    />
+                  ) : (
+                    <HeroCard
+                      key={`news-${heroItem.data.id}`}
+                      href={`/news/${heroItem.data.id}`}
+                      title={heroItem.data.title}
+                      summary={heroItem.data.summary}
+                      imageUrl={heroItem.data.game_id ? getSeasonalCoverUrl(heroItem.data.game_id, heroItem.data.games?.cover_url, feed.seasonalImages) : heroItem.data.games?.cover_url}
+                      fallbackTitle={heroItem.data.games?.name || 'Gaming News'}
+                      type="news"
+                      game={heroItem.data.game_id ? {
+                        name: heroItem.data.games?.name || 'General',
+                        logoUrl: getSeasonalLogoUrl(heroItem.data.game_id, heroItem.data.games?.logo_url, feed.seasonalImages),
+                        platforms: getPlatformsForGame(heroItem.data.game_id, feed.gamePlatforms),
+                      } : undefined}
+                      badges={
+                        <>
+                          <Badge variant="news" size="md">News</Badge>
+                          {heroItem.data.is_rumor && (
+                            <Badge variant="rumor" size="md">Rumor</Badge>
+                          )}
+                        </>
+                      }
+                      metaLeft={
+                        <MetaRow
+                          items={[
+                            heroItem.data.games?.name || 'General',
+                            heroItem.data.source_name,
+                            formatDate(heroItem.data.published_at),
+                          ]}
+                          size="sm"
+                        />
+                      }
+                    />
+                  )
+                ))}
+              </HeroCarousel>
+            </section>
+
+            {/* Mobile: Compact featured card */}
+            <section className="sm:hidden">
+              <MobileFeaturedCard item={heroItems[0]} seasonalImages={feed.seasonalImages} />
+            </section>
+          </>
+        )}
+
+        {/* Continue Playing - Important for mobile engagement */}
+        {feed.backlogNudge && (
+          <section className="space-y-3">
+            <SectionHeader title="Continue Playing" href="/backlog" />
+            <BacklogCard
+              href={`/backlog/${feed.backlogNudge.game_id}`}
+              title={feed.backlogNudge.games?.name || 'Unknown Game'}
+              progress={feed.backlogNudge.progress}
+              imageUrl={getSeasonalCoverUrl(feed.backlogNudge.game_id, feed.backlogNudge.games?.cover_url, feed.seasonalImages)}
+              lastPlayedText={
+                feed.backlogNudge.last_played_at
+                  ? `Last played ${relativeDaysText(feed.backlogNudge.last_played_at)}`
+                  : undefined
+              }
+            />
+          </section>
+        )}
+
+        {/* Latest Headlines */}
+        <HeadlinesSection
+          news={feed.latestNews}
+          seasonalImages={feed.seasonalImages}
+          gamePlatforms={feed.gamePlatforms}
+        />
+
+        {/* Main Content + Sidebar Layout for Desktop */}
         <div className="lg:flex lg:gap-8">
-          {/* Main Content */}
-          <div className="flex-1 space-y-6 sm:space-y-8">
-            {/* Patches Section with Filters */}
-            <section className="space-y-4">
-              <SectionHeader title="All Patches" glowLine />
+          <div className="flex-1 space-y-5 sm:space-y-8">
+            {/* Patches Section */}
+            <section className="space-y-3 sm:space-y-4">
+              <SectionHeader title="Latest Patches" glowLine />
 
-              {/* Filters */}
-              <div className="space-y-4">
-                <div className="flex flex-wrap gap-3">
-                  <div className="relative">
-                    <select
-                      defaultValue={gameId || ''}
-                      className="appearance-none rounded-lg border border-input bg-background px-4 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                    >
-                      <option value="">All Games</option>
-                      {filtersData.followedGames.map((game) => (
-                        <option key={game.id} value={game.id}>
-                          {game.name}
-                        </option>
-                      ))}
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center">
-                      <svg className="h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </div>
-                  </div>
-
-                  <div className="relative">
-                    <select
-                      defaultValue={tag || ''}
-                      className="appearance-none rounded-lg border border-input bg-background px-4 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                    >
-                      <option value="">All Tags</option>
-                      {filtersData.availableTags.map((t) => (
-                        <option key={t} value={t}>{t}</option>
-                      ))}
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center">
-                      <svg className="h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </div>
-                  </div>
-
-                  <div className="relative">
-                    <select
-                      defaultValue={importance || ''}
-                      className="appearance-none rounded-lg border border-input bg-background px-4 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                    >
-                      <option value="">All Importance</option>
-                      <option value="major">Major (8-10)</option>
-                      <option value="medium">Medium (5-7)</option>
-                      <option value="minor">Minor (1-4)</option>
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center">
-                      <svg className="h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </div>
-                  </div>
-
-                  {hasFilters && (
-                    <Link
-                      href="/home"
-                      className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      Clear filters
-                    </Link>
-                  )}
-                </div>
-
-                {/* Quick game filter chips */}
-                <div className="flex flex-wrap gap-2">
-                  {filtersData.followedGames.map((game) => (
-                    <Link
-                      key={game.id}
-                      href={buildUrl(currentFilters, {
-                        game: gameId === game.id ? undefined : game.id,
-                      })}
-                      className={`rounded-lg border px-3 py-1.5 text-sm transition-colors ${
-                        gameId === game.id
-                          ? 'border-primary bg-primary/10 text-primary'
-                          : 'border-input bg-background hover:bg-accent'
-                      }`}
-                    >
-                      {game.name}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-
-              {/* Patches Grid with Infinite Scroll */}
               {patchesResult.items.length === 0 ? (
-                <div className="rounded-xl border border-border bg-card p-12 text-center">
-                  <Search className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-lg font-medium">No patches found</p>
-                  <p className="mt-1 text-muted-foreground">
-                    {hasFilters ? 'Try adjusting your filters' : 'Follow some games to see their patches here'}
+                <div className="rounded-xl border border-border bg-card p-8 sm:p-12 text-center">
+                  <Search className="h-10 w-10 sm:h-12 sm:w-12 mx-auto text-muted-foreground mb-3" />
+                  <p className="text-base font-medium">No patches found</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Follow some games to see their patches here
                   </p>
-                  {hasFilters && (
-                    <Link href="/home" className="mt-4 inline-block text-sm text-primary hover:underline">
-                      Clear all filters
-                    </Link>
-                  )}
                 </div>
               ) : (
                 <>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     {patchesResult.total} patch{patchesResult.total !== 1 ? 'es' : ''}
-                    {hasFilters && ' (filtered)'}
                   </p>
 
                   <InfinitePatchesGrid
                     initialPatches={patchesResult.items}
                     initialHasMore={patchesResult.hasMore}
                     initialPage={patchesResult.page}
-                    filters={{
-                      gameId,
-                      tag,
-                      importance,
-                    }}
+                    filters={{}}
                   />
                 </>
               )}
             </section>
-
-            {/* Latest Headlines - with contrasting background */}
-            <HeadlinesSection
-              news={feed.latestNews}
-              seasonalImages={feed.seasonalImages}
-              gamePlatforms={feed.gamePlatforms}
-            />
-
-            {/* Continue Playing */}
-            {feed.backlogNudge && (
-              <section className="space-y-3">
-                <SectionHeader title="Continue Playing" href="/backlog" />
-                <BacklogCard
-                  href={`/backlog/${feed.backlogNudge.game_id}`}
-                  title={feed.backlogNudge.games?.name || 'Unknown Game'}
-                  progress={feed.backlogNudge.progress}
-                  imageUrl={getSeasonalCoverUrl(feed.backlogNudge.game_id, feed.backlogNudge.games?.cover_url, feed.seasonalImages)}
-                  lastPlayedText={
-                    feed.backlogNudge.last_played_at
-                      ? `Last played ${relativeDaysText(feed.backlogNudge.last_played_at)}`
-                      : undefined
-                  }
-                />
-              </section>
-            )}
 
             {/* AI Return Suggestions */}
             {returnSuggestions.length > 0 && (
@@ -410,7 +288,7 @@ export default async function HomePage({
             </div>
           </div>
 
-          {/* Sidebar */}
+          {/* Desktop Sidebar */}
           <aside className="hidden lg:block lg:w-80 lg:flex-shrink-0">
             <div className="sticky top-6">
               <ReleaseRadarSection releases={feed.upcomingReleases} />
@@ -465,3 +343,62 @@ function ReleaseRadarSection({ releases }: { releases: ReleaseItem[] }) {
     </section>
   )
 }
+
+// Mobile featured card - Compact hero replacement
+function MobileFeaturedCard({
+  item,
+  seasonalImages
+}: {
+  item: { type: 'patch' | 'news'; data: any }
+  seasonalImages: Map<string, SeasonalImage>
+}) {
+  const isPatch = item.type === 'patch'
+  const href = isPatch ? `/patches/${item.data.id}` : `/news/${item.data.id}`
+  const title = item.data.title
+  const gameName = item.data.games?.name || 'Gaming'
+  const imageUrl = item.data.game_id
+    ? (seasonalImages.get(item.data.game_id)?.coverUrl || item.data.games?.cover_url)
+    : item.data.games?.cover_url
+
+  return (
+    <Link
+      href={href}
+      className="group flex gap-3 p-3 rounded-xl border border-white/10 bg-white/5 active:scale-[0.98] transition-transform"
+    >
+      {/* Thumbnail */}
+      <div className="relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-zinc-900">
+        {imageUrl ? (
+          <Image
+            src={imageUrl}
+            alt=""
+            fill
+            className="object-cover"
+            sizes="80px"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-zinc-800 to-zinc-900">
+            <Gamepad2 className="w-6 h-6 text-zinc-700" />
+          </div>
+        )}
+        {/* Type badge */}
+        <span className={`absolute top-1 left-1 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase ${
+          isPatch ? 'bg-blue-500/90 text-white' : 'bg-purple-500/90 text-white'
+        }`}>
+          {isPatch ? 'Patch' : 'News'}
+        </span>
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 min-w-0 flex flex-col justify-center">
+        <p className="text-[11px] text-zinc-400 mb-0.5">{gameName}</p>
+        <h3 className="font-semibold text-sm leading-snug line-clamp-2 group-hover:text-primary transition-colors">
+          {title}
+        </h3>
+        <p className="text-[11px] text-zinc-500 mt-1">
+          {formatDate(item.data.published_at)}
+        </p>
+      </div>
+    </Link>
+  )
+}
+

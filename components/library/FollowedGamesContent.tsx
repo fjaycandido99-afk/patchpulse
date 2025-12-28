@@ -23,7 +23,7 @@ type FollowedGamesContentProps = {
 function GameCard({ game, isFavorite }: { game: Game; isFavorite?: boolean }) {
   return (
     <Link
-      href={`/games/${game.slug}`}
+      href={`/backlog/${game.id}`}
       className="group relative flex flex-col rounded-lg border border-border bg-card overflow-hidden hover:border-primary/50 transition-colors"
     >
       <div className="relative aspect-[3/4] bg-muted">
