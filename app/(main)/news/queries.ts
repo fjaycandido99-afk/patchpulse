@@ -35,6 +35,7 @@ type NewsDetail = {
   is_rumor: boolean
   source_name: string | null
   source_url: string | null
+  image_url: string | null
   created_at: string
   game: Game | null
 }
@@ -560,6 +561,7 @@ export async function getNewsById(newsId: string): Promise<NewsDetail> {
       is_rumor,
       source_name,
       source_url,
+      image_url,
       created_at,
       games(id, name, slug, cover_url, logo_url, brand_color, hero_url)
     `
@@ -581,6 +583,7 @@ export async function getNewsById(newsId: string): Promise<NewsDetail> {
     is_rumor: data.is_rumor,
     source_name: data.source_name,
     source_url: data.source_url,
+    image_url: data.image_url,
     created_at: data.created_at,
     game: data.games as unknown as Game | null,
   }

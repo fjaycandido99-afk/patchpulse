@@ -156,7 +156,8 @@ export default async function NewsDetailPage({
   )
 
   const brandColor = news.game?.brand_color || '#6366f1'
-  const heroImage = news.game?.hero_url || news.game?.cover_url
+  // Use article's OG image first, then fall back to game images
+  const heroImage = news.image_url || news.game?.hero_url || news.game?.cover_url
 
   // Calculate impact scores based on topics
   const hasCompetitive = news.topics.some(t => ['ranked', 'competitive', 'esports', 'tournament'].includes(t.toLowerCase()))
