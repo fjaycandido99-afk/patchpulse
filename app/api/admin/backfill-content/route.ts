@@ -1,9 +1,16 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
 import { fetchAllSteamPatches } from '@/lib/fetchers/steam-patches'
 import { fetchAllGamingNews } from '@/lib/fetchers/gaming-news'
 
 export const maxDuration = 300 // 5 minutes max
+
+function verifyAuth(req: Request): boolean {
+  // Vercel cron
+  if (req.headers.get('x-vercel-cron') === '1') return true
+  // Manual call with secret
+  const secret = req.headers.get('x-cron-secret')
+  return !!process.env.CRON_SECRET && secret === process.env.CRON_SECRET
+}
 
 /**
  * Backfill patches and news from the last 3 days
@@ -11,13 +18,9 @@ export const maxDuration = 300 // 5 minutes max
  *
  * This fetches historical content to populate the database
  */
-export async function GET() {
-  const supabase = await createClient()
-
-  // Check if user is authenticated
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized - please log in first' }, { status: 401 })
+export async function GET(req: Request) {
+  if (!verifyAuth(req)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   const results = {
