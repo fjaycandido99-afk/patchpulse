@@ -6,7 +6,7 @@
     },
     {
       "path": "/api/cron/fetch-content",
-      "schedule": "0 * * * *"
+      "schedule": "*/15 * * * *"
     },
     {
       "path": "/api/cron/discover-games",
