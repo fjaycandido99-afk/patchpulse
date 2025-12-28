@@ -70,6 +70,75 @@ const nextConfig = {
         hostname: 'media.rawg.io',
         pathname: '/**',
       },
+      // IGN
+      {
+        protocol: 'https',
+        hostname: 'assets-prd.ignimgs.com',
+        pathname: '/**',
+      },
+      // Future PLC (PC Gamer, GamesRadar, etc.)
+      {
+        protocol: 'https',
+        hostname: 'cdn.mos.cms.futurecdn.net',
+        pathname: '/**',
+      },
+      // Kotaku / Gizmodo Media
+      {
+        protocol: 'https',
+        hostname: 'kotaku.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'i.kinja-img.com',
+        pathname: '/**',
+      },
+      // Eurogamer / Gamer Network
+      {
+        protocol: 'https',
+        hostname: 'assetsio.gnwcdn.com',
+        pathname: '/**',
+      },
+      // GameSpot
+      {
+        protocol: 'https',
+        hostname: 'www.gamespot.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'gamespot.com',
+        pathname: '/**',
+      },
+      // Polygon / Vox Media
+      {
+        protocol: 'https',
+        hostname: 'static0.polygonimages.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'cdn.vox-cdn.com',
+        pathname: '/**',
+      },
+      // VG247
+      {
+        protocol: 'https',
+        hostname: 'assets.vg247.com',
+        pathname: '/**',
+      },
+      // Rock Paper Shotgun
+      {
+        protocol: 'https',
+        hostname: 'assetsio.reedpopcdn.com',
+        pathname: '/**',
+      },
+      // The Verge
+      {
+        protocol: 'https',
+        hostname: 'duet-cdn.vox-cdn.com',
+        pathname: '/**',
+      },
     ],
   },
   // Empty turbopack config to acknowledge webpack configs from plugins
