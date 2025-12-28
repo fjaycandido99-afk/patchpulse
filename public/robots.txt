@@ -8,5 +8,5 @@ Disallow: /admin
 Disallow: /api/
 Disallow: /dev
 
-# Sitemap (add when ready)
-# Sitemap: https://patchpulse.app/sitemap.xml
+# Sitemap
+Sitemap: https://patchpulse.app/sitemap.xml
