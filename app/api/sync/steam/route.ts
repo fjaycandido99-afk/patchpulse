@@ -97,7 +97,27 @@ export async function GET() {
       .eq('user_id', user.id)
       .eq('provider', 'steam')
 
-    return NextResponse.redirect(`${returnUrl}/profile?steam=synced&count=${games.length}`)
+    // Auto-follow games that match our database
+    const steamAppIds = games.map(g => g.appid.toString())
+    const { data: matchedGames } = await supabase
+      .from('games')
+      .select('id')
+      .in('steam_app_id', steamAppIds)
+
+    if (matchedGames && matchedGames.length > 0) {
+      const followRecords = matchedGames.map(game => ({
+        user_id: user.id,
+        game_id: game.id,
+      }))
+
+      // Upsert to avoid duplicates
+      await supabase
+        .from('user_followed_games')
+        .upsert(followRecords, { onConflict: 'user_id,game_id', ignoreDuplicates: true })
+    }
+
+    const followedCount = matchedGames?.length || 0
+    return NextResponse.redirect(`${returnUrl}/profile?steam=synced&count=${games.length}&followed=${followedCount}`)
   } catch (err) {
     console.error('Steam sync error:', err)
     return NextResponse.redirect(`${returnUrl}/profile?error=steam_sync_failed`)

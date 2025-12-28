@@ -84,7 +84,8 @@ export async function GET(request: Request) {
       return NextResponse.redirect(`${returnUrl}/profile?error=save_failed`)
     }
 
-    return NextResponse.redirect(`${returnUrl}/profile?steam=connected`)
+    // Auto-sync library after connecting
+    return NextResponse.redirect(`${returnUrl}/api/sync/steam`)
   } catch (err) {
     console.error('Steam auth error:', err)
     return NextResponse.redirect(`${returnUrl}/profile?error=steam_auth_error`)

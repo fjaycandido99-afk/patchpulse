@@ -202,7 +202,8 @@ export async function GET(request: Request) {
       return NextResponse.redirect(`${returnUrl}/profile?error=save_failed`)
     }
 
-    return NextResponse.redirect(`${returnUrl}/profile?xbox=connected`)
+    // Auto-sync library after connecting
+    return NextResponse.redirect(`${returnUrl}/api/sync/xbox`)
   } catch (err) {
     console.error('Xbox auth error:', err)
     return NextResponse.redirect(`${returnUrl}/profile?error=xbox_auth_error`)
