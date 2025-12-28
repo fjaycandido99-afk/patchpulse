@@ -26,49 +26,49 @@ export async function GET(req: Request) {
   }
 
   try {
-    // Delete old patches that are NOT bookmarked
-    // First get bookmarked patch IDs
+    // Get bookmarked patch IDs to preserve
     const { data: bookmarkedPatches } = await supabase
       .from('bookmarks')
       .select('patch_id')
       .not('patch_id', 'is', null)
 
-    const bookmarkedPatchIds = bookmarkedPatches?.map(b => b.patch_id) || []
+    const bookmarkedPatchIds = (bookmarkedPatches?.map(b => b.patch_id).filter(Boolean) || []) as string[]
+
+    // Count patches to delete
+    const { count: patchCount } = await supabase
+      .from('patch_notes')
+      .select('*', { count: 'exact', head: true })
+      .lt('created_at', cutoffDate)
 
     // Delete old patches not in bookmarks
-    let patchQuery = supabase
-      .from('patch_notes')
-      .delete()
-      .lt('created_at', cutoffDate)
-
     if (bookmarkedPatchIds.length > 0) {
-      patchQuery = patchQuery.not('id', 'in', `(${bookmarkedPatchIds.join(',')})`)
+      await supabase
+        .from('patch_notes')
+        .delete()
+        .lt('created_at', cutoffDate)
+        .not('id', 'in', `(${bookmarkedPatchIds.join(',')})`)
+    } else {
+      await supabase
+        .from('patch_notes')
+        .delete()
+        .lt('created_at', cutoffDate)
     }
 
-    const { count: patchesDeleted } = await patchQuery.select('id', { count: 'exact', head: true })
-
-    // Actually delete
-    await supabase
-      .from('patch_notes')
-      .delete()
-      .lt('created_at', cutoffDate)
-      .not('id', 'in', bookmarkedPatchIds.length > 0 ? `(${bookmarkedPatchIds.join(',')})` : '()')
-
-    results.patches.deleted = patchesDeleted || 0
+    results.patches.deleted = patchCount || 0
     results.patches.kept = bookmarkedPatchIds.length
 
-    // Delete old news that are NOT bookmarked
+    // Get bookmarked news IDs to preserve
     const { data: bookmarkedNews } = await supabase
       .from('bookmarks')
       .select('news_id')
       .not('news_id', 'is', null)
 
-    const bookmarkedNewsIds = bookmarkedNews?.map(b => b.news_id) || []
+    const bookmarkedNewsIds = (bookmarkedNews?.map(b => b.news_id).filter(Boolean) || []) as string[]
 
-    // Count before delete
-    const { count: newsToDelete } = await supabase
+    // Count news to delete
+    const { count: newsCount } = await supabase
       .from('news_items')
-      .select('id', { count: 'exact', head: true })
+      .select('*', { count: 'exact', head: true })
       .lt('created_at', cutoffDate)
 
     // Delete old news not in bookmarks
@@ -85,10 +85,10 @@ export async function GET(req: Request) {
         .lt('created_at', cutoffDate)
     }
 
-    results.news.deleted = (newsToDelete || 0) - bookmarkedNewsIds.length
+    results.news.deleted = newsCount || 0
     results.news.kept = bookmarkedNewsIds.length
 
-    // Also clean up old notifications (older than 7 days, read ones only)
+    // Clean up old read notifications (older than 7 days)
     const sevenDaysAgo = new Date()
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
 
