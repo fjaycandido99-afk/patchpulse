@@ -293,14 +293,46 @@ export async function getHomeFeed(): Promise<HomeFeed> {
     .order('published_at', { ascending: false })
     .limit(6)
 
-  // Fetch news with game info including logo
-  const { data: news } = await supabase
+  // Fetch more news and shuffle for variety on dashboard
+  const { data: newsRaw } = await supabase
     .from('news_items')
     .select('*, games(name, slug, cover_url, logo_url, brand_color)')
     .in('game_id', followedGameIds)
-    .order('is_rumor', { ascending: true })
     .order('published_at', { ascending: false })
-    .limit(8)
+    .limit(30) // Fetch more to pick from
+
+  // Shuffle and pick diverse news items (different games, different topics)
+  let news: typeof newsRaw = []
+  if (newsRaw && newsRaw.length > 0) {
+    // Separate by game to ensure variety
+    const byGame = new Map<string, typeof newsRaw>()
+    for (const item of newsRaw) {
+      const gameId = item.game_id || 'general'
+      if (!byGame.has(gameId)) byGame.set(gameId, [])
+      byGame.get(gameId)!.push(item)
+    }
+
+    // Pick 1-2 items from each game, prioritizing non-rumors and recent
+    const selected: typeof newsRaw = []
+    const shuffledGames = Array.from(byGame.keys()).sort(() => Math.random() - 0.5)
+
+    for (const gameId of shuffledGames) {
+      const gameNews = byGame.get(gameId)!
+      // Sort: non-rumors first, then by date
+      gameNews.sort((a, b) => {
+        if (a.is_rumor !== b.is_rumor) return a.is_rumor ? 1 : -1
+        return new Date(b.published_at).getTime() - new Date(a.published_at).getTime()
+      })
+      // Take up to 2 items per game
+      selected.push(...gameNews.slice(0, 2))
+      if (selected.length >= 10) break
+    }
+
+    // Final shuffle and limit
+    news = selected.sort(() => Math.random() - 0.5).slice(0, 8)
+    // Re-sort by date for display order
+    news.sort((a, b) => new Date(b.published_at).getTime() - new Date(a.published_at).getTime())
+  }
 
   // Fetch platforms for followed games (gracefully handle if table doesn't exist)
   let gamePlatforms = new Map<string, Platform[]>()
@@ -387,7 +419,7 @@ export async function getHomeFeed(): Promise<HomeFeed> {
   return {
     followedGames,
     topPatches: patches || [],
-    latestNews: news || [],
+    latestNews: (news || []) as NewsItem[],
     backlogNudge: backlogData || null,
     upcomingReleases,
     upcomingGames,
