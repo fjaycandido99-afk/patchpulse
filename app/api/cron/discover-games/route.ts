@@ -36,11 +36,11 @@ export async function GET(req: Request) {
 
     for (const game of newReleases) {
       try {
-        // Check if game already exists (by slug or igdb_id)
+        // Check if game already exists (by slug)
         const { data: existing } = await supabase
           .from('games')
           .select('id')
-          .or(`slug.eq.${game.slug},igdb_id.eq.${game.id}`)
+          .eq('slug', game.slug)
           .single()
 
         if (existing) continue // Skip existing games
@@ -71,11 +71,11 @@ export async function GET(req: Request) {
 
     for (const game of upcoming) {
       try {
-        // Check if game already exists
+        // Check if game already exists (by slug)
         const { data: existing } = await supabase
           .from('games')
           .select('id')
-          .or(`slug.eq.${game.slug},igdb_id.eq.${game.id}`)
+          .eq('slug', game.slug)
           .single()
 
         if (existing) continue
