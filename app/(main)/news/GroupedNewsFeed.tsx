@@ -1,12 +1,56 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ChevronDown, ChevronRight, ChevronLeft, ExternalLink, Sparkles, Calendar, Clock, Gamepad2, Trophy, Brain, Cpu, Zap } from 'lucide-react'
 import { formatDate, relativeDaysText } from '@/lib/dates'
 import { markNewsAsVisited } from './actions'
 import type { GameNewsGroup, GroupedNewsItem, UpcomingRelease, TopStory } from './queries'
+
+// Safe image component that falls back to placeholder on error
+function SafeImage({
+  src,
+  alt,
+  fill,
+  className,
+  sizes,
+  priority,
+  fallbackIcon: FallbackIcon = Gamepad2
+}: {
+  src: string
+  alt: string
+  fill?: boolean
+  className?: string
+  sizes?: string
+  priority?: boolean
+  fallbackIcon?: typeof Gamepad2
+}) {
+  const [error, setError] = useState(false)
+
+  const handleError = useCallback(() => setError(true), [])
+
+  if (error || !src) {
+    return (
+      <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-zinc-800 to-zinc-900">
+        <FallbackIcon className="w-8 h-8 text-zinc-600" />
+      </div>
+    )
+  }
+
+  return (
+    <Image
+      src={src}
+      alt={alt}
+      fill={fill}
+      className={className}
+      sizes={sizes}
+      priority={priority}
+      onError={handleError}
+      unoptimized
+    />
+  )
+}
 
 type Game = {
   id: string
@@ -86,7 +130,7 @@ function TopStoryCard({ story, isPrimary = false }: { story: TopStory; isPrimary
     >
       <div className={`relative ${isPrimary ? 'aspect-[16/9] sm:aspect-[21/9]' : 'aspect-[16/9]'}`}>
         {heroImage ? (
-          <Image
+          <SafeImage
             src={heroImage}
             alt={story.title}
             fill
@@ -272,7 +316,7 @@ function NewsMediaCard({ item, showGameName = false }: { item: GroupedNewsItem; 
       {/* Thumbnail */}
       <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-lg overflow-hidden flex-shrink-0 bg-zinc-900">
         {thumbnail ? (
-          <Image
+          <SafeImage
             src={thumbnail}
             alt=""
             fill

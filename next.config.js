@@ -139,6 +139,63 @@ const nextConfig = {
         hostname: 'duet-cdn.vox-cdn.com',
         pathname: '/**',
       },
+      // Destructoid
+      {
+        protocol: 'https',
+        hostname: 'www.destructoid.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'destructoid.com',
+        pathname: '/**',
+      },
+      // WordPress / Jetpack CDN (many gaming sites use this)
+      {
+        protocol: 'https',
+        hostname: 'i0.wp.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'i1.wp.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'i2.wp.com',
+        pathname: '/**',
+      },
+      // Cloudinary (common CDN)
+      {
+        protocol: 'https',
+        hostname: 'res.cloudinary.com',
+        pathname: '/**',
+      },
+      // Imgix (common CDN)
+      {
+        protocol: 'https',
+        hostname: '**.imgix.net',
+        pathname: '/**',
+      },
+      // Additional GameSpot CDNs
+      {
+        protocol: 'https',
+        hostname: 'static.gamespot.com',
+        pathname: '/**',
+      },
+      // Feedburner images
+      {
+        protocol: 'https',
+        hostname: 'blogger.googleusercontent.com',
+        pathname: '/**',
+      },
+      // Generic image CDNs
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+        pathname: '/**',
+      },
     ],
   },
   // Empty turbopack config to acknowledge webpack configs from plugins
