@@ -1,6 +1,6 @@
 'use client'
 
-import { GameCarousel, GameCarouselMobile } from '@/components/games'
+import { GameCarousel } from '@/components/games'
 import type { UpcomingGame, NewReleaseGame } from './queries'
 
 type HomeGameStripProps = {
@@ -11,22 +11,13 @@ type HomeGameStripProps = {
 export function HomeGameStrip({ games, type }: HomeGameStripProps) {
   if (games.length === 0) return null
 
+  // Single-row horizontal carousel for both mobile and desktop
   return (
-    <>
-      {/* Mobile: Compact 4-column grid */}
-      <div className="sm:hidden">
-        <GameCarouselMobile games={games} type={type} />
-      </div>
-
-      {/* Desktop: Horizontal scroll carousel with auto-slide */}
-      <div className="hidden sm:block">
-        <GameCarousel
-          games={games}
-          type={type}
-          autoSlide={true}
-          autoSlideInterval={7000}
-        />
-      </div>
-    </>
+    <GameCarousel
+      games={games}
+      type={type}
+      autoSlide={true}
+      autoSlideInterval={7000}
+    />
   )
 }
