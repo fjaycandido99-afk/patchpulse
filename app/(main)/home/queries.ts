@@ -283,8 +283,7 @@ export async function getHomeFeed(): Promise<HomeFeed> {
     patches = patchData || []
   }
 
-  // Fetch more news and shuffle for variety on dashboard
-  // Include both followed games AND general gaming news (game_id is null)
+  // Fetch ALL news - both followed games AND general gaming news (game_id is null)
   let newsQuery = supabase
     .from('news_items')
     .select('*, games(name, slug, cover_url, logo_url, brand_color)')
@@ -298,39 +297,17 @@ export async function getHomeFeed(): Promise<HomeFeed> {
 
   const { data: newsRaw } = await newsQuery
     .order('published_at', { ascending: false })
-    .limit(30) // Fetch more to pick from
+    .limit(50) // Fetch all recent news
 
-  // Shuffle and pick diverse news items (different games, different topics)
+  // Sort by date (most recent first), non-rumors prioritized
   let news: typeof newsRaw = []
   if (newsRaw && newsRaw.length > 0) {
-    // Separate by game to ensure variety
-    const byGame = new Map<string, typeof newsRaw>()
-    for (const item of newsRaw) {
-      const gameId = item.game_id || 'general'
-      if (!byGame.has(gameId)) byGame.set(gameId, [])
-      byGame.get(gameId)!.push(item)
-    }
-
-    // Pick 1-2 items from each game, prioritizing non-rumors and recent
-    const selected: typeof newsRaw = []
-    const shuffledGames = Array.from(byGame.keys()).sort(() => Math.random() - 0.5)
-
-    for (const gameId of shuffledGames) {
-      const gameNews = byGame.get(gameId)!
-      // Sort: non-rumors first, then by date
-      gameNews.sort((a, b) => {
-        if (a.is_rumor !== b.is_rumor) return a.is_rumor ? 1 : -1
-        return new Date(b.published_at).getTime() - new Date(a.published_at).getTime()
-      })
-      // Take up to 2 items per game
-      selected.push(...gameNews.slice(0, 2))
-      if (selected.length >= 10) break
-    }
-
-    // Final shuffle and limit
-    news = selected.sort(() => Math.random() - 0.5).slice(0, 8)
-    // Re-sort by date for display order
-    news.sort((a, b) => new Date(b.published_at).getTime() - new Date(a.published_at).getTime())
+    news = [...newsRaw].sort((a, b) => {
+      // Non-rumors first
+      if (a.is_rumor !== b.is_rumor) return a.is_rumor ? 1 : -1
+      // Then by date
+      return new Date(b.published_at).getTime() - new Date(a.published_at).getTime()
+    })
   }
 
   // Fetch platforms for followed games (gracefully handle if table doesn't exist)
