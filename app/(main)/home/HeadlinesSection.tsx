@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Newspaper } from 'lucide-react'
@@ -132,7 +132,7 @@ function getPlatformsForGame(gameId: string, platformMap: Map<string, Platform[]
   return platformMap.get(gameId) || []
 }
 
-// Rotating spotlight headline component
+// Rotating spotlight headline component with swipe support
 function RotatingHeadline({
   news,
   seasonalImages,
@@ -142,17 +142,53 @@ function RotatingHeadline({
 }) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [animationKey, setAnimationKey] = useState(0)
+  const touchStartX = useRef<number | null>(null)
+  const touchEndX = useRef<number | null>(null)
 
-  const rotate = useCallback(() => {
+  const goToNext = useCallback(() => {
     setCurrentIndex((prev) => (prev + 1) % news.length)
-    setAnimationKey((prev) => prev + 1) // Trigger new animation
+    setAnimationKey((prev) => prev + 1)
   }, [news.length])
+
+  const goToPrev = useCallback(() => {
+    setCurrentIndex((prev) => (prev - 1 + news.length) % news.length)
+    setAnimationKey((prev) => prev + 1)
+  }, [news.length])
+
+  // Handle swipe gestures
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX
+  }, [])
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    touchEndX.current = e.touches[0].clientX
+  }, [])
+
+  const handleTouchEnd = useCallback(() => {
+    if (!touchStartX.current || !touchEndX.current) return
+
+    const diff = touchStartX.current - touchEndX.current
+    const minSwipeDistance = 50
+
+    if (Math.abs(diff) > minSwipeDistance) {
+      if (diff > 0) {
+        // Swiped left → next
+        goToNext()
+      } else {
+        // Swiped right → prev
+        goToPrev()
+      }
+    }
+
+    touchStartX.current = null
+    touchEndX.current = null
+  }, [goToNext, goToPrev])
 
   useEffect(() => {
     if (news.length <= 1) return
-    const interval = setInterval(rotate, 10000)
+    const interval = setInterval(goToNext, 10000)
     return () => clearInterval(interval)
-  }, [news.length, rotate])
+  }, [news.length, goToNext])
 
   if (news.length === 0) return null
 
@@ -162,12 +198,18 @@ function RotatingHeadline({
   const brandColor = item.games?.brand_color || '#3b82f6'
 
   return (
-    <Link
-      key={animationKey}
-      href={`/news/${item.id}`}
-      className="group relative block overflow-hidden rounded-xl border border-white/10 bg-black/40 mb-4 animate-soft-entry"
-      style={{ opacity: 1 }}
+    <div
+      className="relative mb-4"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
+      <Link
+        key={animationKey}
+        href={`/news/${item.id}`}
+        className="group relative block overflow-hidden rounded-xl border border-white/10 bg-black/40 animate-soft-entry"
+        style={{ opacity: 1 }}
+      >
       <div className="relative aspect-[16/9] sm:aspect-[21/9]">
         {/* Background image */}
         {coverUrl ? (
@@ -252,7 +294,15 @@ function RotatingHeadline({
           </div>
         )}
       </div>
-    </Link>
+      </Link>
+
+      {/* Swipe hint - only show on mobile if multiple items */}
+      {news.length > 1 && (
+        <div className="absolute bottom-3 left-3 flex items-center gap-1 text-[10px] text-white/40 sm:hidden">
+          <span>← swipe →</span>
+        </div>
+      )}
+    </div>
   )
 }
 
