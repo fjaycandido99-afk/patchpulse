@@ -8,9 +8,14 @@ export const maxDuration = 300 // 5 minutes max
 function verifyAuth(req: Request): boolean {
   // Vercel cron
   if (req.headers.get('x-vercel-cron') === '1') return true
-  // Manual call with secret
-  const secret = req.headers.get('x-cron-secret')
-  return !!process.env.CRON_SECRET && secret === process.env.CRON_SECRET
+  // Manual call with CRON_SECRET
+  const cronSecret = req.headers.get('x-cron-secret')
+  if (process.env.CRON_SECRET && cronSecret === process.env.CRON_SECRET) return true
+  // Manual call with INTERNAL_API_SECRET
+  const authHeader = req.headers.get('authorization')
+  const token = authHeader?.replace('Bearer ', '')
+  if (process.env.INTERNAL_API_SECRET && token === process.env.INTERNAL_API_SECRET) return true
+  return false
 }
 
 export async function GET(req: Request) {
