@@ -24,7 +24,7 @@ const NEWS_SOURCES: NewsSource[] = [
   { name: 'Polygon', feedUrl: 'https://www.polygon.com/rss/index.xml', category: 'general' },
   { name: 'VG247', feedUrl: 'https://www.vg247.com/feed', category: 'general' },
   { name: 'GamesRadar+', feedUrl: 'https://www.gamesradar.com/rss/', category: 'general' },
-  { name: 'The Verge Gaming', feedUrl: 'https://www.theverge.com/games/rss/index.xml', category: 'general' },
+  { name: 'Destructoid', feedUrl: 'https://www.destructoid.com/feed/', category: 'general' },
 ]
 
 type FeedItem = {
