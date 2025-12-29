@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { Newspaper } from 'lucide-react'
 import { MediaCard } from '@/components/media/MediaCard'
 import { Badge } from '@/components/ui/badge'
 import { MetaRow } from '@/components/ui/MetaRow'
@@ -10,6 +11,47 @@ import { SectionHeader } from '@/components/ui/SectionHeader'
 import { formatDate, relativeDaysText } from '@/lib/dates'
 import type { SeasonalImage } from '@/lib/images/seasonal'
 import type { Platform } from './queries'
+
+// Safe image component with error handling
+function SafeImage({
+  src,
+  alt,
+  fill,
+  className,
+  sizes,
+  priority,
+}: {
+  src: string
+  alt: string
+  fill?: boolean
+  className?: string
+  sizes?: string
+  priority?: boolean
+}) {
+  const [error, setError] = useState(false)
+  const handleError = useCallback(() => setError(true), [])
+
+  if (error || !src) {
+    return (
+      <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-zinc-800 to-zinc-900">
+        <Newspaper className="w-12 h-12 text-zinc-600" />
+      </div>
+    )
+  }
+
+  return (
+    <Image
+      src={src}
+      alt={alt}
+      fill={fill}
+      className={className}
+      sizes={sizes}
+      priority={priority}
+      onError={handleError}
+      unoptimized
+    />
+  )
+}
 
 type NewsItem = {
   id: string
@@ -109,7 +151,7 @@ function RotatingHeadline({
       <div className="relative aspect-[21/9] sm:aspect-[3/1]">
         {/* Background image */}
         {coverUrl ? (
-          <Image
+          <SafeImage
             src={coverUrl}
             alt=""
             fill
@@ -136,7 +178,7 @@ function RotatingHeadline({
             <div className="flex items-center gap-2 mb-2">
               {item.games?.logo_url && (
                 <div className="relative w-5 h-5 rounded overflow-hidden bg-white/10">
-                  <Image
+                  <SafeImage
                     src={item.games.logo_url}
                     alt=""
                     fill
