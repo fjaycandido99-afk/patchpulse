@@ -64,13 +64,38 @@ type NewsItem = {
   why_it_matters: string | null
   topics: string[]
   is_rumor: boolean
+  image_url: string | null
   games: {
     name: string
     slug: string
     cover_url: string | null
+    hero_url?: string | null
     logo_url?: string | null
     brand_color?: string | null
   } | null
+}
+
+// Get the best available image for a news item
+function getNewsImage(item: NewsItem, seasonalImages: Map<string, SeasonalImage>): string | null {
+  // 1. News article's own image (highest priority)
+  if (item.image_url) return item.image_url
+
+  // 2. Game's hero image
+  if (item.games?.hero_url) return item.games.hero_url
+
+  // 3. Seasonal cover (if applicable)
+  if (item.game_id) {
+    const seasonal = seasonalImages.get(item.game_id)
+    if (seasonal?.isSeasonal && seasonal.coverUrl) {
+      return seasonal.coverUrl
+    }
+  }
+
+  // 4. Game's cover image
+  if (item.games?.cover_url) return item.games.cover_url
+
+  // 5. No image available
+  return null
 }
 
 type HeadlinesSectionProps = {
@@ -132,9 +157,8 @@ function RotatingHeadline({
   if (news.length === 0) return null
 
   const item = news[currentIndex]
-  const coverUrl = item.game_id
-    ? getSeasonalCoverUrl(item.game_id, item.games?.cover_url, seasonalImages)
-    : item.games?.cover_url
+  // Use smart image fallback: image_url → hero → seasonal → cover
+  const coverUrl = getNewsImage(item, seasonalImages)
   const brandColor = item.games?.brand_color || '#3b82f6'
 
   return (

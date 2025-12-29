@@ -21,6 +21,7 @@ type GameInfo = {
   name: string
   slug: string
   cover_url: string | null
+  hero_url?: string | null
   logo_url?: string | null
   brand_color?: string | null
 }
@@ -49,6 +50,7 @@ type NewsItem = {
   why_it_matters: string | null
   topics: string[]
   is_rumor: boolean
+  image_url: string | null
   games: GameInfo | null
 }
 
@@ -284,9 +286,10 @@ export async function getHomeFeed(): Promise<HomeFeed> {
   }
 
   // Fetch ALL news - both followed games AND general gaming news (game_id is null)
+  // Include image_url from news_items and hero_url from games for proper fallbacks
   let newsQuery = supabase
     .from('news_items')
-    .select('*, games(name, slug, cover_url, logo_url, brand_color)')
+    .select('*, games(name, slug, cover_url, hero_url, logo_url, brand_color)')
 
   if (followedGameIds.length > 0) {
     newsQuery = newsQuery.or(`game_id.in.(${followedGameIds.join(',')}),game_id.is.null`)
