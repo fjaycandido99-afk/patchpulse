@@ -111,31 +111,13 @@ export function GameCarousel({
 
   return (
     <div
-      className="relative group"
+      className="relative overflow-hidden"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
       onTouchStart={() => setIsPaused(true)}
       onTouchEnd={() => setTimeout(() => setIsPaused(false), 3000)}
     >
-      {/* Desktop navigation arrows */}
-      {canScrollLeft && (
-        <button
-          onClick={() => scroll('left')}
-          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-black/80 border border-white/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity -translate-x-1/2 hover:bg-black hover:border-white/20"
-        >
-          <ChevronLeft className="w-5 h-5 text-white" />
-        </button>
-      )}
-      {canScrollRight && (
-        <button
-          onClick={() => scroll('right')}
-          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-black/80 border border-white/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity translate-x-1/2 hover:bg-black hover:border-white/20"
-        >
-          <ChevronRight className="w-5 h-5 text-white" />
-        </button>
-      )}
-
-      {/* Scroll container - 12px gap, clean horizontal scroll */}
+      {/* Scroll container */}
       <div
         ref={scrollRef}
         className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 scrollbar-hide"
@@ -149,13 +131,7 @@ export function GameCarousel({
             isActive={index === activeIndex}
           />
         ))}
-        {/* Partial next card indicator */}
-        <div className="snap-start shrink-0 w-4" aria-hidden />
       </div>
-
-      {/* Fade edges */}
-      <div className="absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-background to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity" />
-      <div className="absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none" />
     </div>
   )
 }
