@@ -244,9 +244,8 @@ export async function getUpcomingFromIgdb(limit = 20): Promise<IgdbGame[]> {
 }
 
 // Convert IGDB game to our database format
+// Only includes columns that exist in the games table
 export function igdbToGameRecord(igdb: IgdbGame) {
-  const developer = igdb.involved_companies?.find(c => c.developer)?.company?.name || null
-  const genres = igdb.genres?.map(g => g.name) || []
   const platforms = igdb.platforms?.map(p => p.abbreviation || p.name) || []
 
   // Extract Steam App ID from external_games (category 1 = Steam)
@@ -268,18 +267,9 @@ export function igdbToGameRecord(igdb: IgdbGame) {
   return {
     name: igdb.name,
     slug: igdb.slug,
-    description: igdb.summary || null,
-    developer,
-    genre: genres[0] || null,
     platforms: normalizedPlatforms,
-    release_date: igdb.first_release_date
-      ? new Date(igdb.first_release_date * 1000).toISOString().split('T')[0]
-      : null,
     cover_url: igdb.cover?.image_id
       ? `https://images.igdb.com/igdb/image/upload/t_cover_big_2x/${igdb.cover.image_id}.jpg`
-      : null,
-    hero_url: igdb.screenshots?.[0]?.image_id
-      ? `https://images.igdb.com/igdb/image/upload/t_screenshot_big/${igdb.screenshots[0].image_id}.jpg`
       : null,
     igdb_id: igdb.id,
     steam_app_id: steamAppId,
