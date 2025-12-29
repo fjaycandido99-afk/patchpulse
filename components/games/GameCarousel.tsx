@@ -135,11 +135,10 @@ export function GameCarousel({
         </button>
       )}
 
-      {/* Scroll container - 16px padding, 12px gap for thumb-friendly scrolling */}
+      {/* Scroll container - 12px gap, clean horizontal scroll */}
       <div
         ref={scrollRef}
-        className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 scrollbar-hide -mx-4 px-4 sm:-mx-0 sm:px-1"
-        style={{ scrollPaddingLeft: '16px', scrollPaddingRight: '16px' }}
+        className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 scrollbar-hide"
       >
         {games.map((game, index) => (
           <GameCard

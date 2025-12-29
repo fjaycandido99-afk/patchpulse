@@ -13,8 +13,8 @@ export function HomeGameStrip({ games, type }: HomeGameStripProps) {
 
   return (
     <>
-      {/* Mobile: Horizontal scroll (no auto-slide, manual swipe only) */}
-      <div className="sm:hidden">
+      {/* Mobile: Edge-to-edge horizontal scroll (no auto-slide) */}
+      <div className="sm:hidden -mx-4 px-4">
         <GameCarousel
           games={games}
           type={type}
