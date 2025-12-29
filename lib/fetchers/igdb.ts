@@ -155,6 +155,7 @@ export type IgdbGame = {
   genres?: { name: string }[]
   platforms?: { name: string; abbreviation?: string }[]
   involved_companies?: { company: { name: string }; developer: boolean }[]
+  external_games?: { category: number; uid: string }[]
   category?: number
 }
 
@@ -178,6 +179,7 @@ export async function getNewReleasesFromIgdb(limit = 20): Promise<IgdbGame[]> {
                cover.image_id, screenshots.image_id,
                genres.name, platforms.name, platforms.abbreviation,
                involved_companies.company.name, involved_companies.developer,
+               external_games.category, external_games.uid,
                category;
         where first_release_date >= ${thirtyDaysAgo}
           & first_release_date <= ${now}
@@ -221,6 +223,7 @@ export async function getUpcomingFromIgdb(limit = 20): Promise<IgdbGame[]> {
                cover.image_id, screenshots.image_id,
                genres.name, platforms.name, platforms.abbreviation,
                involved_companies.company.name, involved_companies.developer,
+               external_games.category, external_games.uid,
                category;
         where first_release_date >= ${now}
           & first_release_date <= ${ninetyDaysLater}
@@ -249,6 +252,10 @@ export function igdbToGameRecord(igdb: IgdbGame) {
   const developer = igdb.involved_companies?.find(c => c.developer)?.company?.name || null
   const genres = igdb.genres?.map(g => g.name) || []
   const platforms = igdb.platforms?.map(p => p.abbreviation || p.name) || []
+
+  // Extract Steam App ID from external_games (category 1 = Steam)
+  const steamEntry = igdb.external_games?.find(e => e.category === 1)
+  const steamAppId = steamEntry?.uid ? parseInt(steamEntry.uid, 10) : null
 
   // Normalize platform names
   const normalizedPlatforms = platforms.map(p => {
@@ -279,5 +286,6 @@ export function igdbToGameRecord(igdb: IgdbGame) {
       ? `https://images.igdb.com/igdb/image/upload/t_screenshot_big/${igdb.screenshots[0].image_id}.jpg`
       : null,
     igdb_id: igdb.id,
+    steam_app_id: steamAppId,
   }
 }
