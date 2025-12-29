@@ -445,8 +445,14 @@ function GameSection({
       {/* Collapsible content */}
       {isExpanded && (
         <div className="border-t border-white/5 p-3 space-y-2">
-          {items.map((item) => (
-            <NewsMediaCard key={item.id} item={item} />
+          {items.map((item, index) => (
+            <div
+              key={item.id}
+              className="animate-soft-entry"
+              style={{ animationDelay: `${index * 50}ms` }}
+            >
+              <NewsMediaCard item={item} />
+            </div>
           ))}
         </div>
       )}
@@ -531,11 +537,19 @@ export function GroupedNewsFeed({
           </div>
 
           {topStories.length === 1 ? (
-            <TopStoryCard story={topStories[0]} isPrimary />
+            <div className="animate-soft-entry">
+              <TopStoryCard story={topStories[0]} isPrimary />
+            </div>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2">
-              <TopStoryCard story={topStories[0]} isPrimary />
-              {topStories[1] && <TopStoryCard story={topStories[1]} />}
+              <div className="animate-soft-entry">
+                <TopStoryCard story={topStories[0]} isPrimary />
+              </div>
+              {topStories[1] && (
+                <div className="animate-soft-entry" style={{ animationDelay: '50ms' }}>
+                  <TopStoryCard story={topStories[1]} />
+                </div>
+              )}
             </div>
           )}
         </section>

@@ -270,34 +270,33 @@ export async function getHomeFeed(): Promise<HomeFeed> {
     }
   })
 
-  if (followedGameIds.length === 0) {
-    return {
-      followedGames: [],
-      topPatches: [],
-      latestNews: [],
-      backlogNudge: null,
-      upcomingReleases: [],
-      upcomingGames,
-      newReleases,
-      gamePlatforms: emptyPlatforms,
-      seasonalImages: emptySeasonalImages,
-    }
+  // Fetch patches with game info including logo (only if user follows games)
+  let patches: any[] = []
+  if (followedGameIds.length > 0) {
+    const { data: patchData } = await supabase
+      .from('patch_notes')
+      .select('*, games(name, slug, cover_url, logo_url, brand_color)')
+      .in('game_id', followedGameIds)
+      .order('impact_score', { ascending: false })
+      .order('published_at', { ascending: false })
+      .limit(6)
+    patches = patchData || []
   }
 
-  // Fetch patches with game info including logo
-  const { data: patches } = await supabase
-    .from('patch_notes')
-    .select('*, games(name, slug, cover_url, logo_url, brand_color)')
-    .in('game_id', followedGameIds)
-    .order('impact_score', { ascending: false })
-    .order('published_at', { ascending: false })
-    .limit(6)
-
   // Fetch more news and shuffle for variety on dashboard
-  const { data: newsRaw } = await supabase
+  // Include both followed games AND general gaming news (game_id is null)
+  let newsQuery = supabase
     .from('news_items')
     .select('*, games(name, slug, cover_url, logo_url, brand_color)')
-    .in('game_id', followedGameIds)
+
+  if (followedGameIds.length > 0) {
+    newsQuery = newsQuery.or(`game_id.in.(${followedGameIds.join(',')}),game_id.is.null`)
+  } else {
+    // If no followed games, just show general gaming news
+    newsQuery = newsQuery.is('game_id', null)
+  }
+
+  const { data: newsRaw } = await newsQuery
     .order('published_at', { ascending: false })
     .limit(30) // Fetch more to pick from
 
@@ -336,38 +335,40 @@ export async function getHomeFeed(): Promise<HomeFeed> {
 
   // Fetch platforms for followed games (gracefully handle if table doesn't exist)
   let gamePlatforms = new Map<string, Platform[]>()
-  try {
-    const { data: platformData } = await supabase
-      .from('game_platforms')
-      .select(`
-        game_id,
-        platforms (
-          id,
-          name,
-          icon_url,
-          color,
-          sort_order
-        )
-      `)
-      .in('game_id', followedGameIds)
+  if (followedGameIds.length > 0) {
+    try {
+      const { data: platformData } = await supabase
+        .from('game_platforms')
+        .select(`
+          game_id,
+          platforms (
+            id,
+            name,
+            icon_url,
+            color,
+            sort_order
+          )
+        `)
+        .in('game_id', followedGameIds)
 
-    if (platformData) {
-      for (const item of platformData as any[]) {
-        const gameId = item.game_id as string
-        if (!gamePlatforms.has(gameId)) {
-          gamePlatforms.set(gameId, [])
+      if (platformData) {
+        for (const item of platformData as any[]) {
+          const gameId = item.game_id as string
+          if (!gamePlatforms.has(gameId)) {
+            gamePlatforms.set(gameId, [])
+          }
+          if (item.platforms) {
+            gamePlatforms.get(gameId)!.push(item.platforms as Platform)
+          }
         }
-        if (item.platforms) {
-          gamePlatforms.get(gameId)!.push(item.platforms as Platform)
+        // Sort platforms
+        for (const [, platforms] of gamePlatforms) {
+          platforms.sort((a, b) => a.sort_order - b.sort_order)
         }
       }
-      // Sort platforms
-      for (const [, platforms] of gamePlatforms) {
-        platforms.sort((a, b) => a.sort_order - b.sort_order)
-      }
+    } catch {
+      // Table doesn't exist yet, use empty map
     }
-  } catch {
-    // Table doesn't exist yet, use empty map
   }
 
   const { data: backlogData } = await (supabase as any)
@@ -388,32 +389,36 @@ export async function getHomeFeed(): Promise<HomeFeed> {
     release_type: string
     game: { name: string; slug: string; cover_url: string | null }
   }> = []
-  try {
-    const { data: releasesData } = await supabase
-      .from('upcoming_releases')
-      .select('id, title, release_date, release_type, games!inner(name, slug, cover_url)')
-      .in('game_id', followedGameIds)
-      .or(`release_date.gte.${new Date().toISOString().split('T')[0]},release_date.is.null`)
-      .order('release_date', { ascending: true, nullsFirst: false })
-      .limit(5)
+  if (followedGameIds.length > 0) {
+    try {
+      const { data: releasesData } = await supabase
+        .from('upcoming_releases')
+        .select('id, title, release_date, release_type, games!inner(name, slug, cover_url)')
+        .in('game_id', followedGameIds)
+        .or(`release_date.gte.${new Date().toISOString().split('T')[0]},release_date.is.null`)
+        .order('release_date', { ascending: true, nullsFirst: false })
+        .limit(5)
 
-    upcomingReleases = (releasesData || []).map((r) => ({
-      id: r.id,
-      title: r.title,
-      release_date: r.release_date,
-      release_type: r.release_type,
-      game: r.games as unknown as { name: string; slug: string; cover_url: string | null },
-    }))
-  } catch {
-    // Table doesn't exist yet
+      upcomingReleases = (releasesData || []).map((r) => ({
+        id: r.id,
+        title: r.title,
+        release_date: r.release_date,
+        release_type: r.release_type,
+        game: r.games as unknown as { name: string; slug: string; cover_url: string | null },
+      }))
+    } catch {
+      // Table doesn't exist yet
+    }
   }
 
   // Fetch seasonal images for all followed games
   let seasonalImages = new Map<string, SeasonalImage>()
-  try {
-    seasonalImages = await batchGetSeasonalImages(followedGameIds)
-  } catch {
-    // Table might not exist yet, use empty map
+  if (followedGameIds.length > 0) {
+    try {
+      seasonalImages = await batchGetSeasonalImages(followedGameIds)
+    } catch {
+      // Table might not exist yet, use empty map
+    }
   }
 
   return {

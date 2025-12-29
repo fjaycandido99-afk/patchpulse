@@ -226,6 +226,22 @@
     animation: fadeSlideIn 0.3s ease-out;
   }
 
+  /* Soft entry animation for news cards */
+  @keyframes softEntry {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-soft-entry {
+    animation: softEntry 180ms ease-out forwards;
+  }
+
   /* Carousel dots */
   .carousel-dot {
     @apply w-2 h-2 rounded-full bg-white/30 transition-all duration-300;
@@ -389,6 +405,7 @@
     .skeleton,
     .pull-spinner,
     .page-enter,
+    .animate-soft-entry,
     .animate-pulse-soft,
     .animate-ping-slow,
     .animate-wiggle,
