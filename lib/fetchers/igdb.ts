@@ -264,14 +264,20 @@ export function igdbToGameRecord(igdb: IgdbGame) {
     return p
   }).filter((v, i, a) => a.indexOf(v) === i) // unique
 
-  return {
+  // Only include fields that exist in the games table
+  // User needs to run: ALTER TABLE games ADD COLUMN IF NOT EXISTS igdb_id INTEGER;
+  // and: ALTER TABLE games ADD COLUMN IF NOT EXISTS steam_app_id INTEGER;
+  const record: Record<string, unknown> = {
     name: igdb.name,
     slug: igdb.slug,
     platforms: normalizedPlatforms,
     cover_url: igdb.cover?.image_id
       ? `https://images.igdb.com/igdb/image/upload/t_cover_big_2x/${igdb.cover.image_id}.jpg`
       : null,
-    igdb_id: igdb.id,
-    steam_app_id: steamAppId,
   }
+
+  // These columns may not exist yet
+  if (steamAppId) record.steam_app_id = steamAppId
+
+  return record
 }
