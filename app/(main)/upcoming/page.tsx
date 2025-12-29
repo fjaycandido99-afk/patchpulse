@@ -1,6 +1,6 @@
 import { getUpcomingGames, getUpcomingCounts } from './queries'
 import { SpotlightGameCard, EmptyGameState } from '@/components/games'
-import { Calendar, Sparkles, Clock } from 'lucide-react'
+import { Calendar, Sparkles } from 'lucide-react'
 import { UpcomingCalendar } from './UpcomingCalendar'
 
 export const metadata = {
@@ -18,19 +18,15 @@ export default async function UpcomingPage() {
   const hasCalendar = upcoming.calendar.length > 0
 
   return (
-    <div className="space-y-8 page-enter">
+    <div className="space-y-8">
       {/* Header */}
       <header>
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
           Upcoming Games
         </h1>
         <p className="mt-1 text-muted-foreground">
-          What's on the horizon — without the hype.
+          Games launching soon — without the hype.
         </p>
-        <div className="mt-2 flex items-center gap-1.5 text-xs text-zinc-500">
-          <Clock className="w-3 h-3" />
-          <span>Updated daily</span>
-        </div>
       </header>
 
       {/* Quick stats */}

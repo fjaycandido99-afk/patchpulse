@@ -3,25 +3,21 @@ import { ChevronRight } from 'lucide-react'
 
 type SectionHeaderProps = {
   title: string
-  subtitle?: string
   href?: string
   actionLabel?: string
   badge?: string | number
-  updatedAt?: string
   glowLine?: boolean
 }
 
 export function SectionHeader({
   title,
-  subtitle,
   href,
   actionLabel = 'View all',
   badge,
-  updatedAt,
   glowLine = false,
 }: SectionHeaderProps) {
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-2">
           <h2 className="text-lg font-bold tracking-tight text-white">
@@ -43,14 +39,6 @@ export function SectionHeader({
           </Link>
         )}
       </div>
-      {/* Subtitle and update time */}
-      {(subtitle || updatedAt) && (
-        <div className="flex items-center gap-2 text-xs text-zinc-500">
-          {subtitle && <span>{subtitle}</span>}
-          {subtitle && updatedAt && <span className="text-zinc-600">·</span>}
-          {updatedAt && <span className="text-zinc-600">{updatedAt}</span>}
-        </div>
-      )}
       {glowLine && <GlowDivider />}
     </div>
   )

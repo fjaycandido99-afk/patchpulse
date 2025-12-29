@@ -4,7 +4,6 @@ import Image from 'next/image'
 import { Gamepad2, Calendar } from 'lucide-react'
 import { useSpotlight } from './SpotlightProvider'
 import { Badge } from '@/components/ui/badge'
-import { countdownBadge, countdownText, releasedAgoText } from '@/lib/dates'
 import type { SpotlightGame } from './GameSpotlightPanel'
 
 type SpotlightGameCardProps = {
@@ -18,48 +17,52 @@ export function SpotlightGameCard({ game, type, variant = 'default' }: Spotlight
 
   const isUpcoming = type === 'upcoming'
 
-  // Format relative date using new utilities
+  // Format relative date
   const getRelativeDate = () => {
-    if (isUpcoming) {
-      return countdownText(game.release_date)
+    if (isUpcoming && game.days_until !== undefined) {
+      if (game.days_until === 0) return 'Today'
+      if (game.days_until === 1) return 'Tomorrow'
+      if (game.days_until <= 7) return `In ${game.days_until}d`
+      if (game.days_until <= 30) return `In ${Math.ceil(game.days_until / 7)}w`
+      return `${game.days_until}d`
+    }
+    if (!isUpcoming && game.days_since !== undefined) {
+      if (game.days_since === 0) return 'Today'
+      if (game.days_since === 1) return 'Yesterday'
+      if (game.days_since <= 7) return `${game.days_since}d ago`
+      return `${Math.ceil(game.days_since / 7)}w ago`
     }
     if (game.release_date) {
-      return releasedAgoText(game.release_date).replace('Released ', '')
+      return new Date(game.release_date).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+      })
     }
     return 'TBA'
   }
 
-  // Time badge text
-  const getTimeBadge = () => {
-    if (isUpcoming) {
-      return countdownBadge(game.release_date)
-    }
-    if (game.days_since !== undefined) {
-      if (game.days_since === 0) return 'TODAY'
-      return `${game.days_since}d`
-    }
-    return 'NEW'
-  }
-
-  // Countdown badge with glow
+  // Countdown badge
   const getBadge = () => {
-    const badge = getTimeBadge()
-    const isUrgent = isUpcoming && game.days_until !== undefined && game.days_until <= 7
-    const isNew = !isUpcoming && game.days_since !== undefined && game.days_since <= 3
-
-    return (
-      <span className={`absolute top-2 right-2 z-10 rounded-full px-2 py-0.5 text-xs font-bold transition-all ${
-        isUrgent
-          ? 'bg-violet-500 text-white animate-pulse-soft glow-sm'
-          : isNew
-            ? 'bg-emerald-500 text-white glow-sm'
-            : isUpcoming
-              ? 'bg-indigo-500/90 text-white backdrop-blur-sm'
-              : 'bg-emerald-500/90 text-white backdrop-blur-sm'
-      }`}>
-        {badge}
-      </span>
-    )
+    if (isUpcoming && game.days_until !== undefined) {
+      const urgent = game.days_until <= 7
+      return (
+        <span className={`absolute top-2 right-2 z-10 rounded-full px-2 py-0.5 text-xs font-bold ${
+          urgent
+            ? 'bg-violet-500 text-white animate-pulse'
+            : 'bg-white/20 text-white backdrop-blur-sm'
+        }`}>
+          {game.days_until}d
+        </span>
+      )
+    }
+    if (!isUpcoming && game.days_since !== undefined && game.days_since <= 7) {
+      return (
+        <span className="absolute top-2 right-2 z-10 rounded-full bg-emerald-500 px-2 py-0.5 text-xs font-bold text-white">
+          New!
+        </span>
+      )
+    }
+    return null
   }
 
   const handleClick = () => {
@@ -89,10 +92,10 @@ export function SpotlightGameCard({ game, type, variant = 'default' }: Spotlight
             </div>
           )}
           {/* Countdown badge */}
-          <span className={`absolute top-0.5 left-0.5 text-[7px] px-1 py-0.5 rounded-full backdrop-blur-sm font-semibold ${
-            isUpcoming ? 'bg-indigo-500/90 text-white' : 'bg-emerald-500/90 text-white'
+          <span className={`absolute top-0.5 left-0.5 text-[7px] px-1 py-0.5 rounded-full backdrop-blur-sm font-medium ${
+            isUpcoming ? 'bg-indigo-500/80 text-white' : 'bg-emerald-500/80 text-white'
           }`}>
-            {getTimeBadge()}
+            {isUpcoming ? (game.days_until !== undefined ? `${game.days_until}d` : 'TBA') : `${game.days_since}d`}
           </span>
         </div>
         <h3 className="font-medium leading-tight line-clamp-1 text-zinc-200 text-[9px] mt-0.5">
@@ -127,18 +130,16 @@ export function SpotlightGameCard({ game, type, variant = 'default' }: Spotlight
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
-          {/* Badge with glow */}
+          {/* Badge */}
           <div className="absolute top-4 right-4">
-            <span className={`rounded-full px-3 py-1 text-sm font-bold transition-all ${
+            <span className={`rounded-full px-3 py-1 text-sm font-bold ${
               isUpcoming
                 ? game.days_until !== undefined && game.days_until <= 7
-                  ? 'bg-violet-500 text-white animate-pulse-soft glow-sm'
-                  : 'bg-indigo-500/90 text-white backdrop-blur-sm'
-                : game.days_since !== undefined && game.days_since <= 3
-                  ? 'bg-emerald-500 text-white glow-sm'
-                  : 'bg-emerald-500/90 text-white'
+                  ? 'bg-violet-500 text-white animate-pulse'
+                  : 'bg-white/20 text-white backdrop-blur-sm'
+                : 'bg-emerald-500/90 text-white'
             }`}>
-              {getTimeBadge()}
+              {isUpcoming ? (game.days_until !== undefined ? `${game.days_until}d` : 'TBA') : 'New!'}
             </span>
           </div>
 

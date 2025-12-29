@@ -105,12 +105,7 @@ export default async function HomePage() {
         {/* New Releases */}
         {feed.newReleases.length > 0 && (
           <section className="mt-4">
-            <SectionHeader
-              title="New Releases"
-              subtitle="What just dropped"
-              href="/releases"
-              updatedAt="Updated hourly"
-            />
+            <SectionHeader title="New Releases" href="/releases" />
             <div className="mt-3">
               <HomeGameStrip games={feed.newReleases} type="new" />
             </div>
@@ -120,12 +115,7 @@ export default async function HomePage() {
         {/* Coming Soon */}
         {feed.upcomingGames.length > 0 && (
           <section className="mt-4">
-            <SectionHeader
-              title="Coming Soon"
-              subtitle="What's on the horizon"
-              href="/upcoming"
-              updatedAt="Updated daily"
-            />
+            <SectionHeader title="Coming Soon" href="/upcoming" />
             <div className="mt-3">
               <HomeGameStrip games={feed.upcomingGames} type="upcoming" />
             </div>
