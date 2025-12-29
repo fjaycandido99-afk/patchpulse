@@ -36,7 +36,10 @@ export async function fetchSteamPatches(steamAppId: number, gameId: string, game
                       title.includes('hotfix') ||
                       title.includes('fix') ||
                       title.includes('version') ||
-                      title.includes('changelog')
+                      title.includes('changelog') ||
+                      title.includes('release note') ||
+                      title.includes('maintenance') ||
+                      title.includes('notes')
 
       if (!isPatch) continue
 
