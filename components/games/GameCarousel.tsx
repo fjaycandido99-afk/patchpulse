@@ -36,14 +36,14 @@ export function GameCarousel({
     setCanScrollLeft(el.scrollLeft > 10)
     setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 10)
 
-    // Calculate active index based on scroll position (responsive card width)
-    const isMobile = window.innerWidth < 640
-    const cardWidth = isMobile ? 116 : 156 // 100px + 16px gap on mobile, 140px + 16px on desktop
+    // Calculate active index based on scroll position
+    // 140px card + 12px gap = 152px per card
+    const cardWidth = 152
     const newIndex = Math.round(el.scrollLeft / cardWidth)
     setActiveIndex(Math.min(newIndex, games.length - 1))
   }, [games.length])
 
-  // Auto-slide functionality
+  // Auto-slide functionality (desktop only)
   useEffect(() => {
     if (!autoSlide || isPaused || games.length <= 3) return
 
@@ -51,8 +51,7 @@ export function GameCarousel({
       const el = scrollRef.current
       if (!el) return
 
-      const isMobile = window.innerWidth < 640
-      const cardWidth = isMobile ? 116 : 156
+      const cardWidth = 152 // 140px + 12px gap
       const maxScroll = el.scrollWidth - el.clientWidth
 
       if (el.scrollLeft >= maxScroll - 10) {
@@ -84,8 +83,7 @@ export function GameCarousel({
   const scroll = (direction: 'left' | 'right') => {
     const el = scrollRef.current
     if (!el) return
-    const isMobile = window.innerWidth < 640
-    const cardWidth = isMobile ? 116 : 156
+    const cardWidth = 152 // 140px + 12px gap
     const scrollAmount = direction === 'left' ? -cardWidth * 2 : cardWidth * 2
     el.scrollBy({ left: scrollAmount, behavior: 'smooth' })
   }
@@ -137,11 +135,11 @@ export function GameCarousel({
         </button>
       )}
 
-      {/* Scroll container */}
+      {/* Scroll container - 16px padding, 12px gap for thumb-friendly scrolling */}
       <div
         ref={scrollRef}
-        className="flex gap-3 sm:gap-4 overflow-x-auto snap-x snap-mandatory pb-2 scrollbar-hide px-1"
-        style={{ scrollPaddingLeft: '4px', scrollPaddingRight: '4px' }}
+        className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 scrollbar-hide -mx-4 px-4 sm:-mx-0 sm:px-1"
+        style={{ scrollPaddingLeft: '16px', scrollPaddingRight: '16px' }}
       >
         {games.map((game, index) => (
           <GameCard
@@ -189,11 +187,11 @@ function GameCard({ game, type, onClick, isActive }: GameCardProps) {
   return (
     <button
       onClick={onClick}
-      className={`snap-start shrink-0 w-[100px] sm:w-[140px] text-left transition-all duration-300 ${
-        isActive ? 'scale-[1.03]' : 'hover:scale-[1.02]'
+      className={`snap-start shrink-0 w-[140px] text-left transition-all duration-300 active:scale-[0.98] ${
+        isActive ? 'scale-[1.02]' : ''
       }`}
     >
-      <div className="relative aspect-[2/3] rounded-lg sm:rounded-xl overflow-hidden bg-zinc-900 group/card">
+      <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-zinc-900 group/card">
         {/* Cover image */}
         {game.cover_url ? (
           <Image
@@ -201,13 +199,13 @@ function GameCard({ game, type, onClick, isActive }: GameCardProps) {
             alt={game.name}
             fill
             className="object-cover transition-transform duration-500 group-hover/card:scale-105"
-            sizes="(max-width: 640px) 100px, 140px"
+            sizes="140px"
             loading="lazy"
             unoptimized
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-zinc-800 to-zinc-900">
-            <Gamepad2 className="w-6 h-6 sm:w-8 sm:h-8 text-zinc-700" />
+            <Gamepad2 className="w-8 h-8 text-zinc-700" />
           </div>
         )}
 
@@ -226,7 +224,7 @@ function GameCard({ game, type, onClick, isActive }: GameCardProps) {
 
         {/* Time badge with glow effect */}
         <span
-          className={`absolute top-1 left-1 sm:top-2 sm:left-2 text-[9px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 rounded-full backdrop-blur-sm font-semibold ${badgeColor} ${
+          className={`absolute top-2 left-2 text-[11px] px-2 py-0.5 rounded-full backdrop-blur-sm font-semibold ${badgeColor} ${
             isToday ? 'animate-pulse-soft glow-sm' : ''
           }`}
         >
@@ -235,26 +233,26 @@ function GameCard({ game, type, onClick, isActive }: GameCardProps) {
 
         {/* Live service indicator */}
         {isLive && (
-          <span className="absolute top-1 right-1 sm:top-2 sm:right-2 text-[8px] sm:text-[9px] px-1 sm:px-1.5 py-0.5 rounded bg-red-500/90 text-white font-medium">
+          <span className="absolute top-2 right-2 text-[9px] px-1.5 py-0.5 rounded bg-red-500/90 text-white font-medium">
             LIVE
           </span>
         )}
 
-        {/* Genre tag at bottom - hidden on mobile for cleaner look */}
+        {/* Genre tag at bottom */}
         {game.genre && (
-          <span className="absolute bottom-1.5 left-1.5 right-1.5 sm:bottom-2 sm:left-2 sm:right-2 text-[9px] sm:text-[10px] text-white/80 truncate hidden sm:block">
+          <span className="absolute bottom-2 left-2 right-2 text-[10px] text-white/80 truncate">
             {game.genre}
           </span>
         )}
       </div>
 
       {/* Title */}
-      <h3 className="font-medium text-[11px] sm:text-sm mt-1.5 sm:mt-2 leading-tight line-clamp-2 text-zinc-200 group-hover:text-white transition-colors">
+      <h3 className="font-medium text-sm mt-2 leading-tight line-clamp-2 text-zinc-200">
         {game.name}
       </h3>
 
       {/* Release info text */}
-      <p className="text-[10px] sm:text-[11px] text-zinc-500 mt-0.5">
+      <p className="text-[11px] text-zinc-500 mt-0.5">
         {isUpcoming
           ? game.release_date
             ? new Date(game.release_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
