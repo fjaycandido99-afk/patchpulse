@@ -64,7 +64,7 @@ export default async function MainLayout({
         <div className="flex min-h-screen">
           <DesktopSidebar counts={sidebarCounts} notificationStats={notificationStats} />
 
-        <main className="flex-1 pb-20 md:ml-64 md:pb-0">
+        <main className="flex-1 pb-20 md:ml-64 md:pb-0 overflow-x-hidden">
           {/* Mobile header with search */}
           <header className="sticky top-0 z-40 md:hidden bg-background border-b border-white/10">
             <div className="flex items-center justify-between gap-2 px-4 py-3">
