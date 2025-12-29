@@ -2,7 +2,7 @@ import { Suspense } from 'react'
 import { getNewReleases, getReleaseCounts } from './queries'
 import { SpotlightGameCard, EmptyGameState, EmptyGameStateInline } from '@/components/games'
 import { ReleasesFilters } from './ReleasesFilters'
-import { Info, TrendingUp } from 'lucide-react'
+import { Info, TrendingUp, Clock } from 'lucide-react'
 
 type SearchParams = Promise<{
   days?: string
@@ -32,15 +32,19 @@ export default async function ReleasesPage({
   const hasFeatured = releases.featured.length > 0
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 page-enter">
       {/* Header */}
       <header>
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
           New Releases
         </h1>
         <p className="mt-1 text-muted-foreground">
-          Recently released games worth knowing about.
+          What just dropped — updated hourly.
         </p>
+        <div className="mt-2 flex items-center gap-1.5 text-xs text-zinc-500">
+          <Clock className="w-3 h-3" />
+          <span>Updated hourly</span>
+        </div>
       </header>
 
       {/* Featured New Releases */}

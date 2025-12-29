@@ -105,22 +105,30 @@ export default async function HomePage() {
         {/* New Releases */}
         {feed.newReleases.length > 0 && (
           <section className="mt-4">
-            <Link href="/releases" className="flex items-center justify-between mb-2 group">
-              <h2 className="text-sm font-semibold text-white group-hover:text-primary transition-colors">New Releases</h2>
-              <span className="text-xs text-muted-foreground group-hover:text-primary transition-colors">View all →</span>
-            </Link>
-            <HomeGameStrip games={feed.newReleases} type="new" />
+            <SectionHeader
+              title="New Releases"
+              subtitle="What just dropped"
+              href="/releases"
+              updatedAt="Updated hourly"
+            />
+            <div className="mt-3">
+              <HomeGameStrip games={feed.newReleases} type="new" />
+            </div>
           </section>
         )}
 
         {/* Coming Soon */}
         {feed.upcomingGames.length > 0 && (
           <section className="mt-4">
-            <Link href="/upcoming" className="flex items-center justify-between mb-2 group">
-              <h2 className="text-sm font-semibold text-white group-hover:text-primary transition-colors">Coming Soon</h2>
-              <span className="text-xs text-muted-foreground group-hover:text-primary transition-colors">View all →</span>
-            </Link>
-            <HomeGameStrip games={feed.upcomingGames} type="upcoming" />
+            <SectionHeader
+              title="Coming Soon"
+              subtitle="What's on the horizon"
+              href="/upcoming"
+              updatedAt="Updated daily"
+            />
+            <div className="mt-3">
+              <HomeGameStrip games={feed.upcomingGames} type="upcoming" />
+            </div>
           </section>
         )}
 
