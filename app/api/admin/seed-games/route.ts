@@ -69,21 +69,22 @@ export async function GET(req: Request) {
 
   for (const game of POPULAR_GAMES) {
     try {
-      // Check if game exists
+      // Check if game exists (by slug or name)
       const { data: existing } = await supabase
         .from('games')
         .select('id, steam_app_id')
-        .eq('slug', game.slug)
+        .or(`slug.eq.${game.slug},name.ilike.${game.name}`)
+        .limit(1)
         .single()
 
       if (existing) {
-        // Update steam_app_id if missing
-        if (!existing.steam_app_id && game.steam_app_id > 0) {
-          await supabase
+        // Always update steam_app_id if we have one
+        if (game.steam_app_id > 0) {
+          const { error } = await supabase
             .from('games')
             .update({ steam_app_id: game.steam_app_id })
             .eq('id', existing.id)
-          updated++
+          if (!error) updated++
         }
       } else {
         // Insert new game
