@@ -12,9 +12,9 @@ export function HomeGameStrip({ games, type }: HomeGameStripProps) {
   if (games.length === 0) return null
 
   return (
-    <>
-      {/* Mobile: Edge-to-edge horizontal scroll (no auto-slide) */}
-      <div className="sm:hidden -mx-4 px-4">
+    <div className="overflow-hidden">
+      {/* Mobile: Horizontal scroll (no auto-slide) */}
+      <div className="sm:hidden">
         <GameCarousel
           games={games}
           type={type}
@@ -31,6 +31,6 @@ export function HomeGameStrip({ games, type }: HomeGameStripProps) {
           autoSlideInterval={7000}
         />
       </div>
-    </>
+    </div>
   )
 }
