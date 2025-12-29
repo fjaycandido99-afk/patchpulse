@@ -183,9 +183,7 @@ export async function getNewReleasesFromIgdb(limit = 20): Promise<IgdbGame[]> {
                category;
         where first_release_date >= ${thirtyDaysAgo}
           & first_release_date <= ${now}
-          & category = 0
-          & cover != null
-          & hypes > 5;
+          & cover != null;
         sort first_release_date desc;
         limit ${limit};
       `,
@@ -227,9 +225,7 @@ export async function getUpcomingFromIgdb(limit = 20): Promise<IgdbGame[]> {
                category;
         where first_release_date >= ${now}
           & first_release_date <= ${ninetyDaysLater}
-          & category = 0
-          & cover != null
-          & hypes > 10;
+          & cover != null;
         sort first_release_date asc;
         limit ${limit};
       `,
