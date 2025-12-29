@@ -168,7 +168,7 @@ function RotatingHeadline({
       className="group relative block overflow-hidden rounded-xl border border-white/10 bg-black/40 mb-4 animate-soft-entry"
       style={{ opacity: 1 }}
     >
-      <div className="relative aspect-[21/9] sm:aspect-[3/1]">
+      <div className="relative aspect-[16/9] sm:aspect-[21/9]">
         {/* Background image */}
         {coverUrl ? (
           <SafeImage
@@ -280,11 +280,7 @@ export function HeadlinesSection({ news, seasonalImages, gamePlatforms }: Headli
               title={newsItem.title}
               summary={newsItem.summary}
               whyItMatters={newsItem.why_it_matters}
-              imageUrl={
-                newsItem.game_id
-                  ? getSeasonalCoverUrl(newsItem.game_id, newsItem.games?.cover_url, seasonalImages)
-                  : newsItem.games?.cover_url
-              }
+              imageUrl={getNewsImage(newsItem, seasonalImages)}
               variant="horizontal"
               game={
                 newsItem.game_id

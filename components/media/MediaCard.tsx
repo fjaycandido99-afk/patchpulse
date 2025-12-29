@@ -114,6 +114,7 @@ export function MediaCard({
               sizes="(max-width: 640px) 112px, 144px"
               placeholder={blurHash ? 'blur' : 'empty'}
               blurDataURL={blurHash || undefined}
+              unoptimized
             />
           ) : (
             <ThumbnailFallback title={title} />
@@ -172,6 +173,7 @@ export function MediaCard({
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             placeholder={blurHash ? 'blur' : 'empty'}
             blurDataURL={blurHash || undefined}
+            unoptimized
           />
         ) : (
           <ThumbnailFallback title={title} />
