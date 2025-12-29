@@ -116,15 +116,11 @@ function RotatingHeadline({
   seasonalImages: Map<string, SeasonalImage>
 }) {
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [isAnimating, setIsAnimating] = useState(true)
+  const [animationKey, setAnimationKey] = useState(0)
 
   const rotate = useCallback(() => {
-    setIsAnimating(false)
-    // Small delay to reset animation
-    setTimeout(() => {
-      setCurrentIndex((prev) => (prev + 1) % news.length)
-      setIsAnimating(true)
-    }, 50)
+    setCurrentIndex((prev) => (prev + 1) % news.length)
+    setAnimationKey((prev) => prev + 1) // Trigger new animation
   }, [news.length])
 
   useEffect(() => {
@@ -143,10 +139,10 @@ function RotatingHeadline({
 
   return (
     <Link
+      key={animationKey}
       href={`/news/${item.id}`}
-      className={`group relative block overflow-hidden rounded-xl border border-white/10 bg-black/40 mb-4 ${
-        isAnimating ? 'animate-soft-entry' : 'opacity-0'
-      }`}
+      className="group relative block overflow-hidden rounded-xl border border-white/10 bg-black/40 mb-4 animate-soft-entry"
+      style={{ opacity: 1 }}
     >
       <div className="relative aspect-[21/9] sm:aspect-[3/1]">
         {/* Background image */}
@@ -221,11 +217,8 @@ function RotatingHeadline({
                 key={idx}
                 onClick={(e) => {
                   e.preventDefault()
-                  setIsAnimating(false)
-                  setTimeout(() => {
-                    setCurrentIndex(idx)
-                    setIsAnimating(true)
-                  }, 50)
+                  setCurrentIndex(idx)
+                  setAnimationKey((prev) => prev + 1)
                 }}
                 className={`w-1.5 h-1.5 rounded-full transition-all ${
                   idx === currentIndex ? 'bg-white w-4' : 'bg-white/40 hover:bg-white/60'
