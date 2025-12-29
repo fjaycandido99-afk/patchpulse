@@ -247,12 +247,12 @@ export function HeadlinesSection({ news, seasonalImages, gamePlatforms }: Headli
       <div className="space-y-4">
         <SectionHeader title="Latest Headlines" href="/news" glowLine />
 
-        {/* Rotating spotlight - cycles through top headlines every 10s */}
-        <RotatingHeadline news={news.slice(0, 5)} seasonalImages={seasonalImages} />
+        {/* Rotating spotlight - cycles through all headlines every 10s */}
+        <RotatingHeadline news={news} seasonalImages={seasonalImages} />
 
-        {/* Additional headlines list */}
+        {/* Additional headlines list - show if more than 3 items */}
         <div className="space-y-3">
-          {news.slice(5, 8).map((newsItem, index) => (
+          {news.length > 3 && news.slice(3, 6).map((newsItem, index) => (
             <div
               key={newsItem.id}
               className="animate-soft-entry"
