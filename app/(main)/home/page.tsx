@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { Sparkles, Gamepad2 } from 'lucide-react'
+import { getPatchesList } from '../patches/queries'
 import { getHomeFeed, type Platform, type UpcomingGame, type NewReleaseGame } from './queries'
 import { getStalePlayingGames, getReturnSuggestions } from '../backlog/queries'
 import type { SeasonalImage } from '@/lib/images/seasonal'
@@ -15,6 +16,7 @@ import { MetaRow } from '@/components/ui/MetaRow'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { formatDate, relativeDaysText } from '@/lib/dates'
 import { InstallHint } from '@/components/ui/InstallHint'
+import { MediaCard } from '@/components/media/MediaCard'
 import { HeadlinesSection } from './HeadlinesSection'
 import { HomeGameStrip } from './HomeGameStrip'
 
@@ -70,10 +72,11 @@ function inferAffectedSystems(patch: { title: string; summary_tldr?: string | nu
 }
 
 export default async function HomePage() {
-  const [feed, staleGames, returnSuggestions] = await Promise.all([
+  const [feed, staleGames, returnSuggestions, patchesResult] = await Promise.all([
     getHomeFeed(),
     getStalePlayingGames(14),
     getReturnSuggestions(),
+    getPatchesList({ page: 1, followedOnly: true, limit: 6 }),
   ])
 
   // Create hero items for carousel (top patches + news)
@@ -231,6 +234,50 @@ export default async function HomePage() {
           seasonalImages={feed.seasonalImages}
           gamePlatforms={feed.gamePlatforms}
         />
+
+        {/* Your Patches - Same grid layout as headlines */}
+        {patchesResult.items.length > 0 && (
+          <section className="space-y-4">
+            <SectionHeader title="Your Patches" href="/patches" glowLine />
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+              {patchesResult.items.slice(0, 6).map((patch, index) => (
+                <div
+                  key={patch.id}
+                  className="animate-soft-entry"
+                  style={{ animationDelay: `${index * 50}ms` }}
+                >
+                  <MediaCard
+                    href={`/patches/${patch.id}`}
+                    title={patch.title}
+                    summary={patch.summary_tldr}
+                    imageUrl={patch.game.hero_url || patch.game.cover_url}
+                    variant="vertical"
+                    game={{
+                      name: patch.game.name,
+                      logoUrl: patch.game.logo_url,
+                      platforms: patch.game.platforms,
+                    }}
+                    badges={
+                      <>
+                        <Badge variant="patch">Patch</Badge>
+                        <ImpactBadge score={patch.impact_score} size="sm" />
+                      </>
+                    }
+                    metaText={
+                      <MetaRow
+                        items={[
+                          patch.game.name,
+                          relativeDaysText(patch.published_at),
+                        ]}
+                        size="xs"
+                      />
+                    }
+                  />
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Main Content + Sidebar Layout for Desktop */}
         <div className="lg:flex lg:gap-8">
