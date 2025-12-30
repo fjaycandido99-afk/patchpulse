@@ -301,15 +301,15 @@ function MobilePatchListItem({ patch }: { patch: PatchItem }) {
       href={`/patches/${patch.id}`}
       className="group flex gap-2 overflow-hidden rounded-lg border border-white/10 bg-white/5 p-1.5 hover:bg-white/10 hover:border-white/20 active:scale-[0.98] transition-all w-full"
     >
-      {/* Thumbnail - matches MediaCard horizontal (w-12 = 48px) */}
-      <div className="relative w-12 h-12 rounded-md overflow-hidden flex-shrink-0 bg-zinc-900">
+      {/* Thumbnail - portrait style (narrower, taller) */}
+      <div className="relative w-10 h-14 rounded-md overflow-hidden flex-shrink-0 bg-zinc-900">
         {thumbnail ? (
           <Image
             src={thumbnail}
             alt=""
             fill
             className="object-cover"
-            sizes="48px"
+            sizes="40px"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-zinc-800 to-zinc-900">
