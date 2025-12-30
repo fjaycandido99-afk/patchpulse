@@ -73,7 +73,7 @@ function inferAffectedSystems(patch: { title: string; summary_tldr?: string | nu
 
 export default async function HomePage() {
   const [patchesResult, feed, staleGames, returnSuggestions] = await Promise.all([
-    getPatchesList({ page: 1 }),
+    getPatchesList({ page: 1, followedOnly: true }),
     getHomeFeed(),
     getStalePlayingGames(14),
     getReturnSuggestions(),
@@ -238,16 +238,16 @@ export default async function HomePage() {
         {/* Main Content + Sidebar Layout for Desktop */}
         <div className="lg:flex lg:gap-8">
           <div className="flex-1 space-y-6">
-            {/* Patches Section */}
+            {/* Patches Section - Shows only followed/backlog games */}
             <section className="space-y-3 sm:space-y-4">
-              <SectionHeader title="Latest Patches" glowLine />
+              <SectionHeader title="Your Patches" glowLine />
 
               {patchesResult.items.length === 0 ? (
                 <div className="rounded-xl border border-border bg-card p-8 sm:p-12 text-center">
                   <Search className="h-10 w-10 sm:h-12 sm:w-12 mx-auto text-muted-foreground mb-3" />
-                  <p className="text-base font-medium">No patches found</p>
+                  <p className="text-base font-medium">No patches for your games</p>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    Follow some games to see their patches here
+                    Follow games to see their patches here. Tap the gamepad icon to see all latest patches.
                   </p>
                 </div>
               ) : (
@@ -260,7 +260,7 @@ export default async function HomePage() {
                     initialPatches={patchesResult.items}
                     initialHasMore={patchesResult.hasMore}
                     initialPage={patchesResult.page}
-                    filters={{}}
+                    filters={{ followedOnly: true }}
                   />
                 </>
               )}

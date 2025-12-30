@@ -171,13 +171,13 @@ export function MobileGameCard({
         onTouchCancel={handleTouchEnd}
         className="group relative flex items-center gap-3 p-3 rounded-xl border border-border bg-card hover:border-primary/30 active:scale-[0.98] transition-all"
       >
-        {/* Cover image with progress ring */}
-        <div className="relative h-16 w-16 rounded-lg overflow-hidden flex-shrink-0">
+        {/* Cover image with progress ring - 2:3 aspect ratio */}
+        <div className="relative w-12 aspect-[2/3] rounded-lg overflow-hidden flex-shrink-0">
           {imageUrl ? (
-            <Image src={imageUrl} alt={title} fill className="object-cover" sizes="64px" />
+            <Image src={imageUrl} alt={title} fill className="object-cover" sizes="48px" />
           ) : (
             <div className="absolute inset-0 bg-muted flex items-center justify-center">
-              <Library className="h-6 w-6 text-muted-foreground" />
+              <Library className="h-5 w-5 text-muted-foreground" />
             </div>
           )}
 

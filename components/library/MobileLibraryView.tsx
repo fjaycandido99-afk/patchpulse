@@ -322,14 +322,14 @@ function MiniGameCard({
   return (
     <a
       href={href}
-      className="flex-shrink-0 w-20 group"
+      className="flex-shrink-0 w-16 group"
     >
-      <div className="relative aspect-[3/4] rounded-lg overflow-hidden mb-1.5">
+      <div className="relative aspect-[2/3] rounded-lg overflow-hidden mb-1.5">
         {imageUrl ? (
-          <Image src={imageUrl} alt={title} fill className="object-cover" sizes="80px" />
+          <Image src={imageUrl} alt={title} fill className="object-cover" sizes="64px" />
         ) : (
           <div className="absolute inset-0 bg-muted flex items-center justify-center">
-            <Gamepad2 className="h-6 w-6 text-muted-foreground" />
+            <Gamepad2 className="h-5 w-5 text-muted-foreground" />
           </div>
         )}
       </div>
@@ -356,16 +356,16 @@ function SuggestedGames({
           <button
             key={game.id}
             onClick={() => onAdd(game.id)}
-            className="flex-shrink-0 w-20 group text-left"
+            className="flex-shrink-0 w-16 group text-left"
           >
-            <div className="relative aspect-[3/4] rounded-lg overflow-hidden mb-1.5 ring-2 ring-transparent group-hover:ring-primary transition-all">
+            <div className="relative aspect-[2/3] rounded-lg overflow-hidden mb-1.5 ring-2 ring-transparent group-hover:ring-primary transition-all">
               {game.cover_url ? (
-                <Image src={game.cover_url} alt={game.name} fill className="object-cover" sizes="80px" />
+                <Image src={game.cover_url} alt={game.name} fill className="object-cover" sizes="64px" />
               ) : (
                 <div className="absolute inset-0 bg-muted" />
               )}
               <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Star className="h-6 w-6 text-amber-400" />
+                <Star className="h-5 w-5 text-amber-400" />
               </div>
             </div>
             <p className="text-xs font-medium truncate text-center">{game.name}</p>
@@ -744,8 +744,8 @@ function MobileWatchlistCard({ game }: { game: FollowedGameWithActivity }) {
       href={`/backlog/${game.id}`}
       className="relative flex gap-3 p-3 rounded-xl border border-border bg-card/50 hover:bg-card transition-colors"
     >
-      {/* Cover */}
-      <div className="relative h-14 w-10 flex-shrink-0 rounded-lg overflow-hidden bg-muted">
+      {/* Cover - 2:3 aspect ratio */}
+      <div className="relative w-10 aspect-[2/3] flex-shrink-0 rounded-lg overflow-hidden bg-muted">
         {game.cover_url ? (
           <Image src={game.cover_url} alt={game.name} fill className="object-cover" sizes="40px" />
         ) : (

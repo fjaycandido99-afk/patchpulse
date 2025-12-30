@@ -29,9 +29,12 @@ export async function fetchSteamPatches(steamAppId: number, gameId: string, game
     let addedCount = 0
 
     for (const item of feed.items as SteamFeedItem[]) {
-      // Skip non-patch items (look for keywords)
+      // Skip non-patch items (look for keywords in title and content)
       const title = item.title?.toLowerCase() || ''
-      const isPatch = title.includes('update') ||
+      const content = (item.contentSnippet || item.content || '').toLowerCase()
+
+      // Title-based detection
+      const titleIsPatch = title.includes('update') ||
                       title.includes('patch') ||
                       title.includes('hotfix') ||
                       title.includes('fix') ||
@@ -39,9 +42,23 @@ export async function fetchSteamPatches(steamAppId: number, gameId: string, game
                       title.includes('changelog') ||
                       title.includes('release note') ||
                       title.includes('maintenance') ||
-                      title.includes('notes')
+                      title.includes('notes') ||
+                      // Version patterns like v0.15.1.0, v1.2, etc.
+                      /v\d+\.\d+/.test(title) ||
+                      // Numbered updates like "1.14.105"
+                      /\d+\.\d+\.\d+/.test(title)
 
-      if (!isPatch) continue
+      // Content-based detection (if title doesn't match)
+      const contentIsPatch = content.includes('bug fix') ||
+                             content.includes('patch note') ||
+                             content.includes('changelog') ||
+                             content.includes('balance change') ||
+                             content.includes('we have released') ||
+                             content.includes('has been released') ||
+                             content.includes('now live') ||
+                             content.includes('is now available')
+
+      if (!titleIsPatch && !contentIsPatch) continue
 
       // Check if we already have this patch (by source_url OR similar title)
       const { data: existingByUrl } = await supabase

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Search, X } from 'lucide-react'
 
 type MobileLibraryHeaderProps = {
@@ -10,17 +10,8 @@ type MobileLibraryHeaderProps = {
 }
 
 export function MobileLibraryHeader({ title, subtitle, onSearchChange }: MobileLibraryHeaderProps) {
-  const [isScrolled, setIsScrolled] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20)
-    }
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
 
   const handleSearchChange = (value: string) => {
     setSearchQuery(value)
@@ -34,11 +25,8 @@ export function MobileLibraryHeader({ title, subtitle, onSearchChange }: MobileL
   }
 
   return (
-    <div
-      className={`md:hidden sticky top-0 z-40 transition-all duration-200 ${
-        isScrolled ? 'bg-background/95 backdrop-blur-md border-b border-border shadow-sm' : 'bg-transparent'
-      }`}
-    >
+    <div className="md:hidden">
+      {/* Non-sticky header - main layout already has fixed header */}
       {/* Search overlay */}
       {isSearchOpen && (
         <div className="absolute inset-x-0 top-0 bg-background border-b border-border p-3 animate-in slide-in-from-top-2 duration-200">
@@ -65,16 +53,14 @@ export function MobileLibraryHeader({ title, subtitle, onSearchChange }: MobileL
       )}
 
       {/* Main header */}
-      <div className={`px-4 transition-all duration-200 ${isScrolled ? 'py-2' : 'py-4'}`}>
+      <div className="px-4 py-4">
         <div className="flex items-center justify-between">
           <div className="flex-1 min-w-0">
-            <h1 className={`font-bold tracking-tight transition-all duration-200 ${
-              isScrolled ? 'text-lg' : 'text-2xl'
-            }`}>
+            <h1 className="text-2xl font-bold tracking-tight">
               {title}
             </h1>
-            {!isScrolled && subtitle && (
-              <p className="text-sm text-muted-foreground mt-0.5 animate-in fade-in duration-200">
+            {subtitle && (
+              <p className="text-sm text-muted-foreground mt-0.5">
                 {subtitle}
               </p>
             )}

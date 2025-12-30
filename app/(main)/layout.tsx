@@ -7,10 +7,12 @@ import { DesktopSidebar } from '@/components/layout/DesktopSidebar'
 import { SearchBar } from '@/components/layout/SearchBar'
 import { ProfileAvatar } from '@/components/layout/ProfileAvatar'
 import { NotificationBell } from '@/components/notifications/NotificationBell'
+import { LatestPatchesBell } from '@/components/patches/LatestPatchesBell'
 import { ToastProvider } from '@/components/notifications/ToastProvider'
 import { SpotlightProvider } from '@/components/games'
 import { getSidebarCounts } from '@/lib/sidebar-data'
 import { getNotificationStats } from '@/lib/notifications'
+import { getLatestPatchesStats } from '@/lib/patches-stats'
 
 export default async function MainLayout({
   children,
@@ -41,9 +43,10 @@ export default async function MainLayout({
   }
 
   // Fetch sidebar counts and notification stats for live indicators
-  const [sidebarCounts, notificationStats] = await Promise.all([
+  const [sidebarCounts, notificationStats, patchesStats] = await Promise.all([
     getSidebarCounts(),
     getNotificationStats(),
+    getLatestPatchesStats(),
   ])
 
   // Convert sidebar counts to mobile nav badges
@@ -68,10 +71,11 @@ export default async function MainLayout({
           {/* Mobile header with search - Apple Music/App Store style, fixed for edge-to-edge */}
           <header className="fixed inset-x-0 top-0 z-40 md:hidden bg-[rgba(10,15,30,0.85)] backdrop-blur-xl border-b border-white/10" style={{ paddingTop: 'env(safe-area-inset-top, 0)' }}>
             <div className="flex items-center justify-between gap-2 px-4 py-3">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
                 <Link href="/home" className="text-lg font-bold tracking-tight flex-shrink-0 hover:opacity-80 transition-opacity">
                   PatchPulse
                 </Link>
+                <LatestPatchesBell initialStats={patchesStats} size="sm" />
                 <NotificationBell initialStats={notificationStats} size="sm" />
               </div>
               <div className="flex items-center gap-2">

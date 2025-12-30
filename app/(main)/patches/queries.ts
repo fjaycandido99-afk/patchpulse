@@ -54,6 +54,7 @@ type PatchesListParams = {
   tag?: string
   importance?: 'major' | 'medium' | 'minor'
   page?: number
+  followedOnly?: boolean
 }
 
 type PatchesListResult = {
@@ -296,8 +297,21 @@ export async function getPatchesList(
 ): Promise<PatchesListResult> {
   const supabase = await createClient()
 
-  const { gameId, tag, importance, page = 1 } = params
+  const { gameId, tag, importance, page = 1, followedOnly = false } = params
   const offset = (page - 1) * PAGE_SIZE
+
+  // Get followed game IDs if filtering by followed games
+  let followedGameIds: string[] = []
+  if (followedOnly) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      const { data: userGames } = await supabase
+        .from('user_games')
+        .select('game_id')
+        .eq('user_id', user.id)
+      followedGameIds = (userGames || []).map(ug => ug.game_id)
+    }
+  }
 
   let query = supabase
     .from('patch_notes')
@@ -326,7 +340,21 @@ export async function getPatchesList(
       { count: 'exact' }
     )
 
-  // Filter by specific game if provided, otherwise show ALL patches
+  // Filter by followed games if requested
+  if (followedOnly && followedGameIds.length > 0) {
+    query = query.in('game_id', followedGameIds)
+  } else if (followedOnly && followedGameIds.length === 0) {
+    // No followed games, return empty result
+    return {
+      items: [],
+      page,
+      pageSize: PAGE_SIZE,
+      hasMore: false,
+      total: 0,
+    }
+  }
+
+  // Filter by specific game if provided
   if (gameId) {
     query = query.eq('game_id', gameId)
   }

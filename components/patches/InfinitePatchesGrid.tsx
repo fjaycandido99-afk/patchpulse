@@ -41,6 +41,7 @@ type InfinitePatchesGridProps = {
     gameId?: string
     tag?: string
     importance?: 'major' | 'medium' | 'minor'
+    followedOnly?: boolean
   }
   onEndReached?: () => void
 }
@@ -380,6 +381,7 @@ export function InfinitePatchesGrid({
         gameId: filters.gameId,
         tag: filters.tag,
         importance: filters.importance,
+        followedOnly: filters.followedOnly,
         page: nextPage,
       })
 

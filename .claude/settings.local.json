@@ -11,7 +11,9 @@
       "WebSearch",
       "Bash(npm run build:*)",
       "Bash(git commit -m \"$\\(cat <<''EOF''\nAdd content cleanup and backfill system\n\n- cleanup-content: Daily cron to delete content older than 3 days \\(keeps bookmarked\\)\n- backfill-content: Admin endpoint to fetch historical patches/news\n- Cleans up read notifications older than 7 days\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(npx tsx:*)",
+      "Bash(node:*)"
     ]
   }
 }

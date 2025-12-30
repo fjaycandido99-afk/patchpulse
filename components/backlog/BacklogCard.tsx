@@ -116,15 +116,15 @@ export function BacklogCard({
       href={href}
       className={`group flex gap-4 rounded-xl border border-border p-3 sm:p-4 transition-all ${cardGradient} ${statusBorderColor} active:bg-muted/50 active:scale-[0.99]`}
     >
-      {/* Cover image - larger and clearer */}
-      <div className="relative w-20 h-24 sm:w-24 sm:h-32 flex-shrink-0 overflow-hidden rounded-xl shadow-lg">
+      {/* Cover image - consistent 2:3 aspect ratio like game covers */}
+      <div className="relative w-16 sm:w-20 flex-shrink-0 overflow-hidden rounded-lg shadow-lg aspect-[2/3]">
         {imageUrl ? (
           <Image
             src={imageUrl}
             alt={title}
             fill
             className="object-cover transition-transform group-hover:scale-105"
-            sizes="96px"
+            sizes="80px"
             unoptimized
           />
         ) : (
