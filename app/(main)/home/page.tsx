@@ -91,7 +91,7 @@ export default async function HomePage() {
   return (
     <>
       <InstallHint />
-      <div className="space-y-6 page-enter">
+      <div className="space-y-6 page-enter overflow-x-hidden">
         {/* Mobile: Compact "For You" header */}
         <section className="flex items-center gap-2">
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gradient-to-r from-violet-500/20 to-purple-500/20 border border-violet-500/30">
