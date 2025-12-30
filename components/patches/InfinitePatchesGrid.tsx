@@ -299,50 +299,42 @@ function MobilePatchListItem({ patch }: { patch: PatchItem }) {
   return (
     <Link
       href={`/patches/${patch.id}`}
-      className="group flex gap-3 p-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 active:scale-[0.98] transition-all"
+      className="group flex gap-2.5 p-2.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 active:scale-[0.98] transition-all"
     >
-      {/* Thumbnail - 80x80 like News */}
-      <div className="relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-zinc-900">
+      {/* Thumbnail - smaller for mobile */}
+      <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-zinc-900">
         {thumbnail ? (
           <Image
             src={thumbnail}
             alt=""
             fill
             className="object-cover"
-            sizes="80px"
+            sizes="64px"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-zinc-800 to-zinc-900">
-            <Gamepad2 className="w-6 h-6 text-zinc-700" />
+            <Gamepad2 className="w-5 h-5 text-zinc-700" />
           </div>
         )}
       </div>
 
       {/* Content */}
-      <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
+      <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5 overflow-hidden">
         {/* Title */}
-        <h3 className="font-medium text-sm leading-snug line-clamp-2 group-hover:text-primary transition-colors">
+        <h3 className="font-medium text-[13px] leading-snug line-clamp-2 group-hover:text-primary transition-colors">
           {patch.title}
         </h3>
 
-        {/* Meta row */}
-        <div className="flex items-center gap-2 flex-wrap">
+        {/* Meta row - simplified */}
+        <div className="flex items-center gap-1.5 overflow-hidden">
           {/* Impact badge */}
-          <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold ${impact.bg} ${impact.text} border ${impact.border}`}>
+          <span className={`flex-shrink-0 px-1.5 py-0.5 rounded text-[9px] font-semibold ${impact.bg} ${impact.text}`}>
             {impact.label}
           </span>
 
-          {/* First tag */}
-          {patch.tags[0] && (
-            <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${getTagStyle(patch.tags[0]).bg} ${getTagStyle(patch.tags[0]).text}`}>
-              {patch.tags[0]}
-            </span>
-          )}
-
-          <span className="text-[11px] text-muted-foreground">{relativeDaysText(patch.published_at)}</span>
-
-          <span className="text-muted-foreground/40">·</span>
-          <span className="text-[11px] text-muted-foreground truncate">{patch.game.name}</span>
+          <span className="text-[10px] text-muted-foreground truncate">{patch.game.name}</span>
+          <span className="text-muted-foreground/40 flex-shrink-0">·</span>
+          <span className="text-[10px] text-muted-foreground flex-shrink-0">{relativeDaysText(patch.published_at)}</span>
         </div>
       </div>
     </Link>

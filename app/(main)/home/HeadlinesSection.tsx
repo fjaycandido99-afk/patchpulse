@@ -234,8 +234,8 @@ function RotatingHeadline({
         <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 to-transparent" />
 
         {/* Content */}
-        <div className="absolute inset-0 flex items-center p-4 sm:p-6">
-          <div className="max-w-xl">
+        <div className="absolute inset-0 flex items-center p-3 sm:p-6">
+          <div className="max-w-[85%] sm:max-w-xl">
             {/* Game badge */}
             <div className="flex items-center gap-2 mb-2">
               {item.games?.logo_url && (
@@ -310,7 +310,7 @@ export function HeadlinesSection({ news, seasonalImages, gamePlatforms }: Headli
   if (news.length === 0) return null
 
   return (
-    <section className="relative -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-8 bg-gradient-to-b from-zinc-900/50 to-transparent border-t border-b border-white/5">
+    <section className="relative py-6 sm:py-8 bg-gradient-to-b from-zinc-900/50 to-transparent border-t border-b border-white/5">
       <div className="space-y-4">
         <SectionHeader title="Latest Headlines" href="/news" glowLine />
 

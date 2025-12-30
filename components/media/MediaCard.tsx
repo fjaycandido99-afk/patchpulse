@@ -102,9 +102,9 @@ export function MediaCard({
     return (
       <Link
         href={href}
-        className="group flex gap-4 overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-3 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/40 hover:border-white/20 hover:bg-white/[0.07] touch-feedback gradient-border"
+        className="group flex gap-2.5 sm:gap-4 overflow-hidden rounded-xl sm:rounded-2xl border border-white/10 bg-white/5 p-2.5 sm:p-3 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/40 hover:border-white/20 hover:bg-white/[0.07] touch-feedback gradient-border"
       >
-        <div className="relative aspect-[16/9] w-28 flex-shrink-0 overflow-hidden rounded-xl sm:w-36">
+        <div className="relative aspect-[16/9] w-20 sm:w-28 md:w-36 flex-shrink-0 overflow-hidden rounded-lg sm:rounded-xl">
           {imageUrl ? (
             <Image
               src={imageUrl}
@@ -123,29 +123,29 @@ export function MediaCard({
           <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
         </div>
 
-        <div className="flex flex-1 flex-col justify-center overflow-hidden py-1">
-          <div className="mb-2 flex flex-wrap items-center gap-2">
+        <div className="flex flex-1 flex-col justify-center overflow-hidden py-0.5">
+          <div className="mb-1 sm:mb-2 flex flex-wrap items-center gap-1.5 sm:gap-2">
             {limitedBadges}
             {category && <CategoryTag category={category} />}
           </div>
 
-          <h3 className="text-base font-semibold leading-snug line-clamp-2 text-white group-hover:text-white/95">
+          <h3 className="text-[13px] sm:text-base font-semibold leading-snug line-clamp-2 text-white group-hover:text-white/95">
             {title}
           </h3>
 
           {displaySummary && (
-            <p className="mt-1.5 text-sm text-zinc-300/80 line-clamp-2 leading-relaxed">
+            <p className="hidden sm:block mt-1.5 text-sm text-zinc-300/80 line-clamp-2 leading-relaxed">
               {displaySummary}
             </p>
           )}
 
           {/* Footer: Meta + Game branding */}
-          <div className="mt-2 flex items-center justify-between gap-2">
+          <div className="mt-1.5 sm:mt-2 flex items-center justify-between gap-2 overflow-hidden">
             {metaText && (
-              <div className="text-xs text-zinc-500 flex-1 min-w-0">{metaText}</div>
+              <div className="text-[10px] sm:text-xs text-zinc-500 flex-1 min-w-0 truncate">{metaText}</div>
             )}
             {game && (
-              <div className="flex items-center gap-2 flex-shrink-0">
+              <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
                 <GameLogoMini logoUrl={game.logoUrl} gameName={game.name} />
                 {game.platforms && game.platforms.length > 0 && (
                   <PlatformIcons platforms={game.platforms} maxVisible={3} size="sm" showTooltip={false} />
