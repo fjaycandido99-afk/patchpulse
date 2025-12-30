@@ -114,29 +114,30 @@ export function BacklogCard({
   return (
     <Link
       href={href}
-      className={`group flex gap-3 rounded-xl border border-border p-3 transition-all ${cardGradient} ${statusBorderColor} active:bg-muted/50 active:scale-[0.99]`}
+      className={`group flex gap-4 rounded-xl border border-border p-3 sm:p-4 transition-all ${cardGradient} ${statusBorderColor} active:bg-muted/50 active:scale-[0.99]`}
     >
-      {/* Cover image with status gradient overlay */}
-      <div className="relative w-16 h-20 sm:w-14 sm:h-16 flex-shrink-0 overflow-hidden rounded-lg">
+      {/* Cover image - larger and clearer */}
+      <div className="relative w-20 h-24 sm:w-24 sm:h-32 flex-shrink-0 overflow-hidden rounded-xl shadow-lg">
         {imageUrl ? (
           <Image
             src={imageUrl}
             alt={title}
             fill
             className="object-cover transition-transform group-hover:scale-105"
-            sizes="64px"
+            sizes="96px"
+            unoptimized
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/20 via-muted to-background">
-            <span className="text-sm font-bold text-primary/30 select-none">
+            <span className="text-lg font-bold text-primary/30 select-none">
               {getInitials(title)}
             </span>
           </div>
         )}
         {/* AI suggestion indicator */}
         {hasAISuggestion && (
-          <div className="absolute top-1 right-1 p-1 rounded bg-violet-500/90">
-            <Sparkles className="h-2.5 w-2.5 text-white" />
+          <div className="absolute top-1.5 right-1.5 p-1 rounded-md bg-violet-500/90 shadow-sm">
+            <Sparkles className="h-3 w-3 text-white" />
           </div>
         )}
       </div>
