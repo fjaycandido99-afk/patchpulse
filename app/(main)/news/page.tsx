@@ -1,5 +1,5 @@
-import { getNewsGroupedByGame, getNewsFiltersData } from './queries'
-import { GroupedNewsFeed } from './GroupedNewsFeed'
+import { getFlatNewsList } from './queries'
+import { NewsFeed } from './NewsFeed'
 
 type SearchParams = {
   rumors?: string
@@ -13,10 +13,7 @@ export default async function NewsPage({
   const params = await searchParams
   const includeRumors = params.rumors !== 'false'
 
-  const [groupedNews, filtersData] = await Promise.all([
-    getNewsGroupedByGame({ includeRumors }),
-    getNewsFiltersData(),
-  ])
+  const news = await getFlatNewsList({ includeRumors, limit: 50 })
 
   return (
     <div className="space-y-6">
@@ -28,15 +25,8 @@ export default async function NewsPage({
         </p>
       </div>
 
-      {/* Grouped Feed */}
-      <GroupedNewsFeed
-        groups={groupedNews.groups}
-        lastVisit={groupedNews.lastVisit}
-        newItemsCount={groupedNews.newItemsCount}
-        includeRumors={includeRumors}
-        followedGames={filtersData.followedGames}
-        topStories={groupedNews.topStories}
-      />
+      {/* Flat News Feed */}
+      <NewsFeed news={news} includeRumors={includeRumors} />
     </div>
   )
 }

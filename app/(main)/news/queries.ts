@@ -409,6 +409,82 @@ export async function markNewsVisited(): Promise<void> {
     .eq('id', user.id)
 }
 
+// Get flat news list (no grouping, for simplified news page)
+export async function getFlatNewsList(params: {
+  includeRumors?: boolean
+  limit?: number
+} = {}): Promise<{
+  id: string
+  title: string
+  published_at: string
+  summary: string | null
+  why_it_matters: string | null
+  topics: string[]
+  is_rumor: boolean
+  source_name: string | null
+  image_url: string | null
+  game: {
+    id: string
+    name: string
+    slug: string
+    cover_url: string | null
+    hero_url: string | null
+    logo_url: string | null
+  } | null
+}[]> {
+  const supabase = await createClient()
+  const { includeRumors = true, limit = 50 } = params
+
+  let query = supabase
+    .from('news_items')
+    .select(`
+      id,
+      title,
+      published_at,
+      summary,
+      why_it_matters,
+      topics,
+      is_rumor,
+      source_name,
+      image_url,
+      game_id,
+      games(id, name, slug, cover_url, hero_url, logo_url)
+    `)
+    .order('published_at', { ascending: false })
+    .limit(limit)
+
+  if (!includeRumors) {
+    query = query.eq('is_rumor', false)
+  }
+
+  const { data, error } = await query
+
+  if (error || !data) {
+    console.error('Error fetching flat news:', error)
+    return []
+  }
+
+  return data.map((item) => ({
+    id: item.id,
+    title: item.title,
+    published_at: item.published_at,
+    summary: item.summary,
+    why_it_matters: item.why_it_matters,
+    topics: item.topics || [],
+    is_rumor: item.is_rumor,
+    source_name: item.source_name,
+    image_url: item.image_url,
+    game: item.games as unknown as {
+      id: string
+      name: string
+      slug: string
+      cover_url: string | null
+      hero_url: string | null
+      logo_url: string | null
+    } | null,
+  }))
+}
+
 export async function getNewsFiltersData(): Promise<NewsFiltersData> {
   const supabase = await createClient()
 
