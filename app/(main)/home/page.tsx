@@ -127,7 +127,7 @@ export default async function HomePage() {
           <>
             {/* Desktop: Full carousel */}
             <section className="hidden sm:block">
-              <HeroCarousel autoPlayInterval={6000}>
+              <HeroCarousel autoPlayInterval={3000}>
                 {heroItems.map((heroItem, index) => (
                   heroItem.type === 'patch' ? (
                     <HeroCard

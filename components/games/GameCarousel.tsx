@@ -85,14 +85,18 @@ export function GameCarousel({
           >
             <div className="relative aspect-[2/3] rounded-lg sm:rounded-xl overflow-hidden bg-zinc-900">
               {game.cover_url ? (
-                <Image
-                  src={game.cover_url}
-                  alt={game.name}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 640px) 25vw, 140px"
-                  loading="lazy"
-                />
+                <>
+                  <Image
+                    src={game.cover_url}
+                    alt={game.name}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 640px) 25vw, 140px"
+                    loading="lazy"
+                  />
+                  {/* Subtle gradient overlay for depth and badge readability */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20" />
+                </>
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-zinc-800 to-zinc-900">
                   <Gamepad2 className="w-6 h-6 sm:w-8 sm:h-8 text-zinc-700" />

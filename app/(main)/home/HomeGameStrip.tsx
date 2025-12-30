@@ -16,7 +16,7 @@ export function HomeGameStrip({ games, type }: HomeGameStripProps) {
       games={games}
       type={type}
       autoPlay={true}
-      autoPlayInterval={7000}
+      autoPlayInterval={5000}
     />
   )
 }
