@@ -1,4 +1,4 @@
-import { getFlatNewsList } from './queries'
+import { getFlatNewsList, getTopStories } from './queries'
 import { NewsFeed } from './NewsFeed'
 
 type SearchParams = {
@@ -13,7 +13,10 @@ export default async function NewsPage({
   const params = await searchParams
   const includeRumors = params.rumors !== 'false'
 
-  const news = await getFlatNewsList({ includeRumors, limit: 50 })
+  const [news, topStories] = await Promise.all([
+    getFlatNewsList({ includeRumors, limit: 50 }),
+    getTopStories(2),
+  ])
 
   return (
     <div className="space-y-6">
@@ -25,8 +28,12 @@ export default async function NewsPage({
         </p>
       </div>
 
-      {/* Flat News Feed */}
-      <NewsFeed news={news} includeRumors={includeRumors} />
+      {/* News Feed with Top Stories */}
+      <NewsFeed
+        news={news}
+        topStories={topStories}
+        includeRumors={includeRumors}
+      />
     </div>
   )
 }
