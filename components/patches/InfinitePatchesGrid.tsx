@@ -426,9 +426,9 @@ export function InfinitePatchesGrid({
   const otherPatches = patches.filter(p => p.impact_score < 8)
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="space-y-4 sm:space-y-6 w-full max-w-full overflow-hidden">
       {/* MOBILE: Compact list view - matches News page style */}
-      <div className="sm:hidden space-y-2">
+      <div className="sm:hidden space-y-2 w-full max-w-full">
         {patches.map((patch) => (
           <MobilePatchListItem key={patch.id} patch={patch} />
         ))}

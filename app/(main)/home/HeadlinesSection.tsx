@@ -199,7 +199,7 @@ function RotatingHeadline({
 
   return (
     <div
-      className="relative mb-4"
+      className="relative mb-4 w-full max-w-full overflow-hidden"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
@@ -207,7 +207,7 @@ function RotatingHeadline({
       <Link
         key={animationKey}
         href={`/news/${item.id}`}
-        className="group relative block overflow-hidden rounded-xl border border-white/10 bg-black/40 animate-soft-entry"
+        className="group relative block w-full overflow-hidden rounded-xl border border-white/10 bg-black/40 animate-soft-entry"
         style={{ opacity: 1 }}
       >
       <div className="relative aspect-[2/1] sm:aspect-[21/9]">
@@ -310,8 +310,8 @@ export function HeadlinesSection({ news, seasonalImages, gamePlatforms }: Headli
   if (news.length === 0) return null
 
   return (
-    <section className="relative py-4 sm:py-8 bg-gradient-to-b from-zinc-900/50 to-transparent border-t border-b border-white/5 overflow-hidden">
-      <div className="space-y-3 sm:space-y-4 overflow-hidden">
+    <section className="relative py-4 sm:py-8 bg-gradient-to-b from-zinc-900/50 to-transparent border-t border-b border-white/5 w-full max-w-full overflow-hidden">
+      <div className="space-y-3 sm:space-y-4 w-full max-w-full overflow-hidden">
         <SectionHeader title="Latest Headlines" href="/news" glowLine />
 
         {/* Rotating spotlight - cycles through all headlines every 10s */}
