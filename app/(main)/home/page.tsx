@@ -1,75 +1,18 @@
-import Link from 'next/link'
-import Image from 'next/image'
-import { Sparkles, Gamepad2 } from 'lucide-react'
+import { Sparkles } from 'lucide-react'
 import { getPatchesList } from '../patches/queries'
-import { getHomeFeed, type Platform, type UpcomingGame, type NewReleaseGame } from './queries'
+import { getHomeFeed } from './queries'
 import { getStalePlayingGames, getReturnSuggestions } from '../backlog/queries'
-import type { SeasonalImage } from '@/lib/images/seasonal'
-import { HeroCard } from '@/components/media/HeroCard'
-import { HeroCarousel } from '@/components/media/HeroCarousel'
-import { BacklogCard } from '@/components/backlog/BacklogCard'
 import { StaleGamesPrompt } from '@/components/backlog/StaleGamesPrompt'
 import { ReturnSuggestions } from '@/components/backlog/ReturnSuggestions'
 import { Badge, ImpactBadge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { MetaRow } from '@/components/ui/MetaRow'
 import { SectionHeader } from '@/components/ui/SectionHeader'
-import { formatDate, relativeDaysText } from '@/lib/dates'
+import { relativeDaysText } from '@/lib/dates'
 import { InstallHint } from '@/components/ui/InstallHint'
 import { MediaCard } from '@/components/media/MediaCard'
 import { HeadlinesSection } from './HeadlinesSection'
 import { HomeGameStrip } from './HomeGameStrip'
-
-
-// Helper to get platforms for a game
-function getPlatformsForGame(gameId: string, platformMap: Map<string, Platform[]>): Platform[] {
-  return platformMap.get(gameId) || []
-}
-
-// Helper to get seasonal-aware image URL
-function getSeasonalCoverUrl(
-  gameId: string,
-  defaultCoverUrl: string | null | undefined,
-  seasonalImages: Map<string, SeasonalImage>
-): string | null {
-  const seasonal = seasonalImages.get(gameId)
-  if (seasonal?.isSeasonal && seasonal.coverUrl) {
-    return seasonal.coverUrl
-  }
-  return defaultCoverUrl ?? null
-}
-
-// Helper to get seasonal-aware logo URL
-function getSeasonalLogoUrl(
-  gameId: string,
-  defaultLogoUrl: string | null | undefined,
-  seasonalImages: Map<string, SeasonalImage>
-): string | null {
-  const seasonal = seasonalImages.get(gameId)
-  if (seasonal?.isSeasonal && seasonal.logoUrl) {
-    return seasonal.logoUrl
-  }
-  return defaultLogoUrl ?? null
-}
-
-type AffectedSystem = 'map' | 'mobility' | 'weapons' | 'ranked' | 'casual' | 'balance' | 'ui' | 'performance' | 'social' | 'audio'
-
-// Helper to infer affected systems from patch content
-function inferAffectedSystems(patch: { title: string; summary_tldr?: string | null; tags?: string[] }): AffectedSystem[] {
-  const text = `${patch.title} ${patch.summary_tldr || ''} ${(patch.tags || []).join(' ')}`.toLowerCase()
-  const systems: AffectedSystem[] = []
-
-  if (text.includes('map') || text.includes('zone') || text.includes('arena')) systems.push('map')
-  if (text.includes('mobility') || text.includes('movement') || text.includes('speed')) systems.push('mobility')
-  if (text.includes('weapon') || text.includes('gun') || text.includes('damage')) systems.push('weapons')
-  if (text.includes('ranked') || text.includes('competitive')) systems.push('ranked')
-  if (text.includes('balance') || text.includes('nerf') || text.includes('buff')) systems.push('balance')
-  if (text.includes('ui') || text.includes('menu') || text.includes('interface')) systems.push('ui')
-  if (text.includes('performance') || text.includes('fps') || text.includes('optimization')) systems.push('performance')
-
-  if (systems.length === 0) systems.push('balance')
-  return systems.slice(0, 5)
-}
 
 export default async function HomePage() {
   const [feed, staleGames, returnSuggestions, patchesResult] = await Promise.all([
@@ -78,15 +21,6 @@ export default async function HomePage() {
     getReturnSuggestions(),
     getPatchesList({ page: 1, followedOnly: true, limit: 6 }),
   ])
-
-  // Create hero items for carousel (top patches + news)
-  const heroItems: Array<{ type: 'patch' | 'news'; data: any }> = []
-  feed.topPatches.slice(0, 3).forEach((patch) => {
-    heroItems.push({ type: 'patch', data: patch })
-  })
-  feed.latestNews.slice(0, 2).forEach((news) => {
-    heroItems.push({ type: 'news', data: news })
-  })
 
   return (
     <>
@@ -122,111 +56,6 @@ export default async function HomePage() {
           </section>
         )}
 
-        {/* Hero Carousel - Desktop only, mobile gets compact list */}
-        {heroItems.length > 0 && (
-          <>
-            {/* Desktop: Full carousel */}
-            <section className="hidden sm:block">
-              <HeroCarousel autoPlayInterval={3000}>
-                {heroItems.map((heroItem, index) => (
-                  heroItem.type === 'patch' ? (
-                    <HeroCard
-                      key={`patch-${heroItem.data.id}`}
-                      href={`/patches/${heroItem.data.id}`}
-                      title={heroItem.data.title}
-                      summary={heroItem.data.summary_tldr}
-                      imageUrl={getSeasonalCoverUrl(heroItem.data.game_id, heroItem.data.games?.cover_url, feed.seasonalImages)}
-                      fallbackTitle={heroItem.data.games?.name}
-                      type="patch"
-                      showActions={index === 0}
-                      impactMeter={{
-                        meta: heroItem.data.impact_score,
-                        casual: Math.max(2, Math.round(heroItem.data.impact_score * 0.7)),
-                      }}
-                      affectedSystems={inferAffectedSystems(heroItem.data)}
-                      game={{
-                        name: heroItem.data.games?.name || 'Unknown Game',
-                        logoUrl: getSeasonalLogoUrl(heroItem.data.game_id, heroItem.data.games?.logo_url, feed.seasonalImages),
-                        platforms: getPlatformsForGame(heroItem.data.game_id, feed.gamePlatforms),
-                      }}
-                      badges={
-                        <>
-                          <Badge variant="patch" size="md">Patch</Badge>
-                          <ImpactBadge score={heroItem.data.impact_score} size="md" />
-                        </>
-                      }
-                      metaLeft={
-                        <MetaRow
-                          items={[
-                            heroItem.data.games?.name,
-                            formatDate(heroItem.data.published_at),
-                          ]}
-                          size="sm"
-                        />
-                      }
-                    />
-                  ) : (
-                    <HeroCard
-                      key={`news-${heroItem.data.id}`}
-                      href={`/news/${heroItem.data.id}`}
-                      title={heroItem.data.title}
-                      summary={heroItem.data.summary}
-                      imageUrl={heroItem.data.game_id ? getSeasonalCoverUrl(heroItem.data.game_id, heroItem.data.games?.cover_url, feed.seasonalImages) : heroItem.data.games?.cover_url}
-                      fallbackTitle={heroItem.data.games?.name || 'Gaming News'}
-                      type="news"
-                      game={heroItem.data.game_id ? {
-                        name: heroItem.data.games?.name || 'General',
-                        logoUrl: getSeasonalLogoUrl(heroItem.data.game_id, heroItem.data.games?.logo_url, feed.seasonalImages),
-                        platforms: getPlatformsForGame(heroItem.data.game_id, feed.gamePlatforms),
-                      } : undefined}
-                      badges={
-                        <>
-                          <Badge variant="news" size="md">News</Badge>
-                          {heroItem.data.is_rumor && (
-                            <Badge variant="rumor" size="md">Rumor</Badge>
-                          )}
-                        </>
-                      }
-                      metaLeft={
-                        <MetaRow
-                          items={[
-                            heroItem.data.games?.name || 'General',
-                            heroItem.data.source_name,
-                            formatDate(heroItem.data.published_at),
-                          ]}
-                          size="sm"
-                        />
-                      }
-                    />
-                  )
-                ))}
-              </HeroCarousel>
-            </section>
-
-            {/* Mobile: Compact featured card */}
-            <section className="sm:hidden">
-              <MobileFeaturedCard item={heroItems[0]} seasonalImages={feed.seasonalImages} />
-            </section>
-          </>
-        )}
-
-        {/* Continue Playing - Important for mobile engagement */}
-        {feed.backlogNudge && (
-          <section className="space-y-3">
-            <SectionHeader title="Continue Playing" href="/backlog" />
-            <BacklogCard
-              href={`/backlog/${feed.backlogNudge.game_id}`}
-              title={feed.backlogNudge.games?.name || 'Unknown Game'}
-              progress={feed.backlogNudge.progress}
-              imageUrl={getSeasonalCoverUrl(feed.backlogNudge.game_id, feed.backlogNudge.games?.cover_url, feed.seasonalImages)}
-              lastPlayedText={
-                feed.backlogNudge.last_played_at
-                  ? `Last played ${relativeDaysText(feed.backlogNudge.last_played_at)}`
-                  : undefined
-              }
-            />
-          </section>
-        )}
 
         {/* Latest Headlines */}
         <HeadlinesSection
