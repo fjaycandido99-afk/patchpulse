@@ -1,8 +1,6 @@
 'use client'
 
-import { useCallback, useEffect } from 'react'
-import useEmblaCarousel from 'embla-carousel-react'
-import Autoplay from 'embla-carousel-autoplay'
+import { useCallback } from 'react'
 import Image from 'next/image'
 import { Gamepad2 } from 'lucide-react'
 import { useSpotlight } from '@/components/games'
@@ -18,28 +16,9 @@ type GameCarouselProps = {
 export function GameCarousel({
   games,
   type,
-  autoPlay = true,
-  autoPlayInterval = 7000
 }: GameCarouselProps) {
   const { openSpotlight } = useSpotlight()
   const isUpcoming = type === 'upcoming'
-
-  const [emblaRef, emblaApi] = useEmblaCarousel(
-    {
-      loop: games.length > 4,
-      align: 'start',
-      skipSnaps: false,
-      dragFree: false,
-      containScroll: 'trimSnaps',
-    },
-    autoPlay ? [
-      Autoplay({
-        delay: autoPlayInterval,
-        stopOnInteraction: true,
-        stopOnMouseEnter: true,
-      })
-    ] : []
-  )
 
   const handleClick = useCallback((game: UpcomingGame | NewReleaseGame) => {
     openSpotlight(
@@ -74,14 +53,15 @@ export function GameCarousel({
     ? 'bg-indigo-500/80 text-white'
     : 'bg-emerald-500/80 text-white'
 
+  // Use native horizontal scroll - simpler and works better on mobile
   return (
-    <div className="w-full max-w-full overflow-hidden" ref={emblaRef}>
-      <div className="flex gap-3 w-full">
+    <div className="w-full overflow-x-auto scrollbar-hide pb-2 -mb-2">
+      <div className="flex gap-3 w-max">
         {games.map((game) => (
           <button
             key={game.id}
             onClick={() => handleClick(game)}
-            className="flex-shrink-0 w-[calc(25%-9px)] sm:w-[140px] active:scale-[0.97] transition-transform text-left"
+            className="flex-shrink-0 w-20 sm:w-[140px] active:scale-[0.97] transition-transform text-left"
           >
             <div className="relative aspect-[2/3] rounded-lg sm:rounded-xl overflow-hidden bg-zinc-900">
               {game.cover_url ? (
@@ -91,7 +71,7 @@ export function GameCarousel({
                     alt={game.name}
                     fill
                     className="object-cover"
-                    sizes="(max-width: 640px) 25vw, 140px"
+                    sizes="(max-width: 640px) 80px, 140px"
                     loading="lazy"
                   />
                   {/* Subtle gradient overlay for depth and badge readability */}
