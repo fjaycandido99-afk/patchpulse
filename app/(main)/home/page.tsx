@@ -342,7 +342,7 @@ function ReleaseRadarSection({ releases }: { releases: ReleaseItem[] }) {
   )
 }
 
-// Mobile featured card - Compact hero replacement
+// Mobile featured card - Compact hero replacement (matches MediaCard horizontal)
 function MobileFeaturedCard({
   item,
   seasonalImages
@@ -361,25 +361,25 @@ function MobileFeaturedCard({
   return (
     <Link
       href={href}
-      className="group flex gap-3 p-3 rounded-xl border border-white/10 bg-white/5 active:scale-[0.98] transition-transform"
+      className="group flex gap-3 overflow-hidden rounded-xl border border-white/10 bg-white/5 p-2 active:scale-[0.98] transition-transform"
     >
-      {/* Thumbnail */}
-      <div className="relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-zinc-900">
+      {/* Thumbnail - matches MediaCard horizontal (w-14 = 56px) */}
+      <div className="relative w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 bg-zinc-900">
         {imageUrl ? (
           <Image
             src={imageUrl}
             alt=""
             fill
             className="object-cover"
-            sizes="80px"
+            sizes="56px"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-zinc-800 to-zinc-900">
-            <Gamepad2 className="w-6 h-6 text-zinc-700" />
+            <Gamepad2 className="w-4 h-4 text-zinc-700" />
           </div>
         )}
         {/* Type badge */}
-        <span className={`absolute top-1 left-1 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase ${
+        <span className={`absolute top-0.5 left-0.5 px-1 py-0.5 rounded text-[8px] font-bold uppercase ${
           isPatch ? 'bg-blue-500/90 text-white' : 'bg-purple-500/90 text-white'
         }`}>
           {isPatch ? 'Patch' : 'News'}
@@ -387,14 +387,15 @@ function MobileFeaturedCard({
       </div>
 
       {/* Content */}
-      <div className="flex-1 min-w-0 flex flex-col justify-center">
-        <p className="text-[11px] text-zinc-400 mb-0.5">{gameName}</p>
-        <h3 className="font-semibold text-sm leading-snug line-clamp-2 group-hover:text-primary transition-colors">
+      <div className="flex flex-1 flex-col justify-center overflow-hidden min-w-0">
+        <h3 className="text-sm font-medium leading-snug line-clamp-2 text-white group-hover:text-primary transition-colors">
           {title}
         </h3>
-        <p className="text-[11px] text-zinc-500 mt-1">
-          {formatDate(item.data.published_at)}
-        </p>
+        <div className="mt-1 flex items-center gap-1.5 text-[11px] text-zinc-500 overflow-hidden">
+          <span className="truncate max-w-[100px]">{gameName}</span>
+          <span className="text-zinc-600">·</span>
+          <span className="truncate">{formatDate(item.data.published_at)}</span>
+        </div>
       </div>
     </Link>
   )

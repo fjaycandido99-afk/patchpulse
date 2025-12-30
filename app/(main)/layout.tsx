@@ -103,8 +103,10 @@ export default async function MainLayout({
             </div>
           </header>
 
-          <div className="mx-auto h-full max-w-7xl px-4 pt-16 pb-6 md:pt-6 sm:px-6 lg:px-8 overflow-x-hidden">
-            {children}
+          <div className="mx-auto h-full max-w-7xl px-4 pt-16 pb-6 md:pt-6 sm:px-6 lg:px-8 overflow-x-hidden w-full">
+            <div className="overflow-hidden">
+              {children}
+            </div>
           </div>
         </main>
 
