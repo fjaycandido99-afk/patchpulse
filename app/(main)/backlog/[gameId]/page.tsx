@@ -60,7 +60,7 @@ function getInitials(name: string): string {
     .toUpperCase()
 }
 
-// Fix #1: Game Banner Component - Full width, fixed height, never collapses
+// Fix #1: Game Banner Component - Large hero covering most of the section
 function GameBanner({
   imageUrl,
   gameName,
@@ -76,25 +76,25 @@ function GameBanner({
   const fallbackColor = brandColor || (isInBacklog ? '#1e3a5f' : '#1a1a2e')
 
   return (
-    <div className="relative -mx-4 sm:-mx-6 lg:-mx-8 -mt-4 sm:-mt-6 lg:-mt-8 mb-6 h-[220px] sm:h-[240px] lg:h-[260px] w-[calc(100%+2rem)] sm:w-[calc(100%+3rem)] lg:w-[calc(100%+4rem)] overflow-hidden">
+    <div className="relative -mx-4 sm:-mx-6 lg:-mx-8 -mt-4 sm:-mt-6 lg:-mt-8 mb-6 h-[280px] sm:h-[340px] lg:h-[400px] w-[calc(100%+2rem)] sm:w-[calc(100%+3rem)] lg:w-[calc(100%+4rem)] overflow-hidden">
       {imageUrl ? (
         <>
           <Image
             src={imageUrl}
             alt={gameName}
             fill
-            className="object-cover object-center"
+            className="object-cover object-top"
             sizes="100vw"
             priority
             unoptimized
           />
-          {/* Gradient overlay - keeps image visible but readable text */}
+          {/* Gradient overlay - lighter at top to show more image */}
           <div
             className="absolute inset-0"
             style={{
               background: isInBacklog
-                ? 'linear-gradient(to bottom, rgba(30,58,95,0.2) 0%, rgba(10,10,25,0.7) 70%, rgba(10,10,25,0.95) 100%)'
-                : 'linear-gradient(to bottom, rgba(10,10,25,0.2) 0%, rgba(10,10,25,0.7) 70%, rgba(10,10,25,0.95) 100%)'
+                ? 'linear-gradient(to bottom, rgba(30,58,95,0.1) 0%, rgba(10,10,25,0.3) 50%, rgba(10,10,25,0.85) 85%, rgba(10,10,25,0.98) 100%)'
+                : 'linear-gradient(to bottom, rgba(10,10,25,0.1) 0%, rgba(10,10,25,0.3) 50%, rgba(10,10,25,0.85) 85%, rgba(10,10,25,0.98) 100%)'
             }}
           />
         </>
