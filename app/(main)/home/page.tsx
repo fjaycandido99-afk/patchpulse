@@ -19,7 +19,7 @@ export default async function HomePage() {
     getHomeFeed(),
     getStalePlayingGames(14),
     getReturnSuggestions(),
-    getPatchesList({ page: 1, followedOnly: true, limit: 6 }),
+    getPatchesList({ page: 1, followedOnly: true }),
   ])
 
   return (
