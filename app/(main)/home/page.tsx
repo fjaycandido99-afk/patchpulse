@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { Search, Sparkles, Gamepad2 } from 'lucide-react'
-import { getPatchesList } from '../patches/queries'
+import { Sparkles, Gamepad2 } from 'lucide-react'
 import { getHomeFeed, type Platform, type UpcomingGame, type NewReleaseGame } from './queries'
 import { getStalePlayingGames, getReturnSuggestions } from '../backlog/queries'
 import type { SeasonalImage } from '@/lib/images/seasonal'
@@ -16,7 +15,6 @@ import { MetaRow } from '@/components/ui/MetaRow'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { formatDate, relativeDaysText } from '@/lib/dates'
 import { InstallHint } from '@/components/ui/InstallHint'
-import { InfinitePatchesGrid } from '@/components/patches/InfinitePatchesGrid'
 import { HeadlinesSection } from './HeadlinesSection'
 import { HomeGameStrip } from './HomeGameStrip'
 
@@ -72,8 +70,7 @@ function inferAffectedSystems(patch: { title: string; summary_tldr?: string | nu
 }
 
 export default async function HomePage() {
-  const [patchesResult, feed, staleGames, returnSuggestions] = await Promise.all([
-    getPatchesList({ page: 1, followedOnly: true }),
+  const [feed, staleGames, returnSuggestions] = await Promise.all([
     getHomeFeed(),
     getStalePlayingGames(14),
     getReturnSuggestions(),
@@ -238,34 +235,6 @@ export default async function HomePage() {
         {/* Main Content + Sidebar Layout for Desktop */}
         <div className="lg:flex lg:gap-8">
           <div className="flex-1 space-y-6">
-            {/* Patches Section - Shows only followed/backlog games */}
-            <section className="space-y-3 sm:space-y-4">
-              <SectionHeader title="Your Patches" glowLine />
-
-              {patchesResult.items.length === 0 ? (
-                <div className="rounded-xl border border-border bg-card p-8 sm:p-12 text-center">
-                  <Search className="h-10 w-10 sm:h-12 sm:w-12 mx-auto text-muted-foreground mb-3" />
-                  <p className="text-base font-medium">No patches for your games</p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Follow games to see their patches here. Tap the gamepad icon to see all latest patches.
-                  </p>
-                </div>
-              ) : (
-                <>
-                  <p className="text-xs sm:text-sm text-muted-foreground">
-                    {patchesResult.total} patch{patchesResult.total !== 1 ? 'es' : ''}
-                  </p>
-
-                  <InfinitePatchesGrid
-                    initialPatches={patchesResult.items}
-                    initialHasMore={patchesResult.hasMore}
-                    initialPage={patchesResult.page}
-                    filters={{ followedOnly: true }}
-                  />
-                </>
-              )}
-            </section>
-
             {/* AI Return Suggestions */}
             {returnSuggestions.length > 0 && (
               <section>

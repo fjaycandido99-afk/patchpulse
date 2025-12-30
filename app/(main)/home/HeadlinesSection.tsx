@@ -210,7 +210,7 @@ function RotatingHeadline({
         className="group relative block overflow-hidden rounded-xl border border-white/10 bg-black/40 animate-soft-entry"
         style={{ opacity: 1 }}
       >
-      <div className="relative aspect-[2.2/1] sm:aspect-[21/9]">
+      <div className="relative aspect-[16/10] sm:aspect-[21/9]">
         {/* Background image */}
         {coverUrl ? (
           <SafeImage
@@ -262,13 +262,13 @@ function RotatingHeadline({
             </div>
 
             {/* Title */}
-            <h3 className="text-sm sm:text-lg font-bold text-white leading-tight line-clamp-2 group-hover:text-primary transition-colors">
+            <h3 className="text-base sm:text-xl font-bold text-white leading-tight line-clamp-2 group-hover:text-primary transition-colors">
               {item.title}
             </h3>
 
-            {/* Summary - hidden on mobile */}
+            {/* Summary - show on mobile too */}
             {item.summary && (
-              <p className="text-sm text-white/60 mt-2 line-clamp-1 hidden sm:block">
+              <p className="text-xs sm:text-sm text-white/60 mt-1.5 sm:mt-2 line-clamp-2">
                 {item.summary}
               </p>
             )}
@@ -317,50 +317,51 @@ export function HeadlinesSection({ news, seasonalImages, gamePlatforms }: Headli
         {/* Rotating spotlight - cycles through all headlines every 10s */}
         <RotatingHeadline news={news} seasonalImages={seasonalImages} />
 
-        {/* Additional headlines list - show if more than 3 items */}
-        <div className="space-y-3">
-          {news.length > 3 && news.slice(3, 6).map((newsItem, index) => (
-            <div
-              key={newsItem.id}
-              className="animate-soft-entry"
-              style={{ animationDelay: `${index * 50}ms` }}
-            >
-            <MediaCard
-              href={`/news/${newsItem.id}`}
-              title={newsItem.title}
-              summary={newsItem.summary}
-              whyItMatters={newsItem.why_it_matters}
-              imageUrl={getNewsImage(newsItem, seasonalImages)}
-              variant="horizontal"
-              game={
-                newsItem.game_id
-                  ? {
-                      name: newsItem.games?.name || 'General',
-                      logoUrl: getSeasonalLogoUrl(newsItem.game_id, newsItem.games?.logo_url, seasonalImages),
-                      platforms: getPlatformsForGame(newsItem.game_id, gamePlatforms),
-                    }
-                  : undefined
-              }
-              badges={
-                <>
-                  <Badge variant="news">News</Badge>
-                  {newsItem.is_rumor && <Badge variant="rumor">Rumor</Badge>}
-                </>
-              }
-              metaText={
-                <MetaRow
-                  items={[
-                    newsItem.games?.name || 'General',
-                    newsItem.source_name,
-                    formatDate(newsItem.published_at),
-                  ]}
-                  size="xs"
+        {/* Additional headlines - bigger vertical cards in grid */}
+        {news.length > 3 && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+            {news.slice(3, 9).map((newsItem, index) => (
+              <div
+                key={newsItem.id}
+                className="animate-soft-entry"
+                style={{ animationDelay: `${index * 50}ms` }}
+              >
+                <MediaCard
+                  href={`/news/${newsItem.id}`}
+                  title={newsItem.title}
+                  summary={newsItem.summary}
+                  whyItMatters={newsItem.why_it_matters}
+                  imageUrl={getNewsImage(newsItem, seasonalImages)}
+                  variant="vertical"
+                  game={
+                    newsItem.game_id
+                      ? {
+                          name: newsItem.games?.name || 'General',
+                          logoUrl: getSeasonalLogoUrl(newsItem.game_id, newsItem.games?.logo_url, seasonalImages),
+                          platforms: getPlatformsForGame(newsItem.game_id, gamePlatforms),
+                        }
+                      : undefined
+                  }
+                  badges={
+                    <>
+                      <Badge variant="news">News</Badge>
+                      {newsItem.is_rumor && <Badge variant="rumor">Rumor</Badge>}
+                    </>
+                  }
+                  metaText={
+                    <MetaRow
+                      items={[
+                        newsItem.games?.name || 'General',
+                        formatDate(newsItem.published_at),
+                      ]}
+                      size="xs"
+                    />
+                  }
                 />
-              }
-            />
-            </div>
-          ))}
-        </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   )
