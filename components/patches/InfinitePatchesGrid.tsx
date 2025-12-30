@@ -85,10 +85,10 @@ function HeroPatchCard({ patch, priority = false }: { patch: PatchItem; priority
   return (
     <Link
       href={`/patches/${patch.id}`}
-      className="group relative overflow-hidden rounded-xl sm:rounded-2xl border border-white/10 bg-black/40 block"
+      className="group relative rounded-xl sm:rounded-2xl border border-white/10 bg-black/40 block"
     >
-      {/* Hero Image - Compact on mobile */}
-      <div className="relative aspect-[2/1] sm:aspect-[2.5/1] lg:aspect-[3/1]">
+      {/* Hero Image - Capped height on mobile */}
+      <div className="relative min-h-[140px] max-h-[180px] sm:min-h-[180px] sm:max-h-[260px] overflow-hidden rounded-t-xl sm:rounded-t-2xl">
         {heroImage ? (
           <Image
             src={heroImage}
@@ -110,32 +110,32 @@ function HeroPatchCard({ patch, priority = false }: { patch: PatchItem; priority
         {/* Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
 
-        {/* Content on Image */}
-        <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4 lg:p-6">
+        {/* Content on Image - flex to bottom */}
+        <div className="absolute inset-0 flex flex-col justify-end p-3 sm:p-4 lg:p-5">
           {/* Game Logo + Name */}
-          <div className="flex items-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 mb-1">
             {patch.game.logo_url && (
-              <div className="relative w-5 h-5 sm:w-6 sm:h-6 rounded overflow-hidden bg-white/10 backdrop-blur-sm">
+              <div className="relative w-4 h-4 sm:w-5 sm:h-5 rounded overflow-hidden bg-white/10 backdrop-blur-sm">
                 <Image
                   src={patch.game.logo_url}
                   alt={patch.game.name}
                   fill
                   className="object-contain"
-                  sizes="24px"
+                  sizes="20px"
                 />
               </div>
             )}
-            <span className="text-[11px] sm:text-xs text-zinc-300 font-medium">{patch.game.name}</span>
+            <span className="text-[10px] sm:text-xs text-zinc-300 font-medium">{patch.game.name}</span>
           </div>
 
           {/* Patch Title */}
-          <h3 className="text-sm sm:text-lg lg:text-2xl font-bold leading-tight text-white line-clamp-2 group-hover:text-primary transition-colors">
+          <h3 className="text-sm sm:text-lg font-bold leading-tight text-white line-clamp-2 group-hover:text-primary transition-colors pr-12">
             {patch.title}
           </h3>
         </div>
 
         {/* Importance Badge - Top Right */}
-        <span className={`absolute top-2 right-2 sm:top-3 sm:right-3 rounded-full px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-semibold border backdrop-blur-sm ${impact.bg} ${impact.text} ${impact.border}`}>
+        <span className={`absolute top-2 right-2 rounded-full px-2 py-0.5 text-[9px] sm:text-[10px] font-semibold border backdrop-blur-sm ${impact.bg} ${impact.text} ${impact.border}`}>
           {impact.label}
         </span>
       </div>
@@ -220,10 +220,10 @@ function CompactPatchCard({ patch }: { patch: PatchItem }) {
   return (
     <Link
       href={`/patches/${patch.id}`}
-      className="group relative overflow-hidden rounded-lg sm:rounded-xl border border-white/10 bg-black/40 block active:scale-[0.98] transition-transform"
+      className="group relative rounded-lg sm:rounded-xl border border-white/10 bg-black/40 block active:scale-[0.98] transition-transform"
     >
-      {/* Image - Very compact on mobile */}
-      <div className="relative aspect-[2.5/1] sm:aspect-[2/1]">
+      {/* Image - Capped height */}
+      <div className="relative min-h-[100px] max-h-[120px] sm:min-h-[120px] sm:max-h-[160px] overflow-hidden rounded-t-lg sm:rounded-t-xl">
         {heroImage ? (
           <Image
             src={heroImage}
