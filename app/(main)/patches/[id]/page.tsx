@@ -205,71 +205,75 @@ export default async function PatchDetailPage({
   const sinceLastPlayedChanges = keyChanges.slice(0, 4).map(kc => kc.change)
 
   return (
-    <div className="space-y-6 page-enter">
-      {/* Back Button - Above hero */}
-      <Link
-        href="/patches"
-        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Back to Patches
-      </Link>
-
-      {/* 1. HERO IMAGE - Full width, prominent */}
-      <div className="relative -mx-4 sm:-mx-6 lg:-mx-8 overflow-hidden rounded-2xl">
-        <div className="relative aspect-[16/9] sm:aspect-[21/9]">
-          {heroImage ? (
+    <div className="relative overflow-x-hidden min-h-screen page-enter">
+      {/* Full-bleed Hero Image */}
+      <div className="fixed inset-x-0 top-0 h-[320px] sm:h-[380px] lg:h-[440px] overflow-hidden -z-10">
+        {heroImage ? (
+          <>
             <Image
               src={heroImage}
               alt={patch.title}
               fill
-              className="object-cover"
+              className="object-cover object-top"
               priority
               sizes="100vw"
+              unoptimized
             />
-          ) : (
             <div
               className="absolute inset-0"
               style={{
-                background: `linear-gradient(135deg, ${brandColor}60 0%, ${brandColor}20 50%, #09090b 100%)`
+                background: 'linear-gradient(to bottom, rgba(10,10,25,0.05) 0%, rgba(10,10,25,0.2) 40%, rgba(10,10,25,0.8) 80%, rgb(10,10,25) 100%)'
               }}
             />
-          )}
+          </>
+        ) : (
+          <div
+            className="absolute inset-0"
+            style={{
+              background: `linear-gradient(180deg, ${brandColor}40 0%, rgb(10,10,25) 100%)`
+            }}
+          />
+        )}
+      </div>
 
-          {/* Bottom gradient overlay only */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+      {/* Content pushed below hero */}
+      <div className="relative z-10 pt-[200px] sm:pt-[240px] lg:pt-[280px] space-y-6">
+        {/* Back Button */}
+        <Link
+          href="/patches"
+          className="inline-flex items-center gap-1.5 text-sm text-white/70 transition-colors hover:text-white"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Patches
+        </Link>
 
-          {/* Content overlay on image */}
-          <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 lg:p-8">
-            {/* Game info row */}
-            <div className="flex items-center gap-3 mb-3">
-              {patch.game.logo_url ? (
-                <GameLogo logoUrl={patch.game.logo_url} gameName={patch.game.name} size="md" />
-              ) : (
-                <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold text-white"
-                  style={{ backgroundColor: brandColor }}
-                >
-                  {patch.game.name.charAt(0)}
-                </div>
-              )}
-              <span className="font-medium text-white">{patch.game.name}</span>
-              <span className="text-white/60">•</span>
-              <span className="text-white/60 text-sm">{formatDate(patch.published_at)}</span>
-            </div>
+        {/* Game info + Title */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            {patch.game.logo_url ? (
+              <GameLogo logoUrl={patch.game.logo_url} gameName={patch.game.name} size="md" />
+            ) : (
+              <div
+                className="w-10 h-10 rounded-[10px] flex items-center justify-center text-sm font-bold text-white"
+                style={{ backgroundColor: brandColor }}
+              >
+                {patch.game.name.charAt(0)}
+              </div>
+            )}
+            <span className="font-medium text-white">{patch.game.name}</span>
+            <span className="text-white/60">•</span>
+            <span className="text-white/60 text-sm">{formatDate(patch.published_at)}</span>
+          </div>
 
-            {/* Title + badges */}
-            <div className="flex flex-wrap items-center gap-2 mb-2">
-              <Badge variant="patch" size="md">Patch</Badge>
-              <ImpactBadge score={patch.impact_score} size="md" />
-            </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="patch" size="md">Patch</Badge>
+            <ImpactBadge score={patch.impact_score} size="md" />
+          </div>
+
+          <div className="flex items-start justify-between gap-4">
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-white leading-tight">
               {patch.title}
             </h1>
-          </div>
-
-          {/* Bookmark button */}
-          <div className="absolute top-4 right-4">
             <BookmarkButton
               entityType="patch"
               entityId={patch.id}
@@ -278,10 +282,9 @@ export default async function PatchDetailPage({
             />
           </div>
         </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="space-y-6">
+        {/* Main Content */}
+        <div className="space-y-6">
         {/* 2. QUICK IMPACT - Visual Meters */}
         <Card className="p-5 space-y-4">
           <div className="flex items-center justify-between">
@@ -483,6 +486,7 @@ export default async function PatchDetailPage({
             </section>
           </>
         )}
+        </div>
       </div>
     </div>
   )
