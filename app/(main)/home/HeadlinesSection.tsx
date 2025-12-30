@@ -210,15 +210,16 @@ function RotatingHeadline({
         className="group relative block rounded-xl border border-white/10 bg-black/40 animate-soft-entry"
         style={{ opacity: 1 }}
       >
-      {/* Capped height hero - min 160px, max 200px on mobile, taller on desktop */}
-      <div className="relative min-h-[160px] max-h-[200px] sm:min-h-[200px] sm:max-h-[280px] overflow-hidden rounded-xl">
-        {/* Background image */}
+      {/* Premium hero - breathing room with proper heights */}
+      <div className="relative min-h-[220px] max-h-[280px] sm:min-h-[320px] sm:max-h-[400px] overflow-hidden rounded-xl">
+        {/* Background image - positioned to keep faces/action visible */}
         {coverUrl ? (
           <SafeImage
             src={coverUrl}
             alt=""
             fill
             className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+            style={{ objectPosition: 'center 30%' }}
             sizes="100vw"
             priority
           />
@@ -231,52 +232,54 @@ function RotatingHeadline({
           />
         )}
 
-        {/* Gradient overlay - from bottom for text readability */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
+        {/* Strong gradient overlay - makes headlines pop */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-black/10" />
 
-        {/* Content - positioned at bottom with flex */}
-        <div className="absolute inset-0 flex flex-col justify-end p-3 pb-4 sm:p-4 sm:pb-5">
-          {/* Game badge + meta */}
-          <div className="flex items-center gap-2 mb-1.5">
-            {item.games?.logo_url && (
-              <div className="relative w-4 h-4 sm:w-5 sm:h-5 rounded overflow-hidden bg-white/10">
-                <SafeImage
-                  src={item.games.logo_url}
-                  alt=""
-                  fill
-                  className="object-contain"
-                  sizes="20px"
-                />
-              </div>
-            )}
-            <span className="text-[11px] sm:text-xs font-medium text-white/80">
-              {item.games?.name || 'Gaming'}
-            </span>
-            <span className="text-white/40">·</span>
-            <span className="text-[11px] sm:text-xs text-white/60">{relativeDaysText(item.published_at)}</span>
-            {item.is_rumor && (
-              <span className="px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-semibold bg-amber-500/20 text-amber-400 border border-amber-500/30">
-                RUMOR
+        {/* Content - safe reading zone with max-width */}
+        <div className="absolute inset-0 flex flex-col justify-end p-4 pb-6 sm:p-6 sm:pb-8">
+          <div className="max-w-xl">
+            {/* Game badge + meta */}
+            <div className="flex items-center gap-2 mb-2">
+              {item.games?.logo_url && (
+                <div className="relative w-5 h-5 sm:w-6 sm:h-6 rounded overflow-hidden bg-white/10 backdrop-blur-sm">
+                  <SafeImage
+                    src={item.games.logo_url}
+                    alt=""
+                    fill
+                    className="object-contain"
+                    sizes="24px"
+                  />
+                </div>
+              )}
+              <span className="text-xs sm:text-sm font-medium text-white/90">
+                {item.games?.name || 'Gaming'}
               </span>
+              <span className="text-white/40">·</span>
+              <span className="text-xs sm:text-sm text-white/70">{relativeDaysText(item.published_at)}</span>
+              {item.is_rumor && (
+                <span className="px-2 py-0.5 rounded text-[10px] sm:text-xs font-semibold bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                  RUMOR
+                </span>
+              )}
+            </div>
+
+            {/* Title - larger, bolder */}
+            <h3 className="text-lg sm:text-2xl font-bold text-white leading-snug line-clamp-2 group-hover:text-primary transition-colors">
+              {item.title}
+            </h3>
+
+            {/* Summary */}
+            {item.summary && (
+              <p className="text-sm sm:text-base text-white/70 mt-2 line-clamp-2 hidden sm:block">
+                {item.summary}
+              </p>
             )}
           </div>
-
-          {/* Title */}
-          <h3 className="text-sm sm:text-lg font-bold text-white leading-tight line-clamp-2 group-hover:text-primary transition-colors pr-16">
-            {item.title}
-          </h3>
-
-          {/* Summary - desktop only */}
-          {item.summary && (
-            <p className="text-sm text-white/60 mt-1.5 line-clamp-1 hidden sm:block">
-              {item.summary}
-            </p>
-          )}
         </div>
 
-        {/* Progress dots - absolute overlay */}
+        {/* Progress dots - floating overlay, centered */}
         {news.length > 1 && (
-          <div className="absolute bottom-3 right-3 flex gap-1.5 z-10">
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
             {news.map((_, idx) => (
               <button
                 key={idx}
@@ -285,18 +288,11 @@ function RotatingHeadline({
                   setCurrentIndex(idx)
                   setAnimationKey((prev) => prev + 1)
                 }}
-                className={`w-1.5 h-1.5 rounded-full transition-all ${
-                  idx === currentIndex ? 'bg-white w-4' : 'bg-white/40 hover:bg-white/60'
+                className={`h-1.5 rounded-full transition-all ${
+                  idx === currentIndex ? 'bg-white w-6' : 'bg-white/40 hover:bg-white/60 w-1.5'
                 }`}
               />
             ))}
-          </div>
-        )}
-
-        {/* Swipe hint - absolute overlay on mobile */}
-        {news.length > 1 && (
-          <div className="absolute bottom-3 left-3 flex items-center gap-1 text-[10px] text-white/40 sm:hidden z-10">
-            <span>← swipe →</span>
           </div>
         )}
       </div>

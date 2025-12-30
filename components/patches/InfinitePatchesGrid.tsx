@@ -87,14 +87,15 @@ function HeroPatchCard({ patch, priority = false }: { patch: PatchItem; priority
       href={`/patches/${patch.id}`}
       className="group relative rounded-xl sm:rounded-2xl border border-white/10 bg-black/40 block"
     >
-      {/* Hero Image - Capped height on mobile */}
-      <div className="relative min-h-[140px] max-h-[180px] sm:min-h-[180px] sm:max-h-[260px] overflow-hidden rounded-t-xl sm:rounded-t-2xl">
+      {/* Hero Image - Premium height with breathing room */}
+      <div className="relative min-h-[180px] max-h-[240px] sm:min-h-[240px] sm:max-h-[320px] overflow-hidden rounded-t-xl sm:rounded-t-2xl">
         {heroImage ? (
           <Image
             src={heroImage}
             alt={patch.title}
             fill
             className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+            style={{ objectPosition: 'center 30%' }}
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
             priority={priority}
           />
@@ -107,35 +108,37 @@ function HeroPatchCard({ patch, priority = false }: { patch: PatchItem; priority
           />
         )}
 
-        {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
+        {/* Strong gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-black/10" />
 
-        {/* Content on Image - flex to bottom */}
-        <div className="absolute inset-0 flex flex-col justify-end p-3 sm:p-4 lg:p-5">
-          {/* Game Logo + Name */}
-          <div className="flex items-center gap-1.5 sm:gap-2 mb-1">
-            {patch.game.logo_url && (
-              <div className="relative w-4 h-4 sm:w-5 sm:h-5 rounded overflow-hidden bg-white/10 backdrop-blur-sm">
-                <Image
-                  src={patch.game.logo_url}
-                  alt={patch.game.name}
-                  fill
-                  className="object-contain"
-                  sizes="20px"
-                />
-              </div>
-            )}
-            <span className="text-[10px] sm:text-xs text-zinc-300 font-medium">{patch.game.name}</span>
+        {/* Content - safe reading zone */}
+        <div className="absolute inset-0 flex flex-col justify-end p-4 pb-5 sm:p-5 sm:pb-6">
+          <div className="max-w-lg">
+            {/* Game Logo + Name */}
+            <div className="flex items-center gap-2 mb-2">
+              {patch.game.logo_url && (
+                <div className="relative w-5 h-5 sm:w-6 sm:h-6 rounded overflow-hidden bg-white/10 backdrop-blur-sm">
+                  <Image
+                    src={patch.game.logo_url}
+                    alt={patch.game.name}
+                    fill
+                    className="object-contain"
+                    sizes="24px"
+                  />
+                </div>
+              )}
+              <span className="text-xs sm:text-sm text-white/90 font-medium">{patch.game.name}</span>
+            </div>
+
+            {/* Patch Title - larger */}
+            <h3 className="text-base sm:text-xl font-bold leading-snug text-white line-clamp-2 group-hover:text-primary transition-colors">
+              {patch.title}
+            </h3>
           </div>
-
-          {/* Patch Title */}
-          <h3 className="text-sm sm:text-lg font-bold leading-tight text-white line-clamp-2 group-hover:text-primary transition-colors pr-12">
-            {patch.title}
-          </h3>
         </div>
 
         {/* Importance Badge - Top Right */}
-        <span className={`absolute top-2 right-2 rounded-full px-2 py-0.5 text-[9px] sm:text-[10px] font-semibold border backdrop-blur-sm ${impact.bg} ${impact.text} ${impact.border}`}>
+        <span className={`absolute top-3 right-3 rounded-full px-2.5 py-1 text-[10px] sm:text-xs font-semibold border backdrop-blur-sm ${impact.bg} ${impact.text} ${impact.border}`}>
           {impact.label}
         </span>
       </div>
@@ -222,14 +225,15 @@ function CompactPatchCard({ patch }: { patch: PatchItem }) {
       href={`/patches/${patch.id}`}
       className="group relative rounded-lg sm:rounded-xl border border-white/10 bg-black/40 block active:scale-[0.98] transition-transform"
     >
-      {/* Image - Capped height */}
-      <div className="relative min-h-[100px] max-h-[120px] sm:min-h-[120px] sm:max-h-[160px] overflow-hidden rounded-t-lg sm:rounded-t-xl">
+      {/* Image - Premium compact height */}
+      <div className="relative min-h-[120px] max-h-[150px] sm:min-h-[140px] sm:max-h-[180px] overflow-hidden rounded-t-lg sm:rounded-t-xl">
         {heroImage ? (
           <Image
             src={heroImage}
             alt={patch.title}
             fill
             className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+            style={{ objectPosition: 'center 30%' }}
             sizes="(max-width: 768px) 50vw, 400px"
           />
         ) : (
@@ -241,19 +245,19 @@ function CompactPatchCard({ patch }: { patch: PatchItem }) {
           />
         )}
 
-        {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent" />
+        {/* Strong gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-black/10" />
 
-        {/* Content on Image */}
-        <div className="absolute bottom-0 left-0 right-0 p-2.5 sm:p-3 lg:p-4">
-          <p className="text-[10px] sm:text-[11px] text-zinc-300 mb-0.5 sm:mb-1 font-medium">{patch.game.name}</p>
-          <h3 className="text-xs sm:text-sm lg:text-base font-semibold leading-tight text-white line-clamp-2 group-hover:text-primary transition-colors">
+        {/* Content - flex to bottom */}
+        <div className="absolute inset-0 flex flex-col justify-end p-3 sm:p-4">
+          <p className="text-[11px] sm:text-xs text-white/80 mb-1 font-medium">{patch.game.name}</p>
+          <h3 className="text-sm sm:text-base font-semibold leading-snug text-white line-clamp-2 group-hover:text-primary transition-colors">
             {patch.title}
           </h3>
         </div>
 
         {/* Importance Badge */}
-        <span className={`absolute top-2 right-2 sm:top-2.5 sm:right-2.5 rounded-full px-1.5 sm:px-2 py-0.5 text-[9px] sm:text-[10px] font-semibold border backdrop-blur-sm ${impact.bg} ${impact.text} ${impact.border}`}>
+        <span className={`absolute top-2 right-2 rounded-full px-2 py-0.5 text-[9px] sm:text-[10px] font-semibold border backdrop-blur-sm ${impact.bg} ${impact.text} ${impact.border}`}>
           {impact.label}
         </span>
       </div>
