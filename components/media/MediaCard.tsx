@@ -102,17 +102,17 @@ export function MediaCard({
     return (
       <Link
         href={href}
-        className="group flex gap-3 overflow-hidden rounded-xl border border-white/10 bg-white/5 p-2 sm:p-3 transition-all duration-300 hover:bg-white/10 hover:border-white/20 active:scale-[0.98]"
+        className="group flex gap-2 overflow-hidden rounded-lg border border-white/10 bg-white/5 p-1.5 sm:p-3 transition-all duration-300 hover:bg-white/10 hover:border-white/20 active:scale-[0.98] w-full"
       >
         {/* Square thumbnail on mobile, 16:9 on desktop */}
-        <div className="relative w-14 h-14 sm:w-28 sm:aspect-[16/9] sm:h-auto flex-shrink-0 overflow-hidden rounded-lg">
+        <div className="relative w-12 h-12 sm:w-28 sm:aspect-[16/9] sm:h-auto flex-shrink-0 overflow-hidden rounded-md">
           {imageUrl ? (
             <Image
               src={imageUrl}
               alt={title}
               fill
               className="object-cover"
-              sizes="(max-width: 640px) 56px, 112px"
+              sizes="(max-width: 640px) 48px, 112px"
               unoptimized
             />
           ) : (

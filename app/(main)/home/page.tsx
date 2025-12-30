@@ -361,17 +361,17 @@ function MobileFeaturedCard({
   return (
     <Link
       href={href}
-      className="group flex gap-3 overflow-hidden rounded-xl border border-white/10 bg-white/5 p-2 active:scale-[0.98] transition-transform"
+      className="group flex gap-2 overflow-hidden rounded-lg border border-white/10 bg-white/5 p-1.5 active:scale-[0.98] transition-transform w-full"
     >
-      {/* Thumbnail - matches MediaCard horizontal (w-14 = 56px) */}
-      <div className="relative w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 bg-zinc-900">
+      {/* Thumbnail - matches MediaCard horizontal (w-12 = 48px) */}
+      <div className="relative w-12 h-12 rounded-md overflow-hidden flex-shrink-0 bg-zinc-900">
         {imageUrl ? (
           <Image
             src={imageUrl}
             alt=""
             fill
             className="object-cover"
-            sizes="56px"
+            sizes="48px"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-zinc-800 to-zinc-900">
