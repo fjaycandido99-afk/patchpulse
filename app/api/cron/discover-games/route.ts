@@ -1,6 +1,12 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { getNewReleasesFromIgdb, getUpcomingFromIgdb, igdbToGameRecord } from '@/lib/fetchers/igdb'
+import {
+  getNewReleasesFromIgdb,
+  getUpcomingFromIgdb,
+  getTBAGamesFromIgdb,
+  getIndieGamesFromIgdb,
+  igdbToGameRecord
+} from '@/lib/fetchers/igdb'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300 // 5 minutes max
@@ -27,82 +33,97 @@ export async function GET(req: Request) {
   const results = {
     newReleases: { fetched: 0, added: 0, errors: [] as string[] },
     upcoming: { fetched: 0, added: 0, errors: [] as string[] },
+    tba: { fetched: 0, added: 0, errors: [] as string[] },
+    indie: { fetched: 0, added: 0, errors: [] as string[] },
   }
 
-  // Fetch new releases from IGDB
+  // Helper to insert game if not exists
+  async function insertGameIfNew(game: Awaited<ReturnType<typeof getNewReleasesFromIgdb>>[0], category: keyof typeof results) {
+    try {
+      // Check if game already exists (by slug)
+      const { data: existing } = await supabase
+        .from('games')
+        .select('id')
+        .eq('slug', game.slug)
+        .single()
+
+      if (existing) return false // Skip existing games
+
+      // Insert new game
+      const record = igdbToGameRecord(game)
+      const { error } = await supabase
+        .from('games')
+        .insert(record)
+
+      if (error) {
+        results[category].errors.push(`${game.name}: ${error.message}`)
+        return false
+      }
+
+      results[category].added++
+      return true
+    } catch (err) {
+      results[category].errors.push(`${game.name}: ${err}`)
+      return false
+    }
+  }
+
+  // Fetch new releases from IGDB (last 60 days to catch more)
   try {
-    const newReleases = await getNewReleasesFromIgdb(30)
+    const newReleases = await getNewReleasesFromIgdb(40, 60)
     results.newReleases.fetched = newReleases.length
 
     for (const game of newReleases) {
-      try {
-        // Check if game already exists (by slug)
-        const { data: existing } = await supabase
-          .from('games')
-          .select('id')
-          .eq('slug', game.slug)
-          .single()
-
-        if (existing) continue // Skip existing games
-
-        // Insert new game
-        const record = igdbToGameRecord(game)
-        const { error } = await supabase
-          .from('games')
-          .insert(record)
-
-        if (error) {
-          results.newReleases.errors.push(`${game.name}: ${error.message}`)
-        } else {
-          results.newReleases.added++
-        }
-      } catch (err) {
-        results.newReleases.errors.push(`${game.name}: ${err}`)
-      }
+      await insertGameIfNew(game, 'newReleases')
     }
   } catch (error) {
     results.newReleases.errors.push(`Fetch failed: ${error}`)
   }
 
-  // Fetch upcoming games from IGDB
+  // Fetch upcoming games from IGDB (next 365 days - full year)
   try {
-    const upcoming = await getUpcomingFromIgdb(30)
+    const upcoming = await getUpcomingFromIgdb(50, 365)
     results.upcoming.fetched = upcoming.length
 
     for (const game of upcoming) {
-      try {
-        // Check if game already exists (by slug)
-        const { data: existing } = await supabase
-          .from('games')
-          .select('id')
-          .eq('slug', game.slug)
-          .single()
-
-        if (existing) continue
-
-        // Insert new game
-        const record = igdbToGameRecord(game)
-        const { error } = await supabase
-          .from('games')
-          .insert(record)
-
-        if (error) {
-          results.upcoming.errors.push(`${game.name}: ${error.message}`)
-        } else {
-          results.upcoming.added++
-        }
-      } catch (err) {
-        results.upcoming.errors.push(`${game.name}: ${err}`)
-      }
+      await insertGameIfNew(game, 'upcoming')
     }
   } catch (error) {
     results.upcoming.errors.push(`Fetch failed: ${error}`)
   }
 
+  // Fetch TBA games (announced but no release date)
+  try {
+    const tbaGames = await getTBAGamesFromIgdb(30)
+    results.tba.fetched = tbaGames.length
+
+    for (const game of tbaGames) {
+      await insertGameIfNew(game, 'tba')
+    }
+  } catch (error) {
+    results.tba.errors.push(`Fetch failed: ${error}`)
+  }
+
+  // Fetch indie games specifically
+  try {
+    const indieGames = await getIndieGamesFromIgdb(30)
+    results.indie.fetched = indieGames.length
+
+    for (const game of indieGames) {
+      await insertGameIfNew(game, 'indie')
+    }
+  } catch (error) {
+    results.indie.errors.push(`Fetch failed: ${error}`)
+  }
+
+  const totalAdded = results.newReleases.added + results.upcoming.added + results.tba.added + results.indie.added
+
   return NextResponse.json({
     ok: true,
-    totalAdded: results.newReleases.added + results.upcoming.added,
+    totalAdded,
     newReleases: results.newReleases,
     upcoming: results.upcoming,
+    tba: results.tba,
+    indie: results.indie,
   })
 }

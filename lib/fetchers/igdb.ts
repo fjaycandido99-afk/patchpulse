@@ -159,13 +159,13 @@ export type IgdbGame = {
   category?: number
 }
 
-// Get newly released games from IGDB (last 30 days)
-export async function getNewReleasesFromIgdb(limit = 20): Promise<IgdbGame[]> {
+// Get newly released games from IGDB (last 30 days for frequent, or up to 1 year for backfill)
+export async function getNewReleasesFromIgdb(limit = 20, daysBack = 30): Promise<IgdbGame[]> {
   try {
     const token = await getAccessToken()
 
     const now = Math.floor(Date.now() / 1000)
-    const thirtyDaysAgo = now - (30 * 24 * 60 * 60)
+    const startDate = now - (daysBack * 24 * 60 * 60)
 
     const response = await fetch('https://api.igdb.com/v4/games', {
       method: 'POST',
@@ -180,10 +180,10 @@ export async function getNewReleasesFromIgdb(limit = 20): Promise<IgdbGame[]> {
                genres.name, platforms.name, platforms.abbreviation,
                involved_companies.company.name, involved_companies.developer,
                external_games.category, external_games.uid,
-               category;
-        where first_release_date >= ${thirtyDaysAgo}
+               category, hypes, follows;
+        where first_release_date >= ${startDate}
           & first_release_date <= ${now}
-          & cover != null;
+          & (cover != null | hypes > 5 | follows > 10);
         sort first_release_date desc;
         limit ${limit};
       `,
@@ -201,13 +201,13 @@ export async function getNewReleasesFromIgdb(limit = 20): Promise<IgdbGame[]> {
   }
 }
 
-// Get upcoming games from IGDB (next 90 days)
-export async function getUpcomingFromIgdb(limit = 20): Promise<IgdbGame[]> {
+// Get upcoming games from IGDB (next 90 days default, up to 1 year)
+export async function getUpcomingFromIgdb(limit = 20, daysAhead = 90): Promise<IgdbGame[]> {
   try {
     const token = await getAccessToken()
 
     const now = Math.floor(Date.now() / 1000)
-    const ninetyDaysLater = now + (90 * 24 * 60 * 60)
+    const endDate = now + (daysAhead * 24 * 60 * 60)
 
     const response = await fetch('https://api.igdb.com/v4/games', {
       method: 'POST',
@@ -222,10 +222,10 @@ export async function getUpcomingFromIgdb(limit = 20): Promise<IgdbGame[]> {
                genres.name, platforms.name, platforms.abbreviation,
                involved_companies.company.name, involved_companies.developer,
                external_games.category, external_games.uid,
-               category;
+               category, hypes, follows;
         where first_release_date >= ${now}
-          & first_release_date <= ${ninetyDaysLater}
-          & cover != null;
+          & first_release_date <= ${endDate}
+          & (cover != null | hypes > 5 | follows > 10);
         sort first_release_date asc;
         limit ${limit};
       `,
@@ -239,6 +239,95 @@ export async function getUpcomingFromIgdb(limit = 20): Promise<IgdbGame[]> {
     return await response.json()
   } catch (error) {
     console.error('IGDB upcoming error:', error)
+    return []
+  }
+}
+
+// Get TBA games (announced but no release date) - includes indies
+export async function getTBAGamesFromIgdb(limit = 30): Promise<IgdbGame[]> {
+  try {
+    const token = await getAccessToken()
+
+    // Get games announced in the last year that have no release date
+    const oneYearAgo = Math.floor(Date.now() / 1000) - (365 * 24 * 60 * 60)
+
+    const response = await fetch('https://api.igdb.com/v4/games', {
+      method: 'POST',
+      headers: {
+        'Client-ID': TWITCH_CLIENT_ID,
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'text/plain',
+      },
+      body: `
+        fields id, name, slug, summary, first_release_date,
+               cover.image_id, screenshots.image_id,
+               genres.name, platforms.name, platforms.abbreviation,
+               involved_companies.company.name, involved_companies.developer,
+               external_games.category, external_games.uid,
+               category, hypes, follows, created_at;
+        where first_release_date = null
+          & created_at >= ${oneYearAgo}
+          & (cover != null | hypes > 3 | follows > 5)
+          & category = (0, 8, 9);
+        sort hypes desc;
+        limit ${limit};
+      `,
+      // category: 0 = main game, 8 = remake, 9 = remaster
+    })
+
+    if (!response.ok) {
+      console.error('IGDB TBA games failed:', response.status)
+      return []
+    }
+
+    return await response.json()
+  } catch (error) {
+    console.error('IGDB TBA games error:', error)
+    return []
+  }
+}
+
+// Get indie games specifically (smaller studios, recent announcements)
+export async function getIndieGamesFromIgdb(limit = 30): Promise<IgdbGame[]> {
+  try {
+    const token = await getAccessToken()
+
+    const now = Math.floor(Date.now() / 1000)
+    const oneYearAgo = now - (365 * 24 * 60 * 60)
+    const oneYearAhead = now + (365 * 24 * 60 * 60)
+
+    const response = await fetch('https://api.igdb.com/v4/games', {
+      method: 'POST',
+      headers: {
+        'Client-ID': TWITCH_CLIENT_ID,
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'text/plain',
+      },
+      body: `
+        fields id, name, slug, summary, first_release_date,
+               cover.image_id, screenshots.image_id,
+               genres.name, platforms.name, platforms.abbreviation,
+               involved_companies.company.name, involved_companies.developer,
+               external_games.category, external_games.uid,
+               category, hypes, follows;
+        where genres.name = "Indie"
+          & (first_release_date >= ${oneYearAgo} | first_release_date = null)
+          & (first_release_date <= ${oneYearAhead} | first_release_date = null)
+          & cover != null
+          & category = (0, 8, 9);
+        sort hypes desc;
+        limit ${limit};
+      `,
+    })
+
+    if (!response.ok) {
+      console.error('IGDB indie games failed:', response.status)
+      return []
+    }
+
+    return await response.json()
+  } catch (error) {
+    console.error('IGDB indie games error:', error)
     return []
   }
 }

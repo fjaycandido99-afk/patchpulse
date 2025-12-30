@@ -3,6 +3,21 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { canAddToBacklog, canFollowGame } from '@/lib/subscriptions/limits'
+import { backfillPatchesForGame, needsBackfill } from '@/lib/fetchers/backfill-patches'
+
+// Trigger backfill in background (non-blocking)
+async function triggerBackfill(gameId: string) {
+  try {
+    const needs = await needsBackfill(gameId)
+    if (needs) {
+      console.log(`Backfilling patches for game ${gameId}`)
+      const result = await backfillPatchesForGame(gameId)
+      console.log(`Backfill complete: ${result.addedCount} patches added`)
+    }
+  } catch (error) {
+    console.error('Backfill failed:', error)
+  }
+}
 
 type BacklogStatus = 'playing' | 'paused' | 'backlog' | 'finished' | 'dropped'
 
@@ -77,6 +92,11 @@ export async function addToBacklog(gameId: string) {
 
   if (error) {
     throw new Error('Failed to add game to backlog')
+  }
+
+  // Trigger backfill of historical patches (async, don't wait)
+  if (!existing) {
+    triggerBackfill(gameId).catch(console.error)
   }
 
   revalidatePath('/backlog')
@@ -336,6 +356,11 @@ export async function followAndAddToBacklog(gameId: string) {
 
   if (error) {
     throw new Error('Failed to add game to backlog')
+  }
+
+  // Trigger backfill of historical patches (async, don't wait)
+  if (!existingFollow && !existingBacklog) {
+    triggerBackfill(gameId).catch(console.error)
   }
 
   revalidatePath('/backlog')
