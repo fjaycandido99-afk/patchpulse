@@ -16,24 +16,49 @@ type GameCarouselProps = {
 export function GameCarousel({
   games,
   type,
-  autoPlayInterval = 3500,
+  autoPlayInterval = 3000,
 }: GameCarouselProps) {
   const { openSpotlight } = useSpotlight()
   const isUpcoming = type === 'upcoming'
-  const [currentIndex, setCurrentIndex] = useState(0)
+
+  // Track which games are shown in each of the 4 positions
+  const [slots, setSlots] = useState([0, 1, 2, 3])
+  // Track which slot is currently transitioning
+  const [fadingSlot, setFadingSlot] = useState<number | null>(null)
+  // Track the next game index to show
+  const [nextGameIndex, setNextGameIndex] = useState(4)
 
   const visibleCount = 4
 
-  // Auto-rotate
+  // Auto-rotate one slot at a time
   useEffect(() => {
     if (games.length <= visibleCount) return
 
     const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % games.length)
+      // Pick a random slot to change (or cycle through)
+      const slotToChange = (nextGameIndex - 4) % 4
+
+      // Start fade out
+      setFadingSlot(slotToChange)
+
+      // After fade out, update the game and fade in
+      setTimeout(() => {
+        setSlots(prev => {
+          const newSlots = [...prev]
+          newSlots[slotToChange] = nextGameIndex % games.length
+          return newSlots
+        })
+        setNextGameIndex(prev => prev + 1)
+
+        // Keep fading state for fade-in animation
+        setTimeout(() => {
+          setFadingSlot(null)
+        }, 400)
+      }, 400)
     }, autoPlayInterval)
 
     return () => clearInterval(interval)
-  }, [games.length, autoPlayInterval])
+  }, [games.length, autoPlayInterval, nextGameIndex])
 
   const handleClick = useCallback((game: UpcomingGame | NewReleaseGame) => {
     openSpotlight(
@@ -68,54 +93,55 @@ export function GameCarousel({
     ? 'bg-indigo-500/80 text-white'
     : 'bg-emerald-500/80 text-white'
 
-  // Get visible games
-  const visibleGames = []
-  for (let i = 0; i < Math.min(visibleCount, games.length); i++) {
-    visibleGames.push(games[(currentIndex + i) % games.length])
-  }
-
   return (
     <div className="grid grid-cols-4 gap-2">
-      {visibleGames.map((game, idx) => (
-        <button
-          key={`${currentIndex}-${idx}`}
-          onClick={() => handleClick(game)}
-          className="active:scale-[0.97] text-left transition-opacity duration-500 ease-out"
-          style={{
-            animation: 'fadeIn 400ms ease-out',
-          }}
-        >
-          <div className="relative aspect-[2/3] rounded-lg sm:rounded-xl overflow-hidden bg-zinc-900">
-            {game.cover_url ? (
-              <>
-                <Image
-                  src={game.cover_url}
-                  alt={game.name}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 640px) 25vw, 140px"
-                  loading="lazy"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20" />
-              </>
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-zinc-800 to-zinc-900">
-                <Gamepad2 className="w-5 h-5 sm:w-8 sm:h-8 text-zinc-700" />
-              </div>
-            )}
+      {slots.map((gameIndex, slotIndex) => {
+        const game = games[gameIndex % games.length]
+        const isFading = fadingSlot === slotIndex
 
-            {/* Days badge */}
-            <span className={`absolute top-1 left-1 sm:top-2 sm:left-2 text-[8px] sm:text-[11px] px-1 sm:px-2 py-0.5 rounded-full backdrop-blur-sm font-medium ${badgeColor}`}>
-              {getDaysLabel(game)}
-            </span>
-          </div>
+        return (
+          <button
+            key={`slot-${slotIndex}`}
+            onClick={() => handleClick(game)}
+            className="active:scale-[0.97] text-left"
+            style={{
+              opacity: isFading ? 0 : 1,
+              transform: isFading ? 'scale(0.95)' : 'scale(1)',
+              transition: 'opacity 400ms ease-in-out, transform 400ms ease-in-out',
+            }}
+          >
+            <div className="relative aspect-[2/3] rounded-lg sm:rounded-xl overflow-hidden bg-zinc-900">
+              {game.cover_url ? (
+                <>
+                  <Image
+                    src={game.cover_url}
+                    alt={game.name}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 640px) 25vw, 140px"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20" />
+                </>
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-zinc-800 to-zinc-900">
+                  <Gamepad2 className="w-5 h-5 sm:w-8 sm:h-8 text-zinc-700" />
+                </div>
+              )}
 
-          {/* Title */}
-          <h3 className="font-medium leading-tight line-clamp-1 text-zinc-200 text-[9px] sm:text-sm mt-1 sm:mt-2">
-            {game.name}
-          </h3>
-        </button>
-      ))}
+              {/* Days badge */}
+              <span className={`absolute top-1 left-1 sm:top-2 sm:left-2 text-[8px] sm:text-[11px] px-1 sm:px-2 py-0.5 rounded-full backdrop-blur-sm font-medium ${badgeColor}`}>
+                {getDaysLabel(game)}
+              </span>
+            </div>
+
+            {/* Title */}
+            <h3 className="font-medium leading-tight line-clamp-1 text-zinc-200 text-[9px] sm:text-sm mt-1 sm:mt-2">
+              {game.name}
+            </h3>
+          </button>
+        )
+      })}
     </div>
   )
 }
