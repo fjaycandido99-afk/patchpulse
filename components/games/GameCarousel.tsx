@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useState, useEffect, useRef } from 'react'
+import { useCallback, useState, useEffect } from 'react'
 import Image from 'next/image'
 import { Gamepad2 } from 'lucide-react'
 import { useSpotlight } from '@/components/games'
@@ -21,30 +21,30 @@ export function GameCarousel({
   const { openSpotlight } = useSpotlight()
   const isUpcoming = type === 'upcoming'
   const [offset, setOffset] = useState(0)
-  const [translateX, setTranslateX] = useState(0)
-  const [enableTransition, setEnableTransition] = useState(true)
+  const [isSliding, setIsSliding] = useState(false)
 
   const visibleCount = 4
+  // Card width is 25%, gap is 8px (gap-2), so slide = 25% + 2px (gap/4)
+  const slideAmount = 'calc(25% + 2px)'
 
   // Auto-rotate with smooth slide
   useEffect(() => {
     if (games.length <= visibleCount) return
 
     const interval = setInterval(() => {
-      // Start sliding
-      setEnableTransition(true)
-      setTranslateX(-25)
-
-      // After slide completes, reset instantly
-      setTimeout(() => {
-        setEnableTransition(false) // Disable transition for instant reset
-        setTranslateX(0) // Reset position
-        setOffset((prev) => (prev + 1) % games.length) // Update content
-      }, 500)
+      setIsSliding(true)
     }, autoPlayInterval)
 
     return () => clearInterval(interval)
   }, [games.length, autoPlayInterval])
+
+  // Handle transition end
+  const handleTransitionEnd = () => {
+    if (isSliding) {
+      setIsSliding(false)
+      setOffset((prev) => (prev + 1) % games.length)
+    }
+  }
 
   const handleClick = useCallback((game: UpcomingGame | NewReleaseGame) => {
     openSpotlight(
@@ -90,15 +90,16 @@ export function GameCarousel({
       <div
         className="flex gap-2"
         style={{
-          transform: `translateX(calc(${translateX}% - ${translateX < 0 ? '2px' : '0px'}))`,
-          transition: enableTransition ? 'transform 500ms ease-out' : 'none',
+          transform: isSliding ? `translateX(-${slideAmount})` : 'translateX(0)',
+          transition: isSliding ? 'transform 600ms cubic-bezier(0.25, 0.1, 0.25, 1)' : 'none',
         }}
+        onTransitionEnd={handleTransitionEnd}
       >
         {extendedGames.map((game, idx) => (
           <button
             key={`${game.id}-${offset}-${idx}`}
             onClick={() => handleClick(game)}
-            className="flex-shrink-0 w-[calc(25%-6px)] active:scale-[0.97] transition-transform text-left"
+            className="flex-shrink-0 w-[calc(25%-6px)] active:scale-[0.97] text-left"
           >
             <div className="relative aspect-[2/3] rounded-lg sm:rounded-xl overflow-hidden bg-zinc-900">
               {game.cover_url ? (
