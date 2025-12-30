@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useState, useEffect } from 'react'
+import { useCallback, useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import { Gamepad2 } from 'lucide-react'
 import { useSpotlight } from '@/components/games'
@@ -16,27 +16,28 @@ type GameCarouselProps = {
 export function GameCarousel({
   games,
   type,
-  autoPlayInterval = 2500,
+  autoPlayInterval = 3000,
 }: GameCarouselProps) {
   const { openSpotlight } = useSpotlight()
   const isUpcoming = type === 'upcoming'
-  const [startIndex, setStartIndex] = useState(0)
-  const [animatingIndex, setAnimatingIndex] = useState<number | null>(null)
+  const [offset, setOffset] = useState(0)
+  const [isTransitioning, setIsTransitioning] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   const visibleCount = 4
 
-  // Auto-rotate one game at a time
+  // Auto-rotate with smooth slide
   useEffect(() => {
     if (games.length <= visibleCount) return
 
     const interval = setInterval(() => {
-      // Animate the first position, then shift
-      setAnimatingIndex(0)
+      setIsTransitioning(true)
 
+      // After transition completes, reset position and update offset
       setTimeout(() => {
-        setStartIndex((prev) => (prev + 1) % games.length)
-        setAnimatingIndex(null)
-      }, 300)
+        setOffset((prev) => (prev + 1) % games.length)
+        setIsTransitioning(false)
+      }, 500)
     }, autoPlayInterval)
 
     return () => clearInterval(interval)
@@ -75,56 +76,58 @@ export function GameCarousel({
     ? 'bg-indigo-500/80 text-white'
     : 'bg-emerald-500/80 text-white'
 
-  // Get visible games
-  const visibleGames = []
-  for (let i = 0; i < Math.min(visibleCount, games.length); i++) {
-    visibleGames.push({
-      game: games[(startIndex + i) % games.length],
-      isAnimating: animatingIndex === i
-    })
+  // Get extended list for smooth infinite scroll (show 5 to allow slide effect)
+  const extendedGames = []
+  for (let i = 0; i < visibleCount + 1; i++) {
+    extendedGames.push(games[(offset + i) % games.length])
   }
 
   return (
-    <div className="grid grid-cols-4 gap-2 sm:gap-3">
-      {visibleGames.map(({ game, isAnimating }, idx) => (
-        <button
-          key={`${game.id}-${idx}`}
-          onClick={() => handleClick(game)}
-          className={`active:scale-[0.97] transition-all duration-300 text-left ${
-            isAnimating ? 'opacity-0 scale-95' : 'opacity-100 scale-100'
-          }`}
-        >
-          <div className="relative aspect-[2/3] rounded-lg sm:rounded-xl overflow-hidden bg-zinc-900">
-            {game.cover_url ? (
-              <>
-                <Image
-                  src={game.cover_url}
-                  alt={game.name}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 640px) 25vw, 140px"
-                  loading="lazy"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20" />
-              </>
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-zinc-800 to-zinc-900">
-                <Gamepad2 className="w-5 h-5 sm:w-8 sm:h-8 text-zinc-700" />
-              </div>
-            )}
+    <div className="overflow-hidden" ref={containerRef}>
+      <div
+        className="flex gap-2 transition-transform duration-500 ease-out"
+        style={{
+          transform: isTransitioning ? 'translateX(calc(-25% - 4px))' : 'translateX(0)',
+        }}
+      >
+        {extendedGames.map((game, idx) => (
+          <button
+            key={`${game.id}-${offset}-${idx}`}
+            onClick={() => handleClick(game)}
+            className="flex-shrink-0 w-[calc(25%-6px)] active:scale-[0.97] transition-transform text-left"
+          >
+            <div className="relative aspect-[2/3] rounded-lg sm:rounded-xl overflow-hidden bg-zinc-900">
+              {game.cover_url ? (
+                <>
+                  <Image
+                    src={game.cover_url}
+                    alt={game.name}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 640px) 25vw, 140px"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20" />
+                </>
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-zinc-800 to-zinc-900">
+                  <Gamepad2 className="w-5 h-5 sm:w-8 sm:h-8 text-zinc-700" />
+                </div>
+              )}
 
-            {/* Days badge */}
-            <span className={`absolute top-1 left-1 sm:top-2 sm:left-2 text-[8px] sm:text-[11px] px-1 sm:px-2 py-0.5 rounded-full backdrop-blur-sm font-medium ${badgeColor}`}>
-              {getDaysLabel(game)}
-            </span>
-          </div>
+              {/* Days badge */}
+              <span className={`absolute top-1 left-1 sm:top-2 sm:left-2 text-[8px] sm:text-[11px] px-1 sm:px-2 py-0.5 rounded-full backdrop-blur-sm font-medium ${badgeColor}`}>
+                {getDaysLabel(game)}
+              </span>
+            </div>
 
-          {/* Title */}
-          <h3 className="font-medium leading-tight line-clamp-1 text-zinc-200 text-[9px] sm:text-sm mt-1 sm:mt-2">
-            {game.name}
-          </h3>
-        </button>
-      ))}
+            {/* Title */}
+            <h3 className="font-medium leading-tight line-clamp-1 text-zinc-200 text-[9px] sm:text-sm mt-1 sm:mt-2">
+              {game.name}
+            </h3>
+          </button>
+        ))}
+      </div>
     </div>
   )
 }
