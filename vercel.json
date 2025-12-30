@@ -10,7 +10,7 @@
     },
     {
       "path": "/api/cron/backfill-news-images",
-      "schedule": "*/10 * * * *"
+      "schedule": "*/5 * * * *"
     },
     {
       "path": "/api/cron/discover-games",

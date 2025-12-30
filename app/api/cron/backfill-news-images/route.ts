@@ -43,7 +43,7 @@ export async function GET(req: Request) {
     .is('image_url', null)
     .not('source_url', 'is', null)
     .order('created_at', { ascending: false })
-    .limit(10) // Process 10 at a time
+    .limit(20) // Process 20 at a time
 
   if (error || !newsWithoutImages) {
     return NextResponse.json({ ok: false, error: error?.message || 'No items found' })
