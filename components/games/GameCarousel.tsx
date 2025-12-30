@@ -21,8 +21,8 @@ export function GameCarousel({
   const { openSpotlight } = useSpotlight()
   const isUpcoming = type === 'upcoming'
   const [offset, setOffset] = useState(0)
-  const [isTransitioning, setIsTransitioning] = useState(false)
-  const containerRef = useRef<HTMLDivElement>(null)
+  const [translateX, setTranslateX] = useState(0)
+  const [enableTransition, setEnableTransition] = useState(true)
 
   const visibleCount = 4
 
@@ -31,12 +31,15 @@ export function GameCarousel({
     if (games.length <= visibleCount) return
 
     const interval = setInterval(() => {
-      setIsTransitioning(true)
+      // Start sliding
+      setEnableTransition(true)
+      setTranslateX(-25)
 
-      // After transition completes, reset position and update offset
+      // After slide completes, reset instantly
       setTimeout(() => {
-        setOffset((prev) => (prev + 1) % games.length)
-        setIsTransitioning(false)
+        setEnableTransition(false) // Disable transition for instant reset
+        setTranslateX(0) // Reset position
+        setOffset((prev) => (prev + 1) % games.length) // Update content
       }, 500)
     }, autoPlayInterval)
 
@@ -83,11 +86,12 @@ export function GameCarousel({
   }
 
   return (
-    <div className="overflow-hidden" ref={containerRef}>
+    <div className="overflow-hidden">
       <div
-        className="flex gap-2 transition-transform duration-500 ease-out"
+        className="flex gap-2"
         style={{
-          transform: isTransitioning ? 'translateX(calc(-25% - 4px))' : 'translateX(0)',
+          transform: `translateX(calc(${translateX}% - ${translateX < 0 ? '2px' : '0px'}))`,
+          transition: enableTransition ? 'transform 500ms ease-out' : 'none',
         }}
       >
         {extendedGames.map((game, idx) => (
