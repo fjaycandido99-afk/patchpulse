@@ -102,56 +102,34 @@ export function MediaCard({
     return (
       <Link
         href={href}
-        className="group flex gap-4 overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-3 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/40 hover:border-white/20 hover:bg-white/[0.07] touch-feedback gradient-border"
+        className="group flex gap-2.5 sm:gap-4 overflow-hidden rounded-xl sm:rounded-2xl border border-white/10 bg-white/5 p-2 sm:p-3 transition-all duration-300 hover:bg-white/[0.07] hover:border-white/20 active:scale-[0.98]"
       >
-        <div className="relative aspect-[16/9] w-28 flex-shrink-0 overflow-hidden rounded-xl sm:w-36">
+        <div className="relative w-16 h-16 sm:w-28 sm:aspect-[16/9] sm:h-auto flex-shrink-0 overflow-hidden rounded-lg sm:rounded-xl">
           {imageUrl ? (
             <Image
               src={imageUrl}
               alt={title}
               fill
-              className="object-cover transition-transform duration-300 group-hover:scale-105"
-              sizes="(max-width: 640px) 112px, 144px"
-              placeholder={blurHash ? 'blur' : 'empty'}
-              blurDataURL={blurHash || undefined}
+              className="object-cover"
+              sizes="(max-width: 640px) 64px, 112px"
               unoptimized
             />
           ) : (
             <ThumbnailFallback title={title} />
           )}
-          {/* Gradient overlay for readability */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
         </div>
 
-        <div className="flex flex-1 flex-col justify-center overflow-hidden py-1">
-          <div className="mb-2 flex flex-wrap items-center gap-2">
-            {limitedBadges}
-            {category && <CategoryTag category={category} />}
-          </div>
-
-          <h3 className="text-base font-semibold leading-snug line-clamp-2 text-white group-hover:text-white/95">
+        <div className="flex flex-1 flex-col justify-center overflow-hidden min-w-0">
+          {/* Title */}
+          <h3 className="text-sm sm:text-base font-medium leading-snug line-clamp-2 text-white group-hover:text-primary transition-colors">
             {title}
           </h3>
 
-          {displaySummary && (
-            <p className="mt-1.5 text-sm text-zinc-300/80 line-clamp-2 leading-relaxed">
-              {displaySummary}
-            </p>
-          )}
-
-          {/* Footer: Meta + Game branding */}
-          <div className="mt-2 flex items-center justify-between gap-2">
-            {metaText && (
-              <div className="text-xs text-zinc-500 flex-1 min-w-0">{metaText}</div>
-            )}
-            {game && (
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <GameLogoMini logoUrl={game.logoUrl} gameName={game.name} />
-                {game.platforms && game.platforms.length > 0 && (
-                  <PlatformIcons platforms={game.platforms} maxVisible={3} size="sm" showTooltip={false} />
-                )}
-              </div>
-            )}
+          {/* Meta row - compact on mobile */}
+          <div className="mt-1 flex items-center gap-1.5 text-[11px] sm:text-xs text-zinc-500">
+            {game && <span className="truncate max-w-[80px] sm:max-w-[120px]">{game.name}</span>}
+            {game && metaText && <span className="text-zinc-600">·</span>}
+            {metaText && <span className="truncate">{metaText}</span>}
           </div>
         </div>
       </Link>

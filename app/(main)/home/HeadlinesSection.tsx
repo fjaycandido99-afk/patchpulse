@@ -210,7 +210,7 @@ function RotatingHeadline({
         className="group relative block overflow-hidden rounded-xl border border-white/10 bg-black/40 animate-soft-entry"
         style={{ opacity: 1 }}
       >
-      <div className="relative aspect-[16/9] sm:aspect-[21/9]">
+      <div className="relative aspect-[2.2/1] sm:aspect-[21/9]">
         {/* Background image */}
         {coverUrl ? (
           <SafeImage
@@ -231,15 +231,15 @@ function RotatingHeadline({
         )}
 
         {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
 
         {/* Content */}
-        <div className="absolute inset-0 flex items-center p-4 sm:p-6">
+        <div className="absolute inset-0 flex items-end p-3 sm:p-6">
           <div className="max-w-xl">
             {/* Game badge */}
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-1.5 mb-1 sm:mb-2">
               {item.games?.logo_url && (
-                <div className="relative w-5 h-5 rounded overflow-hidden bg-white/10">
+                <div className="relative w-4 h-4 sm:w-5 sm:h-5 rounded overflow-hidden bg-white/10">
                   <SafeImage
                     src={item.games.logo_url}
                     alt=""
@@ -249,24 +249,24 @@ function RotatingHeadline({
                   />
                 </div>
               )}
-              <span className="text-xs font-medium text-white/80">
+              <span className="text-[11px] sm:text-xs font-medium text-white/80">
                 {item.games?.name || 'Gaming'}
               </span>
               <span className="text-white/40">·</span>
-              <span className="text-xs text-white/60">{relativeDaysText(item.published_at)}</span>
+              <span className="text-[11px] sm:text-xs text-white/60">{relativeDaysText(item.published_at)}</span>
               {item.is_rumor && (
-                <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                <span className="px-1 py-0.5 rounded text-[9px] sm:text-[10px] font-semibold bg-amber-500/20 text-amber-400 border border-amber-500/30">
                   RUMOR
                 </span>
               )}
             </div>
 
             {/* Title */}
-            <h3 className="text-base sm:text-lg font-bold text-white leading-tight line-clamp-2 group-hover:text-primary transition-colors">
+            <h3 className="text-sm sm:text-lg font-bold text-white leading-tight line-clamp-2 group-hover:text-primary transition-colors">
               {item.title}
             </h3>
 
-            {/* Summary */}
+            {/* Summary - hidden on mobile */}
             {item.summary && (
               <p className="text-sm text-white/60 mt-2 line-clamp-1 hidden sm:block">
                 {item.summary}
