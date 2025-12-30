@@ -76,7 +76,7 @@ function GameBanner({
   const fallbackColor = brandColor || (isInBacklog ? '#1e3a5f' : '#1a1a2e')
 
   return (
-    <div className="absolute inset-x-0 top-0 h-[320px] sm:h-[380px] lg:h-[440px] overflow-hidden">
+    <div className="fixed inset-x-0 top-0 h-[320px] sm:h-[380px] lg:h-[440px] overflow-hidden -z-10">
       {imageUrl ? (
         <>
           <Image
