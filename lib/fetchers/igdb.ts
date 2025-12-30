@@ -354,8 +354,6 @@ export function igdbToGameRecord(igdb: IgdbGame) {
   }).filter((v, i, a) => a.indexOf(v) === i) // unique
 
   // Only include fields that exist in the games table
-  // User needs to run: ALTER TABLE games ADD COLUMN IF NOT EXISTS igdb_id INTEGER;
-  // and: ALTER TABLE games ADD COLUMN IF NOT EXISTS steam_app_id INTEGER;
   const record: Record<string, unknown> = {
     name: igdb.name,
     slug: igdb.slug,
@@ -365,7 +363,12 @@ export function igdbToGameRecord(igdb: IgdbGame) {
       : null,
   }
 
-  // These columns may not exist yet
+  // Add release date if available (convert Unix timestamp to ISO string)
+  if (igdb.first_release_date) {
+    record.release_date = new Date(igdb.first_release_date * 1000).toISOString()
+  }
+
+  // Add Steam App ID if available
   if (steamAppId) record.steam_app_id = steamAppId
 
   return record

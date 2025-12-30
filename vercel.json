@@ -21,6 +21,10 @@
       "schedule": "30 */6 * * *"
     },
     {
+      "path": "/api/cron/backfill-release-dates",
+      "schedule": "15 */2 * * *"
+    },
+    {
       "path": "/api/cron/cleanup-content",
       "schedule": "0 4 * * *"
     },
