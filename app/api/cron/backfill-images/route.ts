@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { searchIgdbGame } from '@/lib/fetchers/igdb'
+import { fetchOGImage } from '@/lib/ai/og-image-fetcher'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300 // 5 minutes max
@@ -25,11 +26,11 @@ export async function GET(req: Request) {
 
   const supabase = createAdminClient()
   const results = {
-    processed: 0,
-    updated: 0,
-    errors: [] as string[],
+    games: { processed: 0, updated: 0, errors: [] as string[] },
+    news: { processed: 0, updated: 0, errors: [] as string[] },
   }
 
+  // --- GAME IMAGES (from IGDB) ---
   try {
     // Get games missing cover images (limit to 20 per run to avoid timeouts)
     const { data: games } = await supabase
@@ -38,46 +39,84 @@ export async function GET(req: Request) {
       .is('cover_url', null)
       .limit(20)
 
-    if (!games || games.length === 0) {
-      return NextResponse.json({
-        ok: true,
-        message: 'No games need image backfill',
-        ...results,
-      })
-    }
+    if (games && games.length > 0) {
+      results.games.processed = games.length
 
-    results.processed = games.length
+      for (const game of games) {
+        try {
+          // Search IGDB for cover
+          const igdbResult = await searchIgdbGame(game.name)
 
-    for (const game of games) {
-      try {
-        // Search IGDB for cover
-        const igdbResult = await searchIgdbGame(game.name)
+          if (igdbResult?.cover_url) {
+            const { error } = await supabase
+              .from('games')
+              .update({ cover_url: igdbResult.cover_url })
+              .eq('id', game.id)
 
-        if (igdbResult?.cover_url) {
-          const { error } = await supabase
-            .from('games')
-            .update({ cover_url: igdbResult.cover_url })
-            .eq('id', game.id)
-
-          if (error) {
-            results.errors.push(`${game.name}: ${error.message}`)
-          } else {
-            results.updated++
+            if (error) {
+              results.games.errors.push(`${game.name}: ${error.message}`)
+            } else {
+              results.games.updated++
+            }
           }
-        }
 
-        // Small delay to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 300))
-      } catch (err) {
-        results.errors.push(`${game.name}: ${err}`)
+          // Small delay to avoid rate limiting
+          await new Promise(resolve => setTimeout(resolve, 300))
+        } catch (err) {
+          results.games.errors.push(`${game.name}: ${err}`)
+        }
       }
     }
   } catch (error) {
-    results.errors.push(`Query failed: ${error}`)
+    results.games.errors.push(`Query failed: ${error}`)
+  }
+
+  // --- NEWS IMAGES (from OG tags) ---
+  try {
+    // Get news items missing images (limit to 30 per run)
+    const { data: newsItems } = await supabase
+      .from('news_items')
+      .select('id, title, source_url')
+      .is('image_url', null)
+      .not('source_url', 'is', null)
+      .order('published_at', { ascending: false })
+      .limit(30)
+
+    if (newsItems && newsItems.length > 0) {
+      results.news.processed = newsItems.length
+
+      for (const item of newsItems) {
+        try {
+          const ogData = await fetchOGImage(item.source_url)
+
+          if (ogData.imageUrl) {
+            const { error } = await supabase
+              .from('news_items')
+              .update({ image_url: ogData.imageUrl })
+              .eq('id', item.id)
+
+            if (error) {
+              results.news.errors.push(`${item.title?.slice(0, 30)}: ${error.message}`)
+            } else {
+              results.news.updated++
+            }
+          }
+
+          // Small delay between requests
+          await new Promise(resolve => setTimeout(resolve, 200))
+        } catch (err) {
+          results.news.errors.push(`${item.title?.slice(0, 30)}: ${err}`)
+        }
+      }
+    }
+  } catch (error) {
+    results.news.errors.push(`Query failed: ${error}`)
   }
 
   return NextResponse.json({
     ok: true,
-    ...results,
+    games: results.games,
+    news: results.news,
+    totalUpdated: results.games.updated + results.news.updated,
   })
 }
