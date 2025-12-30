@@ -199,7 +199,7 @@ function RotatingHeadline({
 
   return (
     <div
-      className="relative mb-4 w-full max-w-full overflow-hidden"
+      className="relative mb-4"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
@@ -207,10 +207,10 @@ function RotatingHeadline({
       <Link
         key={animationKey}
         href={`/news/${item.id}`}
-        className="group relative block w-full overflow-hidden rounded-xl border border-white/10 bg-black/40 animate-soft-entry"
+        className="group relative block overflow-hidden rounded-xl border border-white/10 bg-black/40 animate-soft-entry"
         style={{ opacity: 1 }}
       >
-      <div className="relative aspect-[2/1] sm:aspect-[21/9]">
+      <div className="relative aspect-[16/9] sm:aspect-[21/9]">
         {/* Background image */}
         {coverUrl ? (
           <SafeImage
@@ -234,8 +234,8 @@ function RotatingHeadline({
         <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 to-transparent" />
 
         {/* Content */}
-        <div className="absolute inset-0 flex items-center p-3 sm:p-6">
-          <div className="max-w-[85%] sm:max-w-xl">
+        <div className="absolute inset-0 flex items-center p-4 sm:p-6">
+          <div className="max-w-xl">
             {/* Game badge */}
             <div className="flex items-center gap-2 mb-2">
               {item.games?.logo_url && (
@@ -310,8 +310,8 @@ export function HeadlinesSection({ news, seasonalImages, gamePlatforms }: Headli
   if (news.length === 0) return null
 
   return (
-    <section className="relative py-4 sm:py-8 bg-gradient-to-b from-zinc-900/50 to-transparent border-t border-b border-white/5 w-full max-w-full overflow-hidden">
-      <div className="space-y-3 sm:space-y-4 w-full max-w-full overflow-hidden">
+    <section className="relative py-8 bg-gradient-to-b from-zinc-900/50 to-transparent border-t border-b border-white/5 overflow-hidden">
+      <div className="space-y-4">
         <SectionHeader title="Latest Headlines" href="/news" glowLine />
 
         {/* Rotating spotlight - cycles through all headlines every 10s */}

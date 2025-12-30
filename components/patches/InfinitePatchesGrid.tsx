@@ -291,7 +291,7 @@ function CompactPatchCard({ patch }: { patch: PatchItem }) {
   )
 }
 
-// Mobile compact list item - matches News page MediaCard horizontal style
+// Mobile compact list item - matches News page style
 function MobilePatchListItem({ patch }: { patch: PatchItem }) {
   const thumbnail = patch.game.hero_url || patch.game.cover_url
   const impact = getImpactStyle(patch.impact_score)
@@ -299,40 +299,50 @@ function MobilePatchListItem({ patch }: { patch: PatchItem }) {
   return (
     <Link
       href={`/patches/${patch.id}`}
-      className="group flex gap-2 overflow-hidden rounded-lg border border-white/10 bg-white/5 p-1.5 hover:bg-white/10 hover:border-white/20 active:scale-[0.98] transition-all w-full"
+      className="group flex gap-3 p-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 active:scale-[0.98] transition-all"
     >
-      {/* Thumbnail - portrait style (narrower, taller) */}
-      <div className="relative w-10 h-14 rounded-md overflow-hidden flex-shrink-0 bg-zinc-900">
+      {/* Thumbnail - 80x80 like News */}
+      <div className="relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-zinc-900">
         {thumbnail ? (
           <Image
             src={thumbnail}
             alt=""
             fill
             className="object-cover"
-            sizes="40px"
+            sizes="80px"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-zinc-800 to-zinc-900">
-            <Gamepad2 className="w-4 h-4 text-zinc-700" />
+            <Gamepad2 className="w-6 h-6 text-zinc-700" />
           </div>
         )}
       </div>
 
       {/* Content */}
-      <div className="flex flex-1 flex-col justify-center overflow-hidden min-w-0">
+      <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
         {/* Title */}
-        <h3 className="text-sm font-medium leading-snug line-clamp-2 text-white group-hover:text-primary transition-colors">
+        <h3 className="font-medium text-sm leading-snug line-clamp-2 group-hover:text-primary transition-colors">
           {patch.title}
         </h3>
 
-        {/* Meta row - simplified */}
-        <div className="mt-1 flex items-center gap-1.5 text-[11px] text-zinc-500 overflow-hidden">
-          <span className={`flex-shrink-0 px-1.5 py-0.5 rounded text-[9px] font-semibold ${impact.bg} ${impact.text}`}>
+        {/* Meta row */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Impact badge */}
+          <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold ${impact.bg} ${impact.text} border ${impact.border}`}>
             {impact.label}
           </span>
-          <span className="truncate max-w-[100px]">{patch.game.name}</span>
-          <span className="text-zinc-600">·</span>
-          <span className="truncate">{relativeDaysText(patch.published_at)}</span>
+
+          {/* First tag */}
+          {patch.tags[0] && (
+            <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${getTagStyle(patch.tags[0]).bg} ${getTagStyle(patch.tags[0]).text}`}>
+              {patch.tags[0]}
+            </span>
+          )}
+
+          <span className="text-[11px] text-muted-foreground">{relativeDaysText(patch.published_at)}</span>
+
+          <span className="text-muted-foreground/40">·</span>
+          <span className="text-[11px] text-muted-foreground truncate">{patch.game.name}</span>
         </div>
       </div>
     </Link>
@@ -426,9 +436,9 @@ export function InfinitePatchesGrid({
   const otherPatches = patches.filter(p => p.impact_score < 8)
 
   return (
-    <div className="space-y-4 sm:space-y-6 w-full max-w-full overflow-hidden">
+    <div className="space-y-4 sm:space-y-6">
       {/* MOBILE: Compact list view - matches News page style */}
-      <div className="sm:hidden space-y-2 w-full max-w-full">
+      <div className="sm:hidden space-y-2">
         {patches.map((patch) => (
           <MobilePatchListItem key={patch.id} patch={patch} />
         ))}
