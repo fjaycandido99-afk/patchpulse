@@ -10,24 +10,29 @@ export const runtime = 'nodejs'
 export const maxDuration = 300 // 5 minutes max
 
 function verifyAuth(req: Request): boolean {
-  const vercelCron = req.headers.get('x-vercel-cron')
-  const cronSecret = req.headers.get('x-cron-secret')
+  // Vercel cron sends this header
   const authHeader = req.headers.get('authorization')
 
-  // Debug logging
-  console.log('[fetch-content] Auth check:', {
-    hasVercelCron: vercelCron === '1',
-    hasCronSecret: !!cronSecret,
-    hasAuthHeader: !!authHeader,
-  })
+  // Check for Vercel's CRON_SECRET (sent as Bearer token)
+  if (authHeader) {
+    const token = authHeader.replace('Bearer ', '')
+    if (process.env.CRON_SECRET && token === process.env.CRON_SECRET) {
+      return true
+    }
+  }
 
-  // Vercel cron
-  if (vercelCron === '1') return true
-  // Manual call with CRON_SECRET
-  if (process.env.CRON_SECRET && cronSecret === process.env.CRON_SECRET) return true
-  // Manual call with INTERNAL_API_SECRET
-  const token = authHeader?.replace('Bearer ', '')
-  if (process.env.INTERNAL_API_SECRET && token === process.env.INTERNAL_API_SECRET) return true
+  // Manual call with x-cron-secret header
+  const cronSecret = req.headers.get('x-cron-secret')
+  if (process.env.CRON_SECRET && cronSecret === process.env.CRON_SECRET) {
+    return true
+  }
+
+  // Fallback: check for Vercel internal cron header
+  const vercelCron = req.headers.get('x-vercel-cron')
+  if (vercelCron === '1') {
+    return true
+  }
+
   return false
 }
 

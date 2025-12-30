@@ -5,11 +5,27 @@ import { queueAIJob } from '@/lib/ai/jobs'
 export const runtime = 'nodejs'
 
 function verifyAuth(req: Request): boolean {
-  // Vercel cron
-  if (req.headers.get('x-vercel-cron') === '1') return true
-  // Manual call with secret
-  const secret = req.headers.get('x-cron-secret')
-  return !!process.env.CRON_SECRET && secret === process.env.CRON_SECRET
+  // Vercel cron sends CRON_SECRET as Bearer token
+  const authHeader = req.headers.get('authorization')
+  if (authHeader) {
+    const token = authHeader.replace('Bearer ', '')
+    if (process.env.CRON_SECRET && token === process.env.CRON_SECRET) {
+      return true
+    }
+  }
+
+  // Manual call with x-cron-secret header
+  const cronSecret = req.headers.get('x-cron-secret')
+  if (process.env.CRON_SECRET && cronSecret === process.env.CRON_SECRET) {
+    return true
+  }
+
+  // Fallback: check for Vercel internal cron header
+  if (req.headers.get('x-vercel-cron') === '1') {
+    return true
+  }
+
+  return false
 }
 
 export async function GET(req: Request) {
