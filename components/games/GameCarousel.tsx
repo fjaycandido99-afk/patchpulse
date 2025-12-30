@@ -75,8 +75,8 @@ export function GameCarousel({
     : 'bg-emerald-500/80 text-white'
 
   return (
-    <div className="overflow-hidden" ref={emblaRef}>
-      <div className="flex gap-3">
+    <div className="w-full max-w-full overflow-hidden" ref={emblaRef}>
+      <div className="flex gap-3 w-full">
         {games.map((game) => (
           <button
             key={game.id}

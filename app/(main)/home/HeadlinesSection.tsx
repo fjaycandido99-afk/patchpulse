@@ -310,7 +310,7 @@ export function HeadlinesSection({ news, seasonalImages, gamePlatforms }: Headli
   if (news.length === 0) return null
 
   return (
-    <section className="relative py-8 bg-gradient-to-b from-zinc-900/50 to-transparent border-t border-b border-white/5">
+    <section className="relative py-8 bg-gradient-to-b from-zinc-900/50 to-transparent border-t border-b border-white/5 w-full max-w-full overflow-hidden">
       <div className="space-y-4">
         <SectionHeader title="Latest Headlines" href="/news" glowLine />
 
