@@ -207,19 +207,17 @@ function RotatingHeadline({
       <Link
         key={animationKey}
         href={`/news/${item.id}`}
-        className="group relative block rounded-xl border border-white/10 bg-black/40 animate-soft-entry"
+        className="group relative block overflow-hidden rounded-xl border border-white/10 bg-black/40 animate-soft-entry"
         style={{ opacity: 1 }}
       >
-      {/* Premium hero - breathing room with proper heights */}
-      <div className="relative min-h-[220px] max-h-[280px] sm:min-h-[320px] sm:max-h-[400px] overflow-hidden rounded-xl">
-        {/* Background image - positioned to keep faces/action visible */}
+      <div className="relative aspect-[16/9] sm:aspect-[21/9]">
+        {/* Background image */}
         {coverUrl ? (
           <SafeImage
             src={coverUrl}
             alt=""
             fill
             className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
-            style={{ objectPosition: 'center 30%' }}
             sizes="100vw"
             priority
           />
@@ -232,54 +230,54 @@ function RotatingHeadline({
           />
         )}
 
-        {/* Strong gradient overlay - makes headlines pop */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-black/10" />
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 to-transparent" />
 
-        {/* Content - safe reading zone with max-width */}
-        <div className="absolute inset-0 flex flex-col justify-end p-4 pb-6 sm:p-6 sm:pb-8">
+        {/* Content */}
+        <div className="absolute inset-0 flex items-center p-4 sm:p-6">
           <div className="max-w-xl">
-            {/* Game badge + meta */}
+            {/* Game badge */}
             <div className="flex items-center gap-2 mb-2">
               {item.games?.logo_url && (
-                <div className="relative w-5 h-5 sm:w-6 sm:h-6 rounded overflow-hidden bg-white/10 backdrop-blur-sm">
+                <div className="relative w-5 h-5 rounded overflow-hidden bg-white/10">
                   <SafeImage
                     src={item.games.logo_url}
                     alt=""
                     fill
                     className="object-contain"
-                    sizes="24px"
+                    sizes="20px"
                   />
                 </div>
               )}
-              <span className="text-xs sm:text-sm font-medium text-white/90">
+              <span className="text-xs font-medium text-white/80">
                 {item.games?.name || 'Gaming'}
               </span>
               <span className="text-white/40">·</span>
-              <span className="text-xs sm:text-sm text-white/70">{relativeDaysText(item.published_at)}</span>
+              <span className="text-xs text-white/60">{relativeDaysText(item.published_at)}</span>
               {item.is_rumor && (
-                <span className="px-2 py-0.5 rounded text-[10px] sm:text-xs font-semibold bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-500/20 text-amber-400 border border-amber-500/30">
                   RUMOR
                 </span>
               )}
             </div>
 
-            {/* Title - larger, bolder */}
-            <h3 className="text-lg sm:text-2xl font-bold text-white leading-snug line-clamp-2 group-hover:text-primary transition-colors">
+            {/* Title */}
+            <h3 className="text-base sm:text-lg font-bold text-white leading-tight line-clamp-2 group-hover:text-primary transition-colors">
               {item.title}
             </h3>
 
             {/* Summary */}
             {item.summary && (
-              <p className="text-sm sm:text-base text-white/70 mt-2 line-clamp-2 hidden sm:block">
+              <p className="text-sm text-white/60 mt-2 line-clamp-1 hidden sm:block">
                 {item.summary}
               </p>
             )}
           </div>
         </div>
 
-        {/* Progress dots - floating overlay, centered */}
+        {/* Progress dots */}
         {news.length > 1 && (
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+          <div className="absolute bottom-3 right-3 flex gap-1.5">
             {news.map((_, idx) => (
               <button
                 key={idx}
@@ -288,8 +286,8 @@ function RotatingHeadline({
                   setCurrentIndex(idx)
                   setAnimationKey((prev) => prev + 1)
                 }}
-                className={`h-1.5 rounded-full transition-all ${
-                  idx === currentIndex ? 'bg-white w-6' : 'bg-white/40 hover:bg-white/60 w-1.5'
+                className={`w-1.5 h-1.5 rounded-full transition-all ${
+                  idx === currentIndex ? 'bg-white w-4' : 'bg-white/40 hover:bg-white/60'
                 }`}
               />
             ))}
@@ -297,6 +295,13 @@ function RotatingHeadline({
         )}
       </div>
       </Link>
+
+      {/* Swipe hint - only show on mobile if multiple items */}
+      {news.length > 1 && (
+        <div className="absolute bottom-3 left-3 flex items-center gap-1 text-[10px] text-white/40 sm:hidden">
+          <span>← swipe →</span>
+        </div>
+      )}
     </div>
   )
 }
@@ -305,7 +310,7 @@ export function HeadlinesSection({ news, seasonalImages, gamePlatforms }: Headli
   if (news.length === 0) return null
 
   return (
-    <section className="relative py-8 bg-gradient-to-b from-zinc-900/50 to-transparent border-t border-b border-white/5 overflow-hidden">
+    <section className="relative py-8 bg-gradient-to-b from-zinc-900/50 to-transparent border-t border-b border-white/5">
       <div className="space-y-4">
         <SectionHeader title="Latest Headlines" href="/news" glowLine />
 
