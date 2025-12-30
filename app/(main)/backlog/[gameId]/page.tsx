@@ -60,7 +60,7 @@ function getInitials(name: string): string {
     .toUpperCase()
 }
 
-// Fix #1: Game Banner Component - Large hero covering most of the section
+// Fix #1: Game Banner Component - Full bleed hero, no edges visible
 function GameBanner({
   imageUrl,
   gameName,
@@ -76,7 +76,7 @@ function GameBanner({
   const fallbackColor = brandColor || (isInBacklog ? '#1e3a5f' : '#1a1a2e')
 
   return (
-    <div className="relative -mx-4 sm:-mx-6 lg:-mx-8 -mt-4 sm:-mt-6 lg:-mt-8 mb-6 h-[280px] sm:h-[340px] lg:h-[400px] w-[calc(100%+2rem)] sm:w-[calc(100%+3rem)] lg:w-[calc(100%+4rem)] overflow-hidden">
+    <div className="absolute inset-x-0 top-0 h-[320px] sm:h-[380px] lg:h-[440px] overflow-hidden">
       {imageUrl ? (
         <>
           <Image
@@ -88,13 +88,13 @@ function GameBanner({
             priority
             unoptimized
           />
-          {/* Gradient overlay - lighter at top to show more image */}
+          {/* Gradient overlay - seamless fade to background */}
           <div
             className="absolute inset-0"
             style={{
               background: isInBacklog
-                ? 'linear-gradient(to bottom, rgba(30,58,95,0.1) 0%, rgba(10,10,25,0.3) 50%, rgba(10,10,25,0.85) 85%, rgba(10,10,25,0.98) 100%)'
-                : 'linear-gradient(to bottom, rgba(10,10,25,0.1) 0%, rgba(10,10,25,0.3) 50%, rgba(10,10,25,0.85) 85%, rgba(10,10,25,0.98) 100%)'
+                ? 'linear-gradient(to bottom, rgba(30,58,95,0.05) 0%, rgba(10,10,25,0.2) 40%, rgba(10,10,25,0.8) 80%, rgb(10,10,25) 100%)'
+                : 'linear-gradient(to bottom, rgba(10,10,25,0.05) 0%, rgba(10,10,25,0.2) 40%, rgba(10,10,25,0.8) 80%, rgb(10,10,25) 100%)'
             }}
           />
         </>
@@ -103,7 +103,7 @@ function GameBanner({
         <div
           className="absolute inset-0"
           style={{
-            background: `linear-gradient(135deg, ${fallbackColor} 0%, rgba(10,10,25,0.95) 100%)`
+            background: `linear-gradient(180deg, ${fallbackColor} 0%, rgb(10,10,25) 100%)`
           }}
         />
       )}
@@ -270,10 +270,11 @@ export default async function BacklogDetailPage({
 
     return (
       // Fix #5: overflow-x-hidden prevents swipe hijacking
-      <div className="relative overflow-x-hidden">
+      <div className="relative overflow-x-hidden min-h-screen">
         <GameBanner imageUrl={bannerUrl} gameName={game.name} isInBacklog={false} brandColor={brandColor} />
 
-        <div className="space-y-6">
+        {/* Content pushed below hero with padding */}
+        <div className="relative z-10 pt-[200px] sm:pt-[240px] lg:pt-[280px] space-y-6">
           {/* Back Link */}
           <div>
             <Link
@@ -451,10 +452,11 @@ export default async function BacklogDetailPage({
 
   return (
     // Fix #5: overflow-x-hidden prevents swipe hijacking
-    <div className="relative overflow-x-hidden">
+    <div className="relative overflow-x-hidden min-h-screen">
       <GameBanner imageUrl={bannerUrl} gameName={game.name} isInBacklog={true} brandColor={brandColor} />
 
-      <div className="space-y-6">
+      {/* Content pushed below hero with padding */}
+      <div className="relative z-10 pt-[200px] sm:pt-[240px] lg:pt-[280px] space-y-6">
         {/* Back Link */}
         <div>
           <Link
