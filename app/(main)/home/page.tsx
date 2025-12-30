@@ -91,7 +91,7 @@ export default async function HomePage() {
   return (
     <>
       <InstallHint />
-      <div className="space-y-5 sm:space-y-8 page-enter">
+      <div className="space-y-6 page-enter">
         {/* Mobile: Compact "For You" header */}
         <section className="flex items-center gap-2">
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gradient-to-r from-violet-500/20 to-purple-500/20 border border-violet-500/30">
@@ -237,7 +237,7 @@ export default async function HomePage() {
 
         {/* Main Content + Sidebar Layout for Desktop */}
         <div className="lg:flex lg:gap-8">
-          <div className="flex-1 space-y-5 sm:space-y-8">
+          <div className="flex-1 space-y-6">
             {/* Patches Section */}
             <section className="space-y-3 sm:space-y-4">
               <SectionHeader title="Latest Patches" glowLine />

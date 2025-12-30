@@ -110,7 +110,7 @@ export default async function SearchPage({
 
       {/* Results */}
       {query && totalResults > 0 && (
-        <div className="space-y-8">
+        <div className="space-y-6">
           {/* Games */}
           {results.games.length > 0 && (category === 'all' || category === 'games') && (
             <section className="space-y-3">

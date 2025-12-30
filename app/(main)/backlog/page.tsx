@@ -142,7 +142,7 @@ export default async function LibraryPage() {
       </div>
 
       {/* Desktop View */}
-      <div className="hidden md:block space-y-8">
+      <div className="hidden md:block space-y-6">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Library</h1>
           <p className="mt-1 text-muted-foreground">

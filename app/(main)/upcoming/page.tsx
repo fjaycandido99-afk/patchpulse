@@ -18,7 +18,7 @@ export default async function UpcomingPage() {
   const hasCalendar = upcoming.calendar.length > 0
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Header */}
       <header>
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">

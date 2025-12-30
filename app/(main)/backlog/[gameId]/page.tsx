@@ -243,7 +243,7 @@ export default async function BacklogDetailPage({
       <div className="relative">
         <GameBanner imageUrl={bannerUrl} gameName={game.name} isInBacklog={false} />
 
-        <div className="space-y-6 sm:space-y-8">
+        <div className="space-y-6">
           {/* Back Link */}
           <div>
             <Link
@@ -423,7 +423,7 @@ export default async function BacklogDetailPage({
     <div className="relative">
       <GameBanner imageUrl={bannerUrl} gameName={game.name} isInBacklog={true} />
 
-      <div className="space-y-6 sm:space-y-8">
+      <div className="space-y-6">
         {/* Back Link */}
         <div>
           <Link

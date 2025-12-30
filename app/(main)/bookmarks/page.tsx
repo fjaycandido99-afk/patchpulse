@@ -14,7 +14,7 @@ export default async function BookmarksPage() {
   const hasBookmarks = patches.length > 0 || news.length > 0
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Saved</h1>
         <p className="mt-1 text-muted-foreground">
@@ -44,7 +44,7 @@ export default async function BookmarksPage() {
           </div>
         </div>
       ) : (
-        <div className="space-y-8">
+        <div className="space-y-6">
           {patches.length > 0 && (
             <section className="space-y-4">
               <h2 className="text-lg font-semibold">
