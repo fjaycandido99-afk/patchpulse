@@ -12,6 +12,17 @@ import { formatDate, relativeDaysText } from '@/lib/dates'
 import { AddToBacklogButton } from '@/components/backlog/AddToBacklogButton'
 import { StoreLinkButtons } from '@/components/ui/StoreLinkButtons'
 
+// Fix #3: Image source priority helper
+function getHeroImage(game: { hero_url?: string | null; cover_url: string | null }, seasonal: { heroUrl: string | null; coverUrl: string | null }): string | null {
+  // Priority: seasonal hero > seasonal cover > game hero > game cover
+  return seasonal.heroUrl || seasonal.coverUrl || game.hero_url || game.cover_url
+}
+
+function getIconImage(game: { logo_url: string | null; cover_url: string | null }, seasonal: { logoUrl: string | null }): string | null {
+  // Priority: seasonal logo > game logo > game cover (cropped)
+  return seasonal.logoUrl || game.logo_url || game.cover_url
+}
+
 function WhatsNewSkeleton() {
   return (
     <div className="rounded-lg border border-border bg-card p-4 sm:p-6 animate-pulse">
@@ -33,7 +44,7 @@ async function getGame(gameId: string) {
 
   const { data } = await supabase
     .from('games')
-    .select('id, name, slug, cover_url, logo_url, brand_color, release_date, genre, is_live_service, platforms, steam_app_id')
+    .select('id, name, slug, cover_url, hero_url, logo_url, brand_color, release_date, genre, is_live_service, platforms, steam_app_id')
     .eq('id', gameId)
     .single()
 
@@ -49,47 +60,58 @@ function getInitials(name: string): string {
     .toUpperCase()
 }
 
-// Game Banner Component - adapts color based on isInBacklog
+// Fix #1: Game Banner Component - Full width, fixed height, never collapses
 function GameBanner({
   imageUrl,
   gameName,
   isInBacklog,
+  brandColor,
 }: {
   imageUrl: string | null
   gameName: string
   isInBacklog: boolean
+  brandColor?: string | null
 }) {
+  // Fallback gradient color based on brand or default
+  const fallbackColor = brandColor || (isInBacklog ? '#1e3a5f' : '#1a1a2e')
+
   return (
-    <div className="relative -mx-4 sm:-mx-6 lg:-mx-8 -mt-4 sm:-mt-6 lg:-mt-8 mb-6 h-20 sm:h-32 lg:h-40 overflow-hidden">
+    <div className="relative -mx-4 sm:-mx-6 lg:-mx-8 -mt-4 sm:-mt-6 lg:-mt-8 mb-6 h-[220px] sm:h-[240px] lg:h-[260px] w-[calc(100%+2rem)] sm:w-[calc(100%+3rem)] lg:w-[calc(100%+4rem)] overflow-hidden">
       {imageUrl ? (
         <>
           <Image
             src={imageUrl}
-            alt=""
+            alt={gameName}
             fill
             className="object-cover object-center"
             sizes="100vw"
             priority
+            unoptimized
           />
-          {/* Gradient overlay - blue tint for backlog, neutral for info hub */}
-          <div className={`absolute inset-0 ${
-            isInBacklog
-              ? 'bg-gradient-to-b from-blue-950/60 via-black/60 to-background'
-              : 'bg-gradient-to-b from-black/50 via-black/60 to-background'
-          }`} />
+          {/* Gradient overlay - keeps image visible but readable text */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background: isInBacklog
+                ? 'linear-gradient(to bottom, rgba(30,58,95,0.2) 0%, rgba(10,10,25,0.7) 70%, rgba(10,10,25,0.95) 100%)'
+                : 'linear-gradient(to bottom, rgba(10,10,25,0.2) 0%, rgba(10,10,25,0.7) 70%, rgba(10,10,25,0.95) 100%)'
+            }}
+          />
         </>
       ) : (
-        <div className={`absolute inset-0 ${
-          isInBacklog
-            ? 'bg-gradient-to-b from-blue-900/30 to-background'
-            : 'bg-gradient-to-b from-muted/50 to-background'
-        }`} />
+        // Fallback gradient when no image
+        <div
+          className="absolute inset-0"
+          style={{
+            background: `linear-gradient(135deg, ${fallbackColor} 0%, rgba(10,10,25,0.95) 100%)`
+          }}
+        />
       )}
     </div>
   )
 }
 
-// Game Icon Component
+// Fix #2: Game Icon Component - Always 44x44px, always visible, has fallback
 function GameIcon({
   logoUrl,
   coverUrl,
@@ -106,11 +128,15 @@ function GameIcon({
   const imageUrl = logoUrl || coverUrl
   // Blue glow for backlog, brand color or neutral for info hub
   const glowColor = isInBacklog ? '#3b82f6' : (brandColor || '#6366f1')
+  const bgColor = brandColor || '#1b1f3a'
 
   return (
     <div
-      className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden flex-shrink-0 ring-2 ring-border"
+      className="relative flex-shrink-0 rounded-[10px] overflow-hidden ring-2 ring-white/10"
       style={{
+        width: '44px',
+        height: '44px',
+        backgroundColor: bgColor,
         boxShadow: `0 0 20px ${glowColor}40, 0 0 40px ${glowColor}20`,
       }}
     >
@@ -119,14 +145,17 @@ function GameIcon({
           src={imageUrl}
           alt={gameName}
           fill
-          className="object-cover"
-          sizes="56px"
+          className={logoUrl ? 'object-contain p-1' : 'object-cover'}
+          sizes="44px"
+          unoptimized
         />
       ) : (
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/30 via-muted to-background flex items-center justify-center">
-          <span className="text-sm font-bold text-primary/60">
-            {getInitials(gameName)}
-          </span>
+        // Fallback: Show first letter or controller icon
+        <div
+          className="absolute inset-0 flex items-center justify-center"
+          style={{ backgroundColor: bgColor }}
+        >
+          <Gamepad2 className="w-5 h-5 text-white/40" />
         </div>
       )}
     </div>
@@ -191,9 +220,9 @@ export default async function BacklogDetailPage({
   // Simple check: is this game in the user's backlog?
   const isInBacklog = !!backlogItem
 
-  // Use seasonal images if available, otherwise fall back to game defaults
-  const bannerUrl = seasonalImage.heroUrl || seasonalImage.coverUrl || game.cover_url
-  const logoUrl = seasonalImage.logoUrl || game.logo_url
+  // Fix #3: Use image source priority helpers
+  const bannerUrl = getHeroImage(game, seasonalImage)
+  const logoUrl = getIconImage(game, seasonalImage)
   const brandColor = seasonalImage.brandColor || game.brand_color
 
   // Combine patches and news into timeline for info hub view
@@ -240,8 +269,9 @@ export default async function BacklogDetailPage({
       : null
 
     return (
-      <div className="relative">
-        <GameBanner imageUrl={bannerUrl} gameName={game.name} isInBacklog={false} />
+      // Fix #5: overflow-x-hidden prevents swipe hijacking
+      <div className="relative overflow-x-hidden">
+        <GameBanner imageUrl={bannerUrl} gameName={game.name} isInBacklog={false} brandColor={brandColor} />
 
         <div className="space-y-6">
           {/* Back Link */}
@@ -420,8 +450,9 @@ export default async function BacklogDetailPage({
   const initialPauseReason = backlogItem.pause_reason
 
   return (
-    <div className="relative">
-      <GameBanner imageUrl={bannerUrl} gameName={game.name} isInBacklog={true} />
+    // Fix #5: overflow-x-hidden prevents swipe hijacking
+    <div className="relative overflow-x-hidden">
+      <GameBanner imageUrl={bannerUrl} gameName={game.name} isInBacklog={true} brandColor={brandColor} />
 
       <div className="space-y-6">
         {/* Back Link */}
