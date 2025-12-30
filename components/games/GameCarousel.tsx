@@ -53,49 +53,46 @@ export function GameCarousel({
     ? 'bg-indigo-500/80 text-white'
     : 'bg-emerald-500/80 text-white'
 
-  // Use native horizontal scroll - simpler and works better on mobile
+  // Simple grid layout - no horizontal scroll issues
   return (
-    <div className="w-full overflow-x-auto scrollbar-hide pb-2 -mb-2">
-      <div className="flex gap-3 w-max">
-        {games.map((game) => (
-          <button
-            key={game.id}
-            onClick={() => handleClick(game)}
-            className="flex-shrink-0 w-20 sm:w-[140px] active:scale-[0.97] transition-transform text-left"
-          >
-            <div className="relative aspect-[2/3] rounded-lg sm:rounded-xl overflow-hidden bg-zinc-900">
-              {game.cover_url ? (
-                <>
-                  <Image
-                    src={game.cover_url}
-                    alt={game.name}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 640px) 80px, 140px"
-                    loading="lazy"
-                  />
-                  {/* Subtle gradient overlay for depth and badge readability */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20" />
-                </>
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-zinc-800 to-zinc-900">
-                  <Gamepad2 className="w-6 h-6 sm:w-8 sm:h-8 text-zinc-700" />
-                </div>
-              )}
+    <div className="grid grid-cols-4 sm:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-3">
+      {games.slice(0, 8).map((game) => (
+        <button
+          key={game.id}
+          onClick={() => handleClick(game)}
+          className="active:scale-[0.97] transition-transform text-left"
+        >
+          <div className="relative aspect-[2/3] rounded-lg sm:rounded-xl overflow-hidden bg-zinc-900">
+            {game.cover_url ? (
+              <>
+                <Image
+                  src={game.cover_url}
+                  alt={game.name}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 640px) 25vw, 140px"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20" />
+              </>
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-zinc-800 to-zinc-900">
+                <Gamepad2 className="w-5 h-5 sm:w-8 sm:h-8 text-zinc-700" />
+              </div>
+            )}
 
-              {/* Days badge */}
-              <span className={`absolute top-1 left-1 sm:top-2 sm:left-2 text-[9px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 rounded-full backdrop-blur-sm font-medium ${badgeColor}`}>
-                {getDaysLabel(game)}
-              </span>
-            </div>
+            {/* Days badge */}
+            <span className={`absolute top-1 left-1 sm:top-2 sm:left-2 text-[8px] sm:text-[11px] px-1 sm:px-2 py-0.5 rounded-full backdrop-blur-sm font-medium ${badgeColor}`}>
+              {getDaysLabel(game)}
+            </span>
+          </div>
 
-            {/* Title */}
-            <h3 className="font-medium leading-tight line-clamp-1 sm:line-clamp-2 text-zinc-200 text-[10px] sm:text-sm mt-1 sm:mt-2">
-              {game.name}
-            </h3>
-          </button>
-        ))}
-      </div>
+          {/* Title */}
+          <h3 className="font-medium leading-tight line-clamp-1 text-zinc-200 text-[9px] sm:text-sm mt-1 sm:mt-2">
+            {game.name}
+          </h3>
+        </button>
+      ))}
     </div>
   )
 }
