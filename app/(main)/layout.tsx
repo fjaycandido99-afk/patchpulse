@@ -65,8 +65,8 @@ export default async function MainLayout({
           <DesktopSidebar counts={sidebarCounts} notificationStats={notificationStats} />
 
         <main className="flex-1 pb-20 md:ml-64 md:pb-0">
-          {/* Mobile header with search */}
-          <header className="sticky top-0 z-40 md:hidden bg-background border-b border-white/10">
+          {/* Mobile header with search - Apple Music/App Store style, fixed for edge-to-edge */}
+          <header className="fixed inset-x-0 top-0 z-40 md:hidden bg-[rgba(10,15,30,0.85)] backdrop-blur-xl border-b border-white/10" style={{ paddingTop: 'env(safe-area-inset-top, 0)' }}>
             <div className="flex items-center justify-between gap-2 px-4 py-3">
               <div className="flex items-center gap-2">
                 <Link href="/home" className="text-lg font-bold tracking-tight flex-shrink-0 hover:opacity-80 transition-opacity">
@@ -99,7 +99,7 @@ export default async function MainLayout({
             </div>
           </header>
 
-          <div className="mx-auto h-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+          <div className="mx-auto h-full max-w-7xl px-4 pt-16 pb-6 md:pt-6 sm:px-6 lg:px-8">
             {children}
           </div>
         </main>

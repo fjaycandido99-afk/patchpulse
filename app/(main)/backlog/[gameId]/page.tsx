@@ -97,6 +97,13 @@ function GameBanner({
                 : 'linear-gradient(to bottom, rgba(10,10,25,0.05) 0%, rgba(10,10,25,0.2) 40%, rgba(10,10,25,0.8) 80%, rgb(10,10,25) 100%)'
             }}
           />
+          {/* Top gradient to blend with header */}
+          <div
+            className="absolute inset-x-0 top-0 h-20"
+            style={{
+              background: 'linear-gradient(to bottom, rgba(10,15,30,0.6) 0%, transparent 100%)'
+            }}
+          />
         </>
       ) : (
         // Fallback gradient when no image
