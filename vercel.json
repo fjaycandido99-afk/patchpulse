@@ -9,6 +9,10 @@
       "schedule": "*/15 * * * *"
     },
     {
+      "path": "/api/cron/backfill-news-images",
+      "schedule": "*/10 * * * *"
+    },
+    {
       "path": "/api/cron/discover-games",
       "schedule": "0 */6 * * *"
     },

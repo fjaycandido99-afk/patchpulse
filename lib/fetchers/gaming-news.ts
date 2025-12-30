@@ -3,7 +3,6 @@
 import Parser from 'rss-parser'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { queueAIJob } from '@/lib/ai/jobs'
-import { fetchOGImage } from '@/lib/ai/og-image-fetcher'
 
 const parser = new Parser()
 
@@ -228,16 +227,9 @@ export async function fetchNewsFromSource(source: NewsSource) {
       // Try to match to a game
       const gameId = await matchGameToNews(item.title || '', rawText)
 
-      // Fetch OG image from source URL
-      let imageUrl: string | null = null
-      if (item.link) {
-        try {
-          const ogData = await fetchOGImage(item.link)
-          imageUrl = ogData.imageUrl
-        } catch (e) {
-          console.warn(`Failed to fetch OG image for ${item.link}:`, e)
-        }
-      }
+      // Skip OG image fetching during cron - it's too slow
+      // Images will be backfilled by a separate job
+      const imageUrl: string | null = null
 
       // Insert the news item
       const { data: newNews, error } = await supabase
