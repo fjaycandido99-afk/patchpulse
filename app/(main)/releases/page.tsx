@@ -1,6 +1,6 @@
 import { Suspense } from 'react'
 import { getNewReleases, getReleaseCounts } from './queries'
-import { SpotlightGameCard, EmptyGameState, EmptyGameStateInline } from '@/components/games'
+import { EmptyGameState, GameGridWithSearch } from '@/components/games'
 import { ReleasesFilters } from './ReleasesFilters'
 import { Info, TrendingUp } from 'lucide-react'
 
@@ -50,27 +50,24 @@ export default async function ReleasesPage({
             <TrendingUp className="h-5 w-5 text-primary" />
             Featured Releases
           </h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {releases.featured.slice(0, 3).map((game) => (
-              <SpotlightGameCard
-                key={game.id}
-                game={{
-                  id: game.id,
-                  name: game.name,
-                  slug: game.slug,
-                  cover_url: game.cover_url,
-                  hero_url: game.hero_url,
-                  release_date: game.release_date,
-                  days_since: game.days_since,
-                  genre: game.genre,
-                  is_live_service: game.is_live_service,
-                  platforms: game.platforms,
-                }}
-                type="new"
-                variant="featured"
-              />
-            ))}
-          </div>
+          <GameGridWithSearch
+            games={releases.featured.slice(0, 3).map((game) => ({
+              id: game.id,
+              name: game.name,
+              slug: game.slug,
+              cover_url: game.cover_url,
+              hero_url: game.hero_url,
+              release_date: game.release_date,
+              days_since: game.days_since,
+              genre: game.genre,
+              is_live_service: game.is_live_service,
+              platforms: game.platforms,
+            }))}
+            type="new"
+            variant="featured"
+            columns="featured"
+            placeholder="Search featured..."
+          />
         </section>
       ) : (
         <EmptyGameState
@@ -95,27 +92,25 @@ export default async function ReleasesPage({
           </div>
 
           {releases.all.length > 0 ? (
-            <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-              {releases.all.map((game) => (
-                <SpotlightGameCard
-                  key={game.id}
-                  game={{
-                    id: game.id,
-                    name: game.name,
-                    slug: game.slug,
-                    cover_url: game.cover_url,
-                    release_date: game.release_date,
-                    days_since: game.days_since,
-                    genre: game.genre,
-                    is_live_service: game.is_live_service,
-                    platforms: game.platforms,
-                  }}
-                  type="new"
-                />
-              ))}
-            </div>
+            <GameGridWithSearch
+              games={releases.all.map((game) => ({
+                id: game.id,
+                name: game.name,
+                slug: game.slug,
+                cover_url: game.cover_url,
+                release_date: game.release_date,
+                days_since: game.days_since,
+                genre: game.genre,
+                is_live_service: game.is_live_service,
+                platforms: game.platforms,
+              }))}
+              type="new"
+              placeholder="Search releases..."
+            />
           ) : (
-            <EmptyGameStateInline message="No games found for this filter." />
+            <div className="rounded-lg border border-dashed border-border py-12 text-center">
+              <p className="text-muted-foreground">No games found for this filter.</p>
+            </div>
           )}
         </section>
       )}

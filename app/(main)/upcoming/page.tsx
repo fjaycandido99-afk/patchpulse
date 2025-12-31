@@ -1,5 +1,5 @@
 import { getUpcomingGames, getUpcomingCounts } from './queries'
-import { SpotlightGameCard, EmptyGameState } from '@/components/games'
+import { EmptyGameState, GameGridWithSearch } from '@/components/games'
 import { Calendar, Sparkles } from 'lucide-react'
 import { UpcomingCalendar } from './UpcomingCalendar'
 
@@ -58,26 +58,22 @@ export default async function UpcomingPage() {
         </h2>
 
         {upcoming.comingSoon.length > 0 ? (
-          <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-            {upcoming.comingSoon.map((game) => (
-              <SpotlightGameCard
-                key={game.id}
-                game={{
-                  id: game.id,
-                  name: game.name,
-                  slug: game.slug,
-                  cover_url: game.cover_url,
-                  hero_url: game.hero_url,
-                  release_date: game.release_date,
-                  days_until: game.days_until ?? undefined,
-                  genre: game.genre,
-                  is_live_service: game.is_live_service,
-                  platforms: game.platforms,
-                }}
-                type="upcoming"
-              />
-            ))}
-          </div>
+          <GameGridWithSearch
+            games={upcoming.comingSoon.map((game) => ({
+              id: game.id,
+              name: game.name,
+              slug: game.slug,
+              cover_url: game.cover_url,
+              hero_url: game.hero_url,
+              release_date: game.release_date,
+              days_until: game.days_until ?? undefined,
+              genre: game.genre,
+              is_live_service: game.is_live_service,
+              platforms: game.platforms,
+            }))}
+            type="upcoming"
+            placeholder="Search coming soon..."
+          />
         ) : (
           <EmptyGameState
             type="upcoming"
@@ -98,27 +94,24 @@ export default async function UpcomingPage() {
             Based on player interest and community activity
           </p>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {upcoming.anticipated.slice(0, 6).map((game) => (
-              <SpotlightGameCard
-                key={game.id}
-                game={{
-                  id: game.id,
-                  name: game.name,
-                  slug: game.slug,
-                  cover_url: game.cover_url,
-                  hero_url: game.hero_url,
-                  release_date: game.release_date,
-                  days_until: game.days_until ?? undefined,
-                  genre: game.genre,
-                  is_live_service: game.is_live_service,
-                  platforms: game.platforms,
-                }}
-                type="upcoming"
-                variant="featured"
-              />
-            ))}
-          </div>
+          <GameGridWithSearch
+            games={upcoming.anticipated.slice(0, 6).map((game) => ({
+              id: game.id,
+              name: game.name,
+              slug: game.slug,
+              cover_url: game.cover_url,
+              hero_url: game.hero_url,
+              release_date: game.release_date,
+              days_until: game.days_until ?? undefined,
+              genre: game.genre,
+              is_live_service: game.is_live_service,
+              platforms: game.platforms,
+            }))}
+            type="upcoming"
+            variant="featured"
+            columns="featured"
+            placeholder="Search anticipated..."
+          />
         </section>
       )}
 
