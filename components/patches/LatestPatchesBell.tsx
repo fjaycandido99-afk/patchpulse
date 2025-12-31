@@ -133,6 +133,7 @@ export function LatestPatchesBell({ initialStats, size = 'md' }: Props) {
     <>
       {/* Gamepad Button */}
       <button
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
         className="relative p-2 rounded-xl hover:bg-white/10 active:scale-95 transition-all touch-manipulation group"
         title="Discover Patches"
