@@ -45,9 +45,17 @@ type PatchResult = {
 }
 
 export async function GET(req: Request) {
+  // Debug logging - remove after confirming crons work
+  console.log('[CRON] fetch-content hit at', new Date().toISOString())
+  console.log('[CRON] x-vercel-cron header:', req.headers.get('x-vercel-cron'))
+  console.log('[CRON] authorization header exists:', !!req.headers.get('authorization'))
+
   if (!verifyAuth(req)) {
+    console.log('[CRON] fetch-content UNAUTHORIZED')
     return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 })
   }
+
+  console.log('[CRON] fetch-content AUTHORIZED - starting fetch')
 
   const results = {
     patches: {
