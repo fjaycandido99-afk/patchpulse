@@ -422,6 +422,8 @@ export type FollowedGameWithActivity = {
   } | null
   patchCount: number
   inBacklog: boolean
+  unreadPatchCount?: number
+  unreadNewsCount?: number
 }
 
 export async function getFollowedGamesWithActivity(): Promise<FollowedGameWithActivity[]> {

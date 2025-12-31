@@ -9,6 +9,7 @@ import { CollapsibleSection } from '@/components/library/CollapsibleSection'
 import { WatchlistSection } from '@/components/library/WatchlistSection'
 import { ShowcaseSection } from '@/components/library/ShowcaseSection'
 import { MobileLibraryView } from '@/components/library/MobileLibraryView'
+import { MarkAllReadButton } from '@/components/library/MarkAllReadButton'
 import { relativeDaysText } from '@/lib/dates'
 
 type BacklogStatus = 'playing' | 'paused' | 'backlog' | 'finished' | 'dropped'
@@ -188,17 +189,25 @@ export default async function LibraryPage() {
       </CollapsibleSection>
 
       {/* Followed Games - Watchlist Style */}
-      <CollapsibleSection
-        id="followed"
-        title="Watchlist"
-        icon={<Eye className="h-5 w-5 text-blue-400" />}
-        count={followedGamesWithActivity.filter(g => !g.inBacklog).length}
-        defaultOpen={followedGamesWithActivity.some(g => g.latestPatch !== null)}
-      >
-        <WatchlistSection
-          games={followedGamesWithActivity.filter(g => !g.inBacklog)}
-        />
-      </CollapsibleSection>
+      {(() => {
+        const watchlistGames = followedGamesWithActivity.filter(g => !g.inBacklog)
+        const totalUnread = watchlistGames.reduce(
+          (sum, g) => sum + (g.unreadPatchCount || 0) + (g.unreadNewsCount || 0),
+          0
+        )
+        return (
+          <CollapsibleSection
+            id="followed"
+            title="Watchlist"
+            icon={<Eye className="h-5 w-5 text-blue-400" />}
+            count={watchlistGames.length}
+            defaultOpen={watchlistGames.some(g => g.latestPatch !== null)}
+            action={<MarkAllReadButton totalUnread={totalUnread} />}
+          >
+            <WatchlistSection games={watchlistGames} />
+          </CollapsibleSection>
+        )
+      })()}
 
       {/* Backlog Sections */}
       <div className="space-y-6">

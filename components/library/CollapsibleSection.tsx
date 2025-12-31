@@ -10,6 +10,7 @@ type CollapsibleSectionProps = {
   count?: number
   defaultOpen?: boolean
   children: React.ReactNode
+  action?: React.ReactNode
 }
 
 export function CollapsibleSection({
@@ -19,6 +20,7 @@ export function CollapsibleSection({
   count,
   defaultOpen = false,
   children,
+  action,
 }: CollapsibleSectionProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen)
 
@@ -38,23 +40,28 @@ export function CollapsibleSection({
 
   return (
     <section className="rounded-xl border border-border bg-card overflow-hidden">
-      <button
-        onClick={toggle}
-        className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors"
-      >
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between p-4 hover:bg-white/5 transition-colors">
+        <button
+          onClick={toggle}
+          className="flex items-center gap-2 flex-1"
+        >
           {icon}
           <h3 className="text-base font-semibold">{title}</h3>
           {count !== undefined && (
             <span className="text-sm text-muted-foreground">({count})</span>
           )}
-        </div>
-        <ChevronDown
-          className={`h-5 w-5 text-muted-foreground transition-transform duration-200 ${
-            isOpen ? 'rotate-180' : ''
-          }`}
-        />
-      </button>
+          <ChevronDown
+            className={`h-5 w-5 text-muted-foreground transition-transform duration-200 ${
+              isOpen ? 'rotate-180' : ''
+            }`}
+          />
+        </button>
+        {action && (
+          <div onClick={(e) => e.stopPropagation()}>
+            {action}
+          </div>
+        )}
+      </div>
 
       <div
         className={`grid transition-all duration-200 ease-in-out ${

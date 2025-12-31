@@ -11,6 +11,7 @@ import Link from 'next/link'
 import { addToBacklogWithStatus, searchGamesForBacklog, followAndAddToBacklog } from '@/app/(main)/backlog/actions'
 import { updateFavoriteGames } from '@/app/(main)/profile/actions'
 import { relativeDaysText } from '@/lib/dates'
+import { MarkAllReadButton } from './MarkAllReadButton'
 
 type BacklogStatus = 'playing' | 'paused' | 'backlog' | 'finished' | 'dropped'
 
@@ -61,6 +62,8 @@ type FollowedGameWithActivity = {
   } | null
   patchCount: number
   inBacklog: boolean
+  unreadPatchCount?: number
+  unreadNewsCount?: number
 }
 
 type MobileLibraryViewProps = {
@@ -181,17 +184,27 @@ export function MobileLibraryView({
           </CollapsibleMobileSection>
 
           {/* Watchlist Section - Activity-focused */}
-          <CollapsibleMobileSection
-            title="Watchlist"
-            icon={<Eye className="h-4 w-4 text-blue-400" />}
-            count={followedGamesWithActivity.filter(g => !g.inBacklog).length}
-            isOpen={expandedSections.has('followed')}
-            onToggle={() => toggleSection('followed')}
-            isEmpty={followedGamesWithActivity.filter(g => !g.inBacklog).length === 0}
-            emptyText="Follow games to track updates"
-          >
-            <MobileWatchlistGrid games={followedGamesWithActivity.filter(g => !g.inBacklog)} />
-          </CollapsibleMobileSection>
+          {(() => {
+            const watchlistGames = followedGamesWithActivity.filter(g => !g.inBacklog)
+            const totalUnread = watchlistGames.reduce(
+              (sum, g) => sum + (g.unreadPatchCount || 0) + (g.unreadNewsCount || 0),
+              0
+            )
+            return (
+              <CollapsibleMobileSection
+                title="Watchlist"
+                icon={<Eye className="h-4 w-4 text-blue-400" />}
+                count={watchlistGames.length}
+                isOpen={expandedSections.has('followed')}
+                onToggle={() => toggleSection('followed')}
+                isEmpty={watchlistGames.length === 0}
+                emptyText="Follow games to track updates"
+                action={<MarkAllReadButton totalUnread={totalUnread} />}
+              >
+                <MobileWatchlistGrid games={watchlistGames} />
+              </CollapsibleMobileSection>
+            )
+          })()}
 
           {/* Backlog Sections */}
           {SECTION_CONFIG.map(({ key, title, icon, color }) => {
@@ -266,6 +279,7 @@ function CollapsibleMobileSection({
   isEmpty,
   emptyText,
   children,
+  action,
 }: {
   title: string
   icon: React.ReactNode
@@ -275,26 +289,32 @@ function CollapsibleMobileSection({
   isEmpty?: boolean
   emptyText?: string
   children: React.ReactNode
+  action?: React.ReactNode
 }) {
   return (
     <div className="rounded-xl border border-border bg-card overflow-hidden">
-      <button
-        onClick={onToggle}
-        className="w-full flex items-center justify-between p-3 hover:bg-white/5 transition-colors"
-      >
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between p-3 hover:bg-white/5 transition-colors">
+        <button
+          onClick={onToggle}
+          className="flex items-center gap-2 flex-1"
+        >
           {icon}
           <span className="font-medium text-sm">{title}</span>
           <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
             {count}
           </span>
-        </div>
-        <ChevronDown
-          className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${
-            isOpen ? 'rotate-180' : ''
-          }`}
-        />
-      </button>
+          <ChevronDown
+            className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${
+              isOpen ? 'rotate-180' : ''
+            }`}
+          />
+        </button>
+        {action && (
+          <div onClick={(e) => e.stopPropagation()}>
+            {action}
+          </div>
+        )}
+      </div>
 
       {isOpen && (
         <div className="p-3 pt-0 animate-in slide-in-from-top-2 duration-200">
