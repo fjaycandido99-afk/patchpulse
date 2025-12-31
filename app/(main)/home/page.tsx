@@ -71,11 +71,11 @@ export default async function HomePage() {
         {patchesResult.items.length > 0 && (
           <section className="space-y-4">
             <SectionHeader title="Your Patches" href="/patches" glowLine />
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 auto-rows-fr">
               {patchesResult.items.slice(0, 6).map((patch, index) => (
                 <div
                   key={patch.id}
-                  className="animate-soft-entry"
+                  className="animate-soft-entry h-full"
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
                   <MediaCard

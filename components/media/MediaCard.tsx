@@ -142,9 +142,9 @@ export function MediaCard({
   return (
     <Link
       href={href}
-      className="group block overflow-hidden rounded-2xl border border-white/10 bg-white/5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/40 hover:border-white/20 hover:bg-white/[0.07] touch-feedback gradient-border"
+      className="group flex flex-col h-full overflow-hidden rounded-2xl border border-white/10 bg-white/5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/40 hover:border-white/20 hover:bg-white/[0.07] touch-feedback gradient-border"
     >
-      <div className={`relative ${aspectClass} w-full overflow-hidden`}>
+      <div className={`relative ${aspectClass} w-full overflow-hidden flex-shrink-0`}>
         {imageUrl ? (
           <Image
             src={imageUrl}
@@ -176,7 +176,7 @@ export function MediaCard({
         )}
       </div>
 
-      <div className="p-4">
+      <div className="p-4 flex flex-col flex-1">
         {limitedBadges && (
           <div className="mb-2 flex flex-wrap items-center gap-1.5">
             {limitedBadges}
@@ -193,8 +193,8 @@ export function MediaCard({
           </p>
         )}
 
-        {/* Footer: Meta + Game branding */}
-        <div className="mt-3 flex items-center justify-between gap-2 pt-2 border-t border-white/5">
+        {/* Footer: Meta + Game branding - pushed to bottom */}
+        <div className="mt-auto pt-3 flex items-center justify-between gap-2 border-t border-white/5">
           <div className="flex items-center gap-2 min-w-0">
             {game && (
               <>
