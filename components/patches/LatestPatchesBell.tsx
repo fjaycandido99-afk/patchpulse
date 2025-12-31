@@ -1,7 +1,9 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { Gamepad2 } from 'lucide-react'
 import Link from 'next/link'
+import { createClient } from '@/lib/supabase/client'
 
 type LatestPatchesStats = {
   total_today: number
@@ -14,7 +16,45 @@ type Props = {
 }
 
 export function LatestPatchesBell({ initialStats, size = 'md' }: Props) {
-  const stats = initialStats || { total_today: 0, high_impact_count: 0 }
+  const [stats, setStats] = useState<LatestPatchesStats>(
+    initialStats || { total_today: 0, high_impact_count: 0 }
+  )
+
+  useEffect(() => {
+    const supabase = createClient()
+
+    // Subscribe to patch_notes changes
+    const channel = supabase
+      .channel('patches-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'patch_notes',
+        },
+        async () => {
+          // Refetch stats when new patch is added
+          await fetchStats()
+        }
+      )
+      .subscribe()
+
+    async function fetchStats() {
+      try {
+        const res = await fetch('/api/patches/discover?stats=true')
+        const data = await res.json()
+        setStats(data)
+      } catch (error) {
+        console.error('Failed to fetch patch stats:', error)
+      }
+    }
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [])
+
   const hasPatches = stats.total_today > 0
   const hasHighImpact = stats.high_impact_count > 0
 

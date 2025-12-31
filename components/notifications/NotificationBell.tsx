@@ -1,7 +1,9 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { Bell } from 'lucide-react'
 import Link from 'next/link'
+import { createClient } from '@/lib/supabase/client'
 
 type NotificationStats = {
   unread_count: number
@@ -14,7 +16,58 @@ type Props = {
 }
 
 export function NotificationBell({ initialStats, size = 'md' }: Props) {
-  const stats = initialStats || { unread_count: 0, high_priority_count: 0 }
+  const [stats, setStats] = useState<NotificationStats>(
+    initialStats || { unread_count: 0, high_priority_count: 0 }
+  )
+
+  useEffect(() => {
+    const supabase = createClient()
+
+    // Get current user and subscribe to their notifications
+    async function setupRealtime() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      // Subscribe to notification changes for this user
+      const channel = supabase
+        .channel('notifications-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'notifications',
+            filter: `user_id=eq.${user.id}`,
+          },
+          async () => {
+            // Refetch stats when any notification changes
+            await fetchStats()
+          }
+        )
+        .subscribe()
+
+      return () => {
+        supabase.removeChannel(channel)
+      }
+    }
+
+    async function fetchStats() {
+      try {
+        const res = await fetch('/api/notifications?stats=true')
+        const data = await res.json()
+        setStats(data)
+      } catch (error) {
+        console.error('Failed to fetch notification stats:', error)
+      }
+    }
+
+    const cleanup = setupRealtime()
+
+    return () => {
+      cleanup.then(fn => fn?.())
+    }
+  }, [])
+
   const hasUnread = stats.unread_count > 0
   const hasHighPriority = stats.high_priority_count > 0
 
