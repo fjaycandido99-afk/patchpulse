@@ -4,13 +4,14 @@ import { Suspense } from 'react'
 import { ArrowLeft, FileText, Newspaper, Plus, Clock, RefreshCw, Calendar, Gamepad2, Monitor } from 'lucide-react'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { getBacklogItem, getGameActivity } from '../queries'
+import { getBacklogItem, getGameActivity, isFollowingGame } from '../queries'
 import { getSeasonalGameImage } from '@/lib/images/seasonal'
 import { WhatsNew } from '@/components/backlog/WhatsNew'
 import { formatDate, relativeDaysText } from '@/lib/dates'
 import { AddToBacklogButton } from '@/components/backlog/AddToBacklogButton'
 import { StoreLinkButtons } from '@/components/ui/StoreLinkButtons'
 import { SteamStats } from '@/components/library/SteamStats'
+import { GameManagement } from '@/components/backlog/GameManagement'
 
 // Fix #3: Image source priority helper
 function getHeroImage(game: { hero_url?: string | null; cover_url: string | null }, seasonal: { heroUrl: string | null; coverUrl: string | null }): string | null {
@@ -213,11 +214,12 @@ export default async function BacklogDetailPage({
 }) {
   const { gameId } = await params
 
-  const [game, backlogItem, seasonalImage, activity] = await Promise.all([
+  const [game, backlogItem, seasonalImage, activity, isFollowing] = await Promise.all([
     getGame(gameId),
     getBacklogItem(gameId),
     getSeasonalGameImage(gameId),
     getGameActivity(gameId),
+    isFollowingGame(gameId),
   ])
 
   if (!game) {
@@ -456,6 +458,16 @@ export default async function BacklogDetailPage({
               </div>
             </div>
           </div>
+
+          {/* Manage Game - For followed but not in backlog */}
+          {isFollowing && (
+            <GameManagement
+              gameId={gameId}
+              gameName={game.name}
+              isInBacklog={false}
+              isFollowing={true}
+            />
+          )}
         </div>
       </div>
     )
@@ -590,6 +602,13 @@ export default async function BacklogDetailPage({
           </div>
         )}
 
+        {/* Manage Game - Remove from backlog */}
+        <GameManagement
+          gameId={gameId}
+          gameName={game.name}
+          isInBacklog={true}
+          isFollowing={isFollowing}
+        />
       </div>
     </div>
   )

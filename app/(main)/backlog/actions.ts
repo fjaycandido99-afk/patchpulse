@@ -484,3 +484,48 @@ export async function markPlayedToday(gameId: string) {
   revalidatePath('/home')
   return { success: true }
 }
+
+export async function removeFromBacklog(gameId: string) {
+  if (!gameId || typeof gameId !== 'string') {
+    throw new Error('Invalid game ID')
+  }
+
+  const { user, supabase } = await getCurrentUser()
+
+  const { error } = await supabase
+    .from('backlog_items')
+    .delete()
+    .eq('user_id', user.id)
+    .eq('game_id', gameId)
+
+  if (error) {
+    throw new Error('Failed to remove game from backlog')
+  }
+
+  revalidatePath('/backlog')
+  revalidatePath('/home')
+  return { success: true }
+}
+
+export async function unfollowGame(gameId: string) {
+  if (!gameId || typeof gameId !== 'string') {
+    throw new Error('Invalid game ID')
+  }
+
+  const { user, supabase } = await getCurrentUser()
+
+  // Remove from user_games (unfollow)
+  const { error } = await supabase
+    .from('user_games')
+    .delete()
+    .eq('user_id', user.id)
+    .eq('game_id', gameId)
+
+  if (error) {
+    throw new Error('Failed to unfollow game')
+  }
+
+  revalidatePath('/backlog')
+  revalidatePath('/home')
+  return { success: true }
+}

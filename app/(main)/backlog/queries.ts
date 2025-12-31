@@ -711,3 +711,24 @@ export async function getFollowedGamesForBacklogPicker(): Promise<
 
   return games
 }
+
+export async function isFollowingGame(gameId: string): Promise<boolean> {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return false
+  }
+
+  const { data } = await supabase
+    .from('user_games')
+    .select('id')
+    .eq('user_id', user.id)
+    .eq('game_id', gameId)
+    .single()
+
+  return !!data
+}

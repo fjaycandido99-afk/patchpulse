@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { ConnectedAccounts } from './ConnectedAccounts'
 import { BiometricSettings } from '@/components/auth/BiometricSettings'
 import { PushNotificationToggle } from '@/components/notifications/PushNotificationToggle'
+import { LogoutButton } from '@/components/auth/LogoutButton'
 import {
   getConnectedAccounts,
   getProfileStats,
@@ -108,6 +109,15 @@ export default async function ProfilePage() {
           lastUsedAt={biometricCredential?.last_used_at ?? null}
           deviceName={biometricCredential?.device_name ?? null}
         />
+      </section>
+
+      {/* Account Actions */}
+      <section className="rounded-xl border border-border bg-card p-6">
+        <h2 className="text-lg font-semibold mb-4">Account</h2>
+        <p className="text-sm text-muted-foreground mb-4">
+          Sign out of your account or switch to a different user.
+        </p>
+        <LogoutButton />
       </section>
     </div>
   )
