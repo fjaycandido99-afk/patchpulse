@@ -95,37 +95,37 @@ export function SteamStats({
     return null
   }
 
-  // Steam-style stacked layout
+  // Steam-style stacked layout - compact
   if (layout === 'stacked') {
     return (
-      <div className="space-y-0.5 text-sm">
+      <div className="space-y-0.5 text-xs">
         {hasPlaytime && (
-          <div className="flex items-baseline gap-2">
-            <span className="text-muted-foreground text-xs uppercase tracking-wide">Playtime</span>
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-muted-foreground text-[10px] uppercase tracking-wide">Playtime</span>
             <span className="text-foreground font-medium">
               {formatPlaytime(steamStats!.playtime_minutes!)}
             </span>
           </div>
         )}
         {hasLastPlayed && (
-          <div className="flex items-baseline gap-2">
-            <span className="text-muted-foreground text-xs uppercase tracking-wide">Last played</span>
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-muted-foreground text-[10px] uppercase tracking-wide">Last played</span>
             <span className="text-foreground/80">
               {formatLastPlayed(steamStats!.last_played_at!)}
             </span>
           </div>
         )}
         {showPlayerCount && playerCount && (
-          <div className="flex items-center gap-2 pt-0.5">
+          <div className="flex items-center gap-1.5">
             <Users className="h-3 w-3 text-emerald-400" />
             <span className="text-emerald-400 font-medium">{playerCount}</span>
-            <span className="text-muted-foreground text-xs">playing now</span>
+            <span className="text-muted-foreground text-[10px]">playing</span>
           </div>
         )}
         {showPlayerCount && isLoading && (
-          <div className="flex items-center gap-2 pt-0.5">
+          <div className="flex items-center gap-1.5">
             <Users className="h-3 w-3 text-muted-foreground/50 animate-pulse" />
-            <span className="text-muted-foreground/50 text-xs">Loading...</span>
+            <span className="text-muted-foreground/50 text-[10px]">Loading...</span>
           </div>
         )}
       </div>

@@ -498,35 +498,35 @@ export default async function BacklogDetailPage({
           </Link>
         </div>
 
-        {/* Steam Library Style Card */}
-        <div className="rounded-xl border border-border bg-card/95 backdrop-blur-sm p-4 sm:p-6">
-          <div className="flex gap-4 sm:gap-6">
-            {/* Cover Image - Left Side */}
-            <div className="relative w-24 sm:w-32 flex-shrink-0 aspect-[2/3] rounded-lg overflow-hidden shadow-lg">
+        {/* Steam Library Style Card - Fixed size, no overflow */}
+        <div className="rounded-xl border border-border bg-card/95 backdrop-blur-sm p-3 sm:p-4 overflow-hidden">
+          <div className="flex gap-3 sm:gap-4">
+            {/* Cover Image - Left Side - Fixed size */}
+            <div className="relative w-20 sm:w-24 flex-shrink-0 aspect-[2/3] rounded-lg overflow-hidden shadow-lg">
               {game.cover_url ? (
                 <Image
                   src={game.cover_url}
                   alt={game.name}
                   fill
                   className="object-cover"
-                  sizes="128px"
+                  sizes="96px"
                   unoptimized
                 />
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center bg-muted">
-                  <Gamepad2 className="w-8 h-8 text-muted-foreground" />
+                  <Gamepad2 className="w-6 h-6 text-muted-foreground" />
                 </div>
               )}
             </div>
 
-            {/* Right Side - Game Info */}
-            <div className="flex-1 min-w-0 space-y-3">
+            {/* Right Side - Game Info - Compact */}
+            <div className="flex-1 min-w-0 space-y-2">
               {/* Title and Status */}
               <div className="flex items-start justify-between gap-2">
-                <h1 className="text-xl sm:text-2xl font-bold tracking-tight line-clamp-2">
+                <h1 className="text-lg sm:text-xl font-bold tracking-tight line-clamp-1">
                   {game.name}
                 </h1>
-                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border whitespace-nowrap ${statusConfig.bg} ${statusConfig.color} flex-shrink-0`}>
+                <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium border whitespace-nowrap ${statusConfig.bg} ${statusConfig.color} flex-shrink-0`}>
                   {statusConfig.label}
                 </span>
               </div>
@@ -542,21 +542,21 @@ export default async function BacklogDetailPage({
               )}
 
               {/* Progress Bar */}
-              <div className="flex items-center gap-3">
-                <div className="flex-1 h-2.5 rounded-full bg-muted overflow-hidden">
+              <div className="flex items-center gap-2">
+                <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
                   <div
                     className="h-full rounded-full bg-primary transition-all"
                     style={{ width: `${Math.min(100, Math.max(0, initialProgress))}%` }}
                   />
                 </div>
-                <span className="text-sm font-medium text-muted-foreground w-10 text-right">
+                <span className="text-xs font-medium text-muted-foreground w-8 text-right">
                   {initialProgress}%
                 </span>
               </div>
 
               {/* Latest Patch Info */}
               {backlogItem.latestPatch && (
-                <div className="flex items-center gap-1.5 text-xs text-blue-400/80">
+                <div className="flex items-center gap-1 text-[11px] text-blue-400/80">
                   <FileText className="h-3 w-3 flex-shrink-0" />
                   <span className="font-medium">{relativeDaysText(backlogItem.latestPatch.published_at)}</span>
                   <span className="text-muted-foreground/50">·</span>
