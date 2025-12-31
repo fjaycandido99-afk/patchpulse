@@ -287,6 +287,117 @@ function RotatingHeadline({
   )
 }
 
+// Rotating news grid with random fade animation
+function RotatingNewsGrid({
+  news,
+  seasonalImages,
+  gamePlatforms,
+}: {
+  news: NewsItem[]
+  seasonalImages: Map<string, SeasonalImage>
+  gamePlatforms: Map<string, Platform[]>
+}) {
+  const visibleCount = 6
+  // Track which news items are shown in each of the 6 positions
+  const [slots, setSlots] = useState(() =>
+    news.slice(0, visibleCount).map((_, i) => i)
+  )
+  // Track which slot is currently transitioning
+  const [fadingSlot, setFadingSlot] = useState<number | null>(null)
+
+  // Auto-rotate one random slot at a time
+  useEffect(() => {
+    if (news.length <= visibleCount) return
+
+    const interval = setInterval(() => {
+      // Pick a random slot to change
+      const slotToChange = Math.floor(Math.random() * visibleCount)
+
+      // Start fade out
+      setFadingSlot(slotToChange)
+
+      // After fade out, update the news and fade in
+      setTimeout(() => {
+        setSlots(prev => {
+          const newSlots = [...prev]
+          // Pick a random news item that's not currently showing
+          const currentNews = new Set(newSlots)
+          let newNewsIndex = Math.floor(Math.random() * news.length)
+          // Try to find a news item not currently visible
+          let attempts = 0
+          while (currentNews.has(newNewsIndex) && attempts < 10) {
+            newNewsIndex = Math.floor(Math.random() * news.length)
+            attempts++
+          }
+          newSlots[slotToChange] = newNewsIndex
+          return newSlots
+        })
+
+        // Keep fading state for fade-in animation
+        setTimeout(() => {
+          setFadingSlot(null)
+        }, 400)
+      }, 400)
+    }, 7000)
+
+    return () => clearInterval(interval)
+  }, [news.length])
+
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+      {slots.map((newsIndex, slotIndex) => {
+        const newsItem = news[newsIndex]
+        if (!newsItem) return null
+        const isFading = fadingSlot === slotIndex
+
+        return (
+          <div
+            key={`slot-${slotIndex}`}
+            style={{
+              opacity: isFading ? 0 : 1,
+              transform: isFading ? 'scale(0.95)' : 'scale(1)',
+              transition: 'opacity 400ms ease-in-out, transform 400ms ease-in-out',
+            }}
+          >
+            <MediaCard
+              href={`/news/${newsItem.id}`}
+              title={newsItem.title}
+              summary={newsItem.summary}
+              whyItMatters={newsItem.why_it_matters}
+              imageUrl={getNewsImage(newsItem, seasonalImages)}
+              variant="vertical"
+              game={
+                newsItem.game_id
+                  ? {
+                      name: newsItem.games?.name || 'General',
+                      logoUrl: getSeasonalLogoUrl(newsItem.game_id, newsItem.games?.logo_url, seasonalImages),
+                      platforms: getPlatformsForGame(newsItem.game_id, gamePlatforms),
+                    }
+                  : undefined
+              }
+              badges={
+                <>
+                  <Badge variant="news">News</Badge>
+                  {newsItem.is_rumor && <Badge variant="rumor">Rumor</Badge>}
+                </>
+              }
+              metaText={
+                <MetaRow
+                  items={[
+                    newsItem.games?.name || 'General',
+                    formatDate(newsItem.published_at),
+                  ]}
+                  size="xs"
+                />
+              }
+            />
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 export function HeadlinesSection({ news, seasonalImages, gamePlatforms }: HeadlinesSectionProps) {
   if (news.length === 0) return null
 
@@ -298,50 +409,13 @@ export function HeadlinesSection({ news, seasonalImages, gamePlatforms }: Headli
         {/* Rotating spotlight - cycles through all headlines every 10s */}
         <RotatingHeadline news={news} seasonalImages={seasonalImages} />
 
-        {/* Additional headlines - bigger vertical cards in grid */}
+        {/* Additional headlines - rotating grid with random fade animation */}
         {news.length > 3 && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
-            {news.slice(3, 9).map((newsItem, index) => (
-              <div
-                key={newsItem.id}
-                className="animate-soft-entry"
-                style={{ animationDelay: `${index * 50}ms` }}
-              >
-                <MediaCard
-                  href={`/news/${newsItem.id}`}
-                  title={newsItem.title}
-                  summary={newsItem.summary}
-                  whyItMatters={newsItem.why_it_matters}
-                  imageUrl={getNewsImage(newsItem, seasonalImages)}
-                  variant="vertical"
-                  game={
-                    newsItem.game_id
-                      ? {
-                          name: newsItem.games?.name || 'General',
-                          logoUrl: getSeasonalLogoUrl(newsItem.game_id, newsItem.games?.logo_url, seasonalImages),
-                          platforms: getPlatformsForGame(newsItem.game_id, gamePlatforms),
-                        }
-                      : undefined
-                  }
-                  badges={
-                    <>
-                      <Badge variant="news">News</Badge>
-                      {newsItem.is_rumor && <Badge variant="rumor">Rumor</Badge>}
-                    </>
-                  }
-                  metaText={
-                    <MetaRow
-                      items={[
-                        newsItem.games?.name || 'General',
-                        formatDate(newsItem.published_at),
-                      ]}
-                      size="xs"
-                    />
-                  }
-                />
-              </div>
-            ))}
-          </div>
+          <RotatingNewsGrid
+            news={news.slice(3)}
+            seasonalImages={seasonalImages}
+            gamePlatforms={gamePlatforms}
+          />
         )}
       </div>
     </section>
