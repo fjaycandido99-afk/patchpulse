@@ -7,6 +7,9 @@ import { LogoutButton } from '@/components/auth/LogoutButton'
 import {
   getConnectedAccounts,
   getProfileStats,
+  getFollowedGames,
+  getBacklogGames,
+  getPlaytimeGames,
 } from './actions'
 import { ProfileHeader } from '@/components/profile/ProfileHeader'
 import { ProfileStats } from '@/components/profile/ProfileStats'
@@ -36,10 +39,13 @@ export default async function ProfilePage() {
     .limit(1)
     .maybeSingle()
 
-  const [accounts, stats, subscriptionInfo] = await Promise.all([
+  const [accounts, stats, subscriptionInfo, followedGames, backlogGames, playtimeGames] = await Promise.all([
     getConnectedAccounts(),
     getProfileStats(),
     getSubscriptionInfo(user.id),
+    getFollowedGames(),
+    getBacklogGames(),
+    getPlaytimeGames(),
   ])
 
   return (
@@ -71,6 +77,9 @@ export default async function ProfilePage() {
           completedCount={stats.completedCount}
           pausedCount={stats.pausedCount}
           totalPlaytime={stats.totalPlaytime}
+          followedGames={followedGames}
+          backlogGames={backlogGames}
+          playtimeGames={playtimeGames}
         />
       )}
 

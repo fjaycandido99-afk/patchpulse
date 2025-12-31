@@ -290,6 +290,7 @@ export type ConnectedAccount = {
   avatar_url: string | null
   last_sync_at: string | null
   created_at: string
+  metadata: Record<string, unknown> | null
 }
 
 export async function getConnectedAccounts(): Promise<ConnectedAccount[]> {
@@ -301,7 +302,7 @@ export async function getConnectedAccounts(): Promise<ConnectedAccount[]> {
 
     const { data, error } = await supabase
       .from('connected_accounts')
-      .select('id, provider, external_user_id, display_name, avatar_url, last_sync_at, created_at')
+      .select('id, provider, external_user_id, display_name, avatar_url, last_sync_at, created_at, metadata')
       .eq('user_id', user.id)
       .order('created_at', { ascending: true })
 
@@ -406,5 +407,46 @@ export async function getLibraryStats() {
     return stats
   } catch {
     return null
+  }
+}
+
+export async function getPlaytimeGames() {
+  try {
+    const supabase = await createClient()
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return []
+
+    // Get library games with playtime, joined with games table for details
+    const { data, error } = await supabase
+      .from('user_library_games')
+      .select(`
+        playtime_minutes,
+        games:game_id (
+          id,
+          name,
+          slug,
+          cover_url
+        )
+      `)
+      .eq('user_id', user.id)
+      .gt('playtime_minutes', 0)
+      .order('playtime_minutes', { ascending: false })
+      .limit(12)
+
+    if (error || !data) return []
+
+    return data
+      .map((item) => {
+        const game = item.games as unknown as { id: string; name: string; slug: string; cover_url: string | null } | null
+        if (!game) return null
+        return {
+          ...game,
+          playtime_minutes: item.playtime_minutes || 0,
+        }
+      })
+      .filter((g): g is NonNullable<typeof g> => g !== null)
+  } catch {
+    return []
   }
 }

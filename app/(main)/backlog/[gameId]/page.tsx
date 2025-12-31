@@ -12,6 +12,7 @@ import { AddToBacklogButton } from '@/components/backlog/AddToBacklogButton'
 import { StoreLinkButtons } from '@/components/ui/StoreLinkButtons'
 import { SteamStats } from '@/components/library/SteamStats'
 import { GameManagement } from '@/components/backlog/GameManagement'
+import { StudioInfoSection } from '@/components/games/StudioInfoSection'
 
 // Fix #3: Image source priority helper
 function getHeroImage(game: { hero_url?: string | null; cover_url: string | null }, seasonal: { heroUrl: string | null; coverUrl: string | null }): string | null {
@@ -45,7 +46,7 @@ async function getGame(gameId: string) {
 
   const { data } = await supabase
     .from('games')
-    .select('id, name, slug, cover_url, hero_url, logo_url, brand_color, release_date, genre, is_live_service, platforms, steam_app_id')
+    .select('id, name, slug, cover_url, hero_url, logo_url, brand_color, release_date, genre, is_live_service, platforms, steam_app_id, developer, publisher, studio_type, similar_games, developer_notable_games')
     .eq('id', gameId)
     .single()
 
@@ -375,6 +376,16 @@ export default async function BacklogDetailPage({
             </div>
           </div>
 
+          {/* Studio Info Section */}
+          <StudioInfoSection
+            developer={game.developer}
+            publisher={game.publisher}
+            studioType={game.studio_type as 'AAA' | 'AA' | 'indie' | null}
+            genre={game.genre}
+            similarGames={game.similar_games}
+            developerNotableGames={game.developer_notable_games}
+          />
+
           {/* Steam Stats Card - Player Count */}
           {game.steam_app_id && (
             <div className="rounded-xl border border-border bg-card p-4 sm:p-6">
@@ -557,6 +568,16 @@ export default async function BacklogDetailPage({
             </div>
           </div>
         </div>
+
+        {/* Studio Info Section */}
+        <StudioInfoSection
+          developer={game.developer}
+          publisher={game.publisher}
+          studioType={game.studio_type as 'AAA' | 'AA' | 'indie' | null}
+          genre={game.genre}
+          similarGames={game.similar_games}
+          developerNotableGames={game.developer_notable_games}
+        />
 
         {/* AI Summary */}
         <Suspense fallback={<WhatsNewSkeleton />}>

@@ -105,12 +105,12 @@ export function LatestPatchesBell({ initialStats, size = 'md' }: Props) {
   async function fetchPatches() {
     setIsLoading(true)
     try {
-      const res = await fetch('/api/patches/latest?limit=10')
+      const res = await fetch('/api/patches/discover?limit=10')
       const data = await res.json()
       setPatches(data.patches || [])
       setStats(data.stats || { total_today: 0, high_impact_count: 0 })
     } catch (error) {
-      console.error('Failed to fetch latest patches:', error)
+      console.error('Failed to fetch discover patches:', error)
     } finally {
       setIsLoading(false)
     }
@@ -118,7 +118,7 @@ export function LatestPatchesBell({ initialStats, size = 'md' }: Props) {
 
   async function fetchStats() {
     try {
-      const res = await fetch('/api/patches/latest?stats=true')
+      const res = await fetch('/api/patches/discover?stats=true')
       const data = await res.json()
       setStats(data)
     } catch (error) {
@@ -135,8 +135,8 @@ export function LatestPatchesBell({ initialStats, size = 'md' }: Props) {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="relative p-2 rounded-xl hover:bg-white/10 active:scale-95 transition-all touch-manipulation group"
-        title="Latest Patches"
-        aria-label={`Latest patches${hasPatches ? ` (${stats.total_today} today)` : ''}`}
+        title="Discover Patches"
+        aria-label={`Discover patches${hasPatches ? ` (${stats.total_today} today)` : ''}`}
       >
         {/* Pulsing halo effect when there are new patches */}
         {hasHighImpact && (
@@ -191,7 +191,7 @@ export function LatestPatchesBell({ initialStats, size = 'md' }: Props) {
 
               <div className="relative flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <h3 className="text-xl font-bold tracking-tight">Latest Patches</h3>
+                  <h3 className="text-xl font-bold tracking-tight">Discover</h3>
                   {hasPatches && (
                     <span className="px-2.5 py-1 text-xs font-bold rounded-full bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 animate-in zoom-in duration-200">
                       {stats.total_today} today
@@ -212,7 +212,7 @@ export function LatestPatchesBell({ initialStats, size = 'md' }: Props) {
                   <X className="w-5 h-5 text-muted-foreground" />
                 </button>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">All games • Most recent first</p>
+              <p className="text-xs text-muted-foreground mt-1">Patches from games you don&apos;t follow</p>
             </div>
 
             {/* Content */}
@@ -242,17 +242,17 @@ export function LatestPatchesBell({ initialStats, size = 'md' }: Props) {
                     </div>
                   </div>
 
-                  <p className="text-lg font-semibold text-foreground">No patches today</p>
+                  <p className="text-lg font-semibold text-foreground">No new patches</p>
                   <p className="text-sm text-muted-foreground mt-2 text-center max-w-[250px]">
-                    Check back later for the latest game updates
+                    No recent patches from games outside your library
                   </p>
 
                   <Link
-                    href="/patches"
+                    href="/search"
                     onClick={() => setIsOpen(false)}
                     className="mt-6 px-4 py-2 text-sm font-medium text-cyan-400 bg-cyan-500/10 rounded-xl hover:bg-cyan-500/20 transition-colors"
                   >
-                    Browse all patches
+                    Discover games
                   </Link>
                 </div>
               ) : (

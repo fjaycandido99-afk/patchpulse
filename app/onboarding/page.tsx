@@ -2,7 +2,8 @@
 
 import { useState, useTransition } from 'react'
 import { searchGames, saveOnboarding } from './actions'
-import { X, Search } from 'lucide-react'
+import { X, Search, Gamepad2, Check, ArrowRight, ArrowLeft } from 'lucide-react'
+import Image from 'next/image'
 
 type Game = {
   id: string
@@ -12,7 +13,13 @@ type Game = {
   platforms: string[]
 }
 
-const PLATFORMS = ['PC', 'PS5', 'Xbox', 'Switch', 'Mobile']
+const PLATFORMS = [
+  { id: 'PC', label: 'PC', icon: '🖥️' },
+  { id: 'PS5', label: 'PlayStation', icon: '🎮' },
+  { id: 'Xbox', label: 'Xbox', icon: '🎯' },
+  { id: 'Switch', label: 'Nintendo', icon: '🕹️' },
+  { id: 'Mobile', label: 'Mobile', icon: '📱' },
+]
 
 export default function OnboardingPage() {
   const [step, setStep] = useState(1)
@@ -99,11 +106,21 @@ export default function OnboardingPage() {
   return (
     <div className="flex min-h-screen items-center justify-center px-4 py-12">
       <div className="w-full max-w-2xl space-y-8">
-        <div className="text-center">
+        {/* Header */}
+        <div className="text-center space-y-2">
+          <div className="mx-auto w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+            <Gamepad2 className="w-7 h-7 text-primary" />
+          </div>
           <h1 className="text-3xl font-bold tracking-tight">Welcome to PatchPulse</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Step {step} of 2: {step === 1 ? 'Select your games' : 'Set your preferences'}
+          <p className="text-muted-foreground">
+            {step === 1 ? 'Select games you want to follow' : 'Set your preferences'}
           </p>
+
+          {/* Progress bar */}
+          <div className="flex items-center justify-center gap-2 pt-4">
+            <div className={`h-1.5 w-20 rounded-full transition-colors ${step >= 1 ? 'bg-primary' : 'bg-muted'}`} />
+            <div className={`h-1.5 w-20 rounded-full transition-colors ${step >= 2 ? 'bg-primary' : 'bg-muted'}`} />
+          </div>
         </div>
 
         {error && (
@@ -114,37 +131,52 @@ export default function OnboardingPage() {
 
         {step === 1 && (
           <div className="space-y-6">
+            {/* Search */}
             <div>
-              <label htmlFor="search" className="block text-sm font-medium">
-                Search games
-              </label>
-              <div className="relative mt-2">
-                <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
                 <input
-                  id="search"
                   type="text"
                   value={searchQuery}
                   onChange={(e) => handleSearch(e.target.value)}
                   placeholder="Search for games..."
-                  className="block w-full rounded-lg border border-input bg-background py-2 pl-10 pr-3 text-sm transition-colors placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="block w-full rounded-xl border border-input bg-background py-3 pl-12 pr-4 text-sm transition-colors placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                 />
+                {isSearching && (
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                    <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                  </div>
+                )}
               </div>
 
-              {isSearching && (
-                <p className="mt-2 text-sm text-muted-foreground">Searching...</p>
-              )}
-
+              {/* Search Results with Cover Images */}
               {searchResults.length > 0 && (
-                <div className="mt-2 max-h-64 overflow-y-auto rounded-lg border border-border bg-card">
+                <div className="mt-3 max-h-72 overflow-y-auto rounded-xl border border-border bg-card shadow-lg">
                   {searchResults.map((game) => (
                     <button
                       key={game.id}
                       onClick={() => handleSelectGame(game)}
-                      className="flex w-full items-center gap-3 border-b border-border px-4 py-3 text-left transition-colors last:border-0 hover:bg-accent"
+                      className="flex w-full items-center gap-3 border-b border-border/50 px-4 py-3 text-left transition-colors last:border-0 hover:bg-accent"
                     >
-                      <div className="flex-1">
-                        <p className="font-medium">{game.name}</p>
-                        <p className="text-xs text-muted-foreground">
+                      {/* Game Cover */}
+                      <div className="relative w-10 h-14 rounded-lg overflow-hidden bg-muted flex-shrink-0">
+                        {game.cover_url ? (
+                          <Image
+                            src={game.cover_url}
+                            alt={game.name}
+                            fill
+                            className="object-cover"
+                            sizes="40px"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Gamepad2 className="w-4 h-4 text-muted-foreground" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">{game.name}</p>
+                        <p className="text-xs text-muted-foreground truncate">
                           {game.platforms.join(', ')}
                         </p>
                       </div>
@@ -154,28 +186,69 @@ export default function OnboardingPage() {
               )}
             </div>
 
+            {/* Selected Games Grid with Cover Images */}
             <div>
-              <label className="block text-sm font-medium">
-                Selected games ({selectedGames.length}/3 minimum)
-              </label>
+              <div className="flex items-center justify-between mb-3">
+                <label className="text-sm font-medium">
+                  Your games
+                </label>
+                <span className={`text-xs px-2 py-0.5 rounded-full ${
+                  selectedGames.length >= 3
+                    ? 'bg-emerald-500/20 text-emerald-400'
+                    : 'bg-muted text-muted-foreground'
+                }`}>
+                  {selectedGames.length}/3 minimum
+                </span>
+              </div>
+
               {selectedGames.length === 0 ? (
-                <p className="mt-2 text-sm text-muted-foreground">
-                  No games selected yet. Search and select at least 3 games.
-                </p>
+                <div className="rounded-xl border border-dashed border-border bg-muted/30 p-8 text-center">
+                  <Gamepad2 className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">
+                    Search and select at least 3 games to follow
+                  </p>
+                </div>
               ) : (
-                <div className="mt-2 flex flex-wrap gap-2">
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
                   {selectedGames.map((game) => (
                     <div
                       key={game.id}
-                      className="flex items-center gap-2 rounded-lg bg-primary/10 px-3 py-2 text-sm"
+                      className="group relative"
                     >
-                      <span>{game.name}</span>
-                      <button
-                        onClick={() => handleRemoveGame(game.id)}
-                        className="text-muted-foreground hover:text-foreground"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
+                      {/* Game Cover Card */}
+                      <div className="relative aspect-[3/4] rounded-xl overflow-hidden bg-muted ring-2 ring-primary/50">
+                        {game.cover_url ? (
+                          <Image
+                            src={game.cover_url}
+                            alt={game.name}
+                            fill
+                            className="object-cover"
+                            sizes="(max-width: 640px) 33vw, (max-width: 768px) 25vw, 20vw"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-violet-500/20">
+                            <Gamepad2 className="w-8 h-8 text-muted-foreground" />
+                          </div>
+                        )}
+
+                        {/* Checkmark overlay */}
+                        <div className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                          <Check className="w-3 h-3 text-white" />
+                        </div>
+
+                        {/* Remove button on hover */}
+                        <button
+                          onClick={() => handleRemoveGame(game.id)}
+                          className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="w-6 h-6 text-white" />
+                        </button>
+                      </div>
+
+                      {/* Game name */}
+                      <p className="mt-1.5 text-xs font-medium text-center line-clamp-2 leading-tight">
+                        {game.name}
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -185,96 +258,120 @@ export default function OnboardingPage() {
             <button
               onClick={handleNextStep}
               disabled={selectedGames.length < 3}
-              className="w-full rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-all hover:bg-primary/90 disabled:opacity-50 active:scale-[0.98]"
             >
               Continue
+              <ArrowRight className="w-4 h-4" />
             </button>
           </div>
         )}
 
         {step === 2 && (
           <div className="space-y-6">
+            {/* Platforms */}
             <div>
-              <label className="block text-sm font-medium">
+              <label className="block text-sm font-medium mb-3">
                 What platforms do you play on?
               </label>
-              <div className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {PLATFORMS.map((platform) => (
                   <button
-                    key={platform}
-                    onClick={() => handleTogglePlatform(platform)}
-                    className={`rounded-lg border px-4 py-3 text-sm font-medium transition-colors ${
-                      platforms.includes(platform)
-                        ? 'border-primary bg-primary/10 text-primary'
+                    key={platform.id}
+                    onClick={() => handleTogglePlatform(platform.id)}
+                    className={`flex items-center gap-3 rounded-xl border px-4 py-3.5 text-sm font-medium transition-all active:scale-[0.98] ${
+                      platforms.includes(platform.id)
+                        ? 'border-primary bg-primary/10 text-primary ring-1 ring-primary/50'
                         : 'border-input bg-background hover:bg-accent'
                     }`}
                   >
-                    {platform}
+                    <span className="text-lg">{platform.icon}</span>
+                    {platform.label}
+                    {platforms.includes(platform.id) && (
+                      <Check className="w-4 h-4 ml-auto" />
+                    )}
                   </button>
                 ))}
               </div>
             </div>
 
+            {/* Playstyle */}
             <div>
-              <label className="block text-sm font-medium">Playstyle</label>
-              <div className="mt-2 grid grid-cols-2 gap-3">
+              <label className="block text-sm font-medium mb-3">How do you play?</label>
+              <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={() => setPlaystyle('casual')}
-                  className={`rounded-lg border px-4 py-3 text-sm font-medium transition-colors ${
+                  className={`flex flex-col items-center gap-2 rounded-xl border px-4 py-4 text-sm font-medium transition-all active:scale-[0.98] ${
                     playstyle === 'casual'
-                      ? 'border-primary bg-primary/10 text-primary'
+                      ? 'border-primary bg-primary/10 text-primary ring-1 ring-primary/50'
                       : 'border-input bg-background hover:bg-accent'
                   }`}
                 >
-                  Casual
+                  <span className="text-2xl">🎮</span>
+                  <span>Casual</span>
+                  <span className="text-xs text-muted-foreground font-normal">Play for fun</span>
                 </button>
                 <button
                   onClick={() => setPlaystyle('competitive')}
-                  className={`rounded-lg border px-4 py-3 text-sm font-medium transition-colors ${
+                  className={`flex flex-col items-center gap-2 rounded-xl border px-4 py-4 text-sm font-medium transition-all active:scale-[0.98] ${
                     playstyle === 'competitive'
-                      ? 'border-primary bg-primary/10 text-primary'
+                      ? 'border-primary bg-primary/10 text-primary ring-1 ring-primary/50'
                       : 'border-input bg-background hover:bg-accent'
                   }`}
                 >
-                  Competitive
+                  <span className="text-2xl">🏆</span>
+                  <span>Competitive</span>
+                  <span className="text-xs text-muted-foreground font-normal">Play to win</span>
                 </button>
               </div>
             </div>
 
-            <div className="flex items-center justify-between rounded-lg border border-input bg-background px-4 py-3">
+            {/* Notifications toggle */}
+            <div className="flex items-center justify-between rounded-xl border border-input bg-card/50 px-4 py-4">
               <div>
-                <p className="text-sm font-medium">Enable notifications</p>
-                <p className="text-xs text-muted-foreground">
-                  Get alerts for patch notes and news
+                <p className="font-medium">Enable notifications</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Get alerts for patches and important updates
                 </p>
               </div>
               <button
                 onClick={() => setNotificationsEnabled(!notificationsEnabled)}
-                className={`relative h-6 w-11 rounded-full transition-colors ${
+                className={`relative h-7 w-12 rounded-full transition-colors ${
                   notificationsEnabled ? 'bg-primary' : 'bg-input'
                 }`}
               >
                 <span
-                  className={`absolute top-0.5 h-5 w-5 rounded-full bg-background transition-transform ${
+                  className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow-sm transition-transform ${
                     notificationsEnabled ? 'translate-x-5' : 'translate-x-0.5'
                   }`}
                 />
               </button>
             </div>
 
+            {/* Navigation */}
             <div className="flex gap-3">
               <button
                 onClick={() => setStep(1)}
-                className="flex-1 rounded-lg border border-input bg-background px-4 py-2 text-sm font-semibold transition-colors hover:bg-accent"
+                className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-input bg-background px-4 py-3 text-sm font-semibold transition-colors hover:bg-accent active:scale-[0.98]"
               >
+                <ArrowLeft className="w-4 h-4" />
                 Back
               </button>
               <button
                 onClick={handleFinish}
                 disabled={isSaving || platforms.length === 0}
-                className="flex-1 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+                className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-all hover:bg-primary/90 disabled:opacity-50 active:scale-[0.98]"
               >
-                {isSaving ? 'Saving...' : 'Finish'}
+                {isSaving ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    Get Started
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
               </button>
             </div>
           </div>
