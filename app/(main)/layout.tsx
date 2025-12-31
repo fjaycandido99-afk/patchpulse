@@ -71,12 +71,14 @@ export default async function MainLayout({
           {/* Mobile header with search - Apple Music/App Store style, fixed for edge-to-edge */}
           <header className="fixed inset-x-0 top-0 z-40 md:hidden bg-[rgba(10,15,30,0.85)] backdrop-blur-xl border-b border-white/10" style={{ paddingTop: 'env(safe-area-inset-top, 0)' }}>
             <div className="flex items-center justify-between gap-2 px-4 py-3">
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-3">
                 <Link href="/home" className="text-lg font-bold tracking-tight flex-shrink-0 hover:opacity-80 transition-opacity">
                   PatchPulse
                 </Link>
-                <LatestPatchesBell initialStats={patchesStats} size="sm" />
-                <NotificationBell initialStats={notificationStats} size="sm" />
+                <div className="flex items-center gap-1 ml-1">
+                  <LatestPatchesBell initialStats={patchesStats} size="sm" />
+                  <NotificationBell initialStats={notificationStats} size="sm" />
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <SearchBar className="w-auto" />

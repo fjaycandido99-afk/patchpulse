@@ -139,7 +139,7 @@ export function LatestPatchesBell({ initialStats, size = 'md' }: Props) {
           e.stopPropagation()
           setIsOpen(!isOpen)
         }}
-        className="relative p-2 rounded-xl hover:bg-white/10 active:scale-95 transition-all touch-manipulation group"
+        className="relative p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl hover:bg-white/10 active:scale-95 transition-all touch-manipulation group"
         title="Discover Patches"
         aria-label={`Discover patches${hasPatches ? ` (${stats.total_today} today)` : ''}`}
       >
