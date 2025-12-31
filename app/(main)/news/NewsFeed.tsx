@@ -263,8 +263,8 @@ export function NewsFeed({ news, topStories, includeRumors }: NewsFeedProps) {
         </Link>
       </div>
 
-      {/* News list */}
-      <div className="space-y-3">
+      {/* News grid - larger vertical cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
         {filteredNews.map((item, index) => (
           <div
             key={item.id}
@@ -277,7 +277,7 @@ export function NewsFeed({ news, topStories, includeRumors }: NewsFeedProps) {
               summary={item.summary}
               whyItMatters={item.why_it_matters}
               imageUrl={getNewsImage(item)}
-              variant="horizontal"
+              variant="vertical-large"
               game={
                 item.game
                   ? {
