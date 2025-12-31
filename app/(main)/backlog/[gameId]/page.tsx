@@ -470,16 +470,6 @@ export default async function BacklogDetailPage({
   const initialNextNote = backlogItem.next_note
   const initialPauseReason = backlogItem.pause_reason
 
-  // Status config for the pill
-  const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-    playing: { label: 'Playing', color: 'text-green-400', bg: 'bg-green-500/15 border-green-500/30' },
-    paused: { label: 'Paused', color: 'text-amber-400', bg: 'bg-amber-500/15 border-amber-500/30' },
-    backlog: { label: 'Backlog', color: 'text-blue-400', bg: 'bg-blue-500/15 border-blue-500/30' },
-    finished: { label: 'Done', color: 'text-purple-400', bg: 'bg-purple-500/15 border-purple-500/30' },
-    dropped: { label: 'Dropped', color: 'text-zinc-400', bg: 'bg-zinc-500/15 border-zinc-500/30' },
-  }
-  const statusConfig = STATUS_CONFIG[initialStatus] || STATUS_CONFIG.backlog
-
   return (
     // Fix #5: overflow-x-hidden prevents swipe hijacking
     <div className="relative overflow-x-hidden min-h-screen">
@@ -521,15 +511,10 @@ export default async function BacklogDetailPage({
 
             {/* Right Side - Game Info - Compact */}
             <div className="flex-1 min-w-0 space-y-2 overflow-hidden">
-              {/* Title and Status */}
-              <div className="flex items-start justify-between gap-2">
-                <h1 className="text-lg sm:text-xl font-bold tracking-tight line-clamp-1">
-                  {game.name}
-                </h1>
-                <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium border whitespace-nowrap ${statusConfig.bg} ${statusConfig.color} flex-shrink-0`}>
-                  {statusConfig.label}
-                </span>
-              </div>
+              {/* Title */}
+              <h1 className="text-lg sm:text-xl font-bold tracking-tight line-clamp-2">
+                {game.name}
+              </h1>
 
               {/* Steam Stats - Playtime, Last Played, Player Count */}
               {game.steam_app_id && (
