@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Newspaper, Zap } from 'lucide-react'
@@ -9,6 +10,8 @@ import { Badge } from '@/components/ui/badge'
 import { MetaRow } from '@/components/ui/MetaRow'
 import { formatDate, relativeDaysText } from '@/lib/dates'
 import { markNewsAsVisited } from './actions'
+
+const SCROLL_KEY = 'news-scroll-position'
 
 type NewsItem = {
   id: string
@@ -200,8 +203,35 @@ function getNewsImage(item: NewsItem): string | null {
 }
 
 export function NewsFeed({ news, topStories, includeRumors }: NewsFeedProps) {
+  const hasRestoredScroll = useRef(false)
+
   useEffect(() => {
     markNewsAsVisited()
+  }, [])
+
+  // Restore scroll position on mount
+  useEffect(() => {
+    if (hasRestoredScroll.current) return
+
+    const savedPosition = sessionStorage.getItem(SCROLL_KEY)
+    if (savedPosition) {
+      const pos = parseInt(savedPosition, 10)
+      // Small delay to ensure content is rendered
+      setTimeout(() => {
+        window.scrollTo(0, pos)
+      }, 50)
+      hasRestoredScroll.current = true
+    }
+  }, [])
+
+  // Save scroll position before navigating away
+  useEffect(() => {
+    const handleScroll = () => {
+      sessionStorage.setItem(SCROLL_KEY, window.scrollY.toString())
+    }
+
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
   // Filter out top story IDs from the main news list to avoid duplicates
