@@ -2,19 +2,29 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import webpush from 'web-push'
 
-// Initialize Supabase with service role for cron access
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+// Lazy initialization to avoid build-time errors
+let vapidConfigured = false
 
-// Configure VAPID
-const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
-const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY
-const VAPID_SUBJECT = process.env.VAPID_SUBJECT || 'mailto:hello@patchpulse.app'
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
 
-if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
-  webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY)
+function configureVapid(): boolean {
+  if (vapidConfigured) return true
+
+  const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY?.replace(/=/g, '')
+  const privateKey = process.env.VAPID_PRIVATE_KEY?.replace(/=/g, '')
+  const subject = process.env.VAPID_SUBJECT || 'mailto:hello@patchpulse.app'
+
+  if (publicKey && privateKey) {
+    webpush.setVapidDetails(subject, publicKey, privateKey)
+    vapidConfigured = true
+    return true
+  }
+  return false
 }
 
 // GET /api/cron/send-push - Send push notifications for recent notifications
@@ -25,9 +35,11 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
+  if (!configureVapid()) {
     return NextResponse.json({ error: 'Push not configured' }, { status: 500 })
   }
+
+  const supabase = getSupabase()
 
   try {
     // Get notifications from the last 2 minutes (matches cron schedule)
