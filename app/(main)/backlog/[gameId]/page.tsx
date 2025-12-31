@@ -11,6 +11,7 @@ import { WhatsNew } from '@/components/backlog/WhatsNew'
 import { formatDate, relativeDaysText } from '@/lib/dates'
 import { AddToBacklogButton } from '@/components/backlog/AddToBacklogButton'
 import { StoreLinkButtons } from '@/components/ui/StoreLinkButtons'
+import { SteamStats } from '@/components/library/SteamStats'
 
 // Fix #3: Image source priority helper
 function getHeroImage(game: { hero_url?: string | null; cover_url: string | null }, seasonal: { heroUrl: string | null; coverUrl: string | null }): string | null {
@@ -373,6 +374,18 @@ export default async function BacklogDetailPage({
             </div>
           </div>
 
+          {/* Steam Stats Card - Player Count */}
+          {game.steam_app_id && (
+            <div className="rounded-xl border border-border bg-card p-4 sm:p-6">
+              <h2 className="font-semibold mb-4">Steam Stats</h2>
+              <SteamStats
+                steamAppId={game.steam_app_id}
+                showPlayerCount={true}
+                layout="stacked"
+              />
+            </div>
+          )}
+
           {/* AI Summary - What's New */}
           <Suspense fallback={<WhatsNewSkeleton />}>
             <WhatsNew gameId={gameId} />
@@ -509,6 +522,19 @@ export default async function BacklogDetailPage({
             )}
           </div>
         </div>
+
+        {/* Steam Stats Card */}
+        {game.steam_app_id && (
+          <div className="rounded-xl border border-border bg-card p-4 sm:p-6">
+            <h2 className="font-semibold mb-4">Steam Stats</h2>
+            <SteamStats
+              steamAppId={game.steam_app_id}
+              steamStats={backlogItem.steamStats}
+              showPlayerCount={true}
+              layout="stacked"
+            />
+          </div>
+        )}
 
         {/* AI Summary */}
         <Suspense fallback={<WhatsNewSkeleton />}>
