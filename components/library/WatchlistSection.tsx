@@ -2,8 +2,9 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { Eye, Gamepad2, FileText, ChevronRight, Bell, Clock } from 'lucide-react'
+import { Eye, Gamepad2, FileText, ChevronRight, Bell, Clock, Newspaper } from 'lucide-react'
 import { relativeDaysText } from '@/lib/dates'
+import { ActivityBadge, UnreadDot } from './ActivityBadge'
 
 type FollowedGameWithActivity = {
   id: string
@@ -17,6 +18,9 @@ type FollowedGameWithActivity = {
   } | null
   patchCount: number
   inBacklog: boolean
+  // New activity fields
+  unreadPatchCount?: number
+  unreadNewsCount?: number
 }
 
 type WatchlistSectionProps = {
@@ -25,11 +29,17 @@ type WatchlistSectionProps = {
 
 function WatchlistCard({ game }: { game: FollowedGameWithActivity }) {
   const hasActivity = game.latestPatch !== null
+  const totalUnread = (game.unreadPatchCount || 0) + (game.unreadNewsCount || 0)
+  const hasUnread = totalUnread > 0
 
   return (
     <Link
       href={`/backlog/${game.id}`}
-      className="group relative flex gap-4 p-4 rounded-xl border border-border bg-card hover:border-primary/30 hover:bg-card/80 transition-all"
+      className={`group relative flex gap-4 p-4 rounded-xl border transition-all ${
+        hasUnread
+          ? 'border-blue-500/30 bg-gradient-to-r from-blue-500/5 to-transparent hover:border-blue-500/50'
+          : 'border-border bg-card hover:border-primary/30 hover:bg-card/80'
+      }`}
     >
       {/* Cover Image */}
       <div className="relative h-20 w-14 flex-shrink-0 rounded-lg overflow-hidden bg-muted">
@@ -46,17 +56,33 @@ function WatchlistCard({ game }: { game: FollowedGameWithActivity }) {
             <Gamepad2 className="h-6 w-6 text-muted-foreground" />
           </div>
         )}
+        {/* Unread dot on cover */}
+        <UnreadDot show={hasUnread} />
       </div>
 
       {/* Content */}
       <div className="flex-1 min-w-0 flex flex-col justify-center">
-        <h3 className="font-medium text-sm truncate group-hover:text-primary transition-colors">
-          {game.name}
-        </h3>
+        <div className="flex items-center gap-2">
+          <h3 className="font-medium text-sm truncate group-hover:text-primary transition-colors">
+            {game.name}
+          </h3>
+          {/* Unread badge */}
+          {hasUnread && (
+            <ActivityBadge
+              patchCount={game.unreadPatchCount}
+              newsCount={game.unreadNewsCount}
+              size="sm"
+            />
+          )}
+        </div>
 
         {hasActivity ? (
           <div className="mt-1.5 flex items-center gap-2">
-            <span className="flex items-center gap-1 text-xs text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+            <span className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded-full ${
+              hasUnread
+                ? 'text-blue-400 bg-blue-500/10'
+                : 'text-emerald-400 bg-emerald-500/10'
+            }`}>
               <FileText className="h-3 w-3" />
               {game.patchCount} {game.patchCount === 1 ? 'update' : 'updates'}
             </span>
@@ -77,11 +103,6 @@ function WatchlistCard({ game }: { game: FollowedGameWithActivity }) {
           </p>
         )}
       </div>
-
-      {/* Activity indicator */}
-      {hasActivity && (
-        <div className="absolute top-2 right-2 h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-      )}
 
       {/* In backlog badge */}
       {game.inBacklog && (
@@ -114,31 +135,66 @@ export function WatchlistSection({ games }: WatchlistSectionProps) {
     )
   }
 
-  // Separate games with activity from quiet ones
-  const withActivity = games.filter(g => g.latestPatch !== null)
-  const quiet = games.filter(g => g.latestPatch === null)
+  // Sort games: unread first, then by latest activity
+  const sortedGames = [...games].sort((a, b) => {
+    const aUnread = (a.unreadPatchCount || 0) + (a.unreadNewsCount || 0)
+    const bUnread = (b.unreadPatchCount || 0) + (b.unreadNewsCount || 0)
+    if (aUnread !== bUnread) return bUnread - aUnread
+
+    // Then by latest patch
+    const aLatest = a.latestPatch?.published_at || ''
+    const bLatest = b.latestPatch?.published_at || ''
+    return bLatest.localeCompare(aLatest)
+  })
+
+  // Separate games with unread from read
+  const withUnread = sortedGames.filter(g => (g.unreadPatchCount || 0) + (g.unreadNewsCount || 0) > 0)
+  const withActivity = sortedGames.filter(g => g.latestPatch !== null && (g.unreadPatchCount || 0) + (g.unreadNewsCount || 0) === 0)
+  const quiet = sortedGames.filter(g => g.latestPatch === null)
+
+  const totalUnread = games.reduce((sum, g) => sum + (g.unreadPatchCount || 0) + (g.unreadNewsCount || 0), 0)
 
   return (
     <div className="space-y-4">
-      {/* Active games header */}
-      {withActivity.length > 0 && (
+      {/* Unread updates header */}
+      {withUnread.length > 0 && (
         <div className="flex items-center gap-2 text-sm">
-          <Bell className="h-4 w-4 text-emerald-400" />
-          <span className="font-medium">{withActivity.length} with recent updates</span>
+          <Bell className="h-4 w-4 text-blue-400 animate-pulse" />
+          <span className="font-medium text-blue-400">{totalUnread} new updates</span>
+          <span className="text-muted-foreground">in {withUnread.length} games</span>
         </div>
       )}
 
-      {/* Games with activity */}
-      <div className="grid gap-3 sm:grid-cols-2">
-        {withActivity.map(game => (
-          <WatchlistCard key={game.id} game={game} />
-        ))}
-      </div>
+      {/* Games with unread updates - show first */}
+      {withUnread.length > 0 && (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {withUnread.map(game => (
+            <WatchlistCard key={game.id} game={game} />
+          ))}
+        </div>
+      )}
+
+      {/* Games with recent activity but already read */}
+      {withActivity.length > 0 && (
+        <>
+          {withUnread.length > 0 && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground pt-2">
+              <FileText className="h-4 w-4" />
+              <span>{withActivity.length} recently active</span>
+            </div>
+          )}
+          <div className="grid gap-3 sm:grid-cols-2">
+            {withActivity.map(game => (
+              <WatchlistCard key={game.id} game={game} />
+            ))}
+          </div>
+        </>
+      )}
 
       {/* Quiet games */}
       {quiet.length > 0 && (
         <>
-          {withActivity.length > 0 && (
+          {(withUnread.length > 0 || withActivity.length > 0) && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground pt-2">
               <Clock className="h-4 w-4" />
               <span>{quiet.length} quiet</span>
