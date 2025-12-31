@@ -520,47 +520,43 @@ export default async function BacklogDetailPage({
             </div>
 
             {/* Right Side - Game Info */}
-            <div className="flex-1 min-w-0 flex flex-col">
+            <div className="flex-1 min-w-0 space-y-3">
               {/* Title and Status */}
               <div className="flex items-start justify-between gap-2">
-                <h1 className="text-xl sm:text-2xl font-bold tracking-tight truncate">
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight line-clamp-2">
                   {game.name}
                 </h1>
-                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${statusConfig.bg} ${statusConfig.color} flex-shrink-0`}>
+                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border whitespace-nowrap ${statusConfig.bg} ${statusConfig.color} flex-shrink-0`}>
                   {statusConfig.label}
                 </span>
               </div>
 
               {/* Steam Stats - Playtime, Last Played, Player Count */}
               {game.steam_app_id && (
-                <div className="mt-3">
-                  <SteamStats
-                    steamAppId={game.steam_app_id}
-                    steamStats={backlogItem.steamStats}
-                    showPlayerCount={true}
-                    layout="stacked"
-                  />
-                </div>
+                <SteamStats
+                  steamAppId={game.steam_app_id}
+                  steamStats={backlogItem.steamStats}
+                  showPlayerCount={true}
+                  layout="stacked"
+                />
               )}
 
               {/* Progress Bar */}
-              <div className="mt-auto pt-3">
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 h-2.5 rounded-full bg-muted overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-primary transition-all"
-                      style={{ width: `${Math.min(100, Math.max(0, initialProgress))}%` }}
-                    />
-                  </div>
-                  <span className="text-sm font-medium text-muted-foreground w-10 text-right">
-                    {initialProgress}%
-                  </span>
+              <div className="flex items-center gap-3">
+                <div className="flex-1 h-2.5 rounded-full bg-muted overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-primary transition-all"
+                    style={{ width: `${Math.min(100, Math.max(0, initialProgress))}%` }}
+                  />
                 </div>
+                <span className="text-sm font-medium text-muted-foreground w-10 text-right">
+                  {initialProgress}%
+                </span>
               </div>
 
               {/* Latest Patch Info */}
               {backlogItem.latestPatch && (
-                <div className="mt-2 flex items-center gap-1.5 text-xs text-blue-400/80">
+                <div className="flex items-center gap-1.5 text-xs text-blue-400/80">
                   <FileText className="h-3 w-3 flex-shrink-0" />
                   <span className="font-medium">{relativeDaysText(backlogItem.latestPatch.published_at)}</span>
                   <span className="text-muted-foreground/50">·</span>
