@@ -176,35 +176,35 @@ export function MediaCard({
         )}
       </div>
 
-      <div className="p-4 flex flex-col flex-1">
+      <div className="p-3 sm:p-4 flex flex-col flex-1">
         {limitedBadges && (
-          <div className="mb-2 flex flex-wrap items-center gap-1.5">
+          <div className="mb-1.5 sm:mb-2 flex flex-wrap items-center gap-1">
             {limitedBadges}
           </div>
         )}
 
-        <h3 className="text-base font-semibold leading-snug line-clamp-2 text-white group-hover:text-white/95">
+        <h3 className="text-sm sm:text-base font-semibold leading-snug line-clamp-2 text-white group-hover:text-white/95">
           {title}
         </h3>
 
         {displaySummary && (
-          <p className="mt-2 text-sm text-zinc-300/80 line-clamp-2 leading-relaxed">
+          <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-zinc-300/80 line-clamp-1 sm:line-clamp-2 leading-relaxed">
             {displaySummary}
           </p>
         )}
 
         {/* Footer: Meta + Game branding - pushed to bottom */}
-        <div className="mt-auto pt-3 flex items-center justify-between gap-2 border-t border-white/5">
-          <div className="flex items-center gap-2 min-w-0">
+        <div className="mt-auto pt-2 sm:pt-3 flex items-center justify-between gap-2 border-t border-white/5">
+          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
             {game && (
               <>
                 <GameLogoMini logoUrl={game.logoUrl} gameName={game.name} />
-                <span className="text-xs text-zinc-500 truncate">{game.name}</span>
+                <span className="text-[10px] sm:text-xs text-zinc-500 truncate max-w-[60px] sm:max-w-none">{game.name}</span>
               </>
             )}
           </div>
           {game?.platforms && game.platforms.length > 0 && (
-            <PlatformIcons platforms={game.platforms} maxVisible={3} size="sm" showTooltip={false} />
+            <PlatformIcons platforms={game.platforms} maxVisible={2} size="sm" showTooltip={false} className="hidden sm:flex" />
           )}
         </div>
 
