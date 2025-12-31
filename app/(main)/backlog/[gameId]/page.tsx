@@ -6,7 +6,6 @@ import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getBacklogItem, getGameActivity } from '../queries'
 import { getSeasonalGameImage } from '@/lib/images/seasonal'
-import { BacklogControls } from '@/components/backlog/BacklogControls'
 import { WhatsNew } from '@/components/backlog/WhatsNew'
 import { formatDate, relativeDaysText } from '@/lib/dates'
 import { AddToBacklogButton } from '@/components/backlog/AddToBacklogButton'
@@ -465,11 +464,6 @@ export default async function BacklogDetailPage({
   // ============================================
   // BACKLOG VIEW (in backlog - Steam library style)
   // ============================================
-  const initialStatus = backlogItem.status
-  const initialProgress = backlogItem.progress
-  const initialNextNote = backlogItem.next_note
-  const initialPauseReason = backlogItem.pause_reason
-
   return (
     // Fix #5: overflow-x-hidden prevents swipe hijacking
     <div className="relative overflow-x-hidden min-h-screen">
@@ -531,11 +525,11 @@ export default async function BacklogDetailPage({
                 <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
                   <div
                     className="h-full rounded-full bg-primary transition-all"
-                    style={{ width: `${Math.min(100, Math.max(0, initialProgress))}%` }}
+                    style={{ width: `${Math.min(100, Math.max(0, backlogItem.progress))}%` }}
                   />
                 </div>
                 <span className="text-xs font-medium text-muted-foreground w-8 text-right">
-                  {initialProgress}%
+                  {backlogItem.progress}%
                 </span>
               </div>
 
@@ -596,20 +590,6 @@ export default async function BacklogDetailPage({
           </div>
         )}
 
-        {/* Progress Controls */}
-        <div className="rounded-xl border border-blue-500/20 bg-card p-4 sm:p-6">
-          <BacklogControls
-            gameId={gameId}
-            initialStatus={initialStatus}
-            initialProgress={initialProgress}
-            initialNextNote={initialNextNote}
-            initialPauseReason={initialPauseReason}
-          />
-        </div>
-
-        <p className="text-sm text-muted-foreground/70">
-          Tip: Write the next step so you can jump back in later.
-        </p>
       </div>
     </div>
   )
