@@ -25,18 +25,16 @@ export function GameCarousel({
   const [slots, setSlots] = useState([0, 1, 2, 3])
   // Track which slot is currently transitioning
   const [fadingSlot, setFadingSlot] = useState<number | null>(null)
-  // Track the next game index to show
-  const [nextGameIndex, setNextGameIndex] = useState(4)
 
   const visibleCount = 4
 
-  // Auto-rotate one slot at a time
+  // Auto-rotate one random slot at a time
   useEffect(() => {
     if (games.length <= visibleCount) return
 
     const interval = setInterval(() => {
-      // Pick a random slot to change (or cycle through)
-      const slotToChange = (nextGameIndex - 4) % 4
+      // Pick a random slot to change
+      const slotToChange = Math.floor(Math.random() * 4)
 
       // Start fade out
       setFadingSlot(slotToChange)
@@ -45,10 +43,18 @@ export function GameCarousel({
       setTimeout(() => {
         setSlots(prev => {
           const newSlots = [...prev]
-          newSlots[slotToChange] = nextGameIndex % games.length
+          // Pick a random game that's not currently showing
+          const currentGames = new Set(newSlots)
+          let newGameIndex = Math.floor(Math.random() * games.length)
+          // Try to find a game not currently visible
+          let attempts = 0
+          while (currentGames.has(newGameIndex) && attempts < 10) {
+            newGameIndex = Math.floor(Math.random() * games.length)
+            attempts++
+          }
+          newSlots[slotToChange] = newGameIndex
           return newSlots
         })
-        setNextGameIndex(prev => prev + 1)
 
         // Keep fading state for fade-in animation
         setTimeout(() => {
@@ -58,7 +64,7 @@ export function GameCarousel({
     }, autoPlayInterval)
 
     return () => clearInterval(interval)
-  }, [games.length, autoPlayInterval, nextGameIndex])
+  }, [games.length, autoPlayInterval])
 
   const handleClick = useCallback((game: UpcomingGame | NewReleaseGame) => {
     openSpotlight(

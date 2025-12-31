@@ -275,33 +275,14 @@ function RotatingHeadline({
           </div>
         </div>
 
-        {/* Progress dots */}
+        {/* Swipe hint - top right */}
         {news.length > 1 && (
-          <div className="absolute bottom-3 right-3 flex gap-1.5">
-            {news.map((_, idx) => (
-              <button
-                key={idx}
-                onClick={(e) => {
-                  e.preventDefault()
-                  setCurrentIndex(idx)
-                  setAnimationKey((prev) => prev + 1)
-                }}
-                className={`w-1.5 h-1.5 rounded-full transition-all ${
-                  idx === currentIndex ? 'bg-white w-4' : 'bg-white/40 hover:bg-white/60'
-                }`}
-              />
-            ))}
+          <div className="absolute top-3 right-3 flex items-center gap-1 text-[10px] text-white/50 sm:hidden">
+            <span>← swipe →</span>
           </div>
         )}
       </div>
       </Link>
-
-      {/* Swipe hint - only show on mobile if multiple items */}
-      {news.length > 1 && (
-        <div className="absolute bottom-3 left-3 flex items-center gap-1 text-[10px] text-white/40 sm:hidden">
-          <span>← swipe →</span>
-        </div>
-      )}
     </div>
   )
 }
