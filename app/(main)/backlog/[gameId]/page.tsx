@@ -463,12 +463,22 @@ export default async function BacklogDetailPage({
   }
 
   // ============================================
-  // BACKLOG VIEW (in backlog - progress tracking style)
+  // BACKLOG VIEW (in backlog - Steam library style)
   // ============================================
   const initialStatus = backlogItem.status
   const initialProgress = backlogItem.progress
   const initialNextNote = backlogItem.next_note
   const initialPauseReason = backlogItem.pause_reason
+
+  // Status config for the pill
+  const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
+    playing: { label: 'Playing', color: 'text-green-400', bg: 'bg-green-500/15 border-green-500/30' },
+    paused: { label: 'Paused', color: 'text-amber-400', bg: 'bg-amber-500/15 border-amber-500/30' },
+    backlog: { label: 'Backlog', color: 'text-blue-400', bg: 'bg-blue-500/15 border-blue-500/30' },
+    finished: { label: 'Done', color: 'text-purple-400', bg: 'bg-purple-500/15 border-purple-500/30' },
+    dropped: { label: 'Dropped', color: 'text-zinc-400', bg: 'bg-zinc-500/15 border-zinc-500/30' },
+  }
+  const statusConfig = STATUS_CONFIG[initialStatus] || STATUS_CONFIG.backlog
 
   return (
     // Fix #5: overflow-x-hidden prevents swipe hijacking
@@ -488,53 +498,78 @@ export default async function BacklogDetailPage({
           </Link>
         </div>
 
-        {/* Game Title with Icon */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-4">
-            <GameIcon
-              logoUrl={logoUrl}
-              coverUrl={game.cover_url}
-              gameName={game.name}
-              brandColor={brandColor}
-              isInBacklog={true}
-            />
-            <div className="min-w-0">
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight truncate">
-                {game.name}
-              </h1>
-              {seasonalImage.isSeasonal && seasonalImage.eventName && (
-                <p className="text-xs text-violet-400 mt-1">
-                  {seasonalImage.eventName}
-                </p>
+        {/* Steam Library Style Card */}
+        <div className="rounded-xl border border-border bg-card/95 backdrop-blur-sm p-4 sm:p-6">
+          <div className="flex gap-4 sm:gap-6">
+            {/* Cover Image - Left Side */}
+            <div className="relative w-24 sm:w-32 flex-shrink-0 aspect-[2/3] rounded-lg overflow-hidden shadow-lg">
+              {game.cover_url ? (
+                <Image
+                  src={game.cover_url}
+                  alt={game.name}
+                  fill
+                  className="object-cover"
+                  sizes="128px"
+                  unoptimized
+                />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center bg-muted">
+                  <Gamepad2 className="w-8 h-8 text-muted-foreground" />
+                </div>
+              )}
+            </div>
+
+            {/* Right Side - Game Info */}
+            <div className="flex-1 min-w-0 flex flex-col">
+              {/* Title and Status */}
+              <div className="flex items-start justify-between gap-2">
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight truncate">
+                  {game.name}
+                </h1>
+                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${statusConfig.bg} ${statusConfig.color} flex-shrink-0`}>
+                  {statusConfig.label}
+                </span>
+              </div>
+
+              {/* Steam Stats - Playtime, Last Played, Player Count */}
+              {game.steam_app_id && (
+                <div className="mt-3">
+                  <SteamStats
+                    steamAppId={game.steam_app_id}
+                    steamStats={backlogItem.steamStats}
+                    showPlayerCount={true}
+                    layout="stacked"
+                  />
+                </div>
+              )}
+
+              {/* Progress Bar */}
+              <div className="mt-auto pt-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 h-2.5 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-primary transition-all"
+                      style={{ width: `${Math.min(100, Math.max(0, initialProgress))}%` }}
+                    />
+                  </div>
+                  <span className="text-sm font-medium text-muted-foreground w-10 text-right">
+                    {initialProgress}%
+                  </span>
+                </div>
+              </div>
+
+              {/* Latest Patch Info */}
+              {backlogItem.latestPatch && (
+                <div className="mt-2 flex items-center gap-1.5 text-xs text-blue-400/80">
+                  <FileText className="h-3 w-3 flex-shrink-0" />
+                  <span className="font-medium">{relativeDaysText(backlogItem.latestPatch.published_at)}</span>
+                  <span className="text-muted-foreground/50">·</span>
+                  <span className="truncate text-muted-foreground/80">{backlogItem.latestPatch.title}</span>
+                </div>
               )}
             </div>
           </div>
-
-          <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-            {backlogItem.last_played_at && (
-              <span>Last played: {formatDate(backlogItem.last_played_at)}</span>
-            )}
-            {backlogItem.started_at && (
-              <span>Started: {formatDate(backlogItem.started_at)}</span>
-            )}
-            {backlogItem.finished_at && (
-              <span>Finished: {formatDate(backlogItem.finished_at)}</span>
-            )}
-          </div>
         </div>
-
-        {/* Steam Stats Card */}
-        {game.steam_app_id && (
-          <div className="rounded-xl border border-border bg-card p-4 sm:p-6">
-            <h2 className="font-semibold mb-4">Steam Stats</h2>
-            <SteamStats
-              steamAppId={game.steam_app_id}
-              steamStats={backlogItem.steamStats}
-              showPlayerCount={true}
-              layout="stacked"
-            />
-          </div>
-        )}
 
         {/* AI Summary */}
         <Suspense fallback={<WhatsNewSkeleton />}>
