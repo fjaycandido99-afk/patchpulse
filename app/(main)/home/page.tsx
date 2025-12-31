@@ -79,7 +79,7 @@ export default async function HomePage() {
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
                   <MediaCard
-                    href={`/patches/${patch.id}`}
+                    href={`/patches/${patch.id}?from=home`}
                     title={patch.title}
                     summary={patch.summary_tldr}
                     imageUrl={patch.game.hero_url || patch.game.cover_url}

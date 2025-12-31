@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowLeft, ExternalLink, Sparkles, Zap, Users, Trophy, Target, ChevronRight, Map, Swords, Shield, Settings, Gamepad2, BarChart3, Clock, Flame, Star } from 'lucide-react'
+import { Suspense } from 'react'
+import { ExternalLink, Sparkles, Zap, Users, Trophy, Target, ChevronRight, Map, Swords, Shield, Settings, Gamepad2, BarChart3, Clock, Flame, Star, ArrowLeft } from 'lucide-react'
+import { BackButton } from '@/components/ui/BackButton'
 import { getPatchById, getRelatedPatches } from '../queries'
 import { isBookmarked } from '@/app/(main)/actions/bookmarks'
 import { getBacklogItem } from '@/app/(main)/backlog/queries'
@@ -246,13 +248,18 @@ export default async function PatchDetailPage({
       {/* Content pushed below hero */}
       <div className="relative z-10 pt-[200px] sm:pt-[240px] lg:pt-[280px] space-y-6">
         {/* Back Button */}
-        <Link
-          href="/patches"
-          className="inline-flex items-center gap-1.5 text-sm text-white/70 transition-colors hover:text-white"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Patches
-        </Link>
+        <Suspense fallback={
+          <span className="inline-flex items-center gap-1.5 text-sm text-white/70">
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </span>
+        }>
+          <BackButton
+            defaultHref="/patches"
+            defaultLabel="Back to Patches"
+            fromHomeLabel="Back to Home"
+          />
+        </Suspense>
 
         {/* Game info + Title */}
         <div className="space-y-3">
