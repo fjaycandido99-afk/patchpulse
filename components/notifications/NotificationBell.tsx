@@ -213,7 +213,11 @@ export function NotificationBell({ initialStats, size = 'md' }: Props) {
       {/* Bell Button with Pulsing Halo */}
       <button
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          setIsOpen(!isOpen)
+        }}
         className="relative p-2 rounded-xl hover:bg-white/10 active:scale-95 transition-all touch-manipulation group"
         title="Notifications"
         aria-label={`Notifications${hasUnread ? ` (${stats.unread_count} unread)` : ''}`}
