@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { Gamepad2, Plus, Search, X, Eye, FileText, Clock } from 'lucide-react'
 import { MobileLibraryHeader } from './MobileLibraryHeader'
 import { SegmentedControl } from './SegmentedControl'
@@ -86,9 +87,26 @@ export function MobileLibraryView({
   followedGamesWithActivity,
   followedGamesForPicker,
 }: MobileLibraryViewProps) {
-  const [mode, setMode] = useState<'my-games' | 'watchlist'>('my-games')
+  const searchParams = useSearchParams()
+  const router = useRouter()
+
+  // Get tab from URL, default to 'my-games'
+  const tabParam = searchParams.get('tab')
+  const mode = tabParam === 'watchlist' ? 'watchlist' : 'my-games'
+
   const [searchQuery, setSearchQuery] = useState('')
   const [showAddModal, setShowAddModal] = useState(false)
+
+  // Update URL when tab changes (without full page reload)
+  const setMode = (newMode: 'my-games' | 'watchlist') => {
+    const params = new URLSearchParams(searchParams.toString())
+    if (newMode === 'watchlist') {
+      params.set('tab', 'watchlist')
+    } else {
+      params.delete('tab')
+    }
+    router.replace(`/backlog?${params.toString()}`, { scroll: false })
+  }
 
   // Combine all backlog items into a flat list
   const allBacklogItems = [
