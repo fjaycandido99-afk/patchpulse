@@ -76,7 +76,7 @@ export function SpotlightGameCard({ game, type, variant = 'default' }: Spotlight
         onClick={handleClick}
         className="group text-left active:scale-[0.97] transition-transform w-full"
       >
-        <div className="relative aspect-[2/3] rounded-lg overflow-hidden bg-zinc-900">
+        <div className="relative aspect-[3/4] rounded-lg overflow-hidden bg-zinc-900">
           {game.cover_url ? (
             <Image
               src={game.cover_url}
@@ -92,13 +92,14 @@ export function SpotlightGameCard({ game, type, variant = 'default' }: Spotlight
             </div>
           )}
           {/* Countdown badge */}
-          <span className={`absolute top-0.5 left-0.5 text-[7px] px-1 py-0.5 rounded-full backdrop-blur-sm font-medium ${
+          <span className={`absolute top-1 left-1 text-[8px] px-1.5 py-0.5 rounded-full backdrop-blur-sm font-medium ${
             isUpcoming ? 'bg-indigo-500/80 text-white' : 'bg-emerald-500/80 text-white'
           }`}>
             {isUpcoming ? (game.days_until !== undefined ? `${game.days_until}d` : 'TBA') : `${game.days_since}d`}
           </span>
         </div>
-        <h3 className="font-medium leading-tight line-clamp-1 text-zinc-200 text-[9px] mt-0.5">
+        {/* Title - 2 lines max, fixed height */}
+        <h3 className="font-medium leading-tight line-clamp-2 text-zinc-200 text-[10px] mt-1 h-7">
           {game.name}
         </h3>
       </button>

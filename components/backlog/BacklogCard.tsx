@@ -126,10 +126,10 @@ export function BacklogCard({
   return (
     <Link
       href={href}
-      className={`group flex gap-4 rounded-xl border border-border p-3 sm:p-4 transition-all ${cardGradient} ${statusBorderColor} active:bg-muted/50 active:scale-[0.99]`}
+      className={`group flex gap-3 sm:gap-4 rounded-xl border border-border p-3 sm:p-4 transition-all h-[140px] sm:h-auto ${cardGradient} ${statusBorderColor} active:bg-muted/50 active:scale-[0.99]`}
     >
-      {/* Cover image - Steam library style */}
-      <div className="relative w-20 sm:w-24 flex-shrink-0 overflow-hidden rounded-lg shadow-lg aspect-[2/3]">
+      {/* Cover image - locked 3:4 ratio for consistency */}
+      <div className="relative w-[88px] sm:w-24 flex-shrink-0 overflow-hidden rounded-lg shadow-lg aspect-[3/4]">
         {imageUrl ? (
           <Image
             src={imageUrl}
@@ -158,15 +158,15 @@ export function BacklogCard({
       <div className="flex flex-1 flex-col overflow-hidden min-w-0 py-0.5">
         {/* Game title and status */}
         <div className="flex items-start justify-between gap-2">
-          <h3 className="font-semibold text-base leading-tight truncate group-hover:text-primary transition-colors">
+          <h3 className="font-semibold text-sm sm:text-base leading-tight line-clamp-2 group-hover:text-primary transition-colors">
             {title}
           </h3>
           {status && <StatusPill status={status} />}
         </div>
 
-        {/* Steam Stats - prominently displayed below title */}
+        {/* Steam Stats - hidden on mobile for fixed height, shown on desktop */}
         {hasSteamData && (
-          <div className="mt-2">
+          <div className="mt-1.5 hidden sm:block">
             <SteamStats
               steamAppId={steamAppId}
               steamStats={steamStats}
@@ -176,43 +176,38 @@ export function BacklogCard({
           </div>
         )}
 
-        {/* Progress bar */}
-        <div className="mt-auto pt-2">
+        {/* Progress bar + metadata - fixed height footer */}
+        <div className="mt-auto">
+          {/* Progress bar */}
           <div className="flex items-center gap-2">
             <div className="flex-1">
-              <ProgressBar value={progress} thick status={status} />
+              <ProgressBar value={progress} status={status} />
             </div>
             <span className="text-xs font-medium text-muted-foreground w-8 text-right">
               {progress}%
             </span>
           </div>
 
-          {/* Next note or patch info - secondary info */}
-          <div className="mt-1.5 space-y-0.5">
-            {nextNote && (
+          {/* Fixed height metadata row - always renders to maintain height */}
+          <div className="h-5 mt-1 flex items-center">
+            {latestPatch ? (
+              <div className="flex items-center gap-1.5 text-xs text-blue-400/80 truncate">
+                <FileText className="h-3 w-3 flex-shrink-0" />
+                <span className="font-medium">{formatPatchDate(latestPatch.published_at)}</span>
+                {patchCount > 1 && (
+                  <span className="text-muted-foreground/60">+{patchCount - 1} more</span>
+                )}
+              </div>
+            ) : hasAISuggestion ? (
+              <div className="flex items-center gap-1.5 text-xs text-violet-400">
+                <Sparkles className="h-3 w-3" />
+                <span>Update available</span>
+              </div>
+            ) : nextNote ? (
               <p className="text-xs text-muted-foreground truncate">
                 <span className="text-muted-foreground/60">Next:</span> {nextNote}
               </p>
-            )}
-
-            {latestPatch && (
-              <div className="flex items-center gap-1.5 text-xs text-blue-400/80">
-                <FileText className="h-3 w-3 flex-shrink-0" />
-                <span className="font-medium">{formatPatchDate(latestPatch.published_at)}</span>
-                <span className="text-muted-foreground/50">·</span>
-                <span className="truncate text-muted-foreground/80">{latestPatch.title}</span>
-                {patchCount > 1 && (
-                  <span className="text-muted-foreground/60">+{patchCount - 1}</span>
-                )}
-              </div>
-            )}
-
-            {hasAISuggestion && !latestPatch && (
-              <div className="flex items-center gap-1.5 text-xs text-violet-400">
-                <Sparkles className="h-3 w-3" />
-                <span>Relevant update available</span>
-              </div>
-            )}
+            ) : null}
           </div>
         </div>
       </div>

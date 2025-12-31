@@ -44,14 +44,14 @@ function WatchlistCard({ game }: { game: FollowedGameWithActivity }) {
   return (
     <Link
       href={`/backlog/${game.id}`}
-      className={`group relative flex gap-4 p-4 rounded-xl border transition-all ${
+      className={`group relative flex gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl border transition-all h-[140px] sm:h-auto ${
         hasUnread
           ? 'border-blue-500/30 bg-gradient-to-r from-blue-500/5 to-transparent hover:border-blue-500/50'
           : 'border-border bg-card hover:border-primary/30 hover:bg-card/80'
       }`}
     >
-      {/* Cover Image - Steam library style */}
-      <div className="relative w-20 sm:w-24 flex-shrink-0 rounded-lg overflow-hidden bg-muted aspect-[2/3]">
+      {/* Cover Image - locked 3:4 ratio for consistency */}
+      <div className="relative w-[88px] sm:w-24 flex-shrink-0 rounded-lg overflow-hidden bg-muted aspect-[3/4]">
         {game.cover_url ? (
           <Image
             src={game.cover_url}
@@ -72,8 +72,8 @@ function WatchlistCard({ game }: { game: FollowedGameWithActivity }) {
       {/* Right side - Steam library style layout */}
       <div className="flex-1 min-w-0 flex flex-col py-0.5">
         {/* Game title and unread badge */}
-        <div className="flex items-center gap-2">
-          <h3 className="font-semibold text-base truncate group-hover:text-primary transition-colors">
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="font-semibold text-sm sm:text-base leading-tight line-clamp-2 group-hover:text-primary transition-colors">
             {game.name}
           </h3>
           {hasUnread && (
@@ -85,9 +85,9 @@ function WatchlistCard({ game }: { game: FollowedGameWithActivity }) {
           )}
         </div>
 
-        {/* Steam Stats - prominently displayed below title */}
+        {/* Steam Stats - hidden on mobile for fixed height */}
         {hasSteamData && (
-          <div className="mt-2">
+          <div className="mt-1.5 hidden sm:block">
             <SteamStats
               steamAppId={game.steam_app_id}
               steamStats={game.steamStats}
@@ -97,33 +97,30 @@ function WatchlistCard({ game }: { game: FollowedGameWithActivity }) {
           </div>
         )}
 
-        {/* Patch activity - secondary info at bottom */}
-        <div className="mt-auto pt-2">
-          {hasActivity ? (
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <span className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded-full ${
+        {/* Patch activity - fixed height footer */}
+        <div className="mt-auto">
+          <div className="h-5 flex items-center">
+            {hasActivity ? (
+              <div className="flex items-center gap-2 text-xs truncate">
+                <span className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full ${
                   hasUnread
                     ? 'text-blue-400 bg-blue-500/10'
                     : 'text-emerald-400 bg-emerald-500/10'
                 }`}>
                   <FileText className="h-3 w-3" />
-                  {game.patchCount} {game.patchCount === 1 ? 'update' : 'updates'}
+                  {game.patchCount}
                 </span>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-muted-foreground">
                   {relativeDaysText(game.latestPatch!.published_at)}
                 </span>
               </div>
-              <p className="text-xs text-muted-foreground truncate">
-                Latest: {game.latestPatch!.title}
+            ) : (
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                No updates
               </p>
-            </div>
-          ) : (
-            <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              No recent updates
-            </p>
-          )}
+            )}
+          </div>
         </div>
       </div>
 

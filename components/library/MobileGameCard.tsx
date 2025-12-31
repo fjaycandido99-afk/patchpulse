@@ -72,8 +72,8 @@ export function MobileGameCard({
         )}
       </div>
 
-      {/* Title */}
-      <p className="mt-1 text-xs font-medium truncate text-center">{title}</p>
+      {/* Title - 2 lines max for consistency */}
+      <p className="mt-1 text-xs font-medium line-clamp-2 text-center leading-tight h-8">{title}</p>
     </Link>
   )
 }
