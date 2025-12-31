@@ -7,6 +7,12 @@ type Game = {
   name: string
   slug: string
   cover_url: string | null
+  steam_app_id?: number | null
+}
+
+type SteamStats = {
+  playtime_minutes: number | null
+  last_played_at: string | null
 }
 
 type PatchInfo = {
@@ -30,6 +36,7 @@ type BacklogItem = {
   game: Game
   latestPatch: PatchInfo | null
   recentPatches: PatchInfo[]
+  steamStats?: SteamStats | null
 }
 
 type BacklogBoard = {
@@ -80,7 +87,7 @@ export async function getBacklogBoard(): Promise<BacklogBoard> {
       started_at,
       finished_at,
       created_at,
-      games(id, name, slug, cover_url)
+      games(id, name, slug, cover_url, steam_app_id)
     `
     )
     .eq('user_id', user.id)
@@ -92,6 +99,30 @@ export async function getBacklogBoard(): Promise<BacklogBoard> {
       backlog: [],
       finished: [],
       dropped: [],
+    }
+  }
+
+  // Fetch Steam stats for games with steam_app_id
+  const steamAppIds = data
+    .map((item) => (item.games as unknown as Game)?.steam_app_id)
+    .filter((id): id is number => typeof id === 'number')
+
+  let steamStatsMap = new Map<number, SteamStats>()
+  if (steamAppIds.length > 0) {
+    const { data: steamData } = await supabase
+      .from('user_library_games')
+      .select('provider_game_id, playtime_minutes, last_played_at')
+      .eq('user_id', user.id)
+      .eq('provider', 'steam')
+      .in('provider_game_id', steamAppIds.map(String))
+
+    if (steamData) {
+      for (const stat of steamData) {
+        steamStatsMap.set(parseInt(stat.provider_game_id), {
+          playtime_minutes: stat.playtime_minutes,
+          last_played_at: stat.last_played_at,
+        })
+      }
     }
   }
 
@@ -130,6 +161,10 @@ export async function getBacklogBoard(): Promise<BacklogBoard> {
 
   const items: BacklogItem[] = data.map((item) => {
     const patches = patchesMap.get(item.game_id) || []
+    const game = item.games as unknown as Game
+    const steamStats = game?.steam_app_id
+      ? steamStatsMap.get(game.steam_app_id) ?? null
+      : null
     return {
       id: item.id,
       game_id: item.game_id,
@@ -141,9 +176,10 @@ export async function getBacklogBoard(): Promise<BacklogBoard> {
       started_at: item.started_at,
       finished_at: item.finished_at,
       created_at: item.created_at,
-      game: item.games as unknown as Game,
+      game,
       latestPatch: patches[0] ?? null,
       recentPatches: patches.slice(0, 5), // Keep last 5 patches
+      steamStats,
     }
   })
 
@@ -231,7 +267,7 @@ export async function getBacklogItem(
       started_at,
       finished_at,
       created_at,
-      games(id, name, slug, cover_url)
+      games(id, name, slug, cover_url, steam_app_id)
     `
     )
     .eq('user_id', user.id)
@@ -241,6 +277,8 @@ export async function getBacklogItem(
   if (error || !data) {
     return null
   }
+
+  const game = data.games as unknown as Game
 
   // Fetch recent patches for this game
   const { data: patchesData } = await supabase
@@ -257,6 +295,25 @@ export async function getBacklogItem(
     summary_tldr: p.summary_tldr,
   }))
 
+  // Fetch Steam stats if game has steam_app_id
+  let steamStats: SteamStats | null = null
+  if (game?.steam_app_id) {
+    const { data: steamData } = await supabase
+      .from('user_library_games')
+      .select('playtime_minutes, last_played_at')
+      .eq('user_id', user.id)
+      .eq('provider', 'steam')
+      .eq('provider_game_id', game.steam_app_id.toString())
+      .single()
+
+    if (steamData) {
+      steamStats = {
+        playtime_minutes: steamData.playtime_minutes,
+        last_played_at: steamData.last_played_at,
+      }
+    }
+  }
+
   return {
     id: data.id,
     game_id: data.game_id,
@@ -268,9 +325,10 @@ export async function getBacklogItem(
     started_at: data.started_at,
     finished_at: data.finished_at,
     created_at: data.created_at,
-    game: data.games as unknown as Game,
+    game,
     latestPatch: recentPatches[0] ?? null,
     recentPatches,
+    steamStats,
   }
 }
 
@@ -415,6 +473,7 @@ export type FollowedGameWithActivity = {
   name: string
   slug: string
   cover_url: string | null
+  steam_app_id?: number | null
   latestPatch: {
     id: string
     title: string
@@ -424,6 +483,7 @@ export type FollowedGameWithActivity = {
   inBacklog: boolean
   unreadPatchCount?: number
   unreadNewsCount?: number
+  steamStats?: SteamStats | null
 }
 
 export async function getFollowedGamesWithActivity(): Promise<FollowedGameWithActivity[]> {
@@ -440,7 +500,7 @@ export async function getFollowedGamesWithActivity(): Promise<FollowedGameWithAc
   // Get followed games
   const { data: userGamesData, error: userGamesError } = await supabase
     .from('user_games')
-    .select('games(id, name, slug, cover_url)')
+    .select('games(id, name, slug, cover_url, steam_app_id)')
     .eq('user_id', user.id)
 
   if (userGamesError || !userGamesData) {
@@ -456,6 +516,30 @@ export async function getFollowedGamesWithActivity(): Promise<FollowedGameWithAc
   }
 
   const gameIds = games.map((g) => g.id)
+
+  // Fetch Steam stats for games with steam_app_id
+  const steamAppIds = games
+    .map((g) => g.steam_app_id)
+    .filter((id): id is number => typeof id === 'number')
+
+  let steamStatsMap = new Map<number, SteamStats>()
+  if (steamAppIds.length > 0) {
+    const { data: steamData } = await supabase
+      .from('user_library_games')
+      .select('provider_game_id, playtime_minutes, last_played_at')
+      .eq('user_id', user.id)
+      .eq('provider', 'steam')
+      .in('provider_game_id', steamAppIds.map(String))
+
+    if (steamData) {
+      for (const stat of steamData) {
+        steamStatsMap.set(parseInt(stat.provider_game_id), {
+          playtime_minutes: stat.playtime_minutes,
+          last_played_at: stat.last_played_at,
+        })
+      }
+    }
+  }
 
   // Get backlog status
   const { data: backlogData } = await supabase
@@ -501,14 +585,19 @@ export async function getFollowedGamesWithActivity(): Promise<FollowedGameWithAc
   // Build result with activity
   const result: FollowedGameWithActivity[] = games.map((game) => {
     const patchInfo = patchMap.get(game.id) || { latest: null, count: 0 }
+    const steamStats = game.steam_app_id
+      ? steamStatsMap.get(game.steam_app_id) ?? null
+      : null
     return {
       id: game.id,
       name: game.name,
       slug: game.slug,
       cover_url: game.cover_url,
+      steam_app_id: game.steam_app_id,
       latestPatch: patchInfo.latest,
       patchCount: patchInfo.count,
       inBacklog: backlogGameIds.has(game.id),
+      steamStats,
     }
   })
 

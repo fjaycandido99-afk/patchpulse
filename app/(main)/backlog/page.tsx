@@ -1,74 +1,14 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
-import { Star, Gamepad2, Bookmark, ChevronRight, Eye } from 'lucide-react'
+import { Bookmark, ChevronRight, Eye, Gamepad2 } from 'lucide-react'
 import { getBacklogBoard, getFollowedGamesForBacklogPicker, getFollowedGamesWithActivity } from './queries'
-import { getFollowedGames, getBacklogGames, getFavoriteGames } from '../profile/actions'
+import { getFollowedGames, getBacklogGames } from '../profile/actions'
 import { AddToBacklogPanel } from '@/components/backlog/AddToBacklogPanel'
 import { BacklogCard } from '@/components/backlog/BacklogCard'
-import { CollapsibleSection } from '@/components/library/CollapsibleSection'
 import { WatchlistSection } from '@/components/library/WatchlistSection'
-import { ShowcaseSection } from '@/components/library/ShowcaseSection'
 import { MobileLibraryView } from '@/components/library/MobileLibraryView'
 import { MarkAllReadButton } from '@/components/library/MarkAllReadButton'
 import { relativeDaysText } from '@/lib/dates'
-
-type BacklogStatus = 'playing' | 'paused' | 'backlog' | 'finished' | 'dropped'
-
-const SECTION_CONFIG: {
-  key: BacklogStatus
-  title: string
-  icon: string
-  emptyText: string
-  emptySubtext: string
-  color: string
-  bgGradient: string
-}[] = [
-  {
-    key: 'playing',
-    title: 'Currently Playing',
-    icon: '▶',
-    emptyText: 'No active adventures',
-    emptySubtext: 'Start a game to see it here',
-    color: 'text-green-400',
-    bgGradient: 'from-green-500/5 to-transparent',
-  },
-  {
-    key: 'paused',
-    title: 'On Hold',
-    icon: '⏸',
-    emptyText: 'No games on pause',
-    emptySubtext: 'Sometimes you need a break',
-    color: 'text-amber-400',
-    bgGradient: 'from-amber-500/5 to-transparent',
-  },
-  {
-    key: 'backlog',
-    title: 'Up Next',
-    icon: '📦',
-    emptyText: 'Your backlog is clear!',
-    emptySubtext: 'Add games you want to play later',
-    color: 'text-blue-400',
-    bgGradient: 'from-blue-500/5 to-transparent',
-  },
-  {
-    key: 'finished',
-    title: 'Completed',
-    icon: '✓',
-    emptyText: 'No victories yet',
-    emptySubtext: 'Finish a game to celebrate here',
-    color: 'text-purple-400',
-    bgGradient: 'from-purple-500/5 to-transparent',
-  },
-  {
-    key: 'dropped',
-    title: 'Dropped',
-    icon: '✗',
-    emptyText: 'Nothing dropped',
-    emptySubtext: 'Games that didn\'t click',
-    color: 'text-zinc-400',
-    bgGradient: 'from-zinc-500/5 to-transparent',
-  },
-]
 
 export default async function LibraryPage() {
   const supabase = await createClient()
@@ -88,25 +28,20 @@ export default async function LibraryPage() {
       .then(({ count }) => count || 0),
   ])
 
-  // Get favorite game IDs from profile
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('favorite_game_ids')
-    .eq('id', user?.id || '')
-    .single()
-
-  const favoriteGameIds: string[] = Array.isArray(profile?.favorite_game_ids)
-    ? profile.favorite_game_ids
-    : []
-
-  // Fetch favorite games data
-  const favoriteGames = await getFavoriteGames(favoriteGameIds)
-
-  // Combine all games for the favorite picker
-  const allGames = [
-    ...followedGames,
-    ...backlogGames.filter((bg) => !followedGames.some((fg) => fg.id === bg.id)),
+  // Combine all backlog items into a single flat list
+  const allBacklogItems = [
+    ...board.playing,
+    ...board.paused,
+    ...board.backlog,
+    ...board.finished,
+    ...board.dropped,
   ]
+
+  const watchlistGames = followedGamesWithActivity.filter(g => !g.inBacklog)
+  const totalUnread = watchlistGames.reduce(
+    (sum, g) => sum + (g.unreadPatchCount || 0) + (g.unreadNewsCount || 0),
+    0
+  )
 
   return (
     <>
@@ -135,10 +70,7 @@ export default async function LibraryPage() {
           followedGames={followedGames}
           followedGamesWithActivity={followedGamesWithActivity}
           backlogGames={backlogGames}
-          favoriteGames={favoriteGames}
-          favoriteGameIds={favoriteGameIds}
           followedGamesForPicker={followedGamesForPicker}
-          allGames={allGames}
         />
       </div>
 
@@ -173,114 +105,68 @@ export default async function LibraryPage() {
           </Link>
         )}
 
-      {/* Favorite Games - Showcase Style */}
-      <CollapsibleSection
-        id="favorites"
-        title="Favorites"
-        icon={<Star className="h-5 w-5 text-amber-400 fill-amber-400" />}
-        count={favoriteGames.length}
-        defaultOpen={favoriteGames.length > 0}
-      >
-        <ShowcaseSection
-          favoriteGames={favoriteGames}
-          allGames={allGames}
-          maxFavorites={5}
-        />
-      </CollapsibleSection>
+        {/* My Games - Flat Grid */}
+        <section className="rounded-xl border border-border bg-card overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
+            <h2 className="flex items-center gap-2 text-base font-semibold">
+              <Gamepad2 className="h-5 w-5 text-primary" />
+              <span>My Games</span>
+              <span className="px-1.5 py-0.5 rounded-full bg-muted text-xs font-medium text-muted-foreground">
+                {allBacklogItems.length}
+              </span>
+            </h2>
+          </div>
 
-      {/* Followed Games - Watchlist Style */}
-      {(() => {
-        const watchlistGames = followedGamesWithActivity.filter(g => !g.inBacklog)
-        const totalUnread = watchlistGames.reduce(
-          (sum, g) => sum + (g.unreadPatchCount || 0) + (g.unreadNewsCount || 0),
-          0
-        )
-        return (
-          <CollapsibleSection
-            id="followed"
-            title="Watchlist"
-            icon={<Eye className="h-5 w-5 text-blue-400" />}
-            count={watchlistGames.length}
-            defaultOpen={watchlistGames.some(g => g.latestPatch !== null)}
-            action={<MarkAllReadButton totalUnread={totalUnread} />}
-          >
+          <div className="p-4">
+            {allBacklogItems.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-sm font-medium text-muted-foreground">No games in your library</p>
+                <p className="text-xs text-muted-foreground mt-1">Add games to start tracking</p>
+              </div>
+            ) : (
+              <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                {allBacklogItems.map((item) => (
+                  <BacklogCard
+                    key={item.id}
+                    href={`/backlog/${item.game_id}`}
+                    title={item.game.name}
+                    progress={item.progress}
+                    imageUrl={item.game.cover_url}
+                    status={item.status}
+                    nextNote={item.next_note}
+                    lastPlayedText={
+                      item.last_played_at
+                        ? `Last played ${relativeDaysText(item.last_played_at)}`
+                        : null
+                    }
+                    latestPatch={item.latestPatch}
+                    patchCount={item.recentPatches.length}
+                    steamAppId={item.game.steam_app_id}
+                    steamStats={item.steamStats}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Watchlist */}
+        <section className="rounded-xl border border-border bg-card overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
+            <h2 className="flex items-center gap-2 text-base font-semibold">
+              <Eye className="h-5 w-5 text-blue-400" />
+              <span>Watchlist</span>
+              <span className="px-1.5 py-0.5 rounded-full bg-muted text-xs font-medium text-muted-foreground">
+                {watchlistGames.length}
+              </span>
+            </h2>
+            <MarkAllReadButton totalUnread={totalUnread} />
+          </div>
+
+          <div className="p-4">
             <WatchlistSection games={watchlistGames} />
-          </CollapsibleSection>
-        )
-      })()}
-
-      {/* Backlog Sections */}
-      <div className="space-y-6">
-        {SECTION_CONFIG.map(({ key, title, icon, emptyText, emptySubtext, color, bgGradient }) => {
-          const items = board[key]
-          // Auto-collapse empty sections (except playing which should always be visible)
-          if (items.length === 0 && key !== 'playing') {
-            return null
-          }
-          return (
-            <section
-              key={key}
-              className={`rounded-xl border border-border bg-gradient-to-r ${bgGradient} overflow-hidden`}
-            >
-              {/* Section header */}
-              <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
-                <h2 className="flex items-center gap-2 text-base font-semibold">
-                  <span className={`text-sm ${color}`}>{icon}</span>
-                  <span>{title}</span>
-                  <span className="px-1.5 py-0.5 rounded-full bg-muted text-xs font-medium text-muted-foreground">
-                    {items.length}
-                  </span>
-                </h2>
-              </div>
-
-              {/* Section content */}
-              <div className="p-4">
-                {items.length === 0 ? (
-                  <div className="text-center py-8">
-                    <p className={`text-sm font-medium ${color}`}>{emptyText}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{emptySubtext}</p>
-                  </div>
-                ) : (
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {items.map((item) => (
-                      <BacklogCard
-                        key={item.id}
-                        href={`/backlog/${item.game_id}`}
-                        title={item.game.name}
-                        progress={item.progress}
-                        imageUrl={item.game.cover_url}
-                        status={item.status}
-                        nextNote={item.next_note}
-                        lastPlayedText={
-                          item.last_played_at
-                            ? `Last played ${relativeDaysText(item.last_played_at)}`
-                            : null
-                        }
-                        latestPatch={item.latestPatch}
-                        patchCount={item.recentPatches.length}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-            </section>
-          )
-        })}
-
-        {/* Show collapsed empty sections summary */}
-        {(() => {
-          const emptySections = SECTION_CONFIG.filter(
-            ({ key }) => board[key].length === 0 && key !== 'playing'
-          )
-          if (emptySections.length === 0) return null
-          return (
-            <div className="text-center py-4 text-xs text-muted-foreground">
-              {emptySections.length} empty {emptySections.length === 1 ? 'section' : 'sections'} hidden:{' '}
-              {emptySections.map(s => s.title).join(', ')}
-            </div>
-          )
-        })()}
-      </div>
+          </div>
+        </section>
       </div>
     </>
   )

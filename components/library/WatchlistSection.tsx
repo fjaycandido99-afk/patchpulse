@@ -5,12 +5,19 @@ import Link from 'next/link'
 import { Eye, Gamepad2, FileText, ChevronRight, Bell, Clock, Newspaper } from 'lucide-react'
 import { relativeDaysText } from '@/lib/dates'
 import { ActivityBadge, UnreadDot } from './ActivityBadge'
+import { SteamStats } from './SteamStats'
+
+type SteamStatsData = {
+  playtime_minutes: number | null
+  last_played_at: string | null
+}
 
 type FollowedGameWithActivity = {
   id: string
   name: string
   slug: string
   cover_url: string | null
+  steam_app_id?: number | null
   latestPatch: {
     id: string
     title: string
@@ -21,6 +28,7 @@ type FollowedGameWithActivity = {
   // New activity fields
   unreadPatchCount?: number
   unreadNewsCount?: number
+  steamStats?: SteamStatsData | null
 }
 
 type WatchlistSectionProps = {
@@ -31,6 +39,7 @@ function WatchlistCard({ game }: { game: FollowedGameWithActivity }) {
   const hasActivity = game.latestPatch !== null
   const totalUnread = (game.unreadPatchCount || 0) + (game.unreadNewsCount || 0)
   const hasUnread = totalUnread > 0
+  const hasSteamData = game.steam_app_id && (game.steamStats?.playtime_minutes || game.steamStats?.last_played_at)
 
   return (
     <Link
@@ -41,15 +50,15 @@ function WatchlistCard({ game }: { game: FollowedGameWithActivity }) {
           : 'border-border bg-card hover:border-primary/30 hover:bg-card/80'
       }`}
     >
-      {/* Cover Image */}
-      <div className="relative h-20 w-14 flex-shrink-0 rounded-lg overflow-hidden bg-muted">
+      {/* Cover Image - Steam library style */}
+      <div className="relative w-20 sm:w-24 flex-shrink-0 rounded-lg overflow-hidden bg-muted aspect-[2/3]">
         {game.cover_url ? (
           <Image
             src={game.cover_url}
             alt={game.name}
             fill
             className="object-cover transition-transform group-hover:scale-105"
-            sizes="56px"
+            sizes="96px"
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
@@ -60,13 +69,13 @@ function WatchlistCard({ game }: { game: FollowedGameWithActivity }) {
         <UnreadDot show={hasUnread} />
       </div>
 
-      {/* Content */}
-      <div className="flex-1 min-w-0 flex flex-col justify-center">
+      {/* Right side - Steam library style layout */}
+      <div className="flex-1 min-w-0 flex flex-col py-0.5">
+        {/* Game title and unread badge */}
         <div className="flex items-center gap-2">
-          <h3 className="font-medium text-sm truncate group-hover:text-primary transition-colors">
+          <h3 className="font-semibold text-base truncate group-hover:text-primary transition-colors">
             {game.name}
           </h3>
-          {/* Unread badge */}
           {hasUnread && (
             <ActivityBadge
               patchCount={game.unreadPatchCount}
@@ -76,32 +85,46 @@ function WatchlistCard({ game }: { game: FollowedGameWithActivity }) {
           )}
         </div>
 
-        {hasActivity ? (
-          <div className="mt-1.5 flex items-center gap-2">
-            <span className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded-full ${
-              hasUnread
-                ? 'text-blue-400 bg-blue-500/10'
-                : 'text-emerald-400 bg-emerald-500/10'
-            }`}>
-              <FileText className="h-3 w-3" />
-              {game.patchCount} {game.patchCount === 1 ? 'update' : 'updates'}
-            </span>
-            <span className="text-xs text-muted-foreground">
-              {relativeDaysText(game.latestPatch!.published_at)}
-            </span>
+        {/* Steam Stats - prominently displayed below title */}
+        {hasSteamData && (
+          <div className="mt-2">
+            <SteamStats
+              steamAppId={game.steam_app_id}
+              steamStats={game.steamStats}
+              showPlayerCount={true}
+              layout="stacked"
+            />
           </div>
-        ) : (
-          <p className="mt-1.5 text-xs text-muted-foreground flex items-center gap-1">
-            <Clock className="h-3 w-3" />
-            No recent updates
-          </p>
         )}
 
-        {game.latestPatch && (
-          <p className="mt-1 text-xs text-muted-foreground truncate">
-            Latest: {game.latestPatch.title}
-          </p>
-        )}
+        {/* Patch activity - secondary info at bottom */}
+        <div className="mt-auto pt-2">
+          {hasActivity ? (
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded-full ${
+                  hasUnread
+                    ? 'text-blue-400 bg-blue-500/10'
+                    : 'text-emerald-400 bg-emerald-500/10'
+                }`}>
+                  <FileText className="h-3 w-3" />
+                  {game.patchCount} {game.patchCount === 1 ? 'update' : 'updates'}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {relativeDaysText(game.latestPatch!.published_at)}
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground truncate">
+                Latest: {game.latestPatch!.title}
+              </p>
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              No recent updates
+            </p>
+          )}
+        </div>
       </div>
 
       {/* In backlog badge */}
@@ -167,7 +190,7 @@ export function WatchlistSection({ games }: WatchlistSectionProps) {
 
       {/* Games with unread updates - show first */}
       {withUnread.length > 0 && (
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {withUnread.map(game => (
             <WatchlistCard key={game.id} game={game} />
           ))}
@@ -183,7 +206,7 @@ export function WatchlistSection({ games }: WatchlistSectionProps) {
               <span>{withActivity.length} recently active</span>
             </div>
           )}
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {withActivity.map(game => (
               <WatchlistCard key={game.id} game={game} />
             ))}
@@ -200,7 +223,7 @@ export function WatchlistSection({ games }: WatchlistSectionProps) {
               <span>{quiet.length} quiet</span>
             </div>
           )}
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {quiet.map(game => (
               <WatchlistCard key={game.id} game={game} />
             ))}

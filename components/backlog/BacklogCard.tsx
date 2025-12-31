@@ -1,12 +1,18 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { FileText, Sparkles, Play, Pause, Clock, Check, X } from 'lucide-react'
+import { SteamStats } from '@/components/library/SteamStats'
 
 type LatestPatch = {
   id: string
   title: string
   published_at: string
   summary_tldr: string | null
+}
+
+type SteamStatsData = {
+  playtime_minutes: number | null
+  last_played_at: string | null
 }
 
 type BacklogStatus = 'playing' | 'paused' | 'backlog' | 'finished' | 'dropped'
@@ -22,6 +28,8 @@ type BacklogCardProps = {
   patchCount?: number
   status?: BacklogStatus
   hasAISuggestion?: boolean
+  steamAppId?: number | null
+  steamStats?: SteamStatsData | null
 }
 
 const STATUS_CONFIG: Record<BacklogStatus, {
@@ -100,6 +108,8 @@ export function BacklogCard({
   patchCount = 0,
   status,
   hasAISuggestion,
+  steamAppId,
+  steamStats,
 }: BacklogCardProps) {
   const statusConfig = status ? STATUS_CONFIG[status] : null
   const statusBorderColor = status === 'playing'
@@ -111,20 +121,22 @@ export function BacklogCard({
         : 'hover:border-primary/50'
   const cardGradient = statusConfig ? `bg-gradient-to-r ${statusConfig.cardGradient}` : 'bg-card'
 
+  const hasSteamData = steamAppId && (steamStats?.playtime_minutes || steamStats?.last_played_at)
+
   return (
     <Link
       href={href}
       className={`group flex gap-4 rounded-xl border border-border p-3 sm:p-4 transition-all ${cardGradient} ${statusBorderColor} active:bg-muted/50 active:scale-[0.99]`}
     >
-      {/* Cover image - consistent 2:3 aspect ratio like game covers */}
-      <div className="relative w-16 sm:w-20 flex-shrink-0 overflow-hidden rounded-lg shadow-lg aspect-[2/3]">
+      {/* Cover image - Steam library style */}
+      <div className="relative w-20 sm:w-24 flex-shrink-0 overflow-hidden rounded-lg shadow-lg aspect-[2/3]">
         {imageUrl ? (
           <Image
             src={imageUrl}
             alt={title}
             fill
             className="object-cover transition-transform group-hover:scale-105"
-            sizes="80px"
+            sizes="96px"
             unoptimized
           />
         ) : (
@@ -142,60 +154,66 @@ export function BacklogCard({
         )}
       </div>
 
-      <div className="flex flex-1 flex-col justify-between overflow-hidden min-w-0 py-0.5">
-        <div>
-          <div className="flex items-start justify-between gap-2">
-            <h3 className="font-medium leading-tight truncate group-hover:text-primary transition-colors">
-              {title}
-            </h3>
-            {/* Status pill */}
-            {status && <StatusPill status={status} />}
-          </div>
-
-          {/* Progress bar with status color */}
-          <div className="mt-2">
-            <div className="flex items-center gap-2">
-              <div className="flex-1">
-                <ProgressBar value={progress} thick status={status} />
-              </div>
-              <span className="text-xs font-medium text-muted-foreground w-8 text-right">
-                {progress}%
-              </span>
-            </div>
-          </div>
+      {/* Right side - Steam library style layout */}
+      <div className="flex flex-1 flex-col overflow-hidden min-w-0 py-0.5">
+        {/* Game title and status */}
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="font-semibold text-base leading-tight truncate group-hover:text-primary transition-colors">
+            {title}
+          </h3>
+          {status && <StatusPill status={status} />}
         </div>
 
-        {/* Meta info */}
-        <div className="mt-1.5 space-y-1">
-          {nextNote && (
-            <p className="text-xs text-muted-foreground truncate">
-              <span className="text-muted-foreground/60">Next:</span> {nextNote}
-            </p>
-          )}
-          {lastPlayedText && !nextNote && (
-            <p className="text-xs text-muted-foreground/70">{lastPlayedText}</p>
-          )}
+        {/* Steam Stats - prominently displayed below title */}
+        {hasSteamData && (
+          <div className="mt-2">
+            <SteamStats
+              steamAppId={steamAppId}
+              steamStats={steamStats}
+              showPlayerCount={true}
+              layout="stacked"
+            />
+          </div>
+        )}
 
-          {/* Contextual line - patch info */}
-          {latestPatch && (
-            <div className="flex items-center gap-1.5 text-xs text-blue-400/80">
-              <FileText className="h-3 w-3 flex-shrink-0" />
-              <span className="font-medium">{formatPatchDate(latestPatch.published_at)}</span>
-              <span className="text-muted-foreground/50">·</span>
-              <span className="truncate text-muted-foreground/80">{latestPatch.title}</span>
-              {patchCount > 1 && (
-                <span className="text-muted-foreground/60">+{patchCount - 1}</span>
-              )}
+        {/* Progress bar */}
+        <div className="mt-auto pt-2">
+          <div className="flex items-center gap-2">
+            <div className="flex-1">
+              <ProgressBar value={progress} thick status={status} />
             </div>
-          )}
+            <span className="text-xs font-medium text-muted-foreground w-8 text-right">
+              {progress}%
+            </span>
+          </div>
 
-          {/* AI suggestion hint */}
-          {hasAISuggestion && !latestPatch && (
-            <div className="flex items-center gap-1.5 text-xs text-violet-400">
-              <Sparkles className="h-3 w-3" />
-              <span>Relevant update available</span>
-            </div>
-          )}
+          {/* Next note or patch info - secondary info */}
+          <div className="mt-1.5 space-y-0.5">
+            {nextNote && (
+              <p className="text-xs text-muted-foreground truncate">
+                <span className="text-muted-foreground/60">Next:</span> {nextNote}
+              </p>
+            )}
+
+            {latestPatch && (
+              <div className="flex items-center gap-1.5 text-xs text-blue-400/80">
+                <FileText className="h-3 w-3 flex-shrink-0" />
+                <span className="font-medium">{formatPatchDate(latestPatch.published_at)}</span>
+                <span className="text-muted-foreground/50">·</span>
+                <span className="truncate text-muted-foreground/80">{latestPatch.title}</span>
+                {patchCount > 1 && (
+                  <span className="text-muted-foreground/60">+{patchCount - 1}</span>
+                )}
+              </div>
+            )}
+
+            {hasAISuggestion && !latestPatch && (
+              <div className="flex items-center gap-1.5 text-xs text-violet-400">
+                <Sparkles className="h-3 w-3" />
+                <span>Relevant update available</span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </Link>
