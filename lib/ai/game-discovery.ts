@@ -169,21 +169,30 @@ async function discoverWithAI(searchQuery: string): Promise<AIGameData> {
   }
 
   // Fallback to OpenAI (no web search, uses training data)
-  const response = await getOpenAIClient().chat.completions.create({
-    model: OPENAI_MODEL,
-    max_tokens: 1024,
-    messages: [
-      { role: 'system', content: GAME_DISCOVERY_SYSTEM },
-      { role: 'user', content: getGameDiscoveryPrompt(searchQuery) },
-    ],
-  })
+  try {
+    const response = await getOpenAIClient().chat.completions.create({
+      model: OPENAI_MODEL,
+      max_tokens: 1024,
+      messages: [
+        { role: 'system', content: GAME_DISCOVERY_SYSTEM },
+        { role: 'user', content: getGameDiscoveryPrompt(searchQuery) },
+      ],
+    })
 
-  const content = response.choices[0]?.message?.content
-  if (!content) {
-    throw new Error('No response from OpenAI')
+    const content = response.choices[0]?.message?.content
+    if (!content) {
+      throw new Error('No response from OpenAI')
+    }
+
+    return parseJSON<AIGameData>(content)
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : ''
+    // Handle quota exceeded or rate limit errors
+    if (errorMessage.includes('429') || errorMessage.includes('quota') || errorMessage.includes('rate')) {
+      throw new Error('AI service temporarily unavailable. Please try again later.')
+    }
+    throw error
   }
-
-  return parseJSON<AIGameData>(content)
 }
 
 // ============================================================================
