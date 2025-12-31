@@ -498,8 +498,8 @@ export default async function BacklogDetailPage({
           </Link>
         </div>
 
-        {/* Steam Library Style Card - Fixed size, no overflow */}
-        <div className="rounded-xl border border-border bg-card/95 backdrop-blur-sm p-3 sm:p-4 overflow-hidden">
+        {/* Steam Library Style Card - Fixed size, extends to edges on mobile */}
+        <div className="-mx-1 sm:mx-0 rounded-xl border border-border bg-card/95 backdrop-blur-sm p-3 sm:p-4 overflow-hidden">
           <div className="flex gap-3 sm:gap-4">
             {/* Cover Image - Left Side - Fixed size */}
             <div className="relative w-20 sm:w-24 flex-shrink-0 aspect-[2/3] rounded-lg overflow-hidden shadow-lg">
@@ -520,7 +520,7 @@ export default async function BacklogDetailPage({
             </div>
 
             {/* Right Side - Game Info - Compact */}
-            <div className="flex-1 min-w-0 space-y-2">
+            <div className="flex-1 min-w-0 space-y-2 overflow-hidden">
               {/* Title and Status */}
               <div className="flex items-start justify-between gap-2">
                 <h1 className="text-lg sm:text-xl font-bold tracking-tight line-clamp-1">
