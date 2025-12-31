@@ -29,28 +29,13 @@ ON user_games(user_id, unread_patch_count DESC, unread_news_count DESC);
 -- PART 2: RECREATE user_followed_games VIEW TO INCLUDE NEW COLUMNS
 -- ============================================================================
 
--- Drop and recreate the view to include new columns
+-- Drop and recreate the view - use SELECT * to get all base columns plus new ones
 DROP VIEW IF EXISTS user_followed_games CASCADE;
 
 CREATE VIEW user_followed_games AS
 SELECT
-  id,
-  user_id,
-  game_id,
-  source,
-  created_at,
-  -- Activity tracking columns (new)
-  last_seen_patch_at,
-  last_seen_news_at,
-  unread_patch_count,
-  unread_news_count,
-  latest_patch_id,
-  latest_news_id,
-  latest_patch_at,
-  latest_news_at,
-  latest_patch_title,
-  latest_patch_severity,
-  -- Default values for compatibility
+  *,
+  -- Default values for compatibility with code that expects these
   true as notify_patches,
   true as notify_news
 FROM user_games;
