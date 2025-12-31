@@ -37,12 +37,9 @@ SELECT
   id,
   user_id,
   game_id,
-  notify_patches,
-  notify_news,
-  is_favorite,
   source,
   created_at,
-  updated_at,
+  -- Activity tracking columns (new)
   last_seen_patch_at,
   last_seen_news_at,
   unread_patch_count,
@@ -52,7 +49,10 @@ SELECT
   latest_patch_at,
   latest_news_at,
   latest_patch_title,
-  latest_patch_severity
+  latest_patch_severity,
+  -- Default values for compatibility
+  true as notify_patches,
+  true as notify_news
 FROM user_games;
 
 -- Grant permissions on the view
