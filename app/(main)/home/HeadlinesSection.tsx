@@ -186,7 +186,7 @@ function RotatingHeadline({
 
   useEffect(() => {
     if (news.length <= 1) return
-    const interval = setInterval(goToNext, 10000)
+    const interval = setInterval(goToNext, 4000)
     return () => clearInterval(interval)
   }, [news.length, goToNext])
 
