@@ -25,7 +25,7 @@ type MediaCardProps = {
   }
 }
 
-type MediaCardVariant = 'vertical' | 'horizontal'
+type MediaCardVariant = 'vertical' | 'vertical-large' | 'horizontal'
 
 type MediaCardWithVariantProps = MediaCardProps & {
   variant?: MediaCardVariant
@@ -98,6 +98,9 @@ export function MediaCard({
   const limitedBadges = badges ? limitBadges(badges, 2) : null
   const displaySummary = whyItMatters || summary
 
+  const isLarge = variant === 'vertical-large'
+  const aspectClass = isLarge ? 'aspect-[4/3]' : 'aspect-[16/9]'
+
   if (variant === 'horizontal') {
     return (
       <Link
@@ -141,7 +144,7 @@ export function MediaCard({
       href={href}
       className="group block overflow-hidden rounded-2xl border border-white/10 bg-white/5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/40 hover:border-white/20 hover:bg-white/[0.07] touch-feedback gradient-border"
     >
-      <div className="relative aspect-[16/9] w-full overflow-hidden">
+      <div className={`relative ${aspectClass} w-full overflow-hidden`}>
         {imageUrl ? (
           <Image
             src={imageUrl}

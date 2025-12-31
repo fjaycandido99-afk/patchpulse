@@ -365,7 +365,7 @@ function RotatingNewsGrid({
               summary={newsItem.summary}
               whyItMatters={newsItem.why_it_matters}
               imageUrl={getNewsImage(newsItem, seasonalImages)}
-              variant="vertical"
+              variant="vertical-large"
               game={
                 newsItem.game_id
                   ? {
