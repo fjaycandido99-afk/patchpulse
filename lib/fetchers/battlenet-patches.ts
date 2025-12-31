@@ -4,7 +4,12 @@ import Parser from 'rss-parser'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { queueAIJob } from '@/lib/ai/jobs'
 
-const parser = new Parser()
+const parser = new Parser({
+  headers: {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  },
+  timeout: 10000,
+})
 
 // Blizzard game feeds - maps game slug patterns to their news feeds
 const BLIZZARD_FEEDS: Record<string, { name: string; feedUrl: string; patchKeywords: string[] }> = {
