@@ -199,9 +199,8 @@ SELECT
   ug.id,
   ug.user_id,
   ug.game_id,
-  ug.notify_patches,
-  ug.notify_news,
   ug.created_at,
+  -- Activity tracking
   COALESCE(ug.unread_patch_count, 0) as unread_patch_count,
   COALESCE(ug.unread_news_count, 0) as unread_news_count,
   (COALESCE(ug.unread_patch_count, 0) + COALESCE(ug.unread_news_count, 0)) as total_unread,
@@ -213,14 +212,18 @@ SELECT
   ug.latest_news_at,
   ug.last_seen_patch_at,
   ug.last_seen_news_at,
+  -- Game info
   g.name as game_name,
   g.slug as game_slug,
   g.cover_url as game_cover_url,
   g.logo_url as game_logo_url,
   g.brand_color as game_brand_color,
-  -- Check if in backlog
+  -- Backlog info
   bi.id as backlog_id,
-  bi.status as backlog_status
+  bi.status as backlog_status,
+  -- Default notification settings
+  true as notify_patches,
+  true as notify_news
 FROM user_games ug
 JOIN games g ON g.id = ug.game_id
 LEFT JOIN backlog_items bi ON bi.game_id = ug.game_id AND bi.user_id = ug.user_id;
