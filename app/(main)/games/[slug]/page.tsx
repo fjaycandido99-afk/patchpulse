@@ -17,11 +17,22 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params
   const supabase = await createClient()
 
-  const { data: game } = await supabase
+  // Try by slug first
+  let { data: game } = await supabase
     .from('games')
     .select('name')
     .eq('slug', slug)
     .single()
+
+  // Fallback to ID
+  if (!game) {
+    const { data: byId } = await supabase
+      .from('games')
+      .select('name')
+      .eq('id', slug)
+      .single()
+    game = byId
+  }
 
   return {
     title: game ? `${game.name} | PatchPulse` : 'Game | PatchPulse',
@@ -31,13 +42,23 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 async function getGameBySlug(slug: string) {
   const supabase = await createClient()
 
+  // First try by slug
   const { data } = await supabase
     .from('games')
     .select('id, name, slug, cover_url, hero_url, logo_url, brand_color, release_date, genre, is_live_service, platforms, steam_app_id, developer, publisher, studio_type, similar_games, developer_notable_games')
     .eq('slug', slug)
     .single()
 
-  return data
+  if (data) return data
+
+  // Fallback: try by ID (for recommendation links that use game_id)
+  const { data: byId } = await supabase
+    .from('games')
+    .select('id, name, slug, cover_url, hero_url, logo_url, brand_color, release_date, genre, is_live_service, platforms, steam_app_id, developer, publisher, studio_type, similar_games, developer_notable_games')
+    .eq('id', slug)
+    .single()
+
+  return byId
 }
 
 async function getGameActivity(gameId: string) {
