@@ -344,7 +344,7 @@ function RotatingNewsGrid({
   }, [news.length])
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 auto-rows-fr">
       {slots.map((newsIndex, slotIndex) => {
         const newsItem = news[newsIndex]
         if (!newsItem) return null
@@ -353,6 +353,7 @@ function RotatingNewsGrid({
         return (
           <div
             key={`slot-${slotIndex}`}
+            className="h-full"
             style={{
               opacity: isFading ? 0 : 1,
               transform: isFading ? 'scale(0.95)' : 'scale(1)',
