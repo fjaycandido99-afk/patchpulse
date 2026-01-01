@@ -162,10 +162,10 @@ export function NewsDigest() {
                       <div className="flex gap-3 p-3">
                         {/* Game Cover */}
                         <div className="relative flex-shrink-0 w-12 h-16 rounded-md overflow-hidden bg-zinc-800">
-                          {h.game_cover_url ? (
+                          {h.game_cover_url && h.game_cover_url.length > 0 ? (
                             <Image
                               src={h.game_cover_url}
-                              alt={h.game_name}
+                              alt={h.game_name || 'Game'}
                               fill
                               className="object-cover"
                               sizes="48px"
@@ -214,10 +214,10 @@ export function NewsDigest() {
                     >
                       {/* Game Cover */}
                       <div className="relative flex-shrink-0 w-10 h-12 rounded overflow-hidden bg-zinc-800">
-                        {update.game_cover_url ? (
+                        {update.game_cover_url && update.game_cover_url.length > 0 ? (
                           <Image
                             src={update.game_cover_url}
-                            alt={update.game_name}
+                            alt={update.game_name || 'Game'}
                             fill
                             className="object-cover"
                             sizes="40px"

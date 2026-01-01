@@ -378,9 +378,7 @@ export default async function BacklogDetailPage({
           </div>
 
           {/* Sentiment Pulse - Community Mood (Pro) */}
-          <Suspense fallback={null}>
-            <SentimentPulse gameId={gameId} />
-          </Suspense>
+          <SentimentPulse gameId={gameId} />
 
           {/* Studio Info Section */}
           <StudioInfoSection
@@ -576,9 +574,7 @@ export default async function BacklogDetailPage({
         </div>
 
         {/* Sentiment Pulse - Community Mood (Pro) */}
-        <Suspense fallback={null}>
-          <SentimentPulse gameId={gameId} />
-        </Suspense>
+        <SentimentPulse gameId={gameId} />
 
         {/* Studio Info Section */}
         <StudioInfoSection
