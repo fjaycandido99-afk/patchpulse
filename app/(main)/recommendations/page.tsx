@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Sparkles, Clock, Gamepad2, Brain, Loader2, Zap, Calendar, X, TrendingUp, Minus, TrendingDown, AlertTriangle, Users, RefreshCw } from 'lucide-react'
+import { Sparkles, Clock, Gamepad2, Brain, Loader2, Zap, Calendar, X, TrendingUp, Minus, TrendingDown, AlertTriangle, Users } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 
@@ -93,12 +93,14 @@ export default function RecommendationsPage() {
   const [dismissingId, setDismissingId] = useState<string | null>(null)
   const [isPro, setIsPro] = useState<boolean | null>(null)
 
-  // Check if user is pro and auto-fetch on load
+  const [isCached, setIsCached] = useState(false)
+
+  // Load cached recommendations on mount
   useEffect(() => {
-    fetchRecommendations()
+    fetchRecommendations(false)
   }, [])
 
-  const fetchRecommendations = async () => {
+  const fetchRecommendations = async (refresh: boolean) => {
     setLoading(true)
     setError(null)
 
@@ -106,6 +108,7 @@ export default function RecommendationsPage() {
       const params = new URLSearchParams()
       if (mood !== 'any') params.set('mood', mood)
       if (time) params.set('time', time.toString())
+      if (refresh) params.set('refresh', 'true')
 
       const response = await fetch(`/api/ai/recommendations?${params}`)
       const data = await response.json()
@@ -120,6 +123,7 @@ export default function RecommendationsPage() {
       }
 
       setIsPro(true)
+      setIsCached(data.cached || false)
       setResult({
         recommendations: Array.isArray(data?.recommendations) ? data.recommendations : [],
         message: data?.message || 'Here are your recommendations',
@@ -243,16 +247,16 @@ export default function RecommendationsPage() {
 
           <div className="flex items-end">
             <button
-              onClick={fetchRecommendations}
+              onClick={() => fetchRecommendations(true)}
               disabled={loading}
               className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
             >
               {loading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
-                <RefreshCw className="w-4 h-4" />
+                <Brain className="w-4 h-4" />
               )}
-              {loading ? 'Getting...' : 'Refresh'}
+              {loading ? 'Generating...' : 'Get New Recommendations'}
             </button>
           </div>
         </div>

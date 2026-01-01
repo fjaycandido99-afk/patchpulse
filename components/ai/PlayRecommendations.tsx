@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Sparkles, Clock, Gamepad2, Brain, ChevronRight, Loader2, Zap, Calendar, X, TrendingUp, Minus, TrendingDown, AlertTriangle, Users } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -92,7 +92,12 @@ export function PlayRecommendations() {
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set())
   const [dismissingId, setDismissingId] = useState<string | null>(null)
 
-  const fetchRecommendations = async () => {
+  // Load cached recommendations on mount
+  useEffect(() => {
+    fetchRecommendations(false)
+  }, [])
+
+  const fetchRecommendations = async (refresh: boolean) => {
     setLoading(true)
     setError(null)
 
@@ -100,6 +105,7 @@ export function PlayRecommendations() {
       const params = new URLSearchParams()
       if (mood !== 'any') params.set('mood', mood)
       if (time) params.set('time', time.toString())
+      if (refresh) params.set('refresh', 'true')
 
       const response = await fetch(`/api/ai/recommendations?${params}`)
       const data = await response.json()
@@ -212,7 +218,7 @@ export function PlayRecommendations() {
       </div>
 
       <button
-        onClick={fetchRecommendations}
+        onClick={() => fetchRecommendations(true)}
         disabled={loading}
         className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
       >
@@ -221,7 +227,7 @@ export function PlayRecommendations() {
         ) : (
           <Brain className="w-4 h-4" />
         )}
-        Get Recommendations
+        {result ? 'Get New Recommendations' : 'Get Recommendations'}
       </button>
 
       {error && (

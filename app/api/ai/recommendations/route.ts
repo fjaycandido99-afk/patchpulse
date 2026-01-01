@@ -25,7 +25,70 @@ export async function GET(request: Request) {
     const time = searchParams.get('time')
     const mood = searchParams.get('mood')
     const discoveryOnly = searchParams.get('discoveryOnly') === 'true'
+    const refresh = searchParams.get('refresh') === 'true'
 
+    // If not refreshing, try to get cached recommendations first
+    if (!refresh) {
+      const { data: cached } = await supabase
+        .from('play_recommendations')
+        .select(`
+          id,
+          game_id,
+          reason,
+          match_score,
+          recommendation_type,
+          context,
+          factors,
+          created_at,
+          games:game_id (
+            id,
+            name,
+            slug,
+            cover_url
+          )
+        `)
+        .eq('user_id', user.id)
+        .eq('is_dismissed', false)
+        .gte('expires_at', new Date().toISOString())
+        .order('match_score', { ascending: false })
+        .limit(10)
+
+      if (cached && cached.length > 0) {
+        // Transform cached recommendations to match expected format
+        const recommendations = cached.map(rec => {
+          const game = rec.games as { id: string; name: string; slug: string; cover_url: string | null } | null
+          const context = rec.context as Record<string, unknown> || {}
+          const factors = rec.factors as Record<string, unknown> || {}
+
+          return {
+            game_id: rec.game_id,
+            game_name: game?.name || 'Unknown Game',
+            slug: game?.slug || rec.game_id,
+            cover_url: game?.cover_url || null,
+            reason: rec.reason,
+            match_score: rec.match_score,
+            recommendation_type: rec.recommendation_type as 'return' | 'start' | 'finish' | 'discover',
+            factors: Array.isArray(factors) ? factors : [],
+            why_now: (context.why_now as string) || null,
+            what_youd_miss: (context.what_youd_miss as string) || null,
+            momentum: (context.momentum as 'rising' | 'stable' | 'cooling') || 'stable',
+            recent_patch: null,
+            days_since_played: null,
+            progress: 0,
+            is_discovery: rec.recommendation_type === 'discover',
+            follower_count: (context.follower_count as number) || undefined,
+          }
+        })
+
+        return NextResponse.json({
+          recommendations,
+          message: 'Your personalized recommendations',
+          cached: true,
+        })
+      }
+    }
+
+    // Generate fresh recommendations
     const context = {
       availableTime: time ? parseInt(time) : undefined,
       mood: mood as 'chill' | 'challenge' | 'story' | 'social' | 'any' | undefined,
@@ -38,6 +101,7 @@ export async function GET(request: Request) {
     return NextResponse.json({
       recommendations: Array.isArray(recommendations?.recommendations) ? recommendations.recommendations : [],
       message: recommendations?.message || 'Here are your recommendations',
+      cached: false,
     })
   } catch (error) {
     console.error('Recommendations error:', error)
