@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Gamepad2, ExternalLink, Tag, Newspaper, FileText } from 'lucide-react'
+import { Gamepad2, ExternalLink, Tag, Newspaper, FileText, SlidersHorizontal, X, Check } from 'lucide-react'
 import { MediaCard } from '@/components/media/MediaCard'
 import { formatDate } from '@/lib/dates'
 
@@ -53,9 +53,10 @@ type FilterType = 'all' | 'deals' | 'patches' | 'news'
 
 export function SavedContent({ deals, patches, news }: SavedContentProps) {
   const [filter, setFilter] = useState<FilterType>('all')
+  const [isFilterOpen, setIsFilterOpen] = useState(false)
 
   const filters: { id: FilterType; label: string; icon: typeof Tag; count: number }[] = [
-    { id: 'all', label: 'All', icon: Gamepad2, count: deals.length + patches.length + news.length },
+    { id: 'all', label: 'All Saved', icon: Gamepad2, count: deals.length + patches.length + news.length },
     { id: 'deals', label: 'Deals', icon: Tag, count: deals.length },
     { id: 'patches', label: 'Patches', icon: FileText, count: patches.length },
     { id: 'news', label: 'News', icon: Newspaper, count: news.length },
@@ -65,31 +66,85 @@ export function SavedContent({ deals, patches, news }: SavedContentProps) {
   const showPatches = filter === 'all' || filter === 'patches'
   const showNews = filter === 'all' || filter === 'news'
 
+  const currentFilter = filters.find(f => f.id === filter)
+
   return (
     <div className="space-y-6">
-      {/* Filter Tabs */}
-      <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
-        {filters.map((f) => (
-          <button
-            key={f.id}
-            onClick={() => setFilter(f.id)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
-              filter === f.id
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground'
-            }`}
-          >
-            <f.icon className="w-4 h-4" />
-            {f.label}
-            {f.count > 0 && (
-              <span className={`px-1.5 py-0.5 rounded-full text-xs ${
-                filter === f.id ? 'bg-white/20' : 'bg-background'
-              }`}>
-                {f.count}
-              </span>
-            )}
-          </button>
-        ))}
+      {/* Filter Button */}
+      <div className="relative">
+        <button
+          onClick={() => setIsFilterOpen(!isFilterOpen)}
+          className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
+            filter !== 'all'
+              ? 'bg-primary/20 text-primary border border-primary/30'
+              : 'bg-white/5 text-muted-foreground hover:text-foreground border border-white/10'
+          }`}
+        >
+          <SlidersHorizontal className="w-4 h-4" />
+          {currentFilter?.label || 'Filter'}
+          {filter !== 'all' && (
+            <span className="px-1.5 py-0.5 rounded-full bg-primary text-primary-foreground text-xs">
+              1
+            </span>
+          )}
+        </button>
+
+        {/* Filter Dropdown */}
+        {isFilterOpen && (
+          <>
+            {/* Backdrop */}
+            <div
+              className="fixed inset-0 z-40"
+              onClick={() => setIsFilterOpen(false)}
+            />
+
+            {/* Dropdown Panel */}
+            <div className="absolute top-full left-0 mt-2 w-64 rounded-xl border border-white/10 bg-[#0b1220] shadow-xl z-50 overflow-hidden">
+              {/* Header */}
+              <div className="flex items-center justify-between p-3 border-b border-white/10">
+                <span className="font-semibold text-sm">Filter by Type</span>
+                <button
+                  onClick={() => setIsFilterOpen(false)}
+                  className="p-1 rounded-lg hover:bg-white/10 text-muted-foreground"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Filter Options */}
+              <div className="p-2">
+                {filters.map((f) => {
+                  const Icon = f.icon
+                  return (
+                    <button
+                      key={f.id}
+                      onClick={() => {
+                        setFilter(f.id)
+                        setIsFilterOpen(false)
+                      }}
+                      className={`flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                        filter === f.id
+                          ? 'bg-primary/20 text-primary'
+                          : 'hover:bg-white/5 text-foreground'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Icon className="w-4 h-4" />
+                        <span>{f.label}</span>
+                        {f.count > 0 && (
+                          <span className="px-1.5 py-0.5 rounded-full bg-white/10 text-xs text-muted-foreground">
+                            {f.count}
+                          </span>
+                        )}
+                      </div>
+                      {filter === f.id && <Check className="w-4 h-4" />}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Content */}

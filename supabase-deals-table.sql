@@ -33,7 +33,7 @@ CREATE POLICY "Deals are viewable by everyone"
 -- Only service role can insert/update/delete (cron job)
 CREATE POLICY "Service role can manage deals"
   ON public.deals FOR ALL
-  USING (auth.role() = 'service_role');
+  USING (auth.jwt() ->> 'role' = 'service_role');
 
 -- Function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_deals_updated_at()
