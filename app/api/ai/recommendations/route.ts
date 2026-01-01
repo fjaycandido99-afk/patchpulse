@@ -102,15 +102,26 @@ export async function GET(request: Request) {
             return true
           })
 
-          return NextResponse.json({
-            recommendations: uniqueRecommendations,
-            message: 'Your personalized recommendations',
-            cached: true,
-          })
+          // Only return cached if we have at least 4 recommendations
+          if (uniqueRecommendations.length >= 4) {
+            return NextResponse.json({
+              recommendations: uniqueRecommendations,
+              message: 'Your personalized recommendations',
+              cached: true,
+            })
+          }
+          // If less than 4, fall through to generate fresh ones
         }
-        // If all cached recommendations were filtered out, fall through to generate new ones
+        // If all cached recommendations were filtered out or too few, fall through to generate new ones
       }
     }
+
+    // Delete old recommendations before generating new ones
+    // This happens when: refreshing OR cached results had fewer than 4
+    await supabase
+      .from('play_recommendations')
+      .delete()
+      .eq('user_id', user.id)
 
     // Generate fresh recommendations
     const context = {

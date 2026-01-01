@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { Suspense } from 'react'
-import { ArrowLeft, Calendar, Gamepad2, Monitor, RefreshCw, ShoppingCart, Heart, Plus, Clock, FileText, Newspaper, ChevronRight, Flame, Home } from 'lucide-react'
+import { Calendar, Gamepad2, Monitor, RefreshCw, ShoppingCart, Heart, Plus, Clock, FileText, Newspaper, ChevronRight, Flame, Home } from 'lucide-react'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getSeasonalGameImage } from '@/lib/images/seasonal'
@@ -12,6 +12,7 @@ import { StoreLinkButtons } from '@/components/ui/StoreLinkButtons'
 import { SteamStats } from '@/components/library/SteamStats'
 import { StudioInfoSection } from '@/components/games/StudioInfoSection'
 import { SentimentPulse } from '@/components/ai/SentimentPulse'
+import { BackButton } from '@/components/ui/BackButton'
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
@@ -383,13 +384,7 @@ export default async function GamePage({
       <div className="relative z-10 pt-[200px] sm:pt-[240px] lg:pt-[280px] space-y-6">
         {/* Back Link */}
         <div>
-          <Link
-            href="/home"
-            className="inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </Link>
+          <BackButton defaultHref="/home" defaultLabel="Back" />
         </div>
 
         {/* Game Header */}

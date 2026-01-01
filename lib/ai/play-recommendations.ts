@@ -176,7 +176,7 @@ ${discoveryGames.map(g => `
 - Today: ${now.toLocaleDateString()}
 ${discoverySection}
 
-Recommend 2-4 NEW games for the user to try. Focus on games that match their mood and have good momentum.
+Recommend 4-6 NEW games for the user to try. Focus on games that match their mood and have good momentum. You MUST provide at least 4 recommendations.
 Return JSON:
 {
   "recommendations": [
@@ -200,7 +200,7 @@ Return JSON:
 - Today: ${now.toLocaleDateString()}
 ${backlogSection}${discoverySection}
 
-Recommend 2-4 games to play. Include at least 1 discovery game if available to help user find new favorites.
+Recommend 4-6 games to play. You MUST provide at least 4 recommendations. Include at least 1 discovery game if available to help user find new favorites.
 Return JSON:
 {
   "recommendations": [
@@ -445,17 +445,29 @@ export async function getPlayRecommendations(
     return true
   })
 
-  // Optionally save recommendations (non-blocking)
+  // Save recommendations with long expiration (persist until user refreshes)
   if (result.recommendations.length > 0) {
     try {
+      // Set expiration to 1 year from now - recommendations persist until user clicks refresh
+      const expiresAt = new Date()
+      expiresAt.setFullYear(expiresAt.getFullYear() + 1)
+
       const toInsert = result.recommendations.map(rec => ({
         user_id: userId,
         game_id: rec.game_id,
         reason: rec.reason,
         match_score: rec.match_score,
         recommendation_type: rec.recommendation_type,
-        context,
+        context: {
+          ...context,
+          why_now: rec.why_now,
+          what_youd_miss: rec.what_youd_miss,
+          momentum: rec.momentum,
+          follower_count: rec.follower_count,
+        },
         factors: rec.factors,
+        expires_at: expiresAt.toISOString(),
+        is_dismissed: false,
       }))
 
       await supabase.from('play_recommendations').insert(toInsert)
