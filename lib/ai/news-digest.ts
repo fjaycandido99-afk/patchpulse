@@ -154,10 +154,26 @@ export async function getUserNewsDigest(
     .single()
 
   if (cached) {
+    // Ensure old cached data has the new fields with defaults
+    const highlights = (cached.highlights as DigestHighlight[] || []).map(h => ({
+      ...h,
+      game_slug: h.game_slug || '',
+      game_cover_url: h.game_cover_url || null,
+    }))
+
+    const gameUpdates: Record<string, GameUpdate> = {}
+    for (const [key, update] of Object.entries(cached.game_updates as Record<string, GameUpdate> || {})) {
+      gameUpdates[key] = {
+        ...update,
+        game_slug: update.game_slug || '',
+        game_cover_url: update.game_cover_url || null,
+      }
+    }
+
     return {
       summary: cached.summary,
-      highlights: cached.highlights as DigestHighlight[],
-      game_updates: cached.game_updates as Record<string, GameUpdate>,
+      highlights,
+      game_updates: gameUpdates,
       total_news: cached.news_count,
     }
   }
