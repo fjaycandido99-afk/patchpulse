@@ -155,3 +155,30 @@ export async function markAllAsRead(): Promise<boolean> {
 
   return true
 }
+
+// Mark notification as read by content ID (patch or news)
+export async function markNotificationReadByContent(
+  contentType: 'patch' | 'news',
+  contentId: string
+): Promise<boolean> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) return false
+
+  const column = contentType === 'patch' ? 'patch_id' : 'news_id'
+
+  const { error } = await supabase
+    .from('notifications')
+    .update({ is_read: true, read_at: new Date().toISOString() })
+    .eq('user_id', user.id)
+    .eq(column, contentId)
+    .eq('is_read', false)
+
+  if (error) {
+    console.error(`Error marking ${contentType} notification as read:`, error)
+    return false
+  }
+
+  return true
+}

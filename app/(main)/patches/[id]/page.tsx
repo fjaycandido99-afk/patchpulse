@@ -15,6 +15,7 @@ import { GameLogo } from '@/components/ui/GameLogo'
 import { formatDate, relativeDaysText } from '@/lib/dates'
 import { createClient } from '@/lib/supabase/server'
 import { getUserPlan } from '@/lib/subscriptions/limits'
+import { AutoMarkRead } from '@/components/notifications/AutoMarkRead'
 
 type KeyChange = {
   category?: string
@@ -216,6 +217,9 @@ export default async function PatchDetailPage({
 
   return (
     <div className="relative overflow-x-hidden min-h-screen page-enter">
+      {/* Auto-mark notification as read when viewing this patch */}
+      <AutoMarkRead contentType="patch" contentId={id} />
+
       {/* Full-bleed Hero Image */}
       <div className="fixed inset-x-0 top-0 h-[320px] sm:h-[380px] lg:h-[440px] overflow-hidden -z-10">
         {heroImage ? (

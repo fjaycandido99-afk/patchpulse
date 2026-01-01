@@ -13,6 +13,7 @@ import { GameLogo } from '@/components/ui/GameLogo'
 import { formatDate, relativeDaysText } from '@/lib/dates'
 import { createClient } from '@/lib/supabase/server'
 import { getUserPlan } from '@/lib/subscriptions/limits'
+import { AutoMarkRead } from '@/components/notifications/AutoMarkRead'
 
 // Topic to icon mapping
 const TOPIC_ICONS: Record<string, { icon: typeof Trophy; color: string; bg: string }> = {
@@ -175,6 +176,9 @@ export default async function NewsDetailPage({
 
   return (
     <div className="relative overflow-x-hidden min-h-screen page-enter">
+      {/* Auto-mark notification as read when viewing this news */}
+      <AutoMarkRead contentType="news" contentId={id} />
+
       {/* Full-bleed Hero Image */}
       <div className="fixed inset-x-0 top-0 h-[320px] sm:h-[380px] lg:h-[440px] overflow-hidden -z-10">
         {heroImage ? (
