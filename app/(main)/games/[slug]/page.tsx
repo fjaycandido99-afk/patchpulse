@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { Suspense } from 'react'
-import { ArrowLeft, Calendar, Gamepad2, Monitor, RefreshCw, ShoppingCart, Heart, Plus, Clock, FileText, Newspaper, ChevronRight, Flame } from 'lucide-react'
+import { ArrowLeft, Calendar, Gamepad2, Monitor, RefreshCw, ShoppingCart, Heart, Plus, Clock, FileText, Newspaper, ChevronRight, Flame, Home } from 'lucide-react'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getSeasonalGameImage } from '@/lib/images/seasonal'
@@ -314,7 +314,32 @@ export default async function GamePage({
   const game = await getGameBySlug(slug)
 
   if (!game) {
-    notFound()
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] px-6 text-center">
+        <div className="w-20 h-20 rounded-full bg-muted/50 flex items-center justify-center mb-6">
+          <Gamepad2 className="w-10 h-10 text-muted-foreground/50" />
+        </div>
+        <h1 className="text-2xl font-bold mb-2">Game Not Found</h1>
+        <p className="text-muted-foreground max-w-md mb-6">
+          This game isn&apos;t in our database yet. It may have been recommended but hasn&apos;t been added to PatchPulse.
+        </p>
+        <div className="flex gap-3">
+          <Link
+            href="/home"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
+          >
+            <Home className="w-4 h-4" />
+            Go Home
+          </Link>
+          <Link
+            href="/patches"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-muted hover:bg-muted/80 font-medium transition-colors"
+          >
+            Browse Patches
+          </Link>
+        </div>
+      </div>
+    )
   }
 
   const [seasonalImage, activity, inBacklog] = await Promise.all([
