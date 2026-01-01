@@ -211,21 +211,21 @@ export function BacklogHealth() {
           href={`/games/${data.spotlight.slug}`}
           className="relative block h-32 sm:h-40 group"
         >
-          {/* Background Image with Blur */}
+          {/* Background Image - Clearer with subtle blur */}
           <div className="absolute inset-0 overflow-hidden">
             <Image
               src={data.spotlight.cover_url}
               alt={data.spotlight.name}
               fill
-              className="object-cover scale-110 blur-sm group-hover:scale-105 transition-transform duration-500"
+              className="object-cover scale-105 blur-[2px] group-hover:scale-100 group-hover:blur-0 transition-all duration-500"
               sizes="(max-width: 768px) 100vw, 50vw"
               priority
             />
           </div>
 
-          {/* Dark Gradient Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-card via-card/80 to-card/40" />
-          <div className="absolute inset-0 bg-gradient-to-r from-card/60 to-transparent" />
+          {/* Dark Gradient Overlay - Lighter for clearer image */}
+          <div className="absolute inset-0 bg-gradient-to-t from-card via-card/60 to-card/20" />
+          <div className="absolute inset-0 bg-gradient-to-r from-card/40 to-transparent" />
 
           {/* Content */}
           <div className="absolute inset-0 p-4 sm:p-6 flex flex-col justify-end">
