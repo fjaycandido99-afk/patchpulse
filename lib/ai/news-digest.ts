@@ -180,44 +180,68 @@ export async function getUserNewsDigest(
       .single()
 
     if (cached) {
-    // Ensure old cached data has the new fields with defaults
-    const rawHighlights = cached.highlights as DigestHighlight[] | null
-    const highlights = (rawHighlights || []).map(h => ({
-      news_id: h.news_id || '',
-      title: h.title || '',
-      game_name: h.game_name || '',
-      game_slug: h.game_slug || '',
-      game_cover_url: h.game_cover_url || null,
-      tldr: h.tldr || '',
-      why_it_matters: h.why_it_matters || null,
-      is_early_signal: h.is_early_signal || false,
-      importance: h.importance || 'low',
-      category: h.category || 'other',
-    }))
+      // Get all game names from cached data to fetch fresh cover URLs
+      const rawHighlights = cached.highlights as DigestHighlight[] | null
+      const rawGameUpdates = cached.game_updates as Record<string, GameUpdate> | null
 
-    const rawGameUpdates = cached.game_updates as Record<string, GameUpdate> | null
-    const gameUpdates: Record<string, GameUpdate> = {}
-    if (rawGameUpdates) {
-      for (const [key, update] of Object.entries(rawGameUpdates)) {
-        if (update) {
-          gameUpdates[key] = {
-            game_name: update.game_name || '',
-            game_slug: update.game_slug || '',
-            game_cover_url: update.game_cover_url || null,
-            update_count: update.update_count || 0,
-            summary: update.summary || '',
-            highlights: update.highlights || [],
+      const gameNames = new Set<string>()
+      rawHighlights?.forEach(h => h.game_name && gameNames.add(h.game_name))
+      if (rawGameUpdates) {
+        Object.values(rawGameUpdates).forEach(u => u?.game_name && gameNames.add(u.game_name))
+      }
+
+      // Fetch fresh cover URLs from games table
+      const { data: gamesData } = await supabase
+        .from('games')
+        .select('name, slug, cover_url')
+        .in('name', Array.from(gameNames))
+
+      const gameCovers = new Map<string, { slug: string; cover_url: string | null }>()
+      gamesData?.forEach(g => {
+        gameCovers.set(g.name, { slug: g.slug, cover_url: g.cover_url })
+      })
+
+      // Enrich highlights with fresh cover URLs
+      const highlights = (rawHighlights || []).map(h => {
+        const gameInfo = gameCovers.get(h.game_name || '')
+        return {
+          news_id: h.news_id || '',
+          title: h.title || '',
+          game_name: h.game_name || '',
+          game_slug: gameInfo?.slug || h.game_slug || '',
+          game_cover_url: gameInfo?.cover_url || h.game_cover_url || null,
+          tldr: h.tldr || '',
+          why_it_matters: h.why_it_matters || null,
+          is_early_signal: h.is_early_signal || false,
+          importance: h.importance || 'low',
+          category: h.category || 'other',
+        }
+      })
+
+      // Enrich game_updates with fresh cover URLs
+      const gameUpdates: Record<string, GameUpdate> = {}
+      if (rawGameUpdates) {
+        for (const [key, update] of Object.entries(rawGameUpdates)) {
+          if (update) {
+            const gameInfo = gameCovers.get(update.game_name || '')
+            gameUpdates[key] = {
+              game_name: update.game_name || '',
+              game_slug: gameInfo?.slug || update.game_slug || '',
+              game_cover_url: gameInfo?.cover_url || update.game_cover_url || null,
+              update_count: update.update_count || 0,
+              summary: update.summary || '',
+              highlights: update.highlights || [],
+            }
           }
         }
       }
-    }
 
-    return {
-      summary: cached.summary || '',
-      highlights,
-      game_updates: gameUpdates,
-      total_news: cached.news_count || 0,
-    }
+      return {
+        summary: cached.summary || '',
+        highlights,
+        game_updates: gameUpdates,
+        total_news: cached.news_count || 0,
+      }
     }
   }
 
