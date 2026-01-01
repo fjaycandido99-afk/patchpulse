@@ -1,5 +1,26 @@
 import { generateJSON } from './client'
 import { createAdminClient } from '@/lib/supabase/admin'
+import type { DiffStats } from './provider'
+
+type PriorityAlertRule = {
+  id: string
+  user_id: string
+  name: string
+  enabled: boolean
+  rule_type: 'major_patch' | 'balance_changes' | 'resurfacing' | 'new_content' | 'high_priority' | 'custom'
+  applies_to: 'all_games' | 'followed_games' | 'specific_games'
+  game_ids: string[] | null
+  thresholds: Record<string, number>
+  priority_boost: number
+  force_push: boolean
+}
+
+type RuleMatchResult = {
+  matched: boolean
+  rule?: PriorityAlertRule
+  priority_boost: number
+  force_push: boolean
+}
 
 type NotificationType =
   | 'major_patch'
@@ -272,4 +293,140 @@ export async function processNotificationsForContent(
   }
 
   return { notified, skipped }
+}
+
+/**
+ * Get user's priority alert rules
+ */
+export async function getUserPriorityAlertRules(userId: string): Promise<PriorityAlertRule[]> {
+  const supabase = createAdminClient()
+
+  const { data } = await supabase
+    .from('priority_alert_rules')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('enabled', true)
+
+  return (data || []) as PriorityAlertRule[]
+}
+
+/**
+ * Check if a priority alert rule matches the given content
+ */
+export function checkRuleMatch(
+  rule: PriorityAlertRule,
+  content: {
+    type: 'patch' | 'news'
+    game_id: string
+    impact_score?: number
+    diff_stats?: DiffStats | null
+    priority?: number
+    is_resurfacing?: boolean
+  },
+  userFollowedGameIds: string[]
+): boolean {
+  // Check scope
+  if (rule.applies_to === 'specific_games') {
+    if (!rule.game_ids || !rule.game_ids.includes(content.game_id)) {
+      return false
+    }
+  } else if (rule.applies_to === 'followed_games') {
+    if (!userFollowedGameIds.includes(content.game_id)) {
+      return false
+    }
+  }
+  // 'all_games' matches everything
+
+  // Check rule type conditions
+  switch (rule.rule_type) {
+    case 'major_patch':
+      // Match if impact_score >= threshold (default 7)
+      const impactThreshold = rule.thresholds.impact_score || 7
+      return (content.impact_score ?? 0) >= impactThreshold
+
+    case 'balance_changes':
+      // Match if significant buffs or nerfs
+      if (!content.diff_stats) return false
+      const buffsMin = rule.thresholds.buffs_min || 3
+      const nerfsMin = rule.thresholds.nerfs_min || 3
+      return (content.diff_stats.buffs >= buffsMin) || (content.diff_stats.nerfs >= nerfsMin)
+
+    case 'resurfacing':
+      // Match if game was dormant and got an update
+      return content.is_resurfacing === true
+
+    case 'new_content':
+      // Match if new systems detected
+      if (!content.diff_stats) return false
+      const newSystemsMin = rule.thresholds.new_systems_min || 1
+      return content.diff_stats.new_systems >= newSystemsMin
+
+    case 'high_priority':
+      // Match if notification priority >= threshold
+      const priorityThreshold = rule.thresholds.priority || 4
+      return (content.priority ?? 0) >= priorityThreshold
+
+    case 'custom':
+      // Custom rules not implemented in v1
+      return false
+
+    default:
+      return false
+  }
+}
+
+/**
+ * Apply priority alert rules to a notification
+ * Returns the cumulative result of all matching rules
+ */
+export async function applyPriorityAlertRules(
+  userId: string,
+  content: {
+    type: 'patch' | 'news'
+    game_id: string
+    impact_score?: number
+    diff_stats?: DiffStats | null
+    priority?: number
+    is_resurfacing?: boolean
+  }
+): Promise<RuleMatchResult> {
+  const supabase = createAdminClient()
+
+  // Get user's enabled rules
+  const rules = await getUserPriorityAlertRules(userId)
+  if (rules.length === 0) {
+    return { matched: false, priority_boost: 0, force_push: false }
+  }
+
+  // Get user's followed games
+  const { data: followedGames } = await supabase
+    .from('user_games')
+    .select('game_id')
+    .eq('user_id', userId)
+
+  const followedGameIds = (followedGames || []).map(g => g.game_id)
+
+  // Check each rule
+  let totalPriorityBoost = 0
+  let shouldForcePush = false
+  let matchedRule: PriorityAlertRule | undefined
+
+  for (const rule of rules) {
+    if (checkRuleMatch(rule, content, followedGameIds)) {
+      totalPriorityBoost = Math.max(totalPriorityBoost, rule.priority_boost)
+      if (rule.force_push) {
+        shouldForcePush = true
+      }
+      if (!matchedRule) {
+        matchedRule = rule
+      }
+    }
+  }
+
+  return {
+    matched: totalPriorityBoost > 0 || shouldForcePush,
+    rule: matchedRule,
+    priority_boost: Math.min(totalPriorityBoost, 2), // Cap at +2
+    force_push: shouldForcePush,
+  }
 }
