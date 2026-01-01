@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { queueAllPendingAIJobs, getAIJobStats, triggerCronManually } from './actions'
+import { queueAllPendingAIJobs, getAIJobStats, triggerCronManually, getFailedJobs, retryFailedJobs } from './actions'
 
 export default function AIAdminPage() {
   const [loading, setLoading] = useState(false)
@@ -13,6 +13,14 @@ export default function AIAdminPage() {
     done: number
     failed: number
   } | null>(null)
+  const [failedJobs, setFailedJobs] = useState<{
+    id: string
+    job_type: string
+    entity_id: string
+    error_message: string | null
+    attempts: number
+    created_at: string
+  }[] | null>(null)
 
   async function handleBackfill() {
     setLoading(true)
@@ -54,6 +62,41 @@ export default function AIAdminPage() {
         setMessage(`Error: ${result.error}`)
       } else {
         setMessage(`Processed ${result.processed} jobs`)
+      }
+      // Refresh stats after processing
+      handleRefreshStats()
+    } catch (err) {
+      setMessage(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`)
+    }
+    setLoading(false)
+  }
+
+  async function handleViewFailedJobs() {
+    setLoading(true)
+    try {
+      const result = await getFailedJobs()
+      if ('error' in result) {
+        setMessage(`Error: ${result.error}`)
+      } else {
+        setFailedJobs(result.jobs)
+      }
+    } catch (err) {
+      setMessage(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`)
+    }
+    setLoading(false)
+  }
+
+  async function handleRetryFailed() {
+    setLoading(true)
+    setMessage(null)
+    try {
+      const result = await retryFailedJobs()
+      if ('error' in result) {
+        setMessage(`Error: ${result.error}`)
+      } else {
+        setMessage(`Reset ${result.retriedCount} failed jobs to pending`)
+        setFailedJobs(null)
+        handleRefreshStats()
       }
     } catch (err) {
       setMessage(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`)
@@ -141,8 +184,60 @@ export default function AIAdminPage() {
               {loading ? 'Processing...' : 'Process Now'}
             </button>
           </div>
+
+          <div className="flex items-center justify-between p-4 rounded-lg bg-white/5">
+            <div>
+              <h3 className="font-medium">View Failed Jobs</h3>
+              <p className="text-sm text-zinc-400">
+                See error messages from failed AI processing jobs
+              </p>
+            </div>
+            <button
+              onClick={handleViewFailedJobs}
+              disabled={loading}
+              className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-500 disabled:opacity-50 transition-colors"
+            >
+              {loading ? 'Loading...' : 'View Errors'}
+            </button>
+          </div>
         </div>
       </section>
+
+      {/* Failed Jobs Section */}
+      {failedJobs && failedJobs.length > 0 && (
+        <section className="rounded-xl border border-red-500/30 bg-red-500/5 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-red-300">Failed Jobs ({failedJobs.length})</h2>
+            <button
+              onClick={handleRetryFailed}
+              disabled={loading}
+              className="px-3 py-1.5 text-sm rounded-lg bg-red-600 hover:bg-red-500 disabled:opacity-50 transition-colors"
+            >
+              Retry All
+            </button>
+          </div>
+          <div className="space-y-3">
+            {failedJobs.map(job => (
+              <div key={job.id} className="p-3 rounded-lg bg-black/30 border border-red-500/20">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm font-medium text-red-300">{job.job_type}</span>
+                  <span className="text-xs text-zinc-500">Attempts: {job.attempts}</span>
+                </div>
+                <p className="text-xs text-zinc-400 mb-1">Entity: {job.entity_id}</p>
+                <p className="text-sm text-red-400 font-mono bg-black/50 p-2 rounded">
+                  {job.error_message || 'No error message'}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {failedJobs && failedJobs.length === 0 && (
+        <section className="rounded-xl border border-green-500/30 bg-green-500/5 p-6">
+          <p className="text-green-300">No failed jobs found!</p>
+        </section>
+      )}
 
       {/* Info Section */}
       <section className="rounded-xl border border-white/10 bg-white/5 p-6">

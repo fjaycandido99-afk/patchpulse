@@ -119,3 +119,46 @@ export async function triggerCronManually() {
     return { error: err instanceof Error ? err.message : 'Unknown error' }
   }
 }
+
+// Get recent failed jobs with error messages
+export async function getFailedJobs() {
+  try {
+    const supabase = createAdminClient()
+
+    const { data, error } = await supabase
+      .from('ai_jobs')
+      .select('id, job_type, entity_id, error_message, attempts, created_at')
+      .eq('status', 'failed')
+      .order('created_at', { ascending: false })
+      .limit(10)
+
+    if (error) {
+      return { error: error.message }
+    }
+
+    return { jobs: data || [] }
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : 'Unknown error' }
+  }
+}
+
+// Retry failed jobs by resetting them to pending
+export async function retryFailedJobs() {
+  try {
+    const supabase = createAdminClient()
+
+    const { data, error } = await supabase
+      .from('ai_jobs')
+      .update({ status: 'pending', attempts: 0, error_message: null })
+      .eq('status', 'failed')
+      .select('id')
+
+    if (error) {
+      return { error: error.message }
+    }
+
+    return { retriedCount: data?.length || 0 }
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : 'Unknown error' }
+  }
+}
