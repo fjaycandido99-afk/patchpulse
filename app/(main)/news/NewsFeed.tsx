@@ -127,9 +127,9 @@ function TopStoryCard({ story, isPrimary = false }: { story: TopStory; isPrimary
   return (
     <Link
       href={`/news/${story.id}`}
-      className="group relative overflow-hidden rounded-2xl border border-white/10 bg-black/40 block"
+      className="group relative overflow-hidden rounded-2xl border border-white/10 bg-black/40 block h-full"
     >
-      <div className={`relative ${isPrimary ? 'aspect-[16/9] sm:aspect-[21/9]' : 'aspect-[16/9]'}`}>
+      <div className={`relative h-full ${isPrimary ? 'aspect-[16/9] sm:aspect-[21/9]' : 'aspect-[16/9]'}`}>
         {heroImage ? (
           <SafeImage
             src={heroImage}
@@ -265,12 +265,12 @@ export function NewsFeed({ news, topStories, includeRumors }: NewsFeedProps) {
               <TopStoryCard story={topStories[0]} isPrimary />
             </div>
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="animate-soft-entry">
-                <TopStoryCard story={topStories[0]} isPrimary />
+            <div className="grid gap-4 sm:grid-cols-2 auto-rows-fr">
+              <div className="animate-soft-entry h-full">
+                <TopStoryCard story={topStories[0]} />
               </div>
               {topStories[1] && (
-                <div className="animate-soft-entry" style={{ animationDelay: '50ms' }}>
+                <div className="animate-soft-entry h-full" style={{ animationDelay: '50ms' }}>
                   <TopStoryCard story={topStories[1]} />
                 </div>
               )}
@@ -294,11 +294,11 @@ export function NewsFeed({ news, topStories, includeRumors }: NewsFeedProps) {
       </div>
 
       {/* News grid - larger vertical cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 auto-rows-fr">
         {filteredNews.map((item, index) => (
           <div
             key={item.id}
-            className="animate-soft-entry"
+            className="animate-soft-entry h-full"
             style={{ animationDelay: `${index * 30}ms` }}
           >
             <MediaCard
