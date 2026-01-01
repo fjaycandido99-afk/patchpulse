@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Sparkles, Clock, Gamepad2, Brain, ChevronRight, Loader2, Zap, Calendar, X } from 'lucide-react'
+import { Sparkles, Clock, Gamepad2, Brain, ChevronRight, Loader2, Zap, Calendar, X, TrendingUp, Minus, TrendingDown, AlertTriangle } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 
@@ -15,6 +15,8 @@ type Recommendation = {
   recommendation_type: 'return' | 'start' | 'finish' | 'discover'
   factors: string[]
   why_now: string | null
+  what_youd_miss?: string | null
+  momentum?: 'rising' | 'stable' | 'cooling'
   recent_patch: {
     title: string
     published_at: string
@@ -43,10 +45,16 @@ const TIME_OPTIONS = [
 ]
 
 const TYPE_LABELS = {
-  return: { label: 'Return to', color: 'text-blue-400' },
-  start: { label: 'Start', color: 'text-green-400' },
-  finish: { label: 'Finish', color: 'text-purple-400' },
-  discover: { label: 'Discover', color: 'text-amber-400' },
+  return: { label: 'Return to', color: 'text-blue-400', bg: 'bg-blue-500/20' },
+  start: { label: 'Start', color: 'text-green-400', bg: 'bg-green-500/20' },
+  finish: { label: 'Finish', color: 'text-purple-400', bg: 'bg-purple-500/20' },
+  discover: { label: 'Discover', color: 'text-amber-400', bg: 'bg-amber-500/20' },
+}
+
+const MOMENTUM_CONFIG = {
+  rising: { icon: TrendingUp, color: 'text-green-400', bg: 'bg-green-500/20', label: 'Rising', glow: 'shadow-green-500/20' },
+  stable: { icon: Minus, color: 'text-blue-400', bg: 'bg-blue-500/20', label: 'Stable', glow: '' },
+  cooling: { icon: TrendingDown, color: 'text-zinc-400', bg: 'bg-zinc-500/20', label: 'Cooling', glow: '' },
 }
 
 export function PlayRecommendations() {
@@ -203,89 +211,132 @@ export function PlayRecommendations() {
             </div>
           )}
 
-          {visibleRecommendations.map((rec, i) => (
-            <div key={rec.game_id} className="relative group">
-              <Link
-                href={`/games/${rec.slug || rec.game_id}`}
-                className="block rounded-lg bg-muted/50 hover:bg-muted transition-colors overflow-hidden"
-              >
-                <div className="flex gap-3 p-3">
-                  {/* Game Cover */}
-                  <div className="relative flex-shrink-0 w-16 h-20 rounded-md overflow-hidden bg-zinc-800">
-                    {rec.cover_url ? (
-                      <Image
-                        src={rec.cover_url}
-                        alt={rec.game_name}
-                        fill
-                        className="object-cover"
-                        sizes="64px"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-zinc-600">
-                        <Gamepad2 className="w-6 h-6" />
-                      </div>
-                    )}
-                    {/* Rank badge */}
-                    <div className="absolute -top-1 -left-1 w-6 h-6 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-xs shadow-lg">
-                      {i + 1}
-                    </div>
-                  </div>
+          {visibleRecommendations.map((rec, i) => {
+            const momentum = rec.momentum || 'stable'
+            const momentumConfig = MOMENTUM_CONFIG[momentum]
+            const MomentumIcon = momentumConfig.icon
+            const isHot = momentum === 'rising' || rec.recent_patch?.is_major
 
-                  {/* Content */}
-                  <div className="flex-1 min-w-0 pr-6">
-                    <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <span className={`text-xs font-medium ${TYPE_LABELS[rec.recommendation_type].color}`}>
-                        {TYPE_LABELS[rec.recommendation_type].label}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {rec.match_score}% match
-                      </span>
-                      {rec.progress > 0 && (
-                        <span className="text-xs text-muted-foreground">
-                          · {rec.progress}% complete
-                        </span>
+            return (
+              <div key={rec.game_id} className="relative group">
+                <Link
+                  href={`/games/${rec.slug || rec.game_id}`}
+                  className={`block rounded-xl border transition-all overflow-hidden ${
+                    isHot
+                      ? 'border-primary/30 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent hover:border-primary/50 shadow-lg shadow-primary/5'
+                      : 'border-border bg-muted/30 hover:bg-muted/50 hover:border-border/80'
+                  }`}
+                >
+                  <div className="flex gap-4 p-4">
+                    {/* Game Cover - Larger with glow */}
+                    <div className={`relative flex-shrink-0 w-20 h-28 rounded-lg overflow-hidden bg-zinc-800 ${isHot ? 'ring-2 ring-primary/30 shadow-lg shadow-primary/20' : 'ring-1 ring-white/10'}`}>
+                      {rec.cover_url ? (
+                        <Image
+                          src={rec.cover_url}
+                          alt={rec.game_name}
+                          fill
+                          className="object-cover"
+                          sizes="80px"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-zinc-600">
+                          <Gamepad2 className="w-8 h-8" />
+                        </div>
+                      )}
+                      {/* Rank badge */}
+                      <div className="absolute -top-1 -left-1 w-7 h-7 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm shadow-lg">
+                        {i + 1}
+                      </div>
+                      {/* Momentum indicator on cover */}
+                      {isHot && (
+                        <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-green-500 flex items-center justify-center shadow-lg animate-pulse">
+                          <TrendingUp className="w-3.5 h-3.5 text-white" />
+                        </div>
                       )}
                     </div>
-                    <h4 className="font-medium truncate">{rec.game_name}</h4>
-                    <p className="text-sm text-muted-foreground mt-0.5 line-clamp-2">{rec.reason}</p>
 
-                    {/* Why Now - the key selling point */}
-                    {rec.why_now && (
-                      <div className="mt-2 flex items-start gap-1.5 text-xs text-primary">
-                        <Zap className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
-                        <span className="font-medium">{rec.why_now}</span>
-                      </div>
-                    )}
-
-                    {/* Patch indicator */}
-                    {rec.recent_patch && (
-                      <div className="mt-1.5 flex items-center gap-1.5 text-xs text-amber-400">
-                        <Calendar className="w-3 h-3" />
-                        <span className={rec.recent_patch.is_major ? 'font-medium' : ''}>
-                          {rec.recent_patch.is_major ? '🔥 ' : ''}
-                          {rec.recent_patch.title}
+                    {/* Content */}
+                    <div className="flex-1 min-w-0 pr-6">
+                      {/* Signal Chips Row */}
+                      <div className="flex items-center gap-2 mb-2 flex-wrap">
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${TYPE_LABELS[rec.recommendation_type].bg} ${TYPE_LABELS[rec.recommendation_type].color}`}>
+                          {TYPE_LABELS[rec.recommendation_type].label}
                         </span>
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs ${momentumConfig.bg} ${momentumConfig.color}`}>
+                          <MomentumIcon className="w-3 h-3" />
+                          {momentumConfig.label}
+                        </span>
+                        {rec.recent_patch && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-amber-500/20 text-amber-400">
+                            <Calendar className="w-3 h-3" />
+                            Patch
+                          </span>
+                        )}
                       </div>
-                    )}
-                  </div>
-                </div>
-              </Link>
 
-              {/* Dismiss button */}
-              <button
-                onClick={(e) => handleDismiss(rec.game_id, e)}
-                disabled={dismissingId === rec.game_id}
-                className="absolute top-2 right-2 p-1.5 rounded-full bg-zinc-800/80 text-zinc-400 opacity-0 group-hover:opacity-100 hover:bg-zinc-700 hover:text-zinc-200 transition-all disabled:opacity-50"
-                title="Not interested"
-              >
-                {dismissingId === rec.game_id ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  <X className="w-3.5 h-3.5" />
-                )}
-              </button>
-            </div>
-          ))}
+                      <h4 className="font-semibold text-lg truncate">{rec.game_name}</h4>
+
+                      {rec.progress > 0 && (
+                        <div className="flex items-center gap-2 mt-1">
+                          <div className="flex-1 h-1.5 bg-zinc-700 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-primary rounded-full transition-all"
+                              style={{ width: `${rec.progress}%` }}
+                            />
+                          </div>
+                          <span className="text-xs text-muted-foreground">{rec.progress}%</span>
+                        </div>
+                      )}
+
+                      <p className="text-sm text-muted-foreground mt-1.5 line-clamp-2">{rec.reason}</p>
+
+                      {/* Why Now - the key selling point */}
+                      {rec.why_now && (
+                        <div className="mt-3 p-2 rounded-lg bg-primary/10 border border-primary/20">
+                          <div className="flex items-start gap-2 text-sm">
+                            <Zap className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+                            <span className="font-medium text-primary">{rec.why_now}</span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* What You'd Miss */}
+                      {rec.what_youd_miss && (
+                        <div className="mt-2 flex items-start gap-2 text-xs text-amber-400">
+                          <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+                          <span>{rec.what_youd_miss}</span>
+                        </div>
+                      )}
+
+                      {/* Patch indicator */}
+                      {rec.recent_patch && (
+                        <div className="mt-2 text-xs text-muted-foreground">
+                          <span className={rec.recent_patch.is_major ? 'text-amber-400 font-medium' : ''}>
+                            {rec.recent_patch.is_major ? '🔥 Major: ' : ''}
+                            {rec.recent_patch.title}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </Link>
+
+                {/* Dismiss button */}
+                <button
+                  onClick={(e) => handleDismiss(rec.game_id, e)}
+                  disabled={dismissingId === rec.game_id}
+                  className="absolute top-3 right-3 p-1.5 rounded-full bg-zinc-800/80 text-zinc-400 opacity-0 group-hover:opacity-100 hover:bg-zinc-700 hover:text-zinc-200 transition-all disabled:opacity-50"
+                  title="Not interested"
+                >
+                  {dismissingId === rec.game_id ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <X className="w-3.5 h-3.5" />
+                  )}
+                </button>
+              </div>
+            )
+          })}
         </div>
       )}
     </div>

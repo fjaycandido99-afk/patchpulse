@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Newspaper, Loader2, ChevronDown, ChevronUp, Sparkles, Gamepad2 } from 'lucide-react'
+import { Newspaper, Loader2, ChevronDown, ChevronUp, Sparkles, Gamepad2, Zap, AlertCircle, TrendingUp, Radio } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 
@@ -12,6 +12,8 @@ type DigestHighlight = {
   game_slug: string
   game_cover_url: string | null
   tldr: string
+  why_it_matters?: string | null
+  is_early_signal?: boolean
   importance: 'high' | 'medium' | 'low'
   category: string
 }
@@ -33,9 +35,9 @@ type DigestResult = {
 }
 
 const IMPORTANCE_STYLES = {
-  high: { border: 'border-l-primary', bg: 'bg-primary/5', label: 'Important', color: 'text-primary' },
-  medium: { border: 'border-l-amber-500', bg: 'bg-amber-500/5', label: 'Notable', color: 'text-amber-400' },
-  low: { border: 'border-l-zinc-500', bg: 'bg-zinc-500/5', label: '', color: 'text-zinc-400' },
+  high: { border: 'border-l-primary', bg: 'bg-gradient-to-r from-primary/10 to-transparent', label: 'High Impact', color: 'text-primary', icon: Zap },
+  medium: { border: 'border-l-amber-500', bg: 'bg-gradient-to-r from-amber-500/10 to-transparent', label: 'Notable', color: 'text-amber-400', icon: AlertCircle },
+  low: { border: 'border-l-zinc-500', bg: 'bg-zinc-800/30', label: '', color: 'text-zinc-400', icon: null },
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -99,11 +101,11 @@ export function NewsDigest() {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-            <Newspaper className="w-5 h-5 text-primary" />
+            <Radio className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <h3 className="font-semibold">News Digest</h3>
-            <p className="text-sm text-muted-foreground">AI-curated news for your games</p>
+            <h3 className="font-semibold">Early Signal Feed</h3>
+            <p className="text-sm text-muted-foreground">News ranked by impact, not recency</p>
           </div>
         </div>
 
@@ -155,49 +157,85 @@ export function NewsDigest() {
           {/* Highlights */}
           {digest.highlights.length > 0 && (
             <div>
-              <h4 className="text-sm font-medium text-muted-foreground mb-3">Top Stories</h4>
+              <h4 className="text-sm font-medium text-muted-foreground mb-3">Priority Signals</h4>
               <div className="space-y-3">
                 {digest.highlights.map((h) => {
                   const style = IMPORTANCE_STYLES[h.importance]
+                  const ImportanceIcon = style.icon
                   return (
                     <Link
                       key={h.news_id}
                       href={`/news/${h.news_id}`}
-                      className={`block rounded-lg ${style.bg} hover:bg-muted/80 transition-colors overflow-hidden`}
+                      className={`block rounded-xl border transition-all overflow-hidden ${
+                        h.importance === 'high'
+                          ? 'border-primary/30 hover:border-primary/50'
+                          : 'border-border hover:border-border/80'
+                      } ${style.bg}`}
                     >
                       <div className="flex gap-3 p-3">
                         {/* Game Cover */}
-                        <div className="relative flex-shrink-0 w-12 h-16 rounded-md overflow-hidden bg-zinc-800">
+                        <div className={`relative flex-shrink-0 w-14 h-18 rounded-lg overflow-hidden bg-zinc-800 ${
+                          h.importance === 'high' ? 'ring-2 ring-primary/30' : 'ring-1 ring-white/10'
+                        }`}>
                           {h.game_cover_url && h.game_cover_url.length > 0 ? (
                             <Image
                               src={h.game_cover_url}
                               alt={h.game_name || 'Game'}
                               fill
                               className="object-cover"
-                              sizes="48px"
+                              sizes="56px"
                             />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center text-zinc-600">
                               <Gamepad2 className="w-5 h-5" />
                             </div>
                           )}
+                          {/* Early Signal Badge */}
+                          {h.is_early_signal && (
+                            <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center shadow-lg">
+                              <TrendingUp className="w-3 h-3 text-white" />
+                            </div>
+                          )}
                         </div>
 
                         {/* Content */}
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 text-xs mb-1 flex-wrap">
-                            <span className="text-muted-foreground">{h.game_name}</span>
-                            <span className="px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground text-[10px] uppercase">
+                          {/* Signal Chips */}
+                          <div className="flex items-center gap-2 text-xs mb-1.5 flex-wrap">
+                            <span className="text-muted-foreground font-medium">{h.game_name}</span>
+                            <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] uppercase ${
+                              h.category === 'update' ? 'bg-amber-500/20 text-amber-400' :
+                              h.category === 'dlc' ? 'bg-purple-500/20 text-purple-400' :
+                              h.category === 'announcement' ? 'bg-blue-500/20 text-blue-400' :
+                              'bg-muted text-muted-foreground'
+                            }`}>
                               {CATEGORY_LABELS[h.category] || h.category}
                             </span>
-                            {style.label && (
-                              <span className={`text-[10px] font-medium ${style.color}`}>
+                            {style.label && ImportanceIcon && (
+                              <span className={`inline-flex items-center gap-1 text-[10px] font-medium ${style.color}`}>
+                                <ImportanceIcon className="w-3 h-3" />
                                 {style.label}
                               </span>
                             )}
+                            {h.is_early_signal && (
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] bg-blue-500/20 text-blue-400 font-medium">
+                                Early Signal
+                              </span>
+                            )}
                           </div>
-                          <p className="text-sm font-medium line-clamp-2">{h.title}</p>
+
+                          <p className="text-sm font-semibold line-clamp-2">{h.title}</p>
                           <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{h.tldr}</p>
+
+                          {/* Why It Matters */}
+                          {h.why_it_matters && (
+                            <div className="mt-2 p-2 rounded-lg bg-primary/10 border border-primary/20">
+                              <div className="flex items-start gap-1.5 text-xs">
+                                <Sparkles className="w-3.5 h-3.5 text-primary flex-shrink-0 mt-0.5" />
+                                <span className="text-primary font-medium">{h.why_it_matters}</span>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </Link>

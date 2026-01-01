@@ -4,7 +4,8 @@ import { redirect } from 'next/navigation'
 import { getUserPlan } from '@/lib/subscriptions/limits'
 import { PlayRecommendations } from '@/components/ai/PlayRecommendations'
 import { NewsDigest } from '@/components/ai/NewsDigest'
-import { Brain, Crown, Sparkles } from 'lucide-react'
+import { BacklogHealth } from '@/components/ai/BacklogHealth'
+import { Brain, Crown, Sparkles, Zap, Bell, BarChart3 } from 'lucide-react'
 import Link from 'next/link'
 import { ProBadge } from '@/components/ui/ProBadge'
 
@@ -32,7 +33,7 @@ export default async function InsightsPage() {
           {isPro && <ProBadge />}
         </div>
         <p className="mt-2 text-muted-foreground">
-          Personalized gaming intelligence powered by PatchPulse
+          Early signals, smart decisions, and personalized game intelligence
         </p>
       </div>
 
@@ -42,27 +43,39 @@ export default async function InsightsPage() {
             <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mb-4">
               <Brain className="w-8 h-8 text-primary" />
             </div>
-            <h2 className="text-xl font-semibold mb-2">Unlock PatchPulse Insights</h2>
+            <h2 className="text-xl font-semibold mb-2">Know When to Play</h2>
             <p className="text-muted-foreground mb-6">
-              Get personalized recommendations, smart news digests, game sentiment analysis, and more with Pro.
+              Stop guessing. Pro gives you early signals, momentum tracking, and AI-powered timing so you never miss the right moment to jump in.
             </p>
 
-            <div className="grid grid-cols-2 gap-4 w-full mb-6 text-sm">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-primary" />
-                <span>What to Play Next</span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full mb-6 text-sm text-left">
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-white/5">
+                <Sparkles className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                <div>
+                  <span className="font-medium">Why Now Intelligence</span>
+                  <p className="text-xs text-muted-foreground">Know the optimal time to return to any game</p>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-primary" />
-                <span>News Digest</span>
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-white/5">
+                <Sparkles className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                <div>
+                  <span className="font-medium">Momentum Tracking</span>
+                  <p className="text-xs text-muted-foreground">See which games are rising, cooling, or stable</p>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-primary" />
-                <span>Patch Summaries</span>
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-white/5">
+                <Sparkles className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                <div>
+                  <span className="font-medium">Early Signal Feed</span>
+                  <p className="text-xs text-muted-foreground">News ranked by impact, not just recency</p>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-primary" />
-                <span>Sentiment Pulse</span>
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-white/5">
+                <Sparkles className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                <div>
+                  <span className="font-medium">Backlog Health</span>
+                  <p className="text-xs text-muted-foreground">Know when dormant games become active again</p>
+                </div>
               </div>
             </div>
 
@@ -76,37 +89,55 @@ export default async function InsightsPage() {
           </div>
         </div>
       ) : (
-        <div className="grid gap-6 lg:grid-cols-2">
-          {/* What to Play Next */}
-          <div className="lg:col-span-1">
-            <PlayRecommendations />
+        <div className="space-y-6">
+          {/* Main Grid */}
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* What to Play Next */}
+            <div className="lg:col-span-1">
+              <PlayRecommendations />
+            </div>
+
+            {/* News Digest */}
+            <div className="lg:col-span-1">
+              <NewsDigest />
+            </div>
           </div>
 
-          {/* News Digest */}
-          <div className="lg:col-span-1">
-            <NewsDigest />
-          </div>
+          {/* Backlog Health */}
+          <BacklogHealth />
 
-          {/* Quick Tips */}
-          <div className="lg:col-span-2 rounded-xl border border-border bg-card p-4 sm:p-6">
-            <h3 className="font-semibold mb-4">Smart Features Across PatchPulse</h3>
+          {/* Pro Power Tools */}
+          <div className="rounded-xl border border-border bg-card p-4 sm:p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Zap className="w-5 h-5 text-primary" />
+              <h3 className="font-semibold">Pro Power Tools</h3>
+            </div>
             <div className="grid sm:grid-cols-3 gap-4">
-              <div className="p-4 rounded-lg bg-muted/50">
-                <h4 className="font-medium mb-1">Patch Summaries</h4>
+              <div className="p-4 rounded-lg bg-gradient-to-br from-blue-500/10 to-blue-500/5 border border-blue-500/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <BarChart3 className="w-4 h-4 text-blue-400" />
+                  <h4 className="font-medium text-blue-300">Diff Intelligence</h4>
+                </div>
                 <p className="text-sm text-muted-foreground">
-                  View AI summaries on any patch page. We'll tell you what changed and why it matters.
+                  Patch pages show buffs vs nerfs, new mechanics, and whether updates are safe to ignore or must-play.
                 </p>
               </div>
-              <div className="p-4 rounded-lg bg-muted/50">
-                <h4 className="font-medium mb-1">Sentiment Pulse</h4>
+              <div className="p-4 rounded-lg bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 border border-emerald-500/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <Brain className="w-4 h-4 text-emerald-400" />
+                  <h4 className="font-medium text-emerald-300">Sentiment Trends</h4>
+                </div>
                 <p className="text-sm text-muted-foreground">
-                  See community sentiment badges on game pages. Know if now's a good time to jump in.
+                  Game pages show if community mood is improving, declining, or stable after updates.
                 </p>
               </div>
-              <div className="p-4 rounded-lg bg-muted/50">
-                <h4 className="font-medium mb-1">Smart Notifications</h4>
+              <div className="p-4 rounded-lg bg-gradient-to-br from-purple-500/10 to-purple-500/5 border border-purple-500/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <Bell className="w-4 h-4 text-purple-400" />
+                  <h4 className="font-medium text-purple-300">Priority Alerts</h4>
+                </div>
                 <p className="text-sm text-muted-foreground">
-                  We learn what you care about and filter out the noise. Less spam, more signal.
+                  Get notified only for major updates, sentiment flips, or when backlog games heat up again.
                 </p>
               </div>
             </div>

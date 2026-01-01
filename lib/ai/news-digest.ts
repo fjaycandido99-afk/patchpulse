@@ -19,6 +19,8 @@ type DigestHighlight = {
   game_slug: string
   game_cover_url: string | null
   tldr: string
+  why_it_matters: string | null
+  is_early_signal: boolean
   importance: 'high' | 'medium' | 'low'
   category: 'update' | 'dlc' | 'esports' | 'review' | 'announcement' | 'other'
 }
@@ -39,20 +41,28 @@ type DigestResult = {
   total_news: number
 }
 
-const SYSTEM_PROMPT = `You are a gaming news curator creating personalized digests for gamers.
+const SYSTEM_PROMPT = `You are a Pro gaming intelligence analyst creating STRATEGIC news digests.
 
-Your job is to:
-1. Summarize a collection of gaming news into a brief, engaging digest
-2. Identify the most important stories as highlights
-3. Group updates by game with key takeaways
+Your job is to help Pro users gain an ADVANTAGE by surfacing what matters BEFORE it's obvious to everyone.
 
-Be concise and prioritize what gamers actually care about:
-- Major updates and patches
-- New content (DLC, expansions)
-- Important announcements
-- Skip marketing fluff
+For each digest:
+1. Summarize news into actionable intelligence (not just summaries)
+2. Rank highlights by IMPACT on gameplay, not recency
+3. Explain WHY each story matters to actual gameplay
 
-Write in a friendly, conversational tone. The digest should feel like a friend catching you up on what happened.`
+For each highlight provide:
+- "tldr": 1-sentence summary
+- "why_it_matters": How this affects gameplay decisions (e.g., "Fixes progression blockers causing negative reviews", "Meta shift incoming - current builds may become obsolete")
+- "is_early_signal": true if this news isn't widely known yet or represents emerging info
+- "importance": "high" = affects gameplay significantly, "medium" = notable change, "low" = informational only
+
+Prioritize:
+- Patches that fix major issues or change meta
+- Content that has time-limited availability
+- Announcements that change how to play
+- Skip: marketing fluff, minor cosmetic updates, esports results (unless strategy-relevant)
+
+Be direct and strategic. Users pay for ADVANTAGE, not just news summaries.`
 
 /**
  * Generate a news digest from a collection of news items
@@ -88,8 +98,13 @@ ID: ${n.id}
 `).join('\n---\n')}
 
 Return JSON with:
-- summary: 2-3 sentence overview of the ${digestType}'s news
-- highlights: Top 3-5 most important stories with tldr
+- summary: 2-3 sentence strategic overview (what Pro users need to know)
+- highlights: Top 3-5 stories ranked by gameplay IMPACT (not recency), each with:
+  - news_id, title, game_name, tldr
+  - why_it_matters: how this affects gameplay decisions
+  - is_early_signal: true if not widely known yet
+  - importance: high/medium/low
+  - category: update/dlc/announcement/other
 - game_updates: Object with game names as keys, each having update_count, summary, and highlights array`
 
   const result = await generateJSON<DigestResult>(SYSTEM_PROMPT, userPrompt, {
@@ -98,13 +113,15 @@ Return JSON with:
     temperature: 0.5,
   })
 
-  // Enrich highlights with game cover URLs
+  // Enrich highlights with game cover URLs and ensure new fields have defaults
   result.highlights = result.highlights.map(h => {
     const newsItem = newsItems.find(n => n.id === h.news_id)
     return {
       ...h,
       game_slug: newsItem?.game_slug || '',
       game_cover_url: newsItem?.game_cover_url || null,
+      why_it_matters: h.why_it_matters || null,
+      is_early_signal: h.is_early_signal || false,
     }
   })
 
@@ -163,6 +180,8 @@ export async function getUserNewsDigest(
       game_slug: h.game_slug || '',
       game_cover_url: h.game_cover_url || null,
       tldr: h.tldr || '',
+      why_it_matters: h.why_it_matters || null,
+      is_early_signal: h.is_early_signal || false,
       importance: h.importance || 'low',
       category: h.category || 'other',
     }))

@@ -16,6 +16,8 @@ type GameRecommendation = {
   recommendation_type: 'return' | 'start' | 'finish' | 'discover'
   factors: string[]
   why_now: string | null
+  what_youd_miss: string | null
+  momentum: 'rising' | 'stable' | 'cooling'
   recent_patch: {
     title: string
     published_at: string
@@ -30,30 +32,37 @@ type RecommendationResult = {
   message: string
 }
 
-const SYSTEM_PROMPT = `You are a gaming advisor helping players decide what to play from their backlog.
+const SYSTEM_PROMPT = `You are a Pro gaming intelligence advisor helping players make STRATEGIC decisions about what to play.
 
-Given the user's gaming context and backlog, recommend which game(s) they should play.
+Your job is to help users gain an ADVANTAGE by playing the right game at the right time.
+
+Given the user's gaming context and backlog, recommend which game(s) they should play NOW.
 
 Consider:
 - Time available (quick session vs long play)
 - Current mood/preference
 - Progress in each game
-- Recent patches or updates to games
+- Recent patches or updates to games (MAJOR patches = good re-entry point)
 - How long since they last played each game
-- Game completion status
+- Game momentum (is this game "hot" right now?)
 
-For each recommendation:
+For each recommendation provide:
 1. "reason" - WHY this game in a personal, conversational way (1-2 sentences)
-2. "why_now" - A timely hook explaining why NOW is good (e.g., "Just got a major patch fixing bugs", "You haven't touched this in 45 days - perfect time to return", "You're 75% through - one more session to finish!")
-3. "match_score" - How well this matches the user's mood/time (0-100)
+2. "why_now" - A timely, punchy hook explaining why NOW is the optimal moment (e.g., "Patch dropped 3 days ago - perfect re-entry", "Community sentiment just turned positive", "You're 80% through - one session to finish")
+3. "what_youd_miss" - What they'd lose by skipping (e.g., "Limited-time event ends in 5 days", "Meta shift happening now", "Bug fixes make this playable again"). NULL if nothing urgent.
+4. "momentum" - Game's current activity level:
+   - "rising" = Recent patch, active updates, good time to jump in
+   - "stable" = Steady, no major changes
+   - "cooling" = No recent updates, quieting down
+5. "match_score" - How well this matches the user's mood/time (0-100)
 
 Recommendation types:
-- return: Resume a paused game
+- return: Resume a paused game (use when they have progress)
 - start: Begin a game they haven't started
-- finish: Push through to complete a game they're close on
-- discover: Try something new from their backlog
+- finish: Push through to complete (when progress > 70%)
+- discover: Try something different from their backlog
 
-Be encouraging and understand gaming guilt (big backlog anxiety). Keep why_now short and punchy.`
+Be direct and strategic. Users pay for ADVANTAGE, not just suggestions.`
 
 type BacklogGame = {
   game_id: string
@@ -111,13 +120,15 @@ Return JSON:
     {
       "game_name": "string",
       "reason": "personal explanation why this game",
-      "why_now": "timely hook for NOW being the right moment",
+      "why_now": "timely hook for NOW being the optimal moment",
+      "what_youd_miss": "what they lose by skipping (or null if nothing urgent)",
+      "momentum": "rising|stable|cooling",
       "match_score": 0-100,
       "recommendation_type": "return|start|finish|discover",
       "factors": ["factor1", "factor2"]
     }
   ],
-  "message": "brief encouraging message"
+  "message": "brief strategic message"
 }`
 
   const result = await generateJSON<RecommendationResult>(SYSTEM_PROMPT, userPrompt, {
@@ -224,6 +235,8 @@ export async function getPlayRecommendations(
       days_since_played: daysSincePlayed,
       progress: game?.progress || 0,
       why_now: rec.why_now || null,
+      what_youd_miss: rec.what_youd_miss || null,
+      momentum: rec.momentum || 'stable',
     }
   })
 
