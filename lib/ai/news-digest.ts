@@ -6,6 +6,8 @@ type NewsItem = {
   title: string
   summary: string
   game_name: string
+  game_slug: string
+  game_cover_url: string | null
   published_at: string
   source?: string
 }
@@ -14,6 +16,8 @@ type DigestHighlight = {
   news_id: string
   title: string
   game_name: string
+  game_slug: string
+  game_cover_url: string | null
   tldr: string
   importance: 'high' | 'medium' | 'low'
   category: 'update' | 'dlc' | 'esports' | 'review' | 'announcement' | 'other'
@@ -21,6 +25,8 @@ type DigestHighlight = {
 
 type GameUpdate = {
   game_name: string
+  game_slug: string
+  game_cover_url: string | null
   update_count: number
   summary: string
   highlights: string[]
@@ -87,10 +93,32 @@ Return JSON with:
 - game_updates: Object with game names as keys, each having update_count, summary, and highlights array`
 
   const result = await generateJSON<DigestResult>(SYSTEM_PROMPT, userPrompt, {
-    
+
     maxTokens: 2000,
     temperature: 0.5,
   })
+
+  // Enrich highlights with game cover URLs
+  result.highlights = result.highlights.map(h => {
+    const newsItem = newsItems.find(n => n.id === h.news_id)
+    return {
+      ...h,
+      game_slug: newsItem?.game_slug || '',
+      game_cover_url: newsItem?.game_cover_url || null,
+    }
+  })
+
+  // Enrich game_updates with cover URLs
+  const enrichedGameUpdates: Record<string, GameUpdate> = {}
+  for (const [gameKey, update] of Object.entries(result.game_updates)) {
+    const newsItem = newsItems.find(n => n.game_name === update.game_name)
+    enrichedGameUpdates[gameKey] = {
+      ...update,
+      game_slug: newsItem?.game_slug || '',
+      game_cover_url: newsItem?.game_cover_url || null,
+    }
+  }
+  result.game_updates = enrichedGameUpdates
 
   result.total_news = newsItems.length
   return result
@@ -160,7 +188,7 @@ export async function getUserNewsDigest(
       summary,
       published_at,
       source_name,
-      games!inner(name)
+      games!inner(name, slug, cover_url)
     `)
     .in('game_id', gameIds)
     .gte('published_at', startDate.toISOString())
@@ -176,14 +204,20 @@ export async function getUserNewsDigest(
     }
   }
 
-  const newsItems: NewsItem[] = news.map(n => ({
-    id: n.id,
-    title: n.title,
-    summary: n.summary || '',
-    game_name: (n.games as unknown as { name: string }).name,
-    published_at: n.published_at,
-    source: n.source_name || undefined,
-  }))
+  type GameInfo = { name: string; slug: string; cover_url: string | null }
+  const newsItems: NewsItem[] = news.map(n => {
+    const game = n.games as unknown as GameInfo
+    return {
+      id: n.id,
+      title: n.title,
+      summary: n.summary || '',
+      game_name: game.name,
+      game_slug: game.slug,
+      game_cover_url: game.cover_url,
+      published_at: n.published_at,
+      source: n.source_name || undefined,
+    }
+  })
 
   const digest = await generateNewsDigest(newsItems, digestType)
 

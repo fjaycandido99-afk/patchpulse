@@ -1,16 +1,27 @@
 'use client'
 
 import { useState } from 'react'
-import { Sparkles, Clock, Gamepad2, Brain, ChevronRight, Loader2 } from 'lucide-react'
+import { Sparkles, Clock, Gamepad2, Brain, ChevronRight, Loader2, Zap, Calendar, X } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
 
 type Recommendation = {
   game_id: string
   game_name: string
+  slug: string
+  cover_url: string | null
   reason: string
   match_score: number
   recommendation_type: 'return' | 'start' | 'finish' | 'discover'
   factors: string[]
+  why_now: string | null
+  recent_patch: {
+    title: string
+    published_at: string
+    is_major: boolean
+  } | null
+  days_since_played: number | null
+  progress: number
 }
 
 type RecommendationResult = {
@@ -44,6 +55,8 @@ export function PlayRecommendations() {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<RecommendationResult | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set())
+  const [dismissingId, setDismissingId] = useState<string | null>(null)
 
   const fetchRecommendations = async () => {
     setLoading(true)
@@ -68,6 +81,33 @@ export function PlayRecommendations() {
       setLoading(false)
     }
   }
+
+  const handleDismiss = async (gameId: string, e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+
+    setDismissingId(gameId)
+
+    try {
+      await fetch('/api/ai/recommendations/dismiss', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ game_id: gameId, reason: 'not_interested' }),
+      })
+
+      // Add to local dismissed set for immediate UI feedback
+      setDismissedIds(prev => new Set([...prev, gameId]))
+    } catch (err) {
+      console.error('Failed to dismiss:', err)
+    } finally {
+      setDismissingId(null)
+    }
+  }
+
+  // Filter out dismissed recommendations
+  const visibleRecommendations = result?.recommendations.filter(
+    rec => !dismissedIds.has(rec.game_id)
+  ) || []
 
   return (
     <div className="rounded-xl border border-border bg-card p-4 sm:p-6">
@@ -147,30 +187,100 @@ export function PlayRecommendations() {
         <div className="mt-6 space-y-4">
           <p className="text-sm text-muted-foreground italic">{result.message}</p>
 
-          {result.recommendations.map((rec, i) => (
-            <Link
-              key={rec.game_id}
-              href={`/games/${rec.game_id}`}
-              className="block p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className={`text-xs font-medium ${TYPE_LABELS[rec.recommendation_type].color}`}>
-                      {TYPE_LABELS[rec.recommendation_type].label}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {rec.match_score}% match
-                    </span>
+          {visibleRecommendations.length === 0 && dismissedIds.size > 0 && (
+            <div className="text-center py-6 text-muted-foreground">
+              <p className="text-sm">You dismissed all recommendations.</p>
+              <button
+                onClick={() => setDismissedIds(new Set())}
+                className="mt-2 text-xs text-primary hover:text-primary/80"
+              >
+                Reset dismissals
+              </button>
+            </div>
+          )}
+
+          {visibleRecommendations.map((rec, i) => (
+            <div key={rec.game_id} className="relative group">
+              <Link
+                href={`/games/${rec.slug || rec.game_id}`}
+                className="block rounded-lg bg-muted/50 hover:bg-muted transition-colors overflow-hidden"
+              >
+                <div className="flex gap-3 p-3">
+                  {/* Game Cover */}
+                  <div className="relative flex-shrink-0 w-16 h-20 rounded-md overflow-hidden bg-zinc-800">
+                    {rec.cover_url ? (
+                      <Image
+                        src={rec.cover_url}
+                        alt={rec.game_name}
+                        fill
+                        className="object-cover"
+                        sizes="64px"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-zinc-600">
+                        <Gamepad2 className="w-6 h-6" />
+                      </div>
+                    )}
+                    {/* Rank badge */}
+                    <div className="absolute -top-1 -left-1 w-6 h-6 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-xs shadow-lg">
+                      {i + 1}
+                    </div>
                   </div>
-                  <h4 className="font-medium">{rec.game_name}</h4>
-                  <p className="text-sm text-muted-foreground mt-1">{rec.reason}</p>
+
+                  {/* Content */}
+                  <div className="flex-1 min-w-0 pr-6">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <span className={`text-xs font-medium ${TYPE_LABELS[rec.recommendation_type].color}`}>
+                        {TYPE_LABELS[rec.recommendation_type].label}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {rec.match_score}% match
+                      </span>
+                      {rec.progress > 0 && (
+                        <span className="text-xs text-muted-foreground">
+                          · {rec.progress}% complete
+                        </span>
+                      )}
+                    </div>
+                    <h4 className="font-medium truncate">{rec.game_name}</h4>
+                    <p className="text-sm text-muted-foreground mt-0.5 line-clamp-2">{rec.reason}</p>
+
+                    {/* Why Now - the key selling point */}
+                    {rec.why_now && (
+                      <div className="mt-2 flex items-start gap-1.5 text-xs text-primary">
+                        <Zap className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+                        <span className="font-medium">{rec.why_now}</span>
+                      </div>
+                    )}
+
+                    {/* Patch indicator */}
+                    {rec.recent_patch && (
+                      <div className="mt-1.5 flex items-center gap-1.5 text-xs text-amber-400">
+                        <Calendar className="w-3 h-3" />
+                        <span className={rec.recent_patch.is_major ? 'font-medium' : ''}>
+                          {rec.recent_patch.is_major ? '🔥 ' : ''}
+                          {rec.recent_patch.title}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
-                  {i + 1}
-                </div>
-              </div>
-            </Link>
+              </Link>
+
+              {/* Dismiss button */}
+              <button
+                onClick={(e) => handleDismiss(rec.game_id, e)}
+                disabled={dismissingId === rec.game_id}
+                className="absolute top-2 right-2 p-1.5 rounded-full bg-zinc-800/80 text-zinc-400 opacity-0 group-hover:opacity-100 hover:bg-zinc-700 hover:text-zinc-200 transition-all disabled:opacity-50"
+                title="Not interested"
+              >
+                {dismissingId === rec.game_id ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <X className="w-3.5 h-3.5" />
+                )}
+              </button>
+            </div>
           ))}
         </div>
       )}

@@ -1,12 +1,16 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Newspaper, Loader2, ChevronDown, ChevronUp, Sparkles } from 'lucide-react'
+import { Newspaper, Loader2, ChevronDown, ChevronUp, Sparkles, Gamepad2 } from 'lucide-react'
+import Link from 'next/link'
+import Image from 'next/image'
 
 type DigestHighlight = {
   news_id: string
   title: string
   game_name: string
+  game_slug: string
+  game_cover_url: string | null
   tldr: string
   importance: 'high' | 'medium' | 'low'
   category: string
@@ -14,6 +18,8 @@ type DigestHighlight = {
 
 type GameUpdate = {
   game_name: string
+  game_slug: string
+  game_cover_url: string | null
   update_count: number
   summary: string
   highlights: string[]
@@ -27,9 +33,18 @@ type DigestResult = {
 }
 
 const IMPORTANCE_STYLES = {
-  high: 'border-l-primary',
-  medium: 'border-l-amber-500',
-  low: 'border-l-zinc-500',
+  high: { border: 'border-l-primary', bg: 'bg-primary/5', label: 'Important', color: 'text-primary' },
+  medium: { border: 'border-l-amber-500', bg: 'bg-amber-500/5', label: 'Notable', color: 'text-amber-400' },
+  low: { border: 'border-l-zinc-500', bg: 'bg-zinc-500/5', label: '', color: 'text-zinc-400' },
+}
+
+const CATEGORY_LABELS: Record<string, string> = {
+  update: 'Update',
+  dlc: 'DLC',
+  esports: 'Esports',
+  review: 'Review',
+  announcement: 'Announcement',
+  other: 'News',
 }
 
 export function NewsDigest() {
@@ -135,21 +150,53 @@ export function NewsDigest() {
           {digest.highlights.length > 0 && (
             <div>
               <h4 className="text-sm font-medium text-muted-foreground mb-3">Top Stories</h4>
-              <div className="space-y-2">
-                {digest.highlights.map((h) => (
-                  <div
-                    key={h.news_id}
-                    className={`pl-3 py-2 border-l-2 ${IMPORTANCE_STYLES[h.importance]}`}
-                  >
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-                      <span>{h.game_name}</span>
-                      <span>•</span>
-                      <span className="capitalize">{h.category}</span>
-                    </div>
-                    <p className="text-sm font-medium">{h.title}</p>
-                    <p className="text-sm text-muted-foreground mt-1">{h.tldr}</p>
-                  </div>
-                ))}
+              <div className="space-y-3">
+                {digest.highlights.map((h) => {
+                  const style = IMPORTANCE_STYLES[h.importance]
+                  return (
+                    <Link
+                      key={h.news_id}
+                      href={`/news/${h.news_id}`}
+                      className={`block rounded-lg ${style.bg} hover:bg-muted/80 transition-colors overflow-hidden`}
+                    >
+                      <div className="flex gap-3 p-3">
+                        {/* Game Cover */}
+                        <div className="relative flex-shrink-0 w-12 h-16 rounded-md overflow-hidden bg-zinc-800">
+                          {h.game_cover_url ? (
+                            <Image
+                              src={h.game_cover_url}
+                              alt={h.game_name}
+                              fill
+                              className="object-cover"
+                              sizes="48px"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-zinc-600">
+                              <Gamepad2 className="w-5 h-5" />
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 text-xs mb-1 flex-wrap">
+                            <span className="text-muted-foreground">{h.game_name}</span>
+                            <span className="px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground text-[10px] uppercase">
+                              {CATEGORY_LABELS[h.category] || h.category}
+                            </span>
+                            {style.label && (
+                              <span className={`text-[10px] font-medium ${style.color}`}>
+                                {style.label}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm font-medium line-clamp-2">{h.title}</p>
+                          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{h.tldr}</p>
+                        </div>
+                      </div>
+                    </Link>
+                  )
+                })}
               </div>
             </div>
           )}
@@ -160,26 +207,43 @@ export function NewsDigest() {
               <h4 className="text-sm font-medium text-muted-foreground mb-3">By Game</h4>
               <div className="space-y-2">
                 {Object.entries(digest.game_updates).map(([game, update]) => (
-                  <div key={game} className="rounded-lg bg-muted/50">
+                  <div key={game} className="rounded-lg bg-muted/50 overflow-hidden">
                     <button
                       onClick={() => toggleGame(game)}
-                      className="w-full flex items-center justify-between p-3 text-left hover:bg-muted transition-colors rounded-lg"
+                      className="w-full flex items-center gap-3 p-3 text-left hover:bg-muted transition-colors"
                     >
-                      <div>
-                        <span className="font-medium">{update.game_name}</span>
-                        <span className="text-sm text-muted-foreground ml-2">
+                      {/* Game Cover */}
+                      <div className="relative flex-shrink-0 w-10 h-12 rounded overflow-hidden bg-zinc-800">
+                        {update.game_cover_url ? (
+                          <Image
+                            src={update.game_cover_url}
+                            alt={update.game_name}
+                            fill
+                            className="object-cover"
+                            sizes="40px"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-zinc-600">
+                            <Gamepad2 className="w-4 h-4" />
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <span className="font-medium truncate block">{update.game_name}</span>
+                        <span className="text-xs text-muted-foreground">
                           {update.update_count} update{update.update_count !== 1 ? 's' : ''}
                         </span>
                       </div>
                       {expandedGames.has(game) ? (
-                        <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                        <ChevronUp className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                       ) : (
-                        <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                        <ChevronDown className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                       )}
                     </button>
 
                     {expandedGames.has(game) && (
-                      <div className="px-3 pb-3">
+                      <div className="px-3 pb-3 ml-[52px]">
                         <p className="text-sm text-muted-foreground mb-2">{update.summary}</p>
                         {update.highlights.length > 0 && (
                           <ul className="text-sm space-y-1">
@@ -190,6 +254,14 @@ export function NewsDigest() {
                               </li>
                             ))}
                           </ul>
+                        )}
+                        {update.game_slug && (
+                          <Link
+                            href={`/games/${update.game_slug}`}
+                            className="inline-block mt-2 text-xs text-primary hover:text-primary/80"
+                          >
+                            View game →
+                          </Link>
                         )}
                       </div>
                     )}

@@ -13,6 +13,7 @@ import { StoreLinkButtons } from '@/components/ui/StoreLinkButtons'
 import { SteamStats } from '@/components/library/SteamStats'
 import { GameManagement } from '@/components/backlog/GameManagement'
 import { StudioInfoSection } from '@/components/games/StudioInfoSection'
+import { SentimentPulse } from '@/components/ai/SentimentPulse'
 
 // Fix #3: Image source priority helper
 function getHeroImage(game: { hero_url?: string | null; cover_url: string | null }, seasonal: { heroUrl: string | null; coverUrl: string | null }): string | null {
@@ -376,6 +377,11 @@ export default async function BacklogDetailPage({
             </div>
           </div>
 
+          {/* Sentiment Pulse - Community Mood (Pro) */}
+          <Suspense fallback={null}>
+            <SentimentPulse gameId={gameId} />
+          </Suspense>
+
           {/* Studio Info Section */}
           <StudioInfoSection
             developer={game.developer}
@@ -568,6 +574,11 @@ export default async function BacklogDetailPage({
             </div>
           </div>
         </div>
+
+        {/* Sentiment Pulse - Community Mood (Pro) */}
+        <Suspense fallback={null}>
+          <SentimentPulse gameId={gameId} />
+        </Suspense>
 
         {/* Studio Info Section */}
         <StudioInfoSection
