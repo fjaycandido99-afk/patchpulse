@@ -35,6 +35,8 @@ type AIGameData = {
   genre: string | null
   is_live_service: boolean
   description: string | null
+  studio_type: 'AAA' | 'AA' | 'indie' | null
+  similar_games: string[] | null
   confidence: number
 }
 
@@ -66,6 +68,8 @@ Search for this game and return its information. Look for:
 6. Developer and Publisher
 7. Genre
 8. Whether it's a live service game (ongoing updates/seasons)
+9. Studio type (AAA = major publisher like EA/Ubisoft/Sony, AA = mid-tier, indie = independent)
+10. Similar games (3-5 games with similar gameplay/genre)
 
 Return JSON with this schema:
 {
@@ -81,6 +85,8 @@ Return JSON with this schema:
   "genre": "string or null (primary genre)",
   "is_live_service": "boolean",
   "description": "string or null (1-2 sentence description)",
+  "studio_type": "string or null ('AAA', 'AA', or 'indie')",
+  "similar_games": ["string array of 3-5 similar game titles"],
   "confidence": "float 0-1 (how confident you are this is the right game and data is accurate)"
 }
 
@@ -319,8 +325,12 @@ export async function discoverGame(searchQuery: string): Promise<GameDiscoveryRe
         brand_color: aiData.brand_color,
         platforms: aiData.platforms,
         release_date: aiData.release_date,
+        developer: aiData.developer,
+        publisher: aiData.publisher,
         genre: aiData.genre,
         is_live_service: aiData.is_live_service,
+        studio_type: aiData.studio_type,
+        similar_games: aiData.similar_games,
         steam_app_id: steamAppId,
         support_tier: 'partial', // New AI-discovered games start as partial support
         mvp_eligible: false,
@@ -399,6 +409,99 @@ function calculateSimilarity(str1: string, str2: string): number {
   }
 
   return (longer.length - costs[s2.length]) / longer.length
+}
+
+// ============================================================================
+// ENRICH EXISTING GAME (backfill missing data)
+// ============================================================================
+
+export async function enrichGameData(gameId: string): Promise<{
+  success: boolean
+  updated: boolean
+  error?: string
+}> {
+  const supabase = createAdminClient()
+
+  // Get the game
+  const { data: game, error: fetchError } = await supabase
+    .from('games')
+    .select('id, name, developer, publisher, studio_type, similar_games')
+    .eq('id', gameId)
+    .single()
+
+  if (fetchError || !game) {
+    return { success: false, updated: false, error: 'Game not found' }
+  }
+
+  // Skip if already has data
+  if (game.developer && game.publisher && game.studio_type && game.similar_games?.length) {
+    return { success: true, updated: false }
+  }
+
+  try {
+    const aiData = await discoverWithAI(game.name)
+
+    if (aiData.confidence < 0.5) {
+      return { success: false, updated: false, error: 'Low confidence match' }
+    }
+
+    // Only update missing fields
+    const updates: Record<string, unknown> = {}
+    if (!game.developer && aiData.developer) updates.developer = aiData.developer
+    if (!game.publisher && aiData.publisher) updates.publisher = aiData.publisher
+    if (!game.studio_type && aiData.studio_type) updates.studio_type = aiData.studio_type
+    if (!game.similar_games?.length && aiData.similar_games?.length) updates.similar_games = aiData.similar_games
+
+    if (Object.keys(updates).length === 0) {
+      return { success: true, updated: false }
+    }
+
+    const { error: updateError } = await supabase
+      .from('games')
+      .update(updates)
+      .eq('id', gameId)
+
+    if (updateError) {
+      return { success: false, updated: false, error: updateError.message }
+    }
+
+    return { success: true, updated: true }
+  } catch (error) {
+    return { success: false, updated: false, error: error instanceof Error ? error.message : 'Unknown error' }
+  }
+}
+
+// Batch enrich games missing data
+export async function enrichMissingGameData(limit = 20): Promise<{
+  processed: number
+  updated: number
+  errors: number
+}> {
+  const supabase = createAdminClient()
+
+  // Find games missing developer/publisher/similar_games
+  const { data: games } = await supabase
+    .from('games')
+    .select('id, name')
+    .or('developer.is.null,publisher.is.null,similar_games.is.null')
+    .limit(limit)
+
+  if (!games || games.length === 0) {
+    return { processed: 0, updated: 0, errors: 0 }
+  }
+
+  let updated = 0
+  let errors = 0
+
+  for (const game of games) {
+    const result = await enrichGameData(game.id)
+    if (result.updated) updated++
+    if (!result.success) errors++
+    // Rate limit
+    await new Promise(r => setTimeout(r, 1000))
+  }
+
+  return { processed: games.length, updated, errors }
 }
 
 // ============================================================================
