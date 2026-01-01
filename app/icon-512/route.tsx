@@ -10,7 +10,7 @@ export async function GET() {
           fontSize: 280,
           fontFamily: 'sans-serif',
           fontWeight: 800,
-          background: '#0a0a15',
+          background: 'linear-gradient(135deg, #0a0a15 0%, #1a1a2e 100%)',
           width: '100%',
           height: '100%',
           display: 'flex',
