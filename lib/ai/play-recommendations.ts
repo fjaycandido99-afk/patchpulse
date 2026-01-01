@@ -315,20 +315,17 @@ export async function getPlayRecommendations(
       }
     })
 
-  // Fetch discovery games: popular games with recent patches that user doesn't own
-  // Filter to Steam/Xbox games only
+  // Fetch discovery games: all games not in user's backlog
   const { data: discoveryData } = await supabase
     .from('games')
     .select(`
       id,
       name,
       slug,
-      cover_url,
-      platforms,
-      steam_app_id
+      cover_url
     `)
     .not('id', 'in', userGameIds.length > 0 ? `(${userGameIds.join(',')})` : '(00000000-0000-0000-0000-000000000000)')
-    .limit(100) // Fetch more to filter
+    .limit(100)
 
   // Get follower counts for discovery games
   const discoveryIds = (discoveryData || []).map(g => g.id)
@@ -362,9 +359,8 @@ export async function getPlayRecommendations(
   })
 
   // Format discovery games - prioritize by follower count and recent patches
-  // Filter to Steam/Xbox games only
+  // Include all games in the database
   const discoveryGames: BacklogGame[] = (discoveryData || [])
-    .filter(g => isSteamOrXbox(g.platforms || null, g.steam_app_id || null))
     .map(g => ({
       game_id: g.id,
       game_name: g.name,
