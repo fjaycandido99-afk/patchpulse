@@ -15,7 +15,9 @@
       "Bash(npx tsx:*)",
       "Bash(node:*)",
       "Bash(git commit:*)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(find:*)",
+      "Bash(del \"C:\\\\Users\\\\fjayc\\\\OneDrive\\\\Documents\\\\Gaming app\\\\components\\\\backlog\\\\BacklogControls.tsx\")"
     ]
   }
 }

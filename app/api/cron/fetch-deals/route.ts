@@ -43,11 +43,14 @@ export async function GET(req: Request) {
   console.log('[CRON] fetch-deals hit at', new Date().toISOString())
 
   // Debug info
+  const url = new URL(req.url)
   const debugInfo = {
     vercelCron: req.headers.get('x-vercel-cron'),
     hasCronSecret: !!req.headers.get('x-cron-secret'),
     hasEnvSecret: !!process.env.CRON_SECRET,
     hasAuthHeader: !!req.headers.get('authorization'),
+    hasQuerySecret: !!url.searchParams.get('secret'),
+    urlPath: url.pathname + url.search,
   }
 
   if (!verifyAuth(req)) {
