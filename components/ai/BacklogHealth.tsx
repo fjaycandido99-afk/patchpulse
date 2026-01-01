@@ -208,7 +208,7 @@ export function BacklogHealth() {
       {/* Spotlight Header with Background Image */}
       {data.spotlight?.cover_url ? (
         <Link
-          href={`/games/${data.spotlight.slug}`}
+          href={`/backlog/${data.spotlight.id}`}
           className="relative block h-32 sm:h-40 group"
         >
           {/* Background Image - Clearer with subtle blur */}
