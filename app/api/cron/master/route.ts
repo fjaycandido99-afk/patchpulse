@@ -25,8 +25,10 @@ export async function GET(req: Request) {
     ? `https://${process.env.VERCEL_URL}`
     : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
-  const authHeader = req.headers.get('authorization') || ''
-  const cronHeader = req.headers.get('x-vercel-cron') || ''
+  // Use CRON_SECRET for internal calls (x-vercel-cron only works for direct Vercel calls)
+  const internalHeaders = {
+    'x-cron-secret': process.env.CRON_SECRET || '',
+  }
 
   const results: Record<string, unknown> = {}
   const currentHour = new Date().getUTCHours()
@@ -34,10 +36,7 @@ export async function GET(req: Request) {
   // Always run: fetch-content (every 15 min)
   try {
     const res = await fetch(`${baseUrl}/api/cron/fetch-content`, {
-      headers: {
-        'Authorization': authHeader,
-        'x-vercel-cron': cronHeader,
-      },
+      headers: internalHeaders,
     })
     results.fetchContent = await res.json()
   } catch (e) {
@@ -47,10 +46,7 @@ export async function GET(req: Request) {
   // Always run: process-ai-jobs (every 15 min)
   try {
     const res = await fetch(`${baseUrl}/api/cron/process-ai-jobs`, {
-      headers: {
-        'Authorization': authHeader,
-        'x-vercel-cron': cronHeader,
-      },
+      headers: internalHeaders,
     })
     results.processAiJobs = await res.json()
   } catch (e) {
@@ -60,10 +56,7 @@ export async function GET(req: Request) {
   // Always run: fetch-deals (every 15 min - keeps deals fresh)
   try {
     const res = await fetch(`${baseUrl}/api/cron/fetch-deals`, {
-      headers: {
-        'Authorization': authHeader,
-        'x-vercel-cron': cronHeader,
-      },
+      headers: internalHeaders,
     })
     results.fetchDeals = await res.json()
   } catch (e) {
@@ -74,10 +67,7 @@ export async function GET(req: Request) {
   if (currentHour % 6 === 0) {
     try {
       const res = await fetch(`${baseUrl}/api/cron/discover-games`, {
-        headers: {
-          'Authorization': authHeader,
-          'x-vercel-cron': cronHeader,
-        },
+        headers: internalHeaders,
       })
       results.discoverGames = await res.json()
     } catch (e) {
@@ -89,10 +79,7 @@ export async function GET(req: Request) {
   if (currentHour % 6 === 0) {
     try {
       const res = await fetch(`${baseUrl}/api/cron/backfill-images`, {
-        headers: {
-          'Authorization': authHeader,
-          'x-vercel-cron': cronHeader,
-        },
+        headers: internalHeaders,
       })
       results.backfillImages = await res.json()
     } catch (e) {
@@ -104,10 +91,7 @@ export async function GET(req: Request) {
   if (currentHour === 4) {
     try {
       const res = await fetch(`${baseUrl}/api/cron/cleanup-content`, {
-        headers: {
-          'Authorization': authHeader,
-          'x-vercel-cron': cronHeader,
-        },
+        headers: internalHeaders,
       })
       results.cleanupContent = await res.json()
     } catch (e) {
