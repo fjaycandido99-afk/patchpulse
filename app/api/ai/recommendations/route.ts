@@ -90,10 +90,13 @@ export async function GET(request: Request) {
           })
           .filter(Boolean) // Remove null entries (games that don't exist)
 
-        if (recommendations.length > 0) {
+        // Filter out nulls and deduplicate by game_id
+        const validRecommendations = recommendations.filter((rec): rec is NonNullable<typeof rec> => rec !== null)
+
+        if (validRecommendations.length > 0) {
           // Deduplicate by game_id (keep first/highest scored)
           const seen = new Set<string>()
-          const uniqueRecommendations = recommendations.filter(rec => {
+          const uniqueRecommendations = validRecommendations.filter(rec => {
             if (seen.has(rec.game_id)) return false
             seen.add(rec.game_id)
             return true
