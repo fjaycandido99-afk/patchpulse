@@ -62,8 +62,8 @@ export function LatestPatchesBell({ initialStats, size = 'md' }: Props) {
     <Link
       href="/patches"
       className="relative p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl hover:bg-white/10 active:bg-white/20 active:scale-95 transition-all touch-manipulation group"
-      title="View Patches"
-      aria-label={`View patches${hasPatches ? ` (${stats.total_today} today)` : ''}`}
+      title="Discover Patches (games you don't follow)"
+      aria-label={`Discover patches from other games${hasPatches ? ` (${stats.total_today} today)` : ''}`}
     >
       {/* Pulsing halo effect when there are high impact patches */}
       {hasHighImpact && (
