@@ -192,10 +192,19 @@ export async function GET() {
       message = 'Most of your backlog is stable. Check back after major updates.'
     }
 
+    // Select spotlight game (prioritize resurfacing, then active, with cover_url)
+    let spotlight: GameHealth | null = null
+    const spotlightCandidates = [...resurfacing, ...active].filter(g => g.cover_url)
+    if (spotlightCandidates.length > 0) {
+      // Pick randomly for variety on each load
+      spotlight = spotlightCandidates[Math.floor(Math.random() * Math.min(3, spotlightCandidates.length))]
+    }
+
     return NextResponse.json({
       active: { count: active.length, games: active },
       dormant: { count: dormant.length, games: dormant },
       resurfacing: { count: resurfacing.length, games: resurfacing },
+      spotlight,
       message,
       total: userGames.length,
     })

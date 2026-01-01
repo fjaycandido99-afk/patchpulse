@@ -19,6 +19,7 @@ type BacklogHealthData = {
   active: { count: number; games: GameHealth[] }
   dormant: { count: number; games: GameHealth[] }
   resurfacing: { count: number; games: GameHealth[] }
+  spotlight: GameHealth | null
   message: string
   total: number
 }
@@ -194,33 +195,124 @@ export function BacklogHealth() {
     )
   }
 
-  return (
-    <div className="rounded-xl border border-border bg-card p-4 sm:p-6">
-      <div className="flex items-center gap-3 mb-4">
-        <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center">
-          <Activity className="w-5 h-5 text-emerald-400" />
-        </div>
-        <div>
-          <h3 className="font-semibold">Backlog Health</h3>
-          <p className="text-sm text-muted-foreground">
-            {data.total} games tracked
-          </p>
-        </div>
-      </div>
+  // Get spotlight state label
+  const getSpotlightLabel = () => {
+    if (!data.spotlight) return null
+    if (data.spotlight.state === 'resurfacing') return 'Waking Up'
+    if (data.spotlight.state === 'active') return 'Active'
+    return null
+  }
 
-      {/* Dynamic Message */}
-      {data.message && (
-        <div className="p-3 rounded-lg bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-primary/20 mb-4">
-          <p className="text-sm">{data.message}</p>
+  return (
+    <div className="rounded-xl border border-border bg-card overflow-hidden">
+      {/* Spotlight Header with Background Image */}
+      {data.spotlight?.cover_url ? (
+        <Link
+          href={`/games/${data.spotlight.slug}`}
+          className="relative block h-32 sm:h-40 group"
+        >
+          {/* Background Image with Blur */}
+          <div className="absolute inset-0 overflow-hidden">
+            <Image
+              src={data.spotlight.cover_url}
+              alt={data.spotlight.name}
+              fill
+              className="object-cover scale-110 blur-sm group-hover:scale-105 transition-transform duration-500"
+              sizes="(max-width: 768px) 100vw, 50vw"
+              priority
+            />
+          </div>
+
+          {/* Dark Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-card via-card/80 to-card/40" />
+          <div className="absolute inset-0 bg-gradient-to-r from-card/60 to-transparent" />
+
+          {/* Content */}
+          <div className="absolute inset-0 p-4 sm:p-6 flex flex-col justify-end">
+            <div className="flex items-end gap-4">
+              {/* Game Cover Thumbnail */}
+              <div className="relative w-16 h-20 sm:w-20 sm:h-26 rounded-lg overflow-hidden ring-2 ring-white/20 shadow-2xl flex-shrink-0 group-hover:ring-primary/50 transition-all">
+                <Image
+                  src={data.spotlight.cover_url}
+                  alt={data.spotlight.name}
+                  fill
+                  className="object-cover"
+                  sizes="80px"
+                />
+                {/* State Badge */}
+                {getSpotlightLabel() && (
+                  <div className={`absolute -top-1 -right-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold shadow-lg ${
+                    data.spotlight.state === 'resurfacing'
+                      ? 'bg-amber-500 text-black'
+                      : 'bg-green-500 text-black'
+                  }`}>
+                    {getSpotlightLabel()}
+                  </div>
+                )}
+              </div>
+
+              {/* Text Content */}
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-white/60 mb-1">Spotlight</p>
+                <h3 className="font-bold text-lg sm:text-xl text-white truncate group-hover:text-primary transition-colors">
+                  {data.spotlight.name}
+                </h3>
+                <p className="text-sm text-white/70 truncate">{data.spotlight.reason}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Subtle animated grain overlay */}
+          <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJhIiB4PSIwIiB5PSIwIj48ZmVUdXJidWxlbmNlIGJhc2VGcmVxdWVuY3k9Ii43NSIgc3RpdGNoVGlsZXM9InN0aXRjaCIgdHlwZT0iZnJhY3RhbE5vaXNlIi8+PC9maWx0ZXI+PHJlY3Qgd2lkdGg9IjMwMCIgaGVpZ2h0PSIzMDAiIGZpbHRlcj0idXJsKCNhKSIgb3BhY2l0eT0iMC40Ii8+PC9zdmc+')]" />
+        </Link>
+      ) : (
+        /* Fallback Header without Spotlight */
+        <div className="p-4 sm:p-6 pb-0">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center">
+              <Activity className="w-5 h-5 text-emerald-400" />
+            </div>
+            <div>
+              <h3 className="font-semibold">Backlog Health</h3>
+              <p className="text-sm text-muted-foreground">
+                {data.total} games tracked
+              </p>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* State Cards */}
-      <div className="space-y-3">
-        {/* Show Resurfacing first if there are any (most actionable) */}
-        {data.resurfacing.count > 0 && renderStateCard('resurfacing')}
-        {renderStateCard('active')}
-        {renderStateCard('dormant')}
+      {/* Main Content */}
+      <div className="p-4 sm:p-6 pt-4">
+        {/* Show header info if spotlight exists (moved below) */}
+        {data.spotlight?.cover_url && (
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center">
+              <Activity className="w-4 h-4 text-emerald-400" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-sm">Backlog Health</h3>
+              <p className="text-xs text-muted-foreground">
+                {data.total} games tracked
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Dynamic Message */}
+        {data.message && (
+          <div className="p-3 rounded-lg bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-primary/20 mb-4">
+            <p className="text-sm">{data.message}</p>
+          </div>
+        )}
+
+        {/* State Cards */}
+        <div className="space-y-3">
+          {/* Show Resurfacing first if there are any (most actionable) */}
+          {data.resurfacing.count > 0 && renderStateCard('resurfacing')}
+          {renderStateCard('active')}
+          {renderStateCard('dormant')}
+        </div>
       </div>
     </div>
   )
