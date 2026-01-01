@@ -5,8 +5,10 @@ import { ExternalLink, Sparkles, Zap, Users, Trophy, Target, ChevronRight, Map, 
 import { BackButton } from '@/components/ui/BackButton'
 import { getPatchById, getRelatedPatches } from '../queries'
 import { isBookmarked } from '@/app/(main)/actions/bookmarks'
+import { isFollowingGame } from '@/app/(main)/actions/games'
 import { getBacklogItem } from '@/app/(main)/backlog/queries'
 import { BookmarkButton } from '@/components/ui/BookmarkButton'
+import { FollowGameButton } from '@/components/games'
 import { Badge, ImpactBadge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { GameLogo } from '@/components/ui/GameLogo'
@@ -182,6 +184,9 @@ export default async function PatchDetailPage({
   ])
   const isPro = plan === 'pro'
 
+  // Check if user is following this game
+  const isFollowing = await isFollowingGame(patch.game.id)
+
   // Get backlog item if user is logged in
   let backlogItem = null
   if (user) {
@@ -266,7 +271,7 @@ export default async function PatchDetailPage({
 
         {/* Game info + Title */}
         <div className="space-y-3">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             {patch.game.logo_url ? (
               <GameLogo logoUrl={patch.game.logo_url} gameName={patch.game.name} size="md" />
             ) : (
@@ -277,7 +282,16 @@ export default async function PatchDetailPage({
                 {patch.game.name.charAt(0)}
               </div>
             )}
-            <span className="font-medium text-white">{patch.game.name}</span>
+            <Link href={`/games/${patch.game.slug}`} className="font-medium text-white hover:text-primary transition-colors">
+              {patch.game.name}
+            </Link>
+            <FollowGameButton
+              gameId={patch.game.id}
+              gameName={patch.game.name}
+              initialFollowing={isFollowing}
+              size="sm"
+              variant="outline"
+            />
             <span className="text-white/60">•</span>
             <span className="text-white/60 text-sm">{formatDate(patch.published_at)}</span>
           </div>

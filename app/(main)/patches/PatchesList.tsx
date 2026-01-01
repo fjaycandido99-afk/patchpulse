@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { FileText, ChevronRight, Flame, Filter } from 'lucide-react'
+import { FileText, ChevronRight, Flame, Filter, Plus, Loader2, Check } from 'lucide-react'
+import { followGame } from '@/app/(main)/actions/games'
 
 type Patch = {
   id: string
@@ -53,11 +54,36 @@ function getImpactBg(score: number) {
 
 type Props = {
   initialPatches: Patch[]
+  followedGameIds?: string[]
 }
 
-export function PatchesList({ initialPatches }: Props) {
+export function PatchesList({ initialPatches, followedGameIds = [] }: Props) {
   const [patches] = useState(initialPatches)
   const [filter, setFilter] = useState<FilterType>('all')
+  const [followedIds, setFollowedIds] = useState<Set<string>>(new Set(followedGameIds))
+  const [pendingGameId, setPendingGameId] = useState<string | null>(null)
+  const [isPending, startTransition] = useTransition()
+
+  async function handleFollow(gameId: string, e: React.MouseEvent) {
+    e.preventDefault()
+    e.stopPropagation()
+
+    if (followedIds.has(gameId)) return
+
+    setPendingGameId(gameId)
+    startTransition(async () => {
+      try {
+        const result = await followGame(gameId)
+        if (result.success && result.following) {
+          setFollowedIds(prev => new Set([...prev, gameId]))
+        }
+      } catch (error) {
+        console.error('Failed to follow game:', error)
+      } finally {
+        setPendingGameId(null)
+      }
+    })
+  }
 
   const filteredPatches = patches.filter(p => {
     if (filter === 'high_impact') return p.impact_score >= 8
@@ -182,10 +208,32 @@ export function PatchesList({ initialPatches }: Props) {
                     <span className="text-xs text-muted-foreground">
                       {getRelativeTime(patch.published_at)}
                     </span>
-                    <span className="flex items-center gap-1 text-xs text-primary opacity-0 group-hover:opacity-100 transition-opacity">
-                      View details
-                      <ChevronRight className="w-3 h-3" />
-                    </span>
+                    <div className="flex items-center gap-2">
+                      {/* Follow Button */}
+                      {followedIds.has(patch.game.id) ? (
+                        <span className="flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-lg bg-green-500/20 text-green-400 border border-green-500/30">
+                          <Check className="w-3 h-3" />
+                          Following
+                        </span>
+                      ) : (
+                        <button
+                          onClick={(e) => handleFollow(patch.game.id, e)}
+                          disabled={isPending && pendingGameId === patch.game.id}
+                          className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-lg bg-primary/20 text-primary border border-primary/30 hover:bg-primary/30 active:scale-95 transition-all disabled:opacity-50"
+                        >
+                          {isPending && pendingGameId === patch.game.id ? (
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                          ) : (
+                            <Plus className="w-3 h-3" />
+                          )}
+                          Follow
+                        </button>
+                      )}
+                      <span className="flex items-center gap-1 text-xs text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                        View details
+                        <ChevronRight className="w-3 h-3" />
+                      </span>
+                    </div>
                   </div>
                 </div>
               </Link>

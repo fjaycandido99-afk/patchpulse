@@ -51,8 +51,25 @@ async function getPatches(limit = 50) {
   })
 }
 
+async function getFollowedGameIds(): Promise<string[]> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) return []
+
+  const { data } = await supabase
+    .from('user_games')
+    .select('game_id')
+    .eq('user_id', user.id)
+
+  return (data || []).map(ug => ug.game_id)
+}
+
 export default async function PatchesPage() {
-  const patches = await getPatches()
+  const [patches, followedGameIds] = await Promise.all([
+    getPatches(),
+    getFollowedGameIds(),
+  ])
 
   return (
     <div className="space-y-6">
@@ -63,7 +80,7 @@ export default async function PatchesPage() {
         </p>
       </div>
 
-      <PatchesList initialPatches={patches} />
+      <PatchesList initialPatches={patches} followedGameIds={followedGameIds} />
     </div>
   )
 }
