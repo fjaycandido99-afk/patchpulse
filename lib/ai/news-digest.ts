@@ -114,16 +114,23 @@ Return JSON with:
   })
 
   // Enrich highlights with game cover URLs and ensure new fields have defaults
-  result.highlights = result.highlights.map(h => {
-    const newsItem = newsItems.find(n => n.id === h.news_id)
-    return {
-      ...h,
-      game_slug: newsItem?.game_slug || '',
-      game_cover_url: newsItem?.game_cover_url || null,
-      why_it_matters: h.why_it_matters || null,
-      is_early_signal: h.is_early_signal || false,
-    }
-  })
+  // Only include highlights where we can find the matching news item (valid news_id)
+  result.highlights = result.highlights
+    .map(h => {
+      const newsItem = newsItems.find(n => n.id === h.news_id)
+      if (!newsItem) return null // Skip if news_id doesn't match any item
+      return {
+        ...h,
+        news_id: newsItem.id, // Ensure we use the actual ID
+        title: h.title || newsItem.title,
+        game_name: h.game_name || newsItem.game_name,
+        game_slug: newsItem.game_slug || '',
+        game_cover_url: newsItem.game_cover_url || null,
+        why_it_matters: h.why_it_matters || null,
+        is_early_signal: h.is_early_signal || false,
+      }
+    })
+    .filter((h): h is NonNullable<typeof h> => h !== null)
 
   // Enrich game_updates with cover URLs
   const enrichedGameUpdates: Record<string, GameUpdate> = {}
