@@ -74,7 +74,11 @@ export function PlayRecommendations() {
         throw new Error(data.error || 'Failed to get recommendations')
       }
 
-      setResult(data)
+      // Ensure data has required fields with safe defaults
+      setResult({
+        recommendations: Array.isArray(data?.recommendations) ? data.recommendations : [],
+        message: data?.message || 'Here are your recommendations',
+      })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
     } finally {

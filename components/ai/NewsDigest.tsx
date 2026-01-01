@@ -70,7 +70,13 @@ export function NewsDigest() {
         throw new Error(data.error || 'Failed to get digest')
       }
 
-      setDigest(data)
+      // Ensure data has required fields with safe defaults
+      setDigest({
+        summary: data?.summary || 'No news to summarize',
+        highlights: Array.isArray(data?.highlights) ? data.highlights : [],
+        game_updates: data?.game_updates && typeof data.game_updates === 'object' ? data.game_updates : {},
+        total_news: typeof data?.total_news === 'number' ? data.total_news : 0,
+      })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
     } finally {
