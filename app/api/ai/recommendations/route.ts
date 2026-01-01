@@ -56,7 +56,10 @@ export async function GET(request: Request) {
       if (cached && cached.length > 0) {
         // Transform cached recommendations to match expected format
         const recommendations = cached.map(rec => {
-          const game = rec.games as { id: string; name: string; slug: string; cover_url: string | null } | null
+          // Handle both array and single object from Supabase join
+          type GameType = { id: string; name: string; slug: string; cover_url: string | null }
+          const gamesData = rec.games as GameType | GameType[] | null
+          const game = Array.isArray(gamesData) ? gamesData[0] : gamesData
           const context = rec.context as Record<string, unknown> || {}
           const factors = rec.factors as Record<string, unknown> || {}
 
