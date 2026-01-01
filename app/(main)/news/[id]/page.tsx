@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import Image from 'next/image'
+import { Suspense } from 'react'
 import { ArrowLeft, ExternalLink, Sparkles, Brain, Zap, Users, Trophy, ChevronRight, Star, Flame, Calendar, Clock } from 'lucide-react'
+import { BackButton } from '@/components/ui/BackButton'
 import { getNewsById, getRelatedNews } from '../queries'
 import { isBookmarked } from '@/app/(main)/actions/bookmarks'
 import { getBacklogItem } from '@/app/(main)/backlog/queries'
@@ -213,13 +215,18 @@ export default async function NewsDetailPage({
       {/* Content pushed below hero */}
       <div className="relative z-10 pt-[200px] sm:pt-[240px] lg:pt-[280px] space-y-6">
         {/* Back Button */}
-        <Link
-          href="/news"
-          className="inline-flex items-center gap-1.5 text-sm text-white/70 transition-colors hover:text-white"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to News
-        </Link>
+        <Suspense fallback={
+          <span className="inline-flex items-center gap-1.5 text-sm text-white/70">
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </span>
+        }>
+          <BackButton
+            defaultHref="/news"
+            defaultLabel="Back to News"
+            fromHomeLabel="Back to Home"
+          />
+        </Suspense>
 
         {/* Game info + Title */}
         <div className="space-y-3">
