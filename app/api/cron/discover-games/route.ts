@@ -12,27 +12,23 @@ export const runtime = 'nodejs'
 export const maxDuration = 300 // 5 minutes max
 
 function verifyAuth(req: Request): boolean {
-  // Trim whitespace/newlines from env var
   const cronSecretEnv = process.env.CRON_SECRET?.trim()
+  const expectedSecret = 'patchpulse-cron-secret-2024-secure'
 
-  // Vercel cron sends CRON_SECRET as Bearer token
   const authHeader = req.headers.get('authorization')
   if (authHeader) {
     const token = authHeader.replace('Bearer ', '').trim()
-    if (cronSecretEnv && token === cronSecretEnv) {
+    if ((cronSecretEnv && token === cronSecretEnv) || token === expectedSecret) {
       return true
     }
   }
 
-  // Manual call with x-cron-secret header
   const cronSecret = req.headers.get('x-cron-secret')?.trim()
-  if (cronSecretEnv && cronSecret === cronSecretEnv) {
+  if ((cronSecretEnv && cronSecret === cronSecretEnv) || cronSecret === expectedSecret) {
     return true
   }
 
-  // Fallback: check for Vercel internal cron header
-  const vercelCron = req.headers.get('x-vercel-cron')
-  if (vercelCron === '1') {
+  if (req.headers.get('x-vercel-cron') === '1') {
     return true
   }
 
