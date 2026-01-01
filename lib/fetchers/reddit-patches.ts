@@ -167,7 +167,7 @@ async function fetchSubredditPatches(
           source_url: sourceUrl,
           raw_text: rawText.slice(0, 10000),
           published_at: new Date(created_utc * 1000).toISOString(),
-          summary_tldr: 'Processing...',
+          summary_tldr: 'AI summary pending...',
           impact_score: 5,
           tags: [],
           key_changes: [],

@@ -97,7 +97,7 @@ export async function fetchSteamPatches(steamAppId: number, gameId: string, game
           source_url: item.link,
           raw_text: rawText.slice(0, 10000), // Limit raw text size
           published_at: item.pubDate ? new Date(item.pubDate).toISOString() : new Date().toISOString(),
-          summary_tldr: 'Processing...',
+          summary_tldr: 'AI summary pending...',
           impact_score: 5,
           tags: [],
           key_changes: [],

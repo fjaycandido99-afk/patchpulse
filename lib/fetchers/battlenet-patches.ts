@@ -106,7 +106,7 @@ export async function fetchBattlenetPatches(gameSlug: string, gameId: string, ga
           source_url: item.link, // Important: include source URL
           raw_text: rawText.slice(0, 10000),
           published_at: item.pubDate ? new Date(item.pubDate).toISOString() : new Date().toISOString(),
-          summary_tldr: 'Processing...',
+          summary_tldr: 'AI summary pending...',
           impact_score: 5,
           tags: [],
           key_changes: [],

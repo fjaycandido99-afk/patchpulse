@@ -51,7 +51,7 @@ export async function queueAllPendingAIJobs() {
     const { data: patches } = await supabase
       .from('patch_notes')
       .select('id, raw_text, summary_tldr')
-      .or('summary_tldr.is.null,summary_tldr.eq.Processing...')
+      .or('summary_tldr.is.null,summary_tldr.eq.Processing...,summary_tldr.eq.AI summary pending...')
       .not('raw_text', 'is', null)
 
     if (patches && patches.length > 0) {
