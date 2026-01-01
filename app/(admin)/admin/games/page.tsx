@@ -3,6 +3,7 @@ import { getGames } from './actions'
 import { CreateGameForm } from './CreateGameForm'
 import { EditGameButton } from './EditGameButton'
 import { DeleteGameButton } from './DeleteGameButton'
+import { EnrichGamesButton } from './EnrichGamesButton'
 
 export default async function AdminGamesPage() {
   const games = await getGames()
@@ -12,6 +13,15 @@ export default async function AdminGamesPage() {
       <section>
         <h1 className="text-xl font-semibold mb-6">Add Game</h1>
         <CreateGameForm />
+      </section>
+
+      {/* Enrich Games Section */}
+      <section className="p-4 rounded-lg border border-violet-500/20 bg-violet-500/5">
+        <h2 className="text-sm font-semibold mb-2">AI Data Enrichment</h2>
+        <p className="text-xs text-zinc-400 mb-3">
+          Fill in missing developer, publisher, studio type, and similar games for existing games using AI.
+        </p>
+        <EnrichGamesButton />
       </section>
 
       <section>
