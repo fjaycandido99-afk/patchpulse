@@ -378,14 +378,13 @@ export async function getPlayRecommendations(
       is_discovery: true,
       follower_count: followerMap.get(g.id) || 0,
     }))
-    .filter(g => g.follower_count > 0 || g.recent_patch) // Only include games with followers or recent activity
     .sort((a, b) => {
       // Prioritize games with recent patches and more followers
-      const aScore = (a.recent_patch ? 100 : 0) + (a.follower_count || 0)
-      const bScore = (b.recent_patch ? 100 : 0) + (b.follower_count || 0)
+      const aScore = (a.recent_patch ? 100 : 0) + (a.follower_count || 0) * 10
+      const bScore = (b.recent_patch ? 100 : 0) + (b.follower_count || 0) * 10
       return bScore - aScore
     })
-    .slice(0, 10) // Top 10 discovery games
+    .slice(0, 15) // Top 15 discovery games for AI to choose from
 
   const result = await generatePlayRecommendations(backlogGames, discoveryGames, context)
 
