@@ -23,12 +23,20 @@ type SteamFeaturedCategories = {
 }
 
 function verifyAuth(req: Request): boolean {
-  if (req.headers.get('x-vercel-cron') === '1') return true
+  // Debug: log what we're checking
+  const vercelCron = req.headers.get('x-vercel-cron')
   const cronSecret = req.headers.get('x-cron-secret')?.trim()
   const cronSecretEnv = process.env.CRON_SECRET?.trim()
-  if (cronSecretEnv && cronSecret === cronSecretEnv) return true
   const authHeader = req.headers.get('authorization')
   const token = authHeader?.replace('Bearer ', '').trim()
+
+  console.log('[AUTH DEBUG] x-vercel-cron:', vercelCron)
+  console.log('[AUTH DEBUG] x-cron-secret provided:', cronSecret ? 'yes' : 'no')
+  console.log('[AUTH DEBUG] CRON_SECRET env set:', cronSecretEnv ? 'yes' : 'no')
+  console.log('[AUTH DEBUG] Authorization header:', authHeader ? 'yes' : 'no')
+
+  if (vercelCron === '1') return true
+  if (cronSecretEnv && cronSecret === cronSecretEnv) return true
   if (cronSecretEnv && token === cronSecretEnv) return true
   return false
 }
