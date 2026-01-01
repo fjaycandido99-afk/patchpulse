@@ -155,26 +155,40 @@ export async function getUserNewsDigest(
 
   if (cached) {
     // Ensure old cached data has the new fields with defaults
-    const highlights = (cached.highlights as DigestHighlight[] || []).map(h => ({
-      ...h,
+    const rawHighlights = cached.highlights as DigestHighlight[] | null
+    const highlights = (rawHighlights || []).map(h => ({
+      news_id: h.news_id || '',
+      title: h.title || '',
+      game_name: h.game_name || '',
       game_slug: h.game_slug || '',
       game_cover_url: h.game_cover_url || null,
+      tldr: h.tldr || '',
+      importance: h.importance || 'low',
+      category: h.category || 'other',
     }))
 
+    const rawGameUpdates = cached.game_updates as Record<string, GameUpdate> | null
     const gameUpdates: Record<string, GameUpdate> = {}
-    for (const [key, update] of Object.entries(cached.game_updates as Record<string, GameUpdate> || {})) {
-      gameUpdates[key] = {
-        ...update,
-        game_slug: update.game_slug || '',
-        game_cover_url: update.game_cover_url || null,
+    if (rawGameUpdates) {
+      for (const [key, update] of Object.entries(rawGameUpdates)) {
+        if (update) {
+          gameUpdates[key] = {
+            game_name: update.game_name || '',
+            game_slug: update.game_slug || '',
+            game_cover_url: update.game_cover_url || null,
+            update_count: update.update_count || 0,
+            summary: update.summary || '',
+            highlights: update.highlights || [],
+          }
+        }
       }
     }
 
     return {
-      summary: cached.summary,
+      summary: cached.summary || '',
       highlights,
       game_updates: gameUpdates,
-      total_news: cached.news_count,
+      total_news: cached.news_count || 0,
     }
   }
 
