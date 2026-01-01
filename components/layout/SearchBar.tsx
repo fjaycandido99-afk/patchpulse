@@ -1,13 +1,21 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Search, X, Clock, TrendingUp, Gamepad2, FileText, Newspaper } from 'lucide-react'
+import { Search, X, Clock, TrendingUp, Gamepad2, FileText, Newspaper, Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 
 const RECENT_SEARCHES_KEY = 'patchpulse_recent_searches'
 const MAX_RECENT_SEARCHES = 5
 
 type SearchCategory = 'all' | 'games' | 'patches' | 'news'
+
+type Suggestion = {
+  id: string
+  name: string
+  cover_url: string | null
+  type: 'game'
+}
 
 type SearchBarProps = {
   placeholder?: string
@@ -19,7 +27,10 @@ export function SearchBar({ placeholder = 'Search games, patches, news...', clas
   const [query, setQuery] = useState('')
   const [recentSearches, setRecentSearches] = useState<string[]>([])
   const [selectedCategory, setSelectedCategory] = useState<SearchCategory>('all')
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([])
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  const debounceRef = useRef<NodeJS.Timeout | null>(null)
   const router = useRouter()
 
   // Load recent searches from localStorage
@@ -64,6 +75,39 @@ export function SearchBar({ placeholder = 'Search games, patches, news...', clas
     }
   }, [isOpen])
 
+  // Fetch suggestions with debounce
+  useEffect(() => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current)
+    }
+
+    if (query.length < 2) {
+      setSuggestions([])
+      setIsLoadingSuggestions(false)
+      return
+    }
+
+    setIsLoadingSuggestions(true)
+
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/search/suggestions?q=${encodeURIComponent(query)}`)
+        const data = await res.json()
+        setSuggestions(data.suggestions || [])
+      } catch {
+        setSuggestions([])
+      } finally {
+        setIsLoadingSuggestions(false)
+      }
+    }, 200) // 200ms debounce
+
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current)
+      }
+    }
+  }, [query])
+
   const saveRecentSearch = useCallback((search: string) => {
     const trimmed = search.trim()
     if (!trimmed) return
@@ -107,6 +151,15 @@ export function SearchBar({ placeholder = 'Search games, patches, news...', clas
   const closeSearch = () => {
     setIsOpen(false)
     setQuery('')
+    setSuggestions([])
+  }
+
+  const handleSuggestionClick = (suggestion: Suggestion) => {
+    saveRecentSearch(suggestion.name)
+    setIsOpen(false)
+    setQuery('')
+    setSuggestions([])
+    router.push(`/backlog/${suggestion.id}`)
   }
 
   const categories: { id: SearchCategory; label: string; icon: typeof Gamepad2 }[] = [
@@ -250,10 +303,66 @@ export function SearchBar({ placeholder = 'Search games, patches, news...', clas
                   </div>
                 </>
               ) : (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground text-sm">
-                    Press Enter to search for &quot;{query}&quot;
-                  </p>
+                <div>
+                  {/* Loading state */}
+                  {isLoadingSuggestions && (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                    </div>
+                  )}
+
+                  {/* Suggestions */}
+                  {!isLoadingSuggestions && suggestions.length > 0 && (
+                    <div className="mb-4">
+                      <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                        Games
+                      </h3>
+                      <div className="space-y-1">
+                        {suggestions.map((suggestion) => (
+                          <button
+                            key={suggestion.id}
+                            onClick={() => handleSuggestionClick(suggestion)}
+                            className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-white/5 text-left transition-colors"
+                          >
+                            {suggestion.cover_url ? (
+                              <Image
+                                src={suggestion.cover_url}
+                                alt={suggestion.name}
+                                width={40}
+                                height={54}
+                                className="w-10 h-14 rounded-md object-cover flex-shrink-0"
+                                unoptimized
+                              />
+                            ) : (
+                              <div className="w-10 h-14 rounded-md bg-white/10 flex items-center justify-center flex-shrink-0">
+                                <Gamepad2 className="w-5 h-5 text-muted-foreground" />
+                              </div>
+                            )}
+                            <span className="text-sm font-medium text-foreground">{suggestion.name}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* No suggestions found */}
+                  {!isLoadingSuggestions && suggestions.length === 0 && query.length >= 2 && (
+                    <div className="text-center py-6">
+                      <Gamepad2 className="w-8 h-8 mx-auto text-muted-foreground/50 mb-2" />
+                      <p className="text-sm text-muted-foreground">
+                        No games found for &quot;{query}&quot;
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Search all button */}
+                  <button
+                    onClick={() => handleSearch(query)}
+                    className="flex items-center justify-center gap-2 w-full p-3 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary font-medium text-sm transition-colors"
+                  >
+                    <Search className="w-4 h-4" />
+                    Search all for &quot;{query}&quot;
+                  </button>
                 </div>
               )}
             </div>

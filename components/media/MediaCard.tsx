@@ -1,6 +1,8 @@
+'use client'
+
 import Link from 'next/link'
 import Image from 'next/image'
-import { ReactNode, Children, isValidElement } from 'react'
+import { ReactNode, Children, isValidElement, useState } from 'react'
 import { Flame, Swords, Brain, Map, Wrench, Gamepad2, Shield, Zap, Target, Users } from 'lucide-react'
 import { GameLogoMini } from '@/components/ui/GameLogo'
 import { PlatformIcons, type Platform } from '@/components/ui/PlatformIcons'
@@ -64,6 +66,42 @@ function ThumbnailFallback({ title }: { title: string }) {
   )
 }
 
+function ImageWithFallback({
+  src,
+  alt,
+  title,
+  sizes,
+  blurHash,
+  className = ''
+}: {
+  src: string
+  alt: string
+  title: string
+  sizes: string
+  blurHash?: string | null
+  className?: string
+}) {
+  const [hasError, setHasError] = useState(false)
+
+  if (hasError) {
+    return <ThumbnailFallback title={title} />
+  }
+
+  return (
+    <Image
+      src={src}
+      alt={alt}
+      fill
+      className={className}
+      sizes={sizes}
+      placeholder={blurHash ? 'blur' : 'empty'}
+      blurDataURL={blurHash || undefined}
+      unoptimized
+      onError={() => setHasError(true)}
+    />
+  )
+}
+
 function limitBadges(badges: ReactNode, max: number): ReactNode {
   const childArray = Children.toArray(badges)
   if (childArray.length <= max) return badges
@@ -109,13 +147,12 @@ export function MediaCard({
       >
         <div className="relative w-16 h-16 sm:w-28 sm:aspect-[16/9] sm:h-auto flex-shrink-0 overflow-hidden rounded-lg sm:rounded-xl">
           {imageUrl ? (
-            <Image
+            <ImageWithFallback
               src={imageUrl}
               alt={title}
-              fill
-              className="object-cover"
+              title={title}
               sizes="(max-width: 640px) 64px, 112px"
-              unoptimized
+              className="object-cover"
             />
           ) : (
             <ThumbnailFallback title={title} />
@@ -146,15 +183,13 @@ export function MediaCard({
     >
       <div className={`relative ${aspectClass} w-full overflow-hidden flex-shrink-0`}>
         {imageUrl ? (
-          <Image
+          <ImageWithFallback
             src={imageUrl}
             alt={title}
-            fill
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            title={title}
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            placeholder={blurHash ? 'blur' : 'empty'}
-            blurDataURL={blurHash || undefined}
-            unoptimized
+            blurHash={blurHash}
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
           />
         ) : (
           <ThumbnailFallback title={title} />

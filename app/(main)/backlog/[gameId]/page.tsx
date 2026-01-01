@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { Suspense } from 'react'
-import { ArrowLeft, FileText, Newspaper, Plus, Clock, RefreshCw, Calendar, Gamepad2, Monitor } from 'lucide-react'
+import { FileText, Newspaper, Plus, Clock, RefreshCw, Calendar, Gamepad2, Monitor } from 'lucide-react'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getBacklogItem, getGameActivity, isFollowingGame } from '../queries'
@@ -14,6 +14,7 @@ import { SteamStats } from '@/components/library/SteamStats'
 import { GameManagement } from '@/components/backlog/GameManagement'
 import { StudioInfoSection } from '@/components/games/StudioInfoSection'
 import { SentimentPulse } from '@/components/ai/SentimentPulse'
+import { BackButton } from '@/components/ui/BackButton'
 
 // Fix #3: Image source priority helper
 function getHeroImage(game: { hero_url?: string | null; cover_url: string | null }, seasonal: { heroUrl: string | null; coverUrl: string | null }): string | null {
@@ -288,13 +289,7 @@ export default async function BacklogDetailPage({
         <div className="relative z-10 pt-[200px] sm:pt-[240px] lg:pt-[280px] space-y-6">
           {/* Back Link */}
           <div>
-            <Link
-              href="/backlog"
-              className="inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back
-            </Link>
+            <BackButton defaultHref="/backlog" defaultLabel="Back" />
           </div>
 
           {/* Game Title with Icon and Badges */}
@@ -500,13 +495,7 @@ export default async function BacklogDetailPage({
       <div className="relative z-10 pt-[200px] sm:pt-[240px] lg:pt-[280px] space-y-6">
         {/* Back Link */}
         <div>
-          <Link
-            href="/backlog"
-            className="inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Backlog
-          </Link>
+          <BackButton defaultHref="/backlog" defaultLabel="Back to Backlog" />
         </div>
 
         {/* Steam Library Style Card - Fixed size, extends to edges on mobile */}

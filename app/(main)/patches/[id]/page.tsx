@@ -12,6 +12,7 @@ import { Card } from '@/components/ui/card'
 import { GameLogo } from '@/components/ui/GameLogo'
 import { formatDate, relativeDaysText } from '@/lib/dates'
 import { createClient } from '@/lib/supabase/server'
+import { getUserPlan } from '@/lib/subscriptions/limits'
 
 type KeyChange = {
   category?: string
@@ -174,10 +175,12 @@ export default async function PatchDetailPage({
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const [patch, bookmarked] = await Promise.all([
+  const [patch, bookmarked, plan] = await Promise.all([
     getPatchById(id),
     isBookmarked('patch', id),
+    user ? getUserPlan(user.id) : Promise.resolve('free' as const),
   ])
+  const isPro = plan === 'pro'
 
   // Get backlog item if user is logged in
   let backlogItem = null
@@ -293,6 +296,7 @@ export default async function PatchDetailPage({
               entityId={patch.id}
               initialBookmarked={bookmarked}
               size="lg"
+              isPro={isPro}
             />
           </div>
         </div>

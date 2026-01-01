@@ -207,7 +207,7 @@ export function ShowcaseSection({ favoriteGames, allGames, maxFavorites = 5 }: S
                 >
                   <div className="relative h-10 w-8 rounded overflow-hidden flex-shrink-0">
                     {game.cover_url ? (
-                      <Image src={game.cover_url} alt={game.name} fill className="object-cover" sizes="32px" />
+                      <Image src={game.cover_url} alt={game.name} fill className="object-cover" sizes="32px" unoptimized />
                     ) : (
                       <div className="absolute inset-0 bg-muted flex items-center justify-center">
                         <Gamepad2 className="h-4 w-4 text-muted-foreground" />

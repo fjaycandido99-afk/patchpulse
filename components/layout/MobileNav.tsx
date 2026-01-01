@@ -1,6 +1,6 @@
 'use client'
 
-import { Home, Newspaper, Library, User, Brain, Crown } from 'lucide-react'
+import { Home, Newspaper, Library, User, Brain, Crown, Bookmark } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
@@ -23,6 +23,7 @@ const navItems: NavItemConfig[] = [
   { icon: Newspaper, label: 'News', href: '/news' },
   { icon: Brain, label: 'Insights', href: '/insights', isPro: true },
   { icon: Library, label: 'Library', href: '/backlog' },
+  { icon: Bookmark, label: 'Saved', href: '/bookmarks', isPro: true },
   { icon: User, label: 'Profile', href: '/profile' },
 ]
 

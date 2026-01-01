@@ -1,6 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import Link from 'next/link'
-import { Bookmark, ChevronRight, Eye, Gamepad2 } from 'lucide-react'
+import { Eye, Gamepad2 } from 'lucide-react'
 import { getBacklogBoard, getFollowedGamesForBacklogPicker, getFollowedGamesWithActivity } from './queries'
 import { getFollowedGames, getBacklogGames } from '../profile/actions'
 import { AddToBacklogPanel } from '@/components/backlog/AddToBacklogPanel'
@@ -14,18 +13,12 @@ export default async function LibraryPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const [board, followedGamesForPicker, followedGames, followedGamesWithActivity, backlogGames, bookmarksCount] = await Promise.all([
+  const [board, followedGamesForPicker, followedGames, followedGamesWithActivity, backlogGames] = await Promise.all([
     getBacklogBoard(),
     getFollowedGamesForBacklogPicker(),
     getFollowedGames(),
     getFollowedGamesWithActivity(),
     getBacklogGames(),
-    // Get bookmarks count
-    supabase
-      .from('bookmarks')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', user?.id || '')
-      .then(({ count }) => count || 0),
   ])
 
   // Combine all backlog items into a single flat list
@@ -47,24 +40,6 @@ export default async function LibraryPage() {
     <>
       {/* Mobile View */}
       <div className="md:hidden">
-        {/* Saved Updates Link */}
-        {bookmarksCount > 0 && (
-          <Link
-            href="/bookmarks"
-            className="flex items-center justify-between p-4 mb-4 rounded-xl border border-amber-500/20 bg-gradient-to-r from-amber-500/10 to-transparent"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center">
-                <Bookmark className="w-5 h-5 text-amber-400" />
-              </div>
-              <div>
-                <p className="font-medium text-sm">Saved Updates</p>
-                <p className="text-xs text-muted-foreground">{bookmarksCount} saved items</p>
-              </div>
-            </div>
-            <ChevronRight className="w-5 h-5 text-muted-foreground" />
-          </Link>
-        )}
         <MobileLibraryView
           board={board}
           followedGames={followedGames}
@@ -85,25 +60,6 @@ export default async function LibraryPage() {
 
         {/* Add to Backlog */}
         <AddToBacklogPanel games={followedGamesForPicker} />
-
-        {/* Saved Updates Link */}
-        {bookmarksCount > 0 && (
-          <Link
-            href="/bookmarks"
-            className="flex items-center justify-between p-4 rounded-xl border border-amber-500/20 bg-gradient-to-r from-amber-500/10 to-transparent hover:border-amber-500/40 transition-colors"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center">
-                <Bookmark className="w-5 h-5 text-amber-400" />
-              </div>
-              <div>
-                <p className="font-medium">Saved Updates</p>
-                <p className="text-sm text-muted-foreground">{bookmarksCount} bookmarked patches & news</p>
-              </div>
-            </div>
-            <ChevronRight className="w-5 h-5 text-muted-foreground" />
-          </Link>
-        )}
 
         {/* My Games - Flat Grid */}
         <section className="rounded-xl border border-border bg-card overflow-hidden">

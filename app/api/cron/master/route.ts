@@ -57,6 +57,19 @@ export async function GET(req: Request) {
     results.processAiJobs = { error: String(e) }
   }
 
+  // Always run: fetch-deals (every 15 min - keeps deals fresh)
+  try {
+    const res = await fetch(`${baseUrl}/api/cron/fetch-deals`, {
+      headers: {
+        'Authorization': authHeader,
+        'x-vercel-cron': cronHeader,
+      },
+    })
+    results.fetchDeals = await res.json()
+  } catch (e) {
+    results.fetchDeals = { error: String(e) }
+  }
+
   // Run at 0, 6, 12, 18 UTC: discover-games
   if (currentHour % 6 === 0) {
     try {

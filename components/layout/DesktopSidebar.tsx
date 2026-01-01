@@ -1,6 +1,6 @@
 'use client'
 
-import { Home, Newspaper, Library, User, Sparkles, Brain, Crown, Bell, Gamepad2 } from 'lucide-react'
+import { Home, Newspaper, Library, User, Sparkles, Brain, Crown, Bell, Gamepad2, Bookmark } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { ProBadge } from '@/components/ui/ProBadge'
@@ -46,14 +46,6 @@ export function DesktopSidebar({ counts, notificationStats, patchesStats }: Desk
             href="/home"
           />
           <NavItem
-            icon={Gamepad2}
-            label="Patches"
-            href="/patches"
-            badge={patchesStats?.total_today}
-            badgeLabel="today"
-            isLive={patchesStats?.high_impact_count ? patchesStats.high_impact_count > 0 : false}
-          />
-          <NavItem
             icon={Newspaper}
             label="News"
             href="/news"
@@ -62,12 +54,10 @@ export function DesktopSidebar({ counts, notificationStats, patchesStats }: Desk
             isLive={counts?.newNewsToday ? counts.newNewsToday > 0 : false}
           />
           <NavItem
-            icon={Bell}
-            label="Notifications"
-            href="/notifications"
-            badge={notificationStats?.unread_count}
-            badgeLabel="unread"
-            isLive={notificationStats?.high_priority_count ? notificationStats.high_priority_count > 0 : false}
+            icon={Brain}
+            label="Insights"
+            href="/insights"
+            isPro
           />
           <NavItem
             icon={Library}
@@ -76,14 +66,32 @@ export function DesktopSidebar({ counts, notificationStats, patchesStats }: Desk
             badge={counts?.unreadBacklog}
             badgeLabel="unread"
           />
+          <NavItem
+            icon={Bookmark}
+            label="Saved"
+            href="/bookmarks"
+            badge={counts?.savedUpdates}
+            badgeLabel="saved"
+            isPro
+          />
           <NavItem icon={User} label="Profile" href="/profile" />
 
           <div className="mt-4 pt-4 border-t border-border">
             <NavItem
-              icon={Brain}
-              label="Insights"
-              href="/insights"
-              isPro
+              icon={Gamepad2}
+              label="Patches"
+              href="/patches"
+              badge={patchesStats?.total_today}
+              badgeLabel="today"
+              isLive={patchesStats?.high_impact_count ? patchesStats.high_impact_count > 0 : false}
+            />
+            <NavItem
+              icon={Bell}
+              label="Notifications"
+              href="/notifications"
+              badge={notificationStats?.unread_count}
+              badgeLabel="unread"
+              isLive={notificationStats?.high_priority_count ? notificationStats.high_priority_count > 0 : false}
             />
           </div>
         </nav>

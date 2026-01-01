@@ -85,6 +85,7 @@ export function SpotlightGameCard({ game, type, variant = 'default' }: Spotlight
               className="object-cover transition-transform duration-300 group-hover:scale-105"
               sizes="25vw"
               loading="lazy"
+              unoptimized
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-zinc-800 to-zinc-900">
@@ -123,6 +124,7 @@ export function SpotlightGameCard({ game, type, variant = 'default' }: Spotlight
               className="object-cover transition-transform duration-500 group-hover:scale-105"
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
               priority
+              unoptimized
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-muted to-muted/50">
@@ -181,6 +183,7 @@ export function SpotlightGameCard({ game, type, variant = 'default' }: Spotlight
             fill
             className="object-cover transition-transform duration-300 group-hover:scale-105"
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+            unoptimized
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center">

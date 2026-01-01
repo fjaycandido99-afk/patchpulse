@@ -166,6 +166,7 @@ export function BacklogHealth() {
                         fill
                         className="object-cover"
                         sizes="48px"
+                        unoptimized
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-zinc-600">
@@ -211,15 +212,16 @@ export function BacklogHealth() {
           href={`/backlog/${data.spotlight.id}`}
           className="relative block h-32 sm:h-40 group"
         >
-          {/* Background Image - Clearer with subtle blur */}
+          {/* Background Image - Clear, no blur */}
           <div className="absolute inset-0 overflow-hidden">
             <Image
               src={data.spotlight.cover_url}
               alt={data.spotlight.name}
               fill
-              className="object-cover scale-105 blur-[2px] group-hover:scale-100 group-hover:blur-0 transition-all duration-500"
+              className="object-cover scale-105 group-hover:scale-100 transition-transform duration-500"
               sizes="(max-width: 768px) 100vw, 50vw"
               priority
+              unoptimized
             />
           </div>
 
@@ -238,6 +240,7 @@ export function BacklogHealth() {
                   fill
                   className="object-cover"
                   sizes="80px"
+                  unoptimized
                 />
                 {/* State Badge */}
                 {getSpotlightLabel() && (

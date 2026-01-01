@@ -9,6 +9,8 @@ export const PLAN_LIMITS = {
     followed: 10,
     hasNotifications: false,
     hasAISummaries: false,
+    hasFullReleases: false,
+    hasBookmarks: false,
   },
   pro: {
     backlog: Infinity,
@@ -16,6 +18,8 @@ export const PLAN_LIMITS = {
     followed: Infinity,
     hasNotifications: true,
     hasAISummaries: true,
+    hasFullReleases: true,
+    hasBookmarks: true,
   },
 } as const
 
@@ -43,6 +47,8 @@ export type SubscriptionInfo = {
   features: {
     notifications: boolean
     aiSummaries: boolean
+    fullReleases: boolean
+    bookmarks: boolean
   }
 }
 
@@ -213,6 +219,8 @@ export async function getSubscriptionInfo(userId?: string): Promise<Subscription
     features: {
       notifications: limits.hasNotifications,
       aiSummaries: limits.hasAISummaries,
+      fullReleases: limits.hasFullReleases,
+      bookmarks: limits.hasBookmarks,
     },
   }
 }
@@ -232,6 +240,8 @@ function getDefaultSubscriptionInfo(): SubscriptionInfo {
     features: {
       notifications: false,
       aiSummaries: false,
+      fullReleases: false,
+      bookmarks: false,
     },
   }
 }

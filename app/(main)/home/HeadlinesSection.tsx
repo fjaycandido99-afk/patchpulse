@@ -99,7 +99,8 @@ function getNewsImage(item: NewsItem, seasonalImages: Map<string, SeasonalImage>
 }
 
 type HeadlinesSectionProps = {
-  news: NewsItem[]
+  userNews: NewsItem[]  // News from user's followed/backlog games (for hero carousel)
+  latestNews: NewsItem[]  // All news (for Latest Headlines grid)
   seasonalImages: Map<string, SeasonalImage>
   gamePlatforms: Map<string, Platform[]>
 }
@@ -399,21 +400,24 @@ function RotatingNewsGrid({
   )
 }
 
-export function HeadlinesSection({ news, seasonalImages, gamePlatforms }: HeadlinesSectionProps) {
-  if (news.length === 0) return null
+export function HeadlinesSection({ userNews, latestNews, seasonalImages, gamePlatforms }: HeadlinesSectionProps) {
+  // Show section if we have any news (user news for hero OR latest headlines for grid)
+  if (userNews.length === 0 && latestNews.length === 0) return null
 
   return (
     <section className="relative py-8 bg-gradient-to-b from-zinc-900/50 to-transparent border-t border-b border-white/5 w-full max-w-full overflow-hidden">
       <div className="space-y-4">
         <SectionHeader title="Latest Headlines" href="/news" glowLine />
 
-        {/* Rotating spotlight - cycles through all headlines every 10s */}
-        <RotatingHeadline news={news} seasonalImages={seasonalImages} />
+        {/* Hero carousel - shows news from user's followed/backlog games */}
+        {userNews.length > 0 && (
+          <RotatingHeadline news={userNews} seasonalImages={seasonalImages} />
+        )}
 
-        {/* Additional headlines - rotating grid with random fade animation */}
-        {news.length > 3 && (
+        {/* Latest Headlines grid - shows ALL news */}
+        {latestNews.length > 0 && (
           <RotatingNewsGrid
-            news={news.slice(3)}
+            news={latestNews}
             seasonalImages={seasonalImages}
             gamePlatforms={gamePlatforms}
           />

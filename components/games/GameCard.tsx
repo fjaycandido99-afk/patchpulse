@@ -80,7 +80,7 @@ export function GameCard({
   if (variant === 'compact') {
     return (
       <Link
-        href={`/backlog/${id}`}
+        href={`/games/${slug}`}
         className="group flex items-center gap-3 rounded-lg border border-border bg-card p-2 transition-colors hover:border-primary/50 hover:bg-card/80"
       >
         <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-md bg-muted">
@@ -91,6 +91,7 @@ export function GameCard({
               fill
               className="object-cover"
               sizes="48px"
+              unoptimized
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center">
@@ -113,7 +114,7 @@ export function GameCard({
 
   return (
     <Link
-      href={`/backlog/${id}`}
+      href={`/games/${slug}`}
       className="group relative flex flex-col overflow-hidden rounded-xl border border-border bg-card transition-all hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5"
     >
       {/* Cover Image */}
@@ -125,6 +126,7 @@ export function GameCard({
             fill
             className="object-cover transition-transform duration-300 group-hover:scale-105"
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            unoptimized
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center">

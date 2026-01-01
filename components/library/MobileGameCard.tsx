@@ -42,7 +42,7 @@ export function MobileGameCard({
       {/* Cover image */}
       <div className="relative aspect-[3/4] rounded-lg overflow-hidden bg-muted">
         {imageUrl ? (
-          <Image src={imageUrl} alt={title} fill className="object-cover" sizes="120px" />
+          <Image src={imageUrl} alt={title} fill className="object-cover" sizes="120px" unoptimized />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
             <Gamepad2 className="h-6 w-6 text-muted-foreground" />

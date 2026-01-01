@@ -1,9 +1,33 @@
 'use client'
 
 import { useState } from 'react'
-import { Sparkles, Clock, Gamepad2, Brain, ChevronRight, Loader2, Zap, Calendar, X, TrendingUp, Minus, TrendingDown, AlertTriangle } from 'lucide-react'
+import { Sparkles, Clock, Gamepad2, Brain, ChevronRight, Loader2, Zap, Calendar, X, TrendingUp, Minus, TrendingDown, AlertTriangle, Users } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
+
+function GameCoverImage({ src, alt }: { src: string | null; alt: string }) {
+  const [hasError, setHasError] = useState(false)
+
+  if (!src || hasError) {
+    return (
+      <div className="w-full h-full flex items-center justify-center text-zinc-600 bg-gradient-to-br from-zinc-800 to-zinc-900">
+        <Gamepad2 className="w-8 h-8" />
+      </div>
+    )
+  }
+
+  return (
+    <Image
+      src={src}
+      alt={alt}
+      fill
+      className="object-cover"
+      sizes="80px"
+      unoptimized
+      onError={() => setHasError(true)}
+    />
+  )
+}
 
 type Recommendation = {
   game_id: string
@@ -24,6 +48,8 @@ type Recommendation = {
   } | null
   days_since_played: number | null
   progress: number
+  is_discovery?: boolean
+  follower_count?: number
 }
 
 type RecommendationResult = {
@@ -129,7 +155,7 @@ export function PlayRecommendations() {
         </div>
         <div>
           <h3 className="font-semibold">What Should I Play?</h3>
-          <p className="text-sm text-muted-foreground">AI-powered recommendations from your backlog</p>
+          <p className="text-sm text-muted-foreground">From your backlog + trending discoveries</p>
         </div>
       </div>
 
@@ -216,41 +242,44 @@ export function PlayRecommendations() {
             const momentumConfig = MOMENTUM_CONFIG[momentum]
             const MomentumIcon = momentumConfig.icon
             const isHot = momentum === 'rising' || rec.recent_patch?.is_major
+            const isDiscovery = rec.is_discovery || false
 
             return (
               <div key={rec.game_id} className="relative group">
                 <Link
                   href={`/games/${rec.slug || rec.game_id}`}
                   className={`block rounded-xl border transition-all overflow-hidden ${
-                    isHot
-                      ? 'border-primary/30 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent hover:border-primary/50 shadow-lg shadow-primary/5'
-                      : 'border-border bg-muted/30 hover:bg-muted/50 hover:border-border/80'
+                    isDiscovery
+                      ? 'border-amber-500/30 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent hover:border-amber-500/50 shadow-lg shadow-amber-500/5'
+                      : isHot
+                        ? 'border-primary/30 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent hover:border-primary/50 shadow-lg shadow-primary/5'
+                        : 'border-border bg-muted/30 hover:bg-muted/50 hover:border-border/80'
                   }`}
                 >
                   <div className="flex gap-4 p-4">
                     {/* Game Cover - Larger with glow */}
-                    <div className={`relative flex-shrink-0 w-20 h-28 rounded-lg overflow-hidden bg-zinc-800 ${isHot ? 'ring-2 ring-primary/30 shadow-lg shadow-primary/20' : 'ring-1 ring-white/10'}`}>
-                      {rec.cover_url ? (
-                        <Image
-                          src={rec.cover_url}
-                          alt={rec.game_name}
-                          fill
-                          className="object-cover"
-                          sizes="80px"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-zinc-600">
-                          <Gamepad2 className="w-8 h-8" />
-                        </div>
-                      )}
+                    <div className={`relative flex-shrink-0 w-20 h-28 rounded-lg overflow-hidden bg-zinc-800 ${
+                      isDiscovery
+                        ? 'ring-2 ring-amber-500/30 shadow-lg shadow-amber-500/20'
+                        : isHot
+                          ? 'ring-2 ring-primary/30 shadow-lg shadow-primary/20'
+                          : 'ring-1 ring-white/10'
+                    }`}>
+                      <GameCoverImage src={rec.cover_url} alt={rec.game_name} />
                       {/* Rank badge */}
                       <div className="absolute -top-1 -left-1 w-7 h-7 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm shadow-lg">
                         {i + 1}
                       </div>
                       {/* Momentum indicator on cover */}
-                      {isHot && (
+                      {isHot && !rec.is_discovery && (
                         <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-green-500 flex items-center justify-center shadow-lg animate-pulse">
                           <TrendingUp className="w-3.5 h-3.5 text-white" />
+                        </div>
+                      )}
+                      {/* Discovery badge on cover */}
+                      {rec.is_discovery && (
+                        <div className="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded-full bg-amber-500 text-[10px] font-bold text-black shadow-lg">
+                          NEW
                         </div>
                       )}
                     </div>
@@ -270,6 +299,12 @@ export function PlayRecommendations() {
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-amber-500/20 text-amber-400">
                             <Calendar className="w-3 h-3" />
                             Patch
+                          </span>
+                        )}
+                        {rec.is_discovery && rec.follower_count && rec.follower_count > 0 && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-purple-500/20 text-purple-400">
+                            <Users className="w-3 h-3" />
+                            {rec.follower_count} following
                           </span>
                         )}
                       </div>

@@ -2,12 +2,15 @@
 
 import { useState, useTransition } from 'react'
 import { toggleBookmark } from '@/app/(main)/actions/bookmarks'
+import Link from 'next/link'
+import { Crown } from 'lucide-react'
 
 type BookmarkButtonProps = {
   entityType: 'patch' | 'news'
   entityId: string
   initialBookmarked: boolean
   size?: 'sm' | 'md' | 'lg'
+  isPro?: boolean
 }
 
 const sizeClasses = {
@@ -27,6 +30,7 @@ export function BookmarkButton({
   entityId,
   initialBookmarked,
   size = 'md',
+  isPro = true,
 }: BookmarkButtonProps) {
   const [isBookmarked, setIsBookmarked] = useState(initialBookmarked)
   const [isPending, startTransition] = useTransition()
@@ -44,6 +48,20 @@ export function BookmarkButton({
         setIsBookmarked(result.bookmarked)
       }
     })
+  }
+
+  // Non-Pro users see a locked bookmark that links to pricing
+  if (!isPro) {
+    return (
+      <Link
+        href="/pricing"
+        aria-label="Upgrade to save items"
+        title="Pro feature - Upgrade to save"
+        className={`rounded-lg border border-primary/30 bg-primary/10 text-primary transition-colors hover:bg-primary/20 flex items-center justify-center ${sizeClasses[size]}`}
+      >
+        <Crown className={iconSizes[size]} />
+      </Link>
+    )
   }
 
   return (

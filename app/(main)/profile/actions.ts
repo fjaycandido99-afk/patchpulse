@@ -182,11 +182,12 @@ export async function getProfileStats() {
       }
     }
 
-    // Get playtime from library
+    // Get playtime from library (Steam and Xbox only)
     const { data: libraryData } = await supabase
       .from('user_library_games')
       .select('playtime_minutes')
       .eq('user_id', user.id)
+      .in('provider', ['steam', 'xbox'])
 
     const totalPlaytime = libraryData?.reduce(
       (sum, g) => sum + (g.playtime_minutes || 0),
@@ -417,11 +418,12 @@ export async function getPlaytimeGames() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return []
 
-    // Get library games with playtime, joined with games table for details
+    // Get library games with playtime from Steam and Xbox only
     const { data, error } = await supabase
       .from('user_library_games')
       .select(`
         playtime_minutes,
+        provider,
         games:game_id (
           id,
           name,
@@ -430,6 +432,7 @@ export async function getPlaytimeGames() {
         )
       `)
       .eq('user_id', user.id)
+      .in('provider', ['steam', 'xbox'])
       .gt('playtime_minutes', 0)
       .order('playtime_minutes', { ascending: false })
       .limit(12)
@@ -443,6 +446,7 @@ export async function getPlaytimeGames() {
         return {
           ...game,
           playtime_minutes: item.playtime_minutes || 0,
+          provider: item.provider as 'steam' | 'xbox',
         }
       })
       .filter((g): g is NonNullable<typeof g> => g !== null)

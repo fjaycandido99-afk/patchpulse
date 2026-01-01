@@ -1,4 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
+import type { DealMetadata } from '../actions/bookmarks'
+
+export type BookmarkedDeal = {
+  id: string
+  entity_id: string
+  created_at: string
+  metadata: DealMetadata
+}
 
 export type BookmarkedPatch = {
   id: string
@@ -24,6 +32,7 @@ export type BookmarkedNews = {
     summary: string | null
     published_at: string
     is_rumor: boolean
+    image_url: string | null
     game: { id: string; name: string; cover_url: string | null } | null
   }
 }
@@ -134,6 +143,7 @@ export async function getBookmarkedNews(): Promise<BookmarkedNews[]> {
       summary,
       published_at,
       is_rumor,
+      image_url,
       games(id, name, cover_url)
     `)
     .in('id', newsIds)
@@ -164,10 +174,44 @@ export async function getBookmarkedNews(): Promise<BookmarkedNews[]> {
         summary: newsData.summary,
         published_at: newsData.published_at,
         is_rumor: newsData.is_rumor,
+        image_url: (newsData as any).image_url || null,
         game: gameData || null
       }
     })
   }
 
   return results
+}
+
+export async function getBookmarkedDeals(): Promise<BookmarkedDeal[]> {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return []
+  }
+
+  const { data: bookmarks, error } = await supabase
+    .from('bookmarks')
+    .select('id, entity_id, created_at, metadata')
+    .eq('user_id', user.id)
+    .eq('entity_type', 'deal')
+    .order('created_at', { ascending: false })
+
+  if (error || !bookmarks) {
+    if (error) console.error('Error fetching deal bookmarks:', error)
+    return []
+  }
+
+  return bookmarks
+    .filter(b => b.metadata)
+    .map(b => ({
+      id: b.id,
+      entity_id: b.entity_id,
+      created_at: b.created_at,
+      metadata: b.metadata as DealMetadata,
+    }))
 }

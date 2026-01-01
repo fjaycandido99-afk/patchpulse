@@ -2,6 +2,10 @@ import { getUpcomingGames, getUpcomingCounts } from './queries'
 import { EmptyGameState, GameGridWithSearch } from '@/components/games'
 import { Calendar, Sparkles } from 'lucide-react'
 import { UpcomingCalendar } from './UpcomingCalendar'
+import { createClient } from '@/lib/supabase/server'
+import { getUserPlan } from '@/lib/subscriptions/limits'
+import { redirect } from 'next/navigation'
+import { ProUpgradeCTA } from '@/components/ui/ProUpgradeCTA'
 
 export const metadata = {
   title: 'Upcoming Games | PatchPulse',
@@ -9,6 +13,42 @@ export const metadata = {
 }
 
 export default async function UpcomingPage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    redirect('/login')
+  }
+
+  const plan = await getUserPlan(user.id)
+  const isPro = plan === 'pro'
+
+  if (!isPro) {
+    return (
+      <div className="space-y-6">
+        <header>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+            Upcoming Games
+          </h1>
+          <p className="mt-1 text-muted-foreground">
+            Games launching soon — without the hype.
+          </p>
+        </header>
+
+        <ProUpgradeCTA
+          title="Unlock Upcoming Games"
+          description="Get access to the full release calendar with anticipated games and launch dates."
+          features={[
+            'View all games releasing in the next year',
+            'See the most anticipated titles',
+            'Full release calendar view',
+            'Track launch dates for games you care about',
+          ]}
+        />
+      </div>
+    )
+  }
+
   const [upcoming, counts] = await Promise.all([
     getUpcomingGames({ days: 365, limit: 100 }),
     getUpcomingCounts(),

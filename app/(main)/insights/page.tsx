@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { getUserPlan } from '@/lib/subscriptions/limits'
 import { PlayRecommendations } from '@/components/ai/PlayRecommendations'
+import { DealsSection } from '@/components/deals/DealsSection'
 import { NewsDigest } from '@/components/ai/NewsDigest'
 import { BacklogHealth } from '@/components/ai/BacklogHealth'
 import { ProPowerTools } from '@/components/ai/ProPowerTools'
@@ -91,18 +92,14 @@ export default async function InsightsPage() {
         </div>
       ) : (
         <div className="space-y-6">
-          {/* Main Grid */}
-          <div className="grid gap-6 lg:grid-cols-2">
-            {/* What to Play Next */}
-            <div className="lg:col-span-1">
-              <PlayRecommendations />
-            </div>
+          {/* What Should I Play */}
+          <PlayRecommendations />
 
-            {/* News Digest */}
-            <div className="lg:col-span-1">
-              <NewsDigest />
-            </div>
-          </div>
+          {/* Games on Sale */}
+          <DealsSection />
+
+          {/* News Summary */}
+          <NewsDigest />
 
           {/* Backlog Health */}
           <BacklogHealth />

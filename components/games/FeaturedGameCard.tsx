@@ -21,6 +21,7 @@ type FeaturedGameCardProps = {
 export function FeaturedGameCard({
   id,
   name,
+  slug,
   cover_url,
   hero_url,
   release_date,
@@ -91,7 +92,7 @@ export function FeaturedGameCard({
 
   return (
     <Link
-      href={`/backlog/${id}`}
+      href={`/games/${slug}`}
       className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card transition-all hover:border-primary/50 hover:shadow-xl hover:shadow-primary/10"
     >
       {/* Image Container */}
@@ -104,6 +105,7 @@ export function FeaturedGameCard({
             className="object-cover transition-transform duration-500 group-hover:scale-105"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             priority
+            unoptimized
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-muted to-muted/50">

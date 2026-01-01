@@ -259,7 +259,7 @@ function DiscoverMode({
             >
               <div className="relative h-12 w-12 rounded-lg overflow-hidden flex-shrink-0">
                 {game.cover_url ? (
-                  <Image src={game.cover_url} alt={game.name} fill className="object-cover" sizes="48px" />
+                  <Image src={game.cover_url} alt={game.name} fill className="object-cover" sizes="48px" unoptimized />
                 ) : (
                   <div className="absolute inset-0 bg-muted" />
                 )}
@@ -375,7 +375,7 @@ function MobileWatchlistCard({ game }: { game: FollowedGameWithActivity }) {
     >
       <div className="relative aspect-[3/4] rounded-lg overflow-hidden bg-muted">
         {game.cover_url ? (
-          <Image src={game.cover_url} alt={game.name} fill className="object-cover" sizes="120px" />
+          <Image src={game.cover_url} alt={game.name} fill className="object-cover" sizes="120px" unoptimized />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
             <Gamepad2 className="h-6 w-6 text-muted-foreground" />

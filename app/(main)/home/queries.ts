@@ -115,7 +115,8 @@ export type NewReleaseGame = {
 export type HomeFeed = {
   followedGames: FollowedGame[]
   topPatches: PatchNote[]
-  latestNews: NewsItem[]
+  userNews: NewsItem[]  // News from followed/backlog games (for hero carousel)
+  latestNews: NewsItem[]  // All news (for Latest Headlines grid)
   backlogNudge: BacklogItem | null
   upcomingReleases: UpcomingReleaseItem[]
   upcomingGames: UpcomingGame[]
@@ -186,6 +187,7 @@ export async function getHomeFeed(): Promise<HomeFeed> {
     return {
       followedGames: [],
       topPatches: [],
+      userNews: [],
       latestNews: [],
       backlogNudge: null,
       upcomingReleases: [],
@@ -196,6 +198,7 @@ export async function getHomeFeed(): Promise<HomeFeed> {
     }
   }
 
+  // Get followed games (user_games)
   const { data: userGames } = await supabase
     .from('user_games')
     .select('game_id, games!inner(id, name, slug, cover_url, platforms)')
@@ -207,6 +210,17 @@ export async function getHomeFeed(): Promise<HomeFeed> {
       .filter((g): g is FollowedGame => g !== null) || []
 
   const followedGameIds = followedGames.map((g) => g.id)
+
+  // Get backlog games
+  const { data: backlogGames } = await supabase
+    .from('backlog_items')
+    .select('game_id')
+    .eq('user_id', user.id)
+
+  const backlogGameIds = backlogGames?.map((bg) => bg.game_id) || []
+
+  // Combine followed + backlog game IDs (deduplicated)
+  const allUserGameIds = [...new Set([...followedGameIds, ...backlogGameIds])]
 
   // Fetch upcoming games (releasing within 1 year) and new releases (last 30 days)
   // These are global, not filtered by followed games
@@ -285,27 +299,22 @@ export async function getHomeFeed(): Promise<HomeFeed> {
     patches = patchData || []
   }
 
-  // Fetch ALL news - both followed games AND general gaming news (game_id is null)
-  // Include image_url from news_items and hero_url from games for proper fallbacks
-  let newsQuery = supabase
-    .from('news_items')
-    .select('*, games(name, slug, cover_url, hero_url, logo_url, brand_color)')
-
-  if (followedGameIds.length > 0) {
-    newsQuery = newsQuery.or(`game_id.in.(${followedGameIds.join(',')}),game_id.is.null`)
-  } else {
-    // If no followed games, just show general gaming news
-    newsQuery = newsQuery.is('game_id', null)
+  // Fetch news from followed and backlog games (for hero carousel)
+  let userNewsRaw: any[] | null = null
+  if (allUserGameIds.length > 0) {
+    const { data } = await supabase
+      .from('news_items')
+      .select('*, games(name, slug, cover_url, hero_url, logo_url, brand_color)')
+      .in('game_id', allUserGameIds)
+      .order('published_at', { ascending: false })
+      .limit(20)
+    userNewsRaw = data
   }
 
-  const { data: newsRaw } = await newsQuery
-    .order('published_at', { ascending: false })
-    .limit(50) // Fetch all recent news
-
-  // Sort by date (most recent first), non-rumors prioritized
-  let news: typeof newsRaw = []
-  if (newsRaw && newsRaw.length > 0) {
-    news = [...newsRaw].sort((a, b) => {
+  // Sort user news by date (most recent first), non-rumors prioritized
+  let userNews: typeof userNewsRaw = []
+  if (userNewsRaw && userNewsRaw.length > 0) {
+    userNews = [...userNewsRaw].sort((a, b) => {
       // Non-rumors first
       if (a.is_rumor !== b.is_rumor) return a.is_rumor ? 1 : -1
       // Then by date
@@ -313,9 +322,27 @@ export async function getHomeFeed(): Promise<HomeFeed> {
     })
   }
 
-  // Fetch platforms for followed games (gracefully handle if table doesn't exist)
+  // Fetch ALL news (for Latest Headlines grid - not filtered by user's games)
+  const { data: allNewsRaw } = await supabase
+    .from('news_items')
+    .select('*, games(name, slug, cover_url, hero_url, logo_url, brand_color)')
+    .order('published_at', { ascending: false })
+    .limit(50)
+
+  // Sort all news by date (most recent first), non-rumors prioritized
+  let allNews: typeof allNewsRaw = []
+  if (allNewsRaw && allNewsRaw.length > 0) {
+    allNews = [...allNewsRaw].sort((a, b) => {
+      // Non-rumors first
+      if (a.is_rumor !== b.is_rumor) return a.is_rumor ? 1 : -1
+      // Then by date
+      return new Date(b.published_at).getTime() - new Date(a.published_at).getTime()
+    })
+  }
+
+  // Fetch platforms for user games (gracefully handle if table doesn't exist)
   let gamePlatforms = new Map<string, Platform[]>()
-  if (followedGameIds.length > 0) {
+  if (allUserGameIds.length > 0) {
     try {
       const { data: platformData } = await supabase
         .from('game_platforms')
@@ -329,7 +356,7 @@ export async function getHomeFeed(): Promise<HomeFeed> {
             sort_order
           )
         `)
-        .in('game_id', followedGameIds)
+        .in('game_id', allUserGameIds)
 
       if (platformData) {
         for (const item of platformData as any[]) {
@@ -391,11 +418,11 @@ export async function getHomeFeed(): Promise<HomeFeed> {
     }
   }
 
-  // Fetch seasonal images for all followed games
+  // Fetch seasonal images for all user games (followed + backlog)
   let seasonalImages = new Map<string, SeasonalImage>()
-  if (followedGameIds.length > 0) {
+  if (allUserGameIds.length > 0) {
     try {
-      seasonalImages = await batchGetSeasonalImages(followedGameIds)
+      seasonalImages = await batchGetSeasonalImages(allUserGameIds)
     } catch {
       // Table might not exist yet, use empty map
     }
@@ -404,7 +431,8 @@ export async function getHomeFeed(): Promise<HomeFeed> {
   return {
     followedGames,
     topPatches: patches || [],
-    latestNews: (news || []) as NewsItem[],
+    userNews: (userNews || []) as NewsItem[],  // For hero carousel (user's games)
+    latestNews: (allNews || []) as NewsItem[],  // For Latest Headlines (all news)
     backlogNudge: backlogData || null,
     upcomingReleases,
     upcomingGames,

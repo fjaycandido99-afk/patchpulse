@@ -3,6 +3,10 @@ import { getNewReleases, getReleaseCounts } from './queries'
 import { EmptyGameState, GameGridWithSearch } from '@/components/games'
 import { ReleasesFilters } from './ReleasesFilters'
 import { Info, TrendingUp } from 'lucide-react'
+import { createClient } from '@/lib/supabase/server'
+import { getUserPlan } from '@/lib/subscriptions/limits'
+import { redirect } from 'next/navigation'
+import { ProUpgradeCTA } from '@/components/ui/ProUpgradeCTA'
 
 type SearchParams = Promise<{
   days?: string
@@ -19,6 +23,42 @@ export default async function ReleasesPage({
 }: {
   searchParams: SearchParams
 }) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    redirect('/login')
+  }
+
+  const plan = await getUserPlan(user.id)
+  const isPro = plan === 'pro'
+
+  if (!isPro) {
+    return (
+      <div className="space-y-6">
+        <header>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+            New Releases
+          </h1>
+          <p className="mt-1 text-muted-foreground">
+            Recently released games worth knowing about.
+          </p>
+        </header>
+
+        <ProUpgradeCTA
+          title="Unlock Full Releases"
+          description="Get access to the complete catalog of new releases with filters and search."
+          features={[
+            'Browse all new releases from the past 30 days',
+            'Filter by platform and time period',
+            'Search through featured releases',
+            'Track games worth knowing about',
+          ]}
+        />
+      </div>
+    )
+  }
+
   const params = await searchParams
   const days = (parseInt(params.days || '30') as 7 | 14 | 30) || 30
   const platform = params.platform || 'all'

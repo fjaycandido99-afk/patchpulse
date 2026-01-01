@@ -1,8 +1,9 @@
 import Link from 'next/link'
 import { search, type SearchCategory } from './queries'
+import { logSearchRequest } from './actions'
 import { formatDate } from '@/lib/dates'
 import { Search, Gamepad2, FileText, Newspaper } from 'lucide-react'
-import { AddGameButton } from './AddGameButton'
+import { SearchImage } from './SearchImage'
 
 type SearchParams = {
   q?: string
@@ -87,25 +88,9 @@ export default async function SearchPage({
         </div>
       )}
 
-      {/* No results state */}
-      {query && totalResults === 0 && (
-        <div className="space-y-6">
-          <div className="text-center py-8">
-            <Search className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
-            <p className="text-lg font-medium mb-1">No results found</p>
-            <p className="text-muted-foreground text-sm">
-              Try adjusting your search or add the game below.
-            </p>
-          </div>
-
-          {/* AI Game Discovery */}
-          <AddGameButton searchQuery={query} />
-        </div>
-      )}
-
-      {/* Games found but user might want to add a different one */}
-      {query && results.games.length === 0 && (results.patches.length > 0 || results.news.length > 0) && (
-        <AddGameButton searchQuery={query} />
+      {/* No results state - log search for admin review */}
+      {query && results.games.length === 0 && (
+        <NoResultsLogger query={query} hasOtherResults={results.patches.length > 0 || results.news.length > 0} />
       )}
 
       {/* Results */}
@@ -128,27 +113,26 @@ export default async function SearchPage({
                   </Link>
                 )}
               </div>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
                 {results.games.map((game) => (
                   <Link
                     key={game.id}
                     href={`/backlog/${game.id}`}
-                    className="flex items-center gap-3 p-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 transition-all"
+                    className="group flex flex-col overflow-hidden rounded-xl border border-border hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 transition-all bg-card"
                   >
-                    {game.cover_url ? (
-                      <img
-                        src={game.cover_url}
-                        alt={game.name}
-                        className="w-12 h-12 rounded-lg object-cover"
-                      />
-                    ) : (
-                      <div className="w-12 h-12 rounded-lg bg-white/10 flex items-center justify-center">
-                        <Gamepad2 className="w-6 h-6 text-muted-foreground" />
-                      </div>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <h3 className="font-medium truncate">{game.name}</h3>
-                      <p className="text-xs text-muted-foreground">View game details</p>
+                    {/* Cover Image */}
+                    <div className="relative aspect-[3/4] w-full overflow-hidden bg-muted">
+                      {game.cover_url ? (
+                        <SearchImage src={game.cover_url} alt={game.name} type="game" fill className="object-cover transition-transform duration-300 group-hover:scale-105" />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center">
+                          <Gamepad2 className="h-12 w-12 text-muted-foreground" />
+                        </div>
+                      )}
+                    </div>
+                    {/* Title */}
+                    <div className="p-3">
+                      <h3 className="text-sm font-semibold line-clamp-2">{game.name}</h3>
                     </div>
                   </Link>
                 ))}
@@ -173,39 +157,30 @@ export default async function SearchPage({
                   </Link>
                 )}
               </div>
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {results.patches.map((patch) => (
                   <Link
                     key={patch.id}
                     href={`/patches/${patch.id}`}
-                    className="flex gap-4 p-4 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 transition-all"
+                    className="flex gap-3 p-3 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 transition-all"
                   >
                     {patch.game.cover_url ? (
-                      <img
-                        src={patch.game.cover_url}
-                        alt={patch.game.name}
-                        className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
-                      />
+                      <SearchImage src={patch.game.cover_url} alt={patch.game.name} type="patch" />
                     ) : (
-                      <div className="w-16 h-16 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
-                        <FileText className="w-6 h-6 text-muted-foreground" />
+                      <div className="w-14 h-14 rounded-md bg-white/10 flex items-center justify-center flex-shrink-0">
+                        <FileText className="w-5 h-5 text-muted-foreground" />
                       </div>
                     )}
                     <div className="min-w-0 flex-1">
                       <div className="flex items-start justify-between gap-2">
-                        <h3 className="font-medium line-clamp-1">{patch.title}</h3>
-                        <span className={`flex-shrink-0 rounded-md px-2 py-0.5 text-xs font-medium ${getImpactColor(patch.impact_score)}`}>
+                        <h3 className="text-sm font-medium line-clamp-1">{patch.title}</h3>
+                        <span className={`flex-shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium ${getImpactColor(patch.impact_score)}`}>
                           {patch.impact_score}/10
                         </span>
                       </div>
                       <p className="text-xs text-muted-foreground mt-0.5">
                         {patch.game.name} &middot; {formatDate(patch.published_at)}
                       </p>
-                      {patch.summary_tldr && (
-                        <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
-                          {patch.summary_tldr}
-                        </p>
-                      )}
                     </div>
                   </Link>
                 ))}
@@ -230,29 +205,25 @@ export default async function SearchPage({
                   </Link>
                 )}
               </div>
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {results.news.map((item) => (
                   <Link
                     key={item.id}
                     href={`/news/${item.id}`}
-                    className="flex gap-4 p-4 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 transition-all"
+                    className="flex gap-3 p-3 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 transition-all"
                   >
                     {item.game?.cover_url ? (
-                      <img
-                        src={item.game.cover_url}
-                        alt={item.game.name}
-                        className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
-                      />
+                      <SearchImage src={item.game.cover_url} alt={item.game.name} type="news" />
                     ) : (
-                      <div className="w-16 h-16 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
-                        <Newspaper className="w-6 h-6 text-muted-foreground" />
+                      <div className="w-14 h-14 rounded-md bg-white/10 flex items-center justify-center flex-shrink-0">
+                        <Newspaper className="w-5 h-5 text-muted-foreground" />
                       </div>
                     )}
                     <div className="min-w-0 flex-1">
                       <div className="flex items-start gap-2">
-                        <h3 className="font-medium line-clamp-1 flex-1">{item.title}</h3>
+                        <h3 className="text-sm font-medium line-clamp-1 flex-1">{item.title}</h3>
                         {item.is_rumor && (
-                          <span className="flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium bg-yellow-500/10 text-yellow-400">
+                          <span className="flex-shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium bg-yellow-500/10 text-yellow-400">
                             Rumor
                           </span>
                         )}
@@ -262,11 +233,6 @@ export default async function SearchPage({
                         {item.source_name && <> &middot; {item.source_name}</>}
                         {' '}&middot; {formatDate(item.published_at)}
                       </p>
-                      {item.summary && (
-                        <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
-                          {item.summary}
-                        </p>
-                      )}
                     </div>
                   </Link>
                 ))}
@@ -275,6 +241,39 @@ export default async function SearchPage({
           )}
         </div>
       )}
+    </div>
+  )
+}
+
+// Server component that logs failed game searches
+async function NoResultsLogger({ query, hasOtherResults }: { query: string; hasOtherResults: boolean }) {
+  // Log the search request for admin review
+  await logSearchRequest(query)
+
+  if (hasOtherResults) {
+    // Only show message if there are no games but there are patches/news
+    return (
+      <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-center">
+        <Gamepad2 className="w-8 h-8 mx-auto text-primary/60 mb-2" />
+        <p className="text-sm font-medium text-foreground">
+          Can&apos;t find &quot;{query}&quot;?
+        </p>
+        <p className="text-xs text-muted-foreground mt-1">
+          We&apos;ve noted your request and will add it soon!
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="text-center py-12">
+      <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
+        <Gamepad2 className="w-8 h-8 text-primary/60" />
+      </div>
+      <p className="text-lg font-medium mb-2">Can&apos;t find &quot;{query}&quot;?</p>
+      <p className="text-muted-foreground text-sm max-w-md mx-auto">
+        We&apos;ve noted your request! Our team reviews these regularly and will add popular games soon.
+      </p>
     </div>
   )
 }

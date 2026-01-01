@@ -10,6 +10,7 @@ import { Card } from '@/components/ui/card'
 import { GameLogo } from '@/components/ui/GameLogo'
 import { formatDate, relativeDaysText } from '@/lib/dates'
 import { createClient } from '@/lib/supabase/server'
+import { getUserPlan } from '@/lib/subscriptions/limits'
 
 // Topic to icon mapping
 const TOPIC_ICONS: Record<string, { icon: typeof Trophy; color: string; bg: string }> = {
@@ -133,10 +134,12 @@ export default async function NewsDetailPage({
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const [news, bookmarked] = await Promise.all([
+  const [news, bookmarked, plan] = await Promise.all([
     getNewsById(id),
     isBookmarked('news', id),
+    user ? getUserPlan(user.id) : Promise.resolve('free' as const),
   ])
+  const isPro = plan === 'pro'
 
   // Get backlog item if user is logged in and news is for a specific game
   let backlogItem = null
@@ -262,6 +265,7 @@ export default async function NewsDetailPage({
               entityId={news.id}
               initialBookmarked={bookmarked}
               size="lg"
+              isPro={isPro}
             />
           </div>
         </div>

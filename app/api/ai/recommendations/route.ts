@@ -24,10 +24,12 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const time = searchParams.get('time')
     const mood = searchParams.get('mood')
+    const discoveryOnly = searchParams.get('discoveryOnly') === 'true'
 
     const context = {
       availableTime: time ? parseInt(time) : undefined,
       mood: mood as 'chill' | 'challenge' | 'story' | 'social' | 'any' | undefined,
+      discoveryOnly,
     }
 
     const recommendations = await getPlayRecommendations(user.id, context)

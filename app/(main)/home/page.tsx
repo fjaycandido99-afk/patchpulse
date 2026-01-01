@@ -62,7 +62,8 @@ export default async function HomePage() {
 
         {/* Latest Headlines */}
         <HeadlinesSection
-          news={feed.latestNews}
+          userNews={feed.userNews}
+          latestNews={feed.latestNews}
           seasonalImages={feed.seasonalImages}
           gamePlatforms={feed.gamePlatforms}
         />
