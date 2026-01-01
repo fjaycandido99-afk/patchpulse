@@ -174,7 +174,7 @@ export function NewsDigest() {
                     >
                       <div className="flex gap-3 p-3">
                         {/* Game Cover */}
-                        <div className={`relative flex-shrink-0 w-14 h-18 rounded-lg overflow-hidden bg-zinc-800 ${
+                        <div className={`relative flex-shrink-0 w-14 h-[72px] rounded-lg overflow-hidden bg-zinc-800 ${
                           h.importance === 'high' ? 'ring-2 ring-primary/30' : 'ring-1 ring-white/10'
                         }`}>
                           {h.game_cover_url && h.game_cover_url.length > 0 ? (
@@ -248,69 +248,97 @@ export function NewsDigest() {
           {/* By Game */}
           {Object.keys(digest.game_updates).length > 0 && (
             <div>
-              <h4 className="text-sm font-medium text-muted-foreground mb-3">By Game</h4>
+              <h4 className="text-sm font-medium text-muted-foreground mb-3">Updates By Game</h4>
               <div className="space-y-2">
-                {Object.entries(digest.game_updates).map(([game, update]) => (
-                  <div key={game} className="rounded-lg bg-muted/50 overflow-hidden">
-                    <button
-                      onClick={() => toggleGame(game)}
-                      className="w-full flex items-center gap-3 p-3 text-left hover:bg-muted transition-colors"
+                {Object.entries(digest.game_updates).map(([game, update]) => {
+                  const hasMultipleUpdates = update.update_count >= 3
+                  return (
+                    <div
+                      key={game}
+                      className={`rounded-xl border overflow-hidden transition-all ${
+                        hasMultipleUpdates
+                          ? 'border-amber-500/30 bg-gradient-to-r from-amber-500/10 to-transparent'
+                          : 'border-border bg-muted/30'
+                      }`}
                     >
-                      {/* Game Cover */}
-                      <div className="relative flex-shrink-0 w-10 h-12 rounded overflow-hidden bg-zinc-800">
-                        {update.game_cover_url && update.game_cover_url.length > 0 ? (
-                          <Image
-                            src={update.game_cover_url}
-                            alt={update.game_name || 'Game'}
-                            fill
-                            className="object-cover"
-                            sizes="40px"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-zinc-600">
-                            <Gamepad2 className="w-4 h-4" />
+                      <button
+                        onClick={() => toggleGame(game)}
+                        className="w-full flex items-center gap-3 p-3 text-left hover:bg-white/5 transition-colors"
+                      >
+                        {/* Game Cover */}
+                        <div className={`relative flex-shrink-0 w-12 h-16 rounded-lg overflow-hidden bg-zinc-800 ${
+                          hasMultipleUpdates ? 'ring-2 ring-amber-500/30' : 'ring-1 ring-white/10'
+                        }`}>
+                          {update.game_cover_url && update.game_cover_url.length > 0 ? (
+                            <Image
+                              src={update.game_cover_url}
+                              alt={update.game_name || 'Game'}
+                              fill
+                              className="object-cover"
+                              sizes="48px"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-zinc-600">
+                              <Gamepad2 className="w-5 h-5" />
+                            </div>
+                          )}
+                          {/* Update count badge */}
+                          {update.update_count > 1 && (
+                            <div className={`absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shadow-lg ${
+                              hasMultipleUpdates ? 'bg-amber-500 text-black' : 'bg-zinc-700 text-white'
+                            }`}>
+                              {update.update_count}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold truncate">{update.game_name}</span>
+                            {hasMultipleUpdates && (
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] bg-amber-500/20 text-amber-400 font-medium">
+                                Active
+                              </span>
+                            )}
                           </div>
+                          <span className="text-xs text-muted-foreground">
+                            {update.update_count} update{update.update_count !== 1 ? 's' : ''} this period
+                          </span>
+                        </div>
+                        {expandedGames.has(game) ? (
+                          <ChevronUp className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                        ) : (
+                          <ChevronDown className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                         )}
-                      </div>
+                      </button>
 
-                      <div className="flex-1 min-w-0">
-                        <span className="font-medium truncate block">{update.game_name}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {update.update_count} update{update.update_count !== 1 ? 's' : ''}
-                        </span>
-                      </div>
-                      {expandedGames.has(game) ? (
-                        <ChevronUp className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                      ) : (
-                        <ChevronDown className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                      {expandedGames.has(game) && (
+                        <div className="px-3 pb-3 ml-[60px] border-t border-white/5 pt-3">
+                          <p className="text-sm text-muted-foreground mb-3">{update.summary}</p>
+                          {update.highlights.length > 0 && (
+                            <ul className="text-sm space-y-2">
+                              {update.highlights.map((h, i) => (
+                                <li key={i} className="flex items-start gap-2">
+                                  <Zap className="w-3.5 h-3.5 text-primary flex-shrink-0 mt-0.5" />
+                                  <span>{h}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                          {update.game_slug && (
+                            <Link
+                              href={`/games/${update.game_slug}`}
+                              className="inline-flex items-center gap-1 mt-3 text-xs text-primary hover:text-primary/80 font-medium"
+                            >
+                              View game details
+                              <ChevronDown className="w-3 h-3 rotate-[-90deg]" />
+                            </Link>
+                          )}
+                        </div>
                       )}
-                    </button>
-
-                    {expandedGames.has(game) && (
-                      <div className="px-3 pb-3 ml-[52px]">
-                        <p className="text-sm text-muted-foreground mb-2">{update.summary}</p>
-                        {update.highlights.length > 0 && (
-                          <ul className="text-sm space-y-1">
-                            {update.highlights.map((h, i) => (
-                              <li key={i} className="flex items-start gap-2">
-                                <span className="text-primary">•</span>
-                                <span>{h}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        )}
-                        {update.game_slug && (
-                          <Link
-                            href={`/games/${update.game_slug}`}
-                            className="inline-block mt-2 text-xs text-primary hover:text-primary/80"
-                          >
-                            View game →
-                          </Link>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                ))}
+                    </div>
+                  )
+                })}
               </div>
             </div>
           )}
