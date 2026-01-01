@@ -4,6 +4,7 @@ import { useState, useRef } from 'react'
 import Image from 'next/image'
 import { Camera, Pencil, Check, X, Loader2 } from 'lucide-react'
 import { updateProfile, uploadAvatar } from '@/app/(main)/profile/actions'
+import { useToastUI } from '@/components/ui/toast'
 
 type ProfileHeaderProps = {
   userId: string
@@ -32,6 +33,7 @@ export function ProfileHeader({
   const [isSaving, setIsSaving] = useState(false)
   const [currentAvatarUrl, setCurrentAvatarUrl] = useState(avatarUrl)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const { toast } = useToastUI()
 
   const displayedName = displayName || username || email?.split('@')[0] || 'User'
   const initials = displayedName[0]?.toUpperCase() || '?'
@@ -46,12 +48,12 @@ export function ProfileHeader({
 
     // Validate file
     if (!file.type.startsWith('image/')) {
-      alert('Please select an image file')
+      toast.error('Please select an image file')
       return
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      alert('Image must be less than 5MB')
+      toast.error('Image must be less than 5MB')
       return
     }
 
@@ -62,12 +64,13 @@ export function ProfileHeader({
 
       const result = await uploadAvatar(formData)
       if (result.error) {
-        alert(result.error)
+        toast.error(result.error)
       } else if (result.url) {
         setCurrentAvatarUrl(result.url)
+        toast.success('Avatar updated')
       }
     } catch {
-      alert('Failed to upload avatar')
+      toast.error('Failed to upload avatar')
     } finally {
       setIsUploading(false)
     }
@@ -80,12 +83,13 @@ export function ProfileHeader({
     try {
       const result = await updateProfile({ displayName: nameValue.trim() })
       if (result.error) {
-        alert(result.error)
+        toast.error(result.error)
       } else {
         setIsEditingName(false)
+        toast.success('Name updated')
       }
     } catch {
-      alert('Failed to save name')
+      toast.error('Failed to save name')
     } finally {
       setIsSaving(false)
     }
@@ -96,12 +100,13 @@ export function ProfileHeader({
     try {
       const result = await updateProfile({ bio: bioValue.trim() || null })
       if (result.error) {
-        alert(result.error)
+        toast.error(result.error)
       } else {
         setIsEditingBio(false)
+        toast.success('Bio updated')
       }
     } catch {
-      alert('Failed to save bio')
+      toast.error('Failed to save bio')
     } finally {
       setIsSaving(false)
     }

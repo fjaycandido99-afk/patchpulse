@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Image from 'next/image'
 import { Star, Plus, X, Loader2, Gamepad2 } from 'lucide-react'
 import { updateFavoriteGames } from '@/app/(main)/profile/actions'
+import { useToastUI } from '@/components/ui/toast'
 
 type Game = {
   id: string
@@ -29,6 +30,7 @@ export function FavoriteGames({
   )
   const [isSaving, setIsSaving] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const { toast } = useToastUI()
 
   const availableGames = allGames.filter(
     (g) =>
@@ -41,12 +43,13 @@ export function FavoriteGames({
     try {
       const result = await updateFavoriteGames(selectedIds)
       if (result.error) {
-        alert(result.error)
+        toast.error(result.error)
       } else {
         setIsEditing(false)
+        toast.success('Favorites saved')
       }
     } catch {
-      alert('Failed to save favorites')
+      toast.error('Failed to save favorites')
     } finally {
       setIsSaving(false)
     }

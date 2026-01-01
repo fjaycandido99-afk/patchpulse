@@ -2,8 +2,9 @@
 
 import { useState, useTransition } from 'react'
 import Image from 'next/image'
-import { X, Calendar, Gamepad2, Bell, Plus, Sparkles, Info, Clock, Loader2 } from 'lucide-react'
+import { X, Calendar, Gamepad2, Bell, Plus, Sparkles, Info, Clock, Loader2, Check } from 'lucide-react'
 import { followGame } from '@/app/(main)/actions/games'
+import { toggleGameReminder } from '@/app/(main)/actions/reminders'
 import { StoreLinkButtons } from '@/components/ui/StoreLinkButtons'
 
 export type SpotlightGame = {
@@ -30,13 +31,15 @@ type GameSpotlightPanelProps = {
   isOpen: boolean
   onClose: () => void
   type: 'upcoming' | 'new'
+  initialHasReminder?: boolean
 }
 
 
-export function GameSpotlightPanel({ game, isOpen, onClose, type }: GameSpotlightPanelProps) {
+export function GameSpotlightPanel({ game, isOpen, onClose, type, initialHasReminder = false }: GameSpotlightPanelProps) {
   const [isFollowing, setIsFollowing] = useState(false)
-  const [hasReminder, setHasReminder] = useState(false)
+  const [hasReminder, setHasReminder] = useState(initialHasReminder)
   const [isPending, startTransition] = useTransition()
+  const [isReminderPending, startReminderTransition] = useTransition()
 
   if (!isOpen) return null
 
@@ -196,8 +199,19 @@ export function GameSpotlightPanel({ game, isOpen, onClose, type }: GameSpotligh
   }
 
   const handleReminder = () => {
+    const previousState = hasReminder
     setHasReminder(!hasReminder)
-    // TODO: Implement actual reminder logic
+
+    startReminderTransition(async () => {
+      const result = await toggleGameReminder(game.id, game.release_date)
+
+      if (result.error) {
+        // Revert on error
+        setHasReminder(previousState)
+      } else if (result.hasReminder !== undefined) {
+        setHasReminder(result.hasReminder)
+      }
+    })
   }
 
   const microSignal = getMicroSignal()
@@ -368,13 +382,21 @@ export function GameSpotlightPanel({ game, isOpen, onClose, type }: GameSpotligh
               {isUpcoming && (
                 <button
                   onClick={handleReminder}
-                  className={`flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-medium transition-colors ${
+                  disabled={isReminderPending}
+                  className={`flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-medium transition-colors disabled:opacity-50 ${
                     hasReminder
                       ? 'bg-violet-500 text-white'
                       : 'border border-border bg-card hover:bg-muted'
                   }`}
+                  title={hasReminder ? 'Remove reminder' : 'Remind me on release day'}
                 >
-                  <Bell className={`h-4 w-4 ${hasReminder ? 'fill-current' : ''}`} />
+                  {isReminderPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : hasReminder ? (
+                    <Check className="h-4 w-4" />
+                  ) : (
+                    <Bell className="h-4 w-4" />
+                  )}
                 </button>
               )}
             </div>

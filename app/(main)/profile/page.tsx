@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
+import { FileText, Shield, ChevronRight } from 'lucide-react'
 import { ConnectedAccounts } from './ConnectedAccounts'
 import { BiometricSettings } from '@/components/auth/BiometricSettings'
 import { PushNotificationToggle } from '@/components/notifications/PushNotificationToggle'
@@ -127,6 +129,33 @@ export default async function ProfilePage() {
           Sign out of your account or switch to a different user.
         </p>
         <LogoutButton />
+      </section>
+
+      {/* Legal */}
+      <section className="rounded-xl border border-border bg-card p-6">
+        <h2 className="text-lg font-semibold mb-4">Legal</h2>
+        <div className="space-y-1">
+          <Link
+            href="/privacy"
+            className="flex items-center justify-between p-3 -mx-3 rounded-lg hover:bg-white/5 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <Shield className="w-5 h-5 text-muted-foreground" />
+              <span>Privacy Policy</span>
+            </div>
+            <ChevronRight className="w-4 h-4 text-muted-foreground" />
+          </Link>
+          <Link
+            href="/terms"
+            className="flex items-center justify-between p-3 -mx-3 rounded-lg hover:bg-white/5 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <FileText className="w-5 h-5 text-muted-foreground" />
+              <span>Terms of Service</span>
+            </div>
+            <ChevronRight className="w-4 h-4 text-muted-foreground" />
+          </Link>
+        </div>
       </section>
     </div>
   )

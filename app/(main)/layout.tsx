@@ -9,6 +9,7 @@ import { ProfileAvatar } from '@/components/layout/ProfileAvatar'
 import { NotificationBell } from '@/components/notifications/NotificationBell'
 import { LatestPatchesBell } from '@/components/patches/LatestPatchesBell'
 import { ToastProvider } from '@/components/notifications/ToastProvider'
+import { ToastUIProvider } from '@/components/ui/toast'
 import { SpotlightProvider } from '@/components/games'
 import { getSidebarCounts } from '@/lib/sidebar-data'
 import { getNotificationStats } from '@/lib/notifications'
@@ -63,6 +64,7 @@ export default async function MainLayout({
 
   return (
     <ToastProvider userId={user.id}>
+      <ToastUIProvider>
       <SpotlightProvider>
         <div className="flex min-h-screen">
           <DesktopSidebar counts={sidebarCounts} notificationStats={notificationStats} patchesStats={patchesStats} />
@@ -113,6 +115,7 @@ export default async function MainLayout({
           <MobileNav badges={navBadges} />
         </div>
       </SpotlightProvider>
+      </ToastUIProvider>
     </ToastProvider>
   )
 }
