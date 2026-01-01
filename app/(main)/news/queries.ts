@@ -409,9 +409,27 @@ export async function markNewsVisited(): Promise<void> {
     .eq('id', user.id)
 }
 
+// Get available news sources for filter
+export async function getNewsSources(): Promise<string[]> {
+  const supabase = await createClient()
+
+  const { data } = await supabase
+    .from('news_items')
+    .select('source_name')
+    .not('source_name', 'is', null)
+    .order('source_name')
+
+  if (!data) return []
+
+  // Get unique sources
+  const sources = [...new Set(data.map(item => item.source_name).filter(Boolean))] as string[]
+  return sources.sort()
+}
+
 // Get flat news list (no grouping, for simplified news page)
 export async function getFlatNewsList(params: {
   includeRumors?: boolean
+  source?: string
   limit?: number
 } = {}): Promise<{
   id: string
@@ -433,7 +451,7 @@ export async function getFlatNewsList(params: {
   } | null
 }[]> {
   const supabase = await createClient()
-  const { includeRumors = true, limit = 50 } = params
+  const { includeRumors = true, source, limit = 50 } = params
 
   let query = supabase
     .from('news_items')
@@ -455,6 +473,10 @@ export async function getFlatNewsList(params: {
 
   if (!includeRumors) {
     query = query.eq('is_rumor', false)
+  }
+
+  if (source) {
+    query = query.eq('source_name', source)
   }
 
   const { data, error } = await query

@@ -58,6 +58,8 @@ type NewsFeedProps = {
   news: NewsItem[]
   topStories: TopStory[]
   includeRumors: boolean
+  sources: string[]
+  selectedSource: string | null
 }
 
 // Safe image component with error handling
@@ -202,7 +204,7 @@ function getNewsImage(item: NewsItem): string | null {
   return null
 }
 
-export function NewsFeed({ news, topStories, includeRumors }: NewsFeedProps) {
+export function NewsFeed({ news, topStories, includeRumors, sources, selectedSource }: NewsFeedProps) {
   const hasRestoredScroll = useRef(false)
 
   useEffect(() => {
@@ -279,18 +281,61 @@ export function NewsFeed({ news, topStories, includeRumors }: NewsFeedProps) {
         </section>
       )}
 
-      {/* Filter toggle */}
-      <div className="flex items-center gap-2">
-        <Link
-          href={includeRumors ? '/news?rumors=false' : '/news'}
-          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-            !includeRumors
-              ? 'bg-primary/20 text-primary border border-primary/30'
-              : 'bg-white/5 text-muted-foreground hover:text-foreground border border-white/10'
-          }`}
-        >
-          Hide Rumors
-        </Link>
+      {/* Filters */}
+      <div className="space-y-3">
+        {/* Source filters */}
+        {sources.length > 0 && (
+          <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
+            <Link
+              href={`/news${includeRumors ? '' : '?rumors=false'}`}
+              className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                !selectedSource
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-white/5 text-muted-foreground hover:text-foreground border border-white/10'
+              }`}
+            >
+              All Sources
+            </Link>
+            {sources.map((source) => {
+              const params = new URLSearchParams()
+              params.set('source', source)
+              if (!includeRumors) params.set('rumors', 'false')
+              return (
+                <Link
+                  key={source}
+                  href={`/news?${params.toString()}`}
+                  className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+                    selectedSource === source
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-white/5 text-muted-foreground hover:text-foreground border border-white/10'
+                  }`}
+                >
+                  {source}
+                </Link>
+              )
+            })}
+          </div>
+        )}
+
+        {/* Rumor filter */}
+        <div className="flex items-center gap-2">
+          <Link
+            href={(() => {
+              const params = new URLSearchParams()
+              if (selectedSource) params.set('source', selectedSource)
+              if (includeRumors) params.set('rumors', 'false')
+              const queryString = params.toString()
+              return `/news${queryString ? `?${queryString}` : ''}`
+            })()}
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+              !includeRumors
+                ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                : 'bg-white/5 text-muted-foreground hover:text-foreground border border-white/10'
+            }`}
+          >
+            Hide Rumors
+          </Link>
+        </div>
       </div>
 
       {/* News grid - larger vertical cards */}

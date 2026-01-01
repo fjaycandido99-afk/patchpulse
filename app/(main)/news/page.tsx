@@ -1,8 +1,9 @@
-import { getFlatNewsList, getTopStories } from './queries'
+import { getFlatNewsList, getTopStories, getNewsSources } from './queries'
 import { NewsFeed } from './NewsFeed'
 
 type SearchParams = {
   rumors?: string
+  source?: string
 }
 
 export default async function NewsPage({
@@ -12,10 +13,12 @@ export default async function NewsPage({
 }) {
   const params = await searchParams
   const includeRumors = params.rumors !== 'false'
+  const selectedSource = params.source || null
 
-  const [news, topStories] = await Promise.all([
-    getFlatNewsList({ includeRumors, limit: 50 }),
+  const [news, topStories, sources] = await Promise.all([
+    getFlatNewsList({ includeRumors, source: selectedSource || undefined, limit: 50 }),
     getTopStories(2),
+    getNewsSources(),
   ])
 
   return (
@@ -33,6 +36,8 @@ export default async function NewsPage({
         news={news}
         topStories={topStories}
         includeRumors={includeRumors}
+        sources={sources}
+        selectedSource={selectedSource}
       />
     </div>
   )
