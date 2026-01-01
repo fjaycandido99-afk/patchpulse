@@ -442,6 +442,14 @@ export async function getPlayRecommendations(
     })
     .filter((rec): rec is NonNullable<typeof rec> => rec !== null)
 
+  // Deduplicate by game_id (keep first occurrence which has highest score)
+  const seen = new Set<string>()
+  result.recommendations = result.recommendations.filter(rec => {
+    if (seen.has(rec.game_id)) return false
+    seen.add(rec.game_id)
+    return true
+  })
+
   // Optionally save recommendations (non-blocking)
   if (result.recommendations.length > 0) {
     try {

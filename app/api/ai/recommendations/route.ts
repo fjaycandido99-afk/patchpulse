@@ -91,8 +91,16 @@ export async function GET(request: Request) {
           .filter(Boolean) // Remove null entries (games that don't exist)
 
         if (recommendations.length > 0) {
+          // Deduplicate by game_id (keep first/highest scored)
+          const seen = new Set<string>()
+          const uniqueRecommendations = recommendations.filter(rec => {
+            if (seen.has(rec.game_id)) return false
+            seen.add(rec.game_id)
+            return true
+          })
+
           return NextResponse.json({
-            recommendations,
+            recommendations: uniqueRecommendations,
             message: 'Your personalized recommendations',
             cached: true,
           })
