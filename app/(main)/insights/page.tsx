@@ -82,9 +82,11 @@ export default async function InsightsPage() {
             <PlayRecommendations />
           </div>
 
-          {/* News Digest */}
+          {/* News Digest - temporarily disabled for debugging */}
           <div className="lg:col-span-1">
-            <NewsDigest />
+            <div className="rounded-xl border border-border bg-card p-4 sm:p-6">
+              <p className="text-muted-foreground">News Digest loading...</p>
+            </div>
           </div>
 
           {/* Quick Tips */}
