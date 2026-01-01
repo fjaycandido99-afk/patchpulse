@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { queueAllPendingAIJobs, getAIJobStats, triggerCronManually, getFailedJobs, retryFailedJobs } from './actions'
+import { queueAllPendingAIJobs, getAIJobStats, triggerCronManually, getFailedJobs, retryFailedJobs, backfillDiffStats } from './actions'
 
 export default function AIAdminPage() {
   const [loading, setLoading] = useState(false)
@@ -96,6 +96,25 @@ export default function AIAdminPage() {
       } else {
         setMessage(`Reset ${result.retriedCount} failed jobs to pending`)
         setFailedJobs(null)
+        handleRefreshStats()
+      }
+    } catch (err) {
+      setMessage(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`)
+    }
+    setLoading(false)
+  }
+
+  async function handleBackfillDiffStats() {
+    setLoading(true)
+    setMessage(null)
+    try {
+      const result = await backfillDiffStats(30, 100)
+      if ('error' in result) {
+        setMessage(`Error: ${result.error}`)
+      } else if ('message' in result && result.message) {
+        setMessage(result.message)
+      } else {
+        setMessage(`Queued ${result.queued} of ${result.total} patches for diff_stats processing`)
         handleRefreshStats()
       }
     } catch (err) {
@@ -198,6 +217,22 @@ export default function AIAdminPage() {
               className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-500 disabled:opacity-50 transition-colors"
             >
               {loading ? 'Loading...' : 'View Errors'}
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between p-4 rounded-lg bg-white/5 border border-emerald-500/30">
+            <div>
+              <h3 className="font-medium text-emerald-300">Backfill Diff Stats</h3>
+              <p className="text-sm text-zinc-400">
+                Re-process patches to add buffs/nerfs/new systems classification
+              </p>
+            </div>
+            <button
+              onClick={handleBackfillDiffStats}
+              disabled={loading}
+              className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 transition-colors"
+            >
+              {loading ? 'Processing...' : 'Backfill Now'}
             </button>
           </div>
         </div>

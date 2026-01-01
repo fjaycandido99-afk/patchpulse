@@ -162,3 +162,61 @@ export async function retryFailedJobs() {
     return { error: err instanceof Error ? err.message : 'Unknown error' }
   }
 }
+
+// Queue patches for diff_stats backfill
+export async function backfillDiffStats(daysBack: number = 30, limit: number = 50) {
+  try {
+    const supabase = createAdminClient()
+
+    const cutoffDate = new Date()
+    cutoffDate.setDate(cutoffDate.getDate() - daysBack)
+
+    // Find patches that don't have diff_stats yet
+    const { data: patches, error: fetchError } = await supabase
+      .from('patch_notes')
+      .select('id, title')
+      .is('diff_stats', null)
+      .not('raw_text', 'is', null)
+      .gte('published_at', cutoffDate.toISOString())
+      .order('published_at', { ascending: false })
+      .limit(limit)
+
+    if (fetchError) {
+      // Check if diff_stats column doesn't exist
+      if (fetchError.message.includes('diff_stats')) {
+        return { error: 'diff_stats column not found. Run the supabase-diff-stats-migration.sql script first.' }
+      }
+      return { error: fetchError.message }
+    }
+
+    if (!patches || patches.length === 0) {
+      return { queued: 0, message: 'No patches need diff_stats backfill' }
+    }
+
+    // Queue AI jobs for these patches
+    let queued = 0
+    for (const patch of patches) {
+      const { error: queueError } = await supabase
+        .from('ai_jobs')
+        .upsert(
+          {
+            job_type: 'PATCH_SUMMARY',
+            entity_id: patch.id,
+            status: 'pending',
+          },
+          {
+            onConflict: 'job_type,entity_id',
+            ignoreDuplicates: true,
+          }
+        )
+
+      if (!queueError) {
+        queued++
+      }
+    }
+
+    return { queued, total: patches.length }
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : 'Unknown error' }
+  }
+}
