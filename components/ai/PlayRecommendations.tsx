@@ -149,14 +149,23 @@ export function PlayRecommendations() {
 
   return (
     <div className="rounded-xl border border-border bg-card p-4 sm:p-6">
-      <div className="flex items-center gap-3 mb-4">
-        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-          <Sparkles className="w-5 h-5 text-primary" />
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+            <Sparkles className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <h3 className="font-semibold">What Should I Play?</h3>
+            <p className="text-sm text-muted-foreground">From your backlog + trending discoveries</p>
+          </div>
         </div>
-        <div>
-          <h3 className="font-semibold">What Should I Play?</h3>
-          <p className="text-sm text-muted-foreground">From your backlog + trending discoveries</p>
-        </div>
+        <Link
+          href="/recommendations"
+          className="text-sm text-primary hover:text-primary/80 flex items-center gap-1"
+        >
+          See all
+          <ChevronRight className="w-4 h-4" />
+        </Link>
       </div>
 
       {/* Filters */}
