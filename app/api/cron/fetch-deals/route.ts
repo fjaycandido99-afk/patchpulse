@@ -44,13 +44,17 @@ export async function GET(req: Request) {
 
   // Debug info
   const url = new URL(req.url)
+  const querySecret = url.searchParams.get('secret')?.trim()
+  const envSecret = process.env.CRON_SECRET?.trim()
   const debugInfo = {
     vercelCron: req.headers.get('x-vercel-cron'),
     hasCronSecret: !!req.headers.get('x-cron-secret'),
-    hasEnvSecret: !!process.env.CRON_SECRET,
+    hasEnvSecret: !!envSecret,
     hasAuthHeader: !!req.headers.get('authorization'),
-    hasQuerySecret: !!url.searchParams.get('secret'),
-    urlPath: url.pathname + url.search,
+    hasQuerySecret: !!querySecret,
+    querySecretLen: querySecret?.length,
+    envSecretLen: envSecret?.length,
+    match: querySecret === envSecret,
   }
 
   if (!verifyAuth(req)) {
