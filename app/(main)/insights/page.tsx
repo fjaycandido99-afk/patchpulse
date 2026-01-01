@@ -5,7 +5,8 @@ import { getUserPlan } from '@/lib/subscriptions/limits'
 import { PlayRecommendations } from '@/components/ai/PlayRecommendations'
 import { NewsDigest } from '@/components/ai/NewsDigest'
 import { BacklogHealth } from '@/components/ai/BacklogHealth'
-import { Brain, Crown, Sparkles, Zap, Bell, BarChart3 } from 'lucide-react'
+import { ProPowerTools } from '@/components/ai/ProPowerTools'
+import { Brain, Crown, Sparkles } from 'lucide-react'
 import Link from 'next/link'
 import { ProBadge } from '@/components/ui/ProBadge'
 
@@ -107,41 +108,7 @@ export default async function InsightsPage() {
           <BacklogHealth />
 
           {/* Pro Power Tools */}
-          <div className="rounded-xl border border-border bg-card p-4 sm:p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Zap className="w-5 h-5 text-primary" />
-              <h3 className="font-semibold">Pro Power Tools</h3>
-            </div>
-            <div className="grid sm:grid-cols-3 gap-4">
-              <div className="p-4 rounded-lg bg-gradient-to-br from-blue-500/10 to-blue-500/5 border border-blue-500/20">
-                <div className="flex items-center gap-2 mb-2">
-                  <BarChart3 className="w-4 h-4 text-blue-400" />
-                  <h4 className="font-medium text-blue-300">Diff Intelligence</h4>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Patch pages show buffs vs nerfs, new mechanics, and whether updates are safe to ignore or must-play.
-                </p>
-              </div>
-              <div className="p-4 rounded-lg bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 border border-emerald-500/20">
-                <div className="flex items-center gap-2 mb-2">
-                  <Brain className="w-4 h-4 text-emerald-400" />
-                  <h4 className="font-medium text-emerald-300">Sentiment Trends</h4>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Game pages show if community mood is improving, declining, or stable after updates.
-                </p>
-              </div>
-              <div className="p-4 rounded-lg bg-gradient-to-br from-purple-500/10 to-purple-500/5 border border-purple-500/20">
-                <div className="flex items-center gap-2 mb-2">
-                  <Bell className="w-4 h-4 text-purple-400" />
-                  <h4 className="font-medium text-purple-300">Priority Alerts</h4>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Get notified only for major updates, sentiment flips, or when backlog games heat up again.
-                </p>
-              </div>
-            </div>
-          </div>
+          <ProPowerTools />
         </div>
       )}
     </div>

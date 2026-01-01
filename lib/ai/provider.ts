@@ -13,6 +13,14 @@ import {
 // TYPES
 // ============================================================================
 
+export type DiffStats = {
+  buffs: number
+  nerfs: number
+  new_systems: number
+  bug_fixes: number
+  ignore_safe: boolean
+}
+
 export type PatchAIResult = {
   summary_tldr: string
   ai_insight: string
@@ -21,6 +29,7 @@ export type PatchAIResult = {
   impact_score: number
   who_it_affects?: string[]
   confidence?: number
+  diff_stats?: DiffStats
 }
 
 export type NewsAIResult = {

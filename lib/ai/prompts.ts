@@ -23,7 +23,14 @@ Return JSON with this schema:
   "tags": ["balance|bugfix|content|performance|ui|audio|matchmaking|security|economy|quality-of-life|other"],
   "impact_score": "integer 1-10 (how much gameplay changes; 10 = meta-shifting)",
   "who_it_affects": ["casual", "competitive", "new_players", "endgame", "ranked", "all"],
-  "confidence": "float 0-1"
+  "confidence": "float 0-1",
+  "diff_stats": {
+    "buffs": "integer (count of buffs/improvements to characters, weapons, items, abilities)",
+    "nerfs": "integer (count of nerfs/reductions to characters, weapons, items, abilities)",
+    "new_systems": "integer (count of new features, mechanics, modes, content)",
+    "bug_fixes": "integer (count of bug fixes)",
+    "ignore_safe": "boolean (true if patch is mostly cosmetic/minor and safe to skip)"
+  }
 }
 
 Guidance:
@@ -33,6 +40,7 @@ Guidance:
 - tags: choose 1–4 from the allowed list.
 - impact_score: use evidence in text; if mostly bugfixes, keep <=4.
 - confidence: lower if patch notes are vague or incomplete.
+- diff_stats: Count specific types of changes. A buff is anything that makes something stronger/better. A nerf is anything that makes something weaker/worse. New systems includes new content, features, modes. Set ignore_safe=true only for very minor patches (cosmetic only, localization, small UI tweaks).
 
 Output ONLY valid JSON, no markdown or explanation.`
 }
@@ -78,6 +86,14 @@ Output ONLY valid JSON, no markdown or explanation.`
 }
 
 // Type definitions for AI responses
+export type DiffStats = {
+  buffs: number
+  nerfs: number
+  new_systems: number
+  bug_fixes: number
+  ignore_safe: boolean
+}
+
 export type PatchSummaryResult = {
   summary_tldr: string
   ai_insight: string
@@ -86,6 +102,7 @@ export type PatchSummaryResult = {
   impact_score: number
   who_it_affects: string[]
   confidence: number
+  diff_stats?: DiffStats
 }
 
 export type NewsSummaryResult = {

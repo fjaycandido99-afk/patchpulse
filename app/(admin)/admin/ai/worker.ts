@@ -127,6 +127,7 @@ async function processPatchJob(supabase: any, entityId: string) {
   const key_changes = ai.key_changes ?? []
   const tags = sanitizeList(ai.tags, 4)
   const impact_score = clampInt(Number(ai.impact_score ?? 5), 1, 10)
+  const diff_stats = ai.diff_stats ?? null
 
   // If source_url is missing, try to discover it with AI
   let discoveredSourceUrl: string | null = patchRow.source_url
@@ -159,6 +160,7 @@ async function processPatchJob(supabase: any, entityId: string) {
       key_changes,
       tags,
       impact_score,
+      diff_stats,
       ...(discoveredSourceUrl && !patchRow.source_url ? { source_url: discoveredSourceUrl } : {}),
     })
     .eq('id', patchRow.id)
