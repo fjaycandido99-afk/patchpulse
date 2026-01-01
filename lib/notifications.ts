@@ -1,5 +1,21 @@
 import { createClient } from '@/lib/supabase/server'
 
+export type TodaysNewsItem = {
+  id: string
+  title: string
+  published_at: string
+  summary: string | null
+  is_rumor: boolean
+  source_name: string | null
+  image_url: string | null
+  game: {
+    id: string
+    name: string
+    slug: string
+    cover_url: string | null
+  } | null
+}
+
 export type Notification = {
   id: string
   type: 'new_patch' | 'new_news' | 'game_release' | 'ai_digest' | 'price_drop' | 'system'
@@ -181,4 +197,46 @@ export async function markNotificationReadByContent(
   }
 
   return true
+}
+
+// Get all news from today (resets daily), ordered by fetch time
+export async function getTodaysNews(): Promise<TodaysNewsItem[]> {
+  const supabase = await createClient()
+
+  // Get start of today (UTC)
+  const today = new Date()
+  today.setUTCHours(0, 0, 0, 0)
+  const todayIso = today.toISOString()
+
+  const { data, error } = await supabase
+    .from('news_items')
+    .select(`
+      id,
+      title,
+      published_at,
+      summary,
+      is_rumor,
+      source_name,
+      image_url,
+      created_at,
+      games(id, name, slug, cover_url)
+    `)
+    .gte('created_at', todayIso)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('Error fetching today\'s news:', error)
+    return []
+  }
+
+  return (data || []).map(item => ({
+    id: item.id,
+    title: item.title,
+    published_at: item.published_at,
+    summary: item.summary,
+    is_rumor: item.is_rumor,
+    source_name: item.source_name,
+    image_url: item.image_url,
+    game: item.games as unknown as TodaysNewsItem['game'],
+  }))
 }

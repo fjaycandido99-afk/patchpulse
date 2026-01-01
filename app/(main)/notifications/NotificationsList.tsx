@@ -3,8 +3,8 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Bell, FileText, Newspaper, Sparkles, Check, CheckCheck, Zap, ChevronRight, Filter } from 'lucide-react'
-import { type Notification, type NotificationStats } from '@/lib/notifications'
+import { Bell, FileText, Newspaper, Sparkles, Check, CheckCheck, Zap, ChevronRight, Filter, Calendar } from 'lucide-react'
+import { type Notification, type NotificationStats, type TodaysNewsItem } from '@/lib/notifications'
 
 type FilterType = 'all' | 'unread' | 'patches' | 'news'
 
@@ -78,13 +78,15 @@ function getPriorityStyles(priority: number) {
 type Props = {
   initialNotifications: Notification[]
   initialStats: NotificationStats
+  todaysNews?: TodaysNewsItem[]
 }
 
-export function NotificationsList({ initialNotifications, initialStats }: Props) {
+export function NotificationsList({ initialNotifications, initialStats, todaysNews = [] }: Props) {
   const [notifications, setNotifications] = useState(initialNotifications)
   const [stats, setStats] = useState(initialStats)
   const [filter, setFilter] = useState<FilterType>('all')
   const [isMarkingAll, setIsMarkingAll] = useState(false)
+  const [showTodaysNews, setShowTodaysNews] = useState(true)
 
   const filteredNotifications = notifications.filter(n => {
     if (filter === 'unread') return !n.is_read
@@ -179,6 +181,88 @@ export function NotificationsList({ initialNotifications, initialStats }: Props)
           <p className="text-sm text-red-400">
             You have <strong>{stats.high_priority_count}</strong> urgent notification{stats.high_priority_count !== 1 ? 's' : ''} that may require attention
           </p>
+        </div>
+      )}
+
+      {/* Today's News Section */}
+      {todaysNews.length > 0 && (
+        <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 overflow-hidden">
+          <button
+            onClick={() => setShowTodaysNews(!showTodaysNews)}
+            className="flex items-center justify-between w-full p-4 hover:bg-blue-500/10 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                <Calendar className="w-5 h-5 text-blue-400" />
+              </div>
+              <div className="text-left">
+                <h3 className="font-semibold text-blue-400">Today&apos;s News</h3>
+                <p className="text-xs text-muted-foreground">
+                  {todaysNews.length} article{todaysNews.length !== 1 ? 's' : ''} fetched today
+                </p>
+              </div>
+            </div>
+            <ChevronRight className={`w-5 h-5 text-blue-400 transition-transform ${showTodaysNews ? 'rotate-90' : ''}`} />
+          </button>
+
+          {showTodaysNews && (
+            <div className="border-t border-blue-500/20 divide-y divide-blue-500/10">
+              {todaysNews.map(news => (
+                <Link
+                  key={news.id}
+                  href={`/news/${news.id}`}
+                  className="flex gap-3 p-3 hover:bg-blue-500/10 transition-colors"
+                >
+                  {/* Game Cover */}
+                  <div className="flex-shrink-0">
+                    {news.game?.cover_url ? (
+                      <div className="relative w-12 h-16 rounded-lg overflow-hidden bg-zinc-800 ring-1 ring-white/10">
+                        <Image
+                          src={news.game.cover_url}
+                          alt={news.game.name}
+                          fill
+                          className="object-cover"
+                          sizes="48px"
+                        />
+                      </div>
+                    ) : news.image_url ? (
+                      <div className="relative w-12 h-16 rounded-lg overflow-hidden bg-zinc-800 ring-1 ring-white/10">
+                        <Image
+                          src={news.image_url}
+                          alt={news.title}
+                          fill
+                          className="object-cover"
+                          sizes="48px"
+                          unoptimized
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-12 h-16 rounded-lg bg-zinc-800 flex items-center justify-center ring-1 ring-white/10">
+                        <Newspaper className="w-5 h-5 text-blue-400" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start gap-2">
+                      <p className="text-sm font-medium line-clamp-2 flex-1">{news.title}</p>
+                      {news.is_rumor && (
+                        <span className="flex-shrink-0 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded bg-amber-500/20 text-amber-400">
+                          Rumor
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                      {news.game && <span>{news.game.name}</span>}
+                      {news.game && news.source_name && <span>•</span>}
+                      {news.source_name && <span>{news.source_name}</span>}
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

@@ -1,5 +1,5 @@
 import { Metadata } from 'next'
-import { getNotifications, getNotificationStats } from '@/lib/notifications'
+import { getNotifications, getNotificationStats, getTodaysNews } from '@/lib/notifications'
 import { NotificationsList } from './NotificationsList'
 
 export const metadata: Metadata = {
@@ -8,9 +8,10 @@ export const metadata: Metadata = {
 }
 
 export default async function NotificationsPage() {
-  const [notifications, stats] = await Promise.all([
+  const [notifications, stats, todaysNews] = await Promise.all([
     getNotifications(50),
     getNotificationStats(),
+    getTodaysNews(),
   ])
 
   return (
@@ -25,6 +26,7 @@ export default async function NotificationsPage() {
       <NotificationsList
         initialNotifications={notifications}
         initialStats={stats}
+        todaysNews={todaysNews}
       />
     </div>
   )
