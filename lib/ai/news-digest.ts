@@ -113,17 +113,31 @@ Return JSON with:
     temperature: 0.5,
   })
 
+  // Build lookup maps for faster and more flexible matching
+  const newsById = new Map(newsItems.map(n => [n.id, n]))
+  const newsByGameName = new Map<string, NewsItem>()
+  const newsByGameNameLower = new Map<string, NewsItem>()
+  for (const n of newsItems) {
+    newsByGameName.set(n.game_name, n)
+    newsByGameNameLower.set(n.game_name.toLowerCase(), n)
+  }
+
   // Enrich highlights with game cover URLs and ensure new fields have defaults
   // Only include highlights where we can find the matching news item (valid news_id)
   result.highlights = result.highlights
     .map(h => {
-      const newsItem = newsItems.find(n => n.id === h.news_id)
-      if (!newsItem) return null // Skip if news_id doesn't match any item
+      // Try to find by ID first, then by game name
+      let newsItem = newsById.get(h.news_id)
+      if (!newsItem && h.game_name) {
+        newsItem = newsByGameName.get(h.game_name) || newsByGameNameLower.get(h.game_name.toLowerCase())
+      }
+      if (!newsItem) return null // Skip if we can't match
+
       return {
         ...h,
         news_id: newsItem.id, // Ensure we use the actual ID
         title: h.title || newsItem.title,
-        game_name: h.game_name || newsItem.game_name,
+        game_name: newsItem.game_name, // Use the actual game name from DB
         game_slug: newsItem.game_slug || '',
         game_cover_url: newsItem.game_cover_url || null,
         why_it_matters: h.why_it_matters || null,
@@ -132,12 +146,15 @@ Return JSON with:
     })
     .filter((h): h is NonNullable<typeof h> => h !== null)
 
-  // Enrich game_updates with cover URLs
+  // Enrich game_updates with cover URLs (case-insensitive matching)
   const enrichedGameUpdates: Record<string, GameUpdate> = {}
   for (const [gameKey, update] of Object.entries(result.game_updates)) {
-    const newsItem = newsItems.find(n => n.game_name === update.game_name)
+    const newsItem = newsByGameName.get(update.game_name) ||
+                     newsByGameNameLower.get(update.game_name?.toLowerCase() || '') ||
+                     newsByGameNameLower.get(gameKey.toLowerCase())
     enrichedGameUpdates[gameKey] = {
       ...update,
+      game_name: newsItem?.game_name || update.game_name,
       game_slug: newsItem?.game_slug || '',
       game_cover_url: newsItem?.game_cover_url || null,
     }
@@ -190,20 +207,45 @@ export async function getUserNewsDigest(
         Object.values(rawGameUpdates).forEach(u => u?.game_name && gameNames.add(u.game_name))
       }
 
-      // Fetch fresh cover URLs from games table
+      // Fetch fresh cover URLs from games table (try exact match first)
       const { data: gamesData } = await supabase
         .from('games')
         .select('name, slug, cover_url')
         .in('name', Array.from(gameNames))
 
+      // Build case-insensitive lookup maps
       const gameCovers = new Map<string, { slug: string; cover_url: string | null }>()
+      const gameCoversLower = new Map<string, { name: string; slug: string; cover_url: string | null }>()
       gamesData?.forEach(g => {
         gameCovers.set(g.name, { slug: g.slug, cover_url: g.cover_url })
+        gameCoversLower.set(g.name.toLowerCase(), { name: g.name, slug: g.slug, cover_url: g.cover_url })
       })
+
+      // If some games weren't found, try fetching by user's followed games
+      if (gameCovers.size < gameNames.size) {
+        const { data: followedGames } = await supabase
+          .from('user_games')
+          .select('games(name, slug, cover_url)')
+          .eq('user_id', userId)
+
+        followedGames?.forEach(fg => {
+          const g = fg.games as unknown as { name: string; slug: string; cover_url: string | null }
+          if (g && !gameCovers.has(g.name)) {
+            gameCovers.set(g.name, { slug: g.slug, cover_url: g.cover_url })
+            gameCoversLower.set(g.name.toLowerCase(), { name: g.name, slug: g.slug, cover_url: g.cover_url })
+          }
+        })
+      }
+
+      // Helper to find game info with fallback
+      const findGameInfo = (name: string | undefined) => {
+        if (!name) return null
+        return gameCovers.get(name) || gameCoversLower.get(name.toLowerCase()) || null
+      }
 
       // Enrich highlights with fresh cover URLs
       const highlights = (rawHighlights || []).map(h => {
-        const gameInfo = gameCovers.get(h.game_name || '')
+        const gameInfo = findGameInfo(h.game_name)
         return {
           news_id: h.news_id || '',
           title: h.title || '',
@@ -223,7 +265,7 @@ export async function getUserNewsDigest(
       if (rawGameUpdates) {
         for (const [key, update] of Object.entries(rawGameUpdates)) {
           if (update) {
-            const gameInfo = gameCovers.get(update.game_name || '')
+            const gameInfo = findGameInfo(update.game_name) || findGameInfo(key)
             gameUpdates[key] = {
               game_name: update.game_name || '',
               game_slug: gameInfo?.slug || update.game_slug || '',
