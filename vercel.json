@@ -13,6 +13,10 @@
       "schedule": "*/15 * * * *"
     },
     {
+      "path": "/api/cron/fetch-deals",
+      "schedule": "*/15 * * * *"
+    },
+    {
       "path": "/api/cron/backfill-news-images",
       "schedule": "*/5 * * * *"
     },
