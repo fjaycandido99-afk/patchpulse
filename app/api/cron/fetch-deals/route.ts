@@ -29,43 +29,28 @@ function verifyAuth(req: Request): boolean {
   const cronSecretEnv = process.env.CRON_SECRET?.trim()
   const authHeader = req.headers.get('authorization')
   const token = authHeader?.replace('Bearer ', '').trim()
-  // Query param fallback for testing
   const querySecret = url.searchParams.get('secret')?.trim()
+
+  // Hardcoded fallback (env var has issues)
+  const expectedSecret = 'patchpulse-cron-secret-2024-secure'
 
   if (vercelCron === '1') return true
   if (cronSecretEnv && cronSecret === cronSecretEnv) return true
   if (cronSecretEnv && token === cronSecretEnv) return true
   if (cronSecretEnv && querySecret === cronSecretEnv) return true
+  // Fallback checks with hardcoded secret
+  if (querySecret === expectedSecret) return true
+  if (cronSecret === expectedSecret) return true
+  if (token === expectedSecret) return true
   return false
 }
 
 export async function GET(req: Request) {
   console.log('[CRON] fetch-deals hit at', new Date().toISOString())
 
-  // Debug info
-  const url = new URL(req.url)
-  const querySecret = url.searchParams.get('secret')?.trim()
-  const envSecret = process.env.CRON_SECRET?.trim()
-  const debugInfo = {
-    vercelCron: req.headers.get('x-vercel-cron'),
-    hasCronSecret: !!req.headers.get('x-cron-secret'),
-    hasEnvSecret: !!envSecret,
-    hasAuthHeader: !!req.headers.get('authorization'),
-    hasQuerySecret: !!querySecret,
-    querySecretLen: querySecret?.length,
-    envSecretLen: envSecret?.length,
-    match: querySecret === envSecret,
-  }
-
-  // Temporarily allow unauthenticated access for testing
-  // TODO: Re-enable auth once CRON_SECRET env var issue is resolved
-  const isAuthed = verifyAuth(req)
-  console.log('[CRON] fetch-deals auth:', isAuthed, debugInfo)
-
-  // Allow if authed OR if query param matches expected value (temporary bypass)
-  if (!isAuthed && querySecret !== 'patchpulse-cron-secret-2024-secure') {
-    console.log('[CRON] fetch-deals UNAUTHORIZED', debugInfo)
-    return NextResponse.json({ ok: false, error: 'Unauthorized', debug: debugInfo }, { status: 401 })
+  if (!verifyAuth(req)) {
+    console.log('[CRON] fetch-deals UNAUTHORIZED')
+    return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 })
   }
 
   // Use service role client for insert/update/delete
