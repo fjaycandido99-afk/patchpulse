@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Newspaper, Loader2, ChevronDown, ChevronUp, Sparkles, Gamepad2, Zap, AlertCircle, TrendingUp, Radio } from 'lucide-react'
+import { Loader2, ChevronDown, ChevronUp, Sparkles, Gamepad2, Zap, AlertCircle, TrendingUp, Radio, RefreshCw } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 
@@ -60,12 +60,14 @@ export function NewsDigest() {
     fetchDigest()
   }, [digestType])
 
-  const fetchDigest = async () => {
+  const fetchDigest = async (forceRefresh = false) => {
     setLoading(true)
     setError(null)
 
     try {
-      const response = await fetch(`/api/ai/digest?type=${digestType}`)
+      const params = new URLSearchParams({ type: digestType })
+      if (forceRefresh) params.set('refresh', 'true')
+      const response = await fetch(`/api/ai/digest?${params}`)
       const data = await response.json()
 
       if (!response.ok) {
@@ -109,7 +111,16 @@ export function NewsDigest() {
           </div>
         </div>
 
-        <div className="flex gap-1 p-1 rounded-lg bg-muted">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => fetchDigest(true)}
+            disabled={loading}
+            className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-50"
+            title="Refresh digest"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          </button>
+          <div className="flex gap-1 p-1 rounded-lg bg-muted">
           <button
             onClick={() => setDigestType('daily')}
             className={`px-3 py-1 rounded-md text-sm transition-colors ${
@@ -130,6 +141,7 @@ export function NewsDigest() {
           >
             This Week
           </button>
+          </div>
         </div>
       </div>
 

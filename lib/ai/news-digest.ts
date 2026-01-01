@@ -146,7 +146,8 @@ Return JSON with:
  */
 export async function getUserNewsDigest(
   userId: string,
-  digestType: 'daily' | 'weekly' = 'daily'
+  digestType: 'daily' | 'weekly' = 'daily',
+  forceRefresh: boolean = false
 ): Promise<DigestResult> {
   const supabase = await createClient()
 
@@ -161,16 +162,17 @@ export async function getUserNewsDigest(
 
   const digestDate = now.toISOString().split('T')[0]
 
-  // Check for cached digest
-  const { data: cached } = await supabase
-    .from('user_news_digest')
-    .select('summary, highlights, game_updates, news_count')
-    .eq('user_id', userId)
-    .eq('digest_date', digestDate)
-    .eq('digest_type', digestType)
-    .single()
+  // Check for cached digest (skip if force refresh)
+  if (!forceRefresh) {
+    const { data: cached } = await supabase
+      .from('user_news_digest')
+      .select('summary, highlights, game_updates, news_count')
+      .eq('user_id', userId)
+      .eq('digest_date', digestDate)
+      .eq('digest_type', digestType)
+      .single()
 
-  if (cached) {
+    if (cached) {
     // Ensure old cached data has the new fields with defaults
     const rawHighlights = cached.highlights as DigestHighlight[] | null
     const highlights = (rawHighlights || []).map(h => ({
@@ -208,6 +210,7 @@ export async function getUserNewsDigest(
       highlights,
       game_updates: gameUpdates,
       total_news: cached.news_count || 0,
+    }
     }
   }
 

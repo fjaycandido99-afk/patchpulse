@@ -23,8 +23,9 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url)
     const type = searchParams.get('type') as 'daily' | 'weekly' || 'daily'
+    const refresh = searchParams.get('refresh') === 'true'
 
-    const digest = await getUserNewsDigest(user.id, type)
+    const digest = await getUserNewsDigest(user.id, type, refresh)
 
     // Ensure we always return a valid response
     return NextResponse.json({
