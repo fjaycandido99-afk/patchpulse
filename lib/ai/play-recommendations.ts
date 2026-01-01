@@ -470,7 +470,11 @@ export async function getPlayRecommendations(
         is_dismissed: false,
       }))
 
-      await supabase.from('play_recommendations').insert(toInsert)
+      // Use upsert to prevent duplicates (update if same user_id + game_id exists)
+      await supabase.from('play_recommendations').upsert(toInsert, {
+        onConflict: 'user_id,game_id',
+        ignoreDuplicates: false,
+      })
     } catch {
       // Silently fail - saving history is optional
     }

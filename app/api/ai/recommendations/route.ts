@@ -94,7 +94,30 @@ export async function GET(request: Request) {
         const validRecommendations = recommendations.filter((rec): rec is NonNullable<typeof rec> => rec !== null)
 
         if (validRecommendations.length > 0) {
-          // Deduplicate by game_id (keep first/highest scored)
+          // Find duplicate record IDs to clean up (keep first occurrence per game_id)
+          const seenGameIds = new Set<string>()
+          const keepIds = new Set<string>()
+          const allIds = cached.map(c => c.id)
+
+          for (const rec of cached) {
+            if (!seenGameIds.has(rec.game_id)) {
+              seenGameIds.add(rec.game_id)
+              keepIds.add(rec.id)
+            }
+          }
+
+          const duplicateIds = allIds.filter(id => !keepIds.has(id))
+
+          // Clean up duplicate records from database (non-blocking)
+          if (duplicateIds.length > 0) {
+            void supabase
+              .from('play_recommendations')
+              .delete()
+              .in('id', duplicateIds)
+              .then(() => console.log(`Cleaned up ${duplicateIds.length} duplicate recommendations`))
+          }
+
+          // Deduplicate for response
           const seen = new Set<string>()
           const uniqueRecommendations = validRecommendations.filter(rec => {
             if (seen.has(rec.game_id)) return false
