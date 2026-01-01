@@ -1,9 +1,8 @@
 'use client'
 
-import { Home, Newspaper, Library, User, Sparkles, Brain, Crown } from 'lucide-react'
+import { Home, Newspaper, Library, User, Sparkles, Brain, Crown, Bell, Gamepad2 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { NotificationBell } from '@/components/notifications/NotificationBell'
 import { ProBadge } from '@/components/ui/ProBadge'
 
 export type SidebarCounts = {
@@ -18,21 +17,26 @@ type NotificationStats = {
   high_priority_count: number
 }
 
+type PatchesStats = {
+  total_today: number
+  high_impact_count: number
+}
+
 type DesktopSidebarProps = {
   counts?: SidebarCounts | null
   notificationStats?: NotificationStats
+  patchesStats?: PatchesStats
 }
 
-export function DesktopSidebar({ counts, notificationStats }: DesktopSidebarProps) {
+export function DesktopSidebar({ counts, notificationStats, patchesStats }: DesktopSidebarProps) {
   return (
     <aside className="hidden md:fixed md:inset-y-0 md:flex md:w-64 md:flex-col">
       <div className="flex flex-col gap-y-5 border-r border-border bg-background px-6 py-8">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center">
           <Link href="/home" className="flex h-10 items-center gap-2 hover:opacity-80 transition-opacity">
             <Sparkles className="h-5 w-5 text-primary" />
             <h1 className="text-xl font-bold tracking-tight">PatchPulse</h1>
           </Link>
-<NotificationBell initialStats={notificationStats} size="md" />
         </div>
 
         <nav className="flex flex-1 flex-col gap-y-1">
@@ -40,8 +44,14 @@ export function DesktopSidebar({ counts, notificationStats }: DesktopSidebarProp
             icon={Home}
             label="Home"
             href="/home"
-            badge={counts?.newPatchesToday}
-            badgeLabel="new today"
+          />
+          <NavItem
+            icon={Gamepad2}
+            label="Patches"
+            href="/patches"
+            badge={patchesStats?.total_today}
+            badgeLabel="today"
+            isLive={patchesStats?.high_impact_count ? patchesStats.high_impact_count > 0 : false}
           />
           <NavItem
             icon={Newspaper}
@@ -50,6 +60,14 @@ export function DesktopSidebar({ counts, notificationStats }: DesktopSidebarProp
             badge={counts?.newNewsToday}
             badgeLabel="new"
             isLive={counts?.newNewsToday ? counts.newNewsToday > 0 : false}
+          />
+          <NavItem
+            icon={Bell}
+            label="Notifications"
+            href="/notifications"
+            badge={notificationStats?.unread_count}
+            badgeLabel="unread"
+            isLive={notificationStats?.high_priority_count ? notificationStats.high_priority_count > 0 : false}
           />
           <NavItem
             icon={Library}

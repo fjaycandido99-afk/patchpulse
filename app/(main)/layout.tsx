@@ -65,7 +65,7 @@ export default async function MainLayout({
     <ToastProvider userId={user.id}>
       <SpotlightProvider>
         <div className="flex min-h-screen">
-          <DesktopSidebar counts={sidebarCounts} notificationStats={notificationStats} />
+          <DesktopSidebar counts={sidebarCounts} notificationStats={notificationStats} patchesStats={patchesStats} />
 
         <main className="flex-1 pb-20 md:ml-64 md:pb-0">
           {/* Mobile header with search - Apple Music/App Store style, fixed for edge-to-edge */}
