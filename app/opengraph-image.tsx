@@ -23,25 +23,16 @@ export default async function Image() {
           fontFamily: 'sans-serif',
         }}
       >
-        <div
+        {/* Logo */}
+        <img
+          src="https://patchpulse.app/logo.png"
+          width={200}
+          height={200}
           style={{
-            fontSize: 180,
-            fontWeight: 800,
             marginBottom: 20,
-            display: 'flex',
           }}
-        >
-          <span
-            style={{
-              background: 'linear-gradient(90deg, #b085f5, #f0b1a6, #ffc56e)',
-              backgroundClip: 'text',
-              color: 'transparent',
-            }}
-          >
-            P
-          </span>
-        </div>
-        
+        />
+
         <div
           style={{
             fontSize: 72,
@@ -53,7 +44,7 @@ export default async function Image() {
         >
           PatchPulse
         </div>
-        
+
         <div
           style={{
             fontSize: 32,
