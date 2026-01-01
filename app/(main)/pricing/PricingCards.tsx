@@ -52,11 +52,17 @@ export function PricingCards({ currentPlan, isLoggedIn }: Props) {
 
       if (data.url) {
         window.location.href = data.url
+      } else if (data.error) {
+        alert(`Checkout error: ${data.error}`)
+        console.error('Checkout error:', data.error)
+        setIsLoading(false)
       } else {
-        console.error('No checkout URL returned')
+        alert('Failed to create checkout session. Please try again.')
+        console.error('No checkout URL returned:', data)
         setIsLoading(false)
       }
     } catch (error) {
+      alert('Network error. Please check your connection and try again.')
       console.error('Checkout error:', error)
       setIsLoading(false)
     }
