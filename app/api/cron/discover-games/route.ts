@@ -54,14 +54,23 @@ export async function GET(req: Request) {
   // Helper to insert game if not exists
   async function insertGameIfNew(game: Awaited<ReturnType<typeof getNewReleasesFromIgdb>>[0], category: keyof typeof results) {
     try {
-      // Check if game already exists (by slug)
-      const { data: existing } = await supabase
+      // Check if game already exists (by slug OR name to prevent duplicates)
+      const { data: existingBySlug } = await supabase
         .from('games')
         .select('id')
         .eq('slug', game.slug)
         .single()
 
-      if (existing) return false // Skip existing games
+      if (existingBySlug) return false // Skip existing games
+
+      // Also check by name (case insensitive)
+      const { data: existingByName } = await supabase
+        .from('games')
+        .select('id')
+        .ilike('name', game.name)
+        .single()
+
+      if (existingByName) return false // Skip if name already exists
 
       // Insert new game
       const record = igdbToGameRecord(game)
