@@ -393,44 +393,54 @@ export async function getPlayRecommendations(
   const allGames = [...backlogGames, ...discoveryGames]
 
   // Enrich recommendations with full game data
+  // Only include recommendations where we can find the game in our database
   const now = new Date()
-  result.recommendations = result.recommendations.map(rec => {
-    // Look in both backlog and discovery games - try exact match first, then partial
-    let game = allGames.find(g =>
-      g.game_name.toLowerCase() === rec.game_name.toLowerCase()
-    )
-
-    // If no exact match, try partial match
-    if (!game) {
-      const recNameLower = rec.game_name.toLowerCase()
-      game = allGames.find(g =>
-        g.game_name.toLowerCase().includes(recNameLower) ||
-        recNameLower.includes(g.game_name.toLowerCase())
+  result.recommendations = result.recommendations
+    .map(rec => {
+      // Look in both backlog and discovery games - try exact match first, then partial
+      let game = allGames.find(g =>
+        g.game_name.toLowerCase() === rec.game_name.toLowerCase()
       )
-    }
 
-    const lastPlayed = game?.last_played_at ? new Date(game.last_played_at) : null
-    const daysSincePlayed = lastPlayed
-      ? Math.floor((now.getTime() - lastPlayed.getTime()) / (1000 * 60 * 60 * 24))
-      : null
+      // If no exact match, try partial match
+      if (!game) {
+        const recNameLower = rec.game_name.toLowerCase()
+        game = allGames.find(g =>
+          g.game_name.toLowerCase().includes(recNameLower) ||
+          recNameLower.includes(g.game_name.toLowerCase())
+        )
+      }
 
-    const isDiscovery = game?.is_discovery || rec.is_discovery || false
+      // Skip recommendations where we can't find the game in our database
+      if (!game) {
+        console.log(`[Recommendations] Skipping "${rec.game_name}" - not found in database`)
+        return null
+      }
 
-    return {
-      ...rec,
-      game_id: game?.game_id || rec.game_id,
-      slug: game?.slug || '',
-      cover_url: game?.cover_url || null,
-      recent_patch: game?.recent_patch || null,
-      days_since_played: daysSincePlayed,
-      progress: game?.progress || 0,
-      why_now: rec.why_now || null,
-      what_youd_miss: rec.what_youd_miss || null,
-      momentum: rec.momentum || 'stable',
-      is_discovery: isDiscovery,
-      follower_count: game?.follower_count,
-    }
-  })
+      const lastPlayed = game.last_played_at ? new Date(game.last_played_at) : null
+      const daysSincePlayed = lastPlayed
+        ? Math.floor((now.getTime() - lastPlayed.getTime()) / (1000 * 60 * 60 * 24))
+        : null
+
+      const isDiscovery = game.is_discovery || rec.is_discovery || false
+
+      return {
+        ...rec,
+        game_id: game.game_id,
+        game_name: game.game_name, // Use the actual name from DB
+        slug: game.slug || game.game_id,
+        cover_url: game.cover_url || null,
+        recent_patch: game.recent_patch || null,
+        days_since_played: daysSincePlayed,
+        progress: game.progress || 0,
+        why_now: rec.why_now || null,
+        what_youd_miss: rec.what_youd_miss || null,
+        momentum: rec.momentum || 'stable',
+        is_discovery: isDiscovery,
+        follower_count: game.follower_count,
+      }
+    })
+    .filter((rec): rec is NonNullable<typeof rec> => rec !== null)
 
   // Optionally save recommendations (non-blocking)
   if (result.recommendations.length > 0) {

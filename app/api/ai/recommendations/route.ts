@@ -55,39 +55,49 @@ export async function GET(request: Request) {
 
       if (cached && cached.length > 0) {
         // Transform cached recommendations to match expected format
-        const recommendations = cached.map(rec => {
-          // Handle both array and single object from Supabase join
-          type GameType = { id: string; name: string; slug: string; cover_url: string | null }
-          const gamesData = rec.games as GameType | GameType[] | null
-          const game = Array.isArray(gamesData) ? gamesData[0] : gamesData
-          const context = rec.context as Record<string, unknown> || {}
-          const factors = rec.factors as Record<string, unknown> || {}
+        // Filter out any recommendations where the game no longer exists
+        const recommendations = cached
+          .map(rec => {
+            // Handle both array and single object from Supabase join
+            type GameType = { id: string; name: string; slug: string; cover_url: string | null }
+            const gamesData = rec.games as GameType | GameType[] | null
+            const game = Array.isArray(gamesData) ? gamesData[0] : gamesData
 
-          return {
-            game_id: rec.game_id,
-            game_name: game?.name || 'Unknown Game',
-            slug: game?.slug || rec.game_id,
-            cover_url: game?.cover_url || null,
-            reason: rec.reason,
-            match_score: rec.match_score,
-            recommendation_type: rec.recommendation_type as 'return' | 'start' | 'finish' | 'discover',
-            factors: Array.isArray(factors) ? factors : [],
-            why_now: (context.why_now as string) || null,
-            what_youd_miss: (context.what_youd_miss as string) || null,
-            momentum: (context.momentum as 'rising' | 'stable' | 'cooling') || 'stable',
-            recent_patch: null,
-            days_since_played: null,
-            progress: 0,
-            is_discovery: rec.recommendation_type === 'discover',
-            follower_count: (context.follower_count as number) || undefined,
-          }
-        })
+            // Skip if game doesn't exist in database
+            if (!game || !game.id) return null
 
-        return NextResponse.json({
-          recommendations,
-          message: 'Your personalized recommendations',
-          cached: true,
-        })
+            const context = rec.context as Record<string, unknown> || {}
+            const factors = rec.factors as Record<string, unknown> || {}
+
+            return {
+              game_id: rec.game_id,
+              game_name: game.name,
+              slug: game.slug || rec.game_id,
+              cover_url: game.cover_url || null,
+              reason: rec.reason,
+              match_score: rec.match_score,
+              recommendation_type: rec.recommendation_type as 'return' | 'start' | 'finish' | 'discover',
+              factors: Array.isArray(factors) ? factors : [],
+              why_now: (context.why_now as string) || null,
+              what_youd_miss: (context.what_youd_miss as string) || null,
+              momentum: (context.momentum as 'rising' | 'stable' | 'cooling') || 'stable',
+              recent_patch: null,
+              days_since_played: null,
+              progress: 0,
+              is_discovery: rec.recommendation_type === 'discover',
+              follower_count: (context.follower_count as number) || undefined,
+            }
+          })
+          .filter(Boolean) // Remove null entries (games that don't exist)
+
+        if (recommendations.length > 0) {
+          return NextResponse.json({
+            recommendations,
+            message: 'Your personalized recommendations',
+            cached: true,
+          })
+        }
+        // If all cached recommendations were filtered out, fall through to generate new ones
       }
     }
 
