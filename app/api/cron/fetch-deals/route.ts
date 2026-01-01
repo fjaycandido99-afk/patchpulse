@@ -44,9 +44,17 @@ function verifyAuth(req: Request): boolean {
 export async function GET(req: Request) {
   console.log('[CRON] fetch-deals hit at', new Date().toISOString())
 
+  // Debug info
+  const debugInfo = {
+    vercelCron: req.headers.get('x-vercel-cron'),
+    hasCronSecret: !!req.headers.get('x-cron-secret'),
+    hasEnvSecret: !!process.env.CRON_SECRET,
+    hasAuthHeader: !!req.headers.get('authorization'),
+  }
+
   if (!verifyAuth(req)) {
-    console.log('[CRON] fetch-deals UNAUTHORIZED')
-    return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 })
+    console.log('[CRON] fetch-deals UNAUTHORIZED', debugInfo)
+    return NextResponse.json({ ok: false, error: 'Unauthorized', debug: debugInfo }, { status: 401 })
   }
 
   // Use service role client for insert/update/delete
