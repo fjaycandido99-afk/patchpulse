@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Newspaper, Zap } from 'lucide-react'
+import { Newspaper, Zap, SlidersHorizontal, X, Check } from 'lucide-react'
 import { MediaCard } from '@/components/media/MediaCard'
 import { Badge } from '@/components/ui/badge'
 import { MetaRow } from '@/components/ui/MetaRow'
@@ -206,6 +206,8 @@ function getNewsImage(item: NewsItem): string | null {
 
 export function NewsFeed({ news, topStories, includeRumors, sources, selectedSource }: NewsFeedProps) {
   const hasRestoredScroll = useRef(false)
+  const [isFilterOpen, setIsFilterOpen] = useState(false)
+  const router = useRouter()
 
   useEffect(() => {
     markNewsAsVisited()
@@ -281,61 +283,135 @@ export function NewsFeed({ news, topStories, includeRumors, sources, selectedSou
         </section>
       )}
 
-      {/* Filters */}
-      <div className="space-y-3">
-        {/* Source filters */}
-        {sources.length > 0 && (
-          <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
-            <Link
-              href={`/news${includeRumors ? '' : '?rumors=false'}`}
-              className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                !selectedSource
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-white/5 text-muted-foreground hover:text-foreground border border-white/10'
-              }`}
-            >
-              All Sources
-            </Link>
-            {sources.map((source) => {
-              const params = new URLSearchParams()
-              params.set('source', source)
-              if (!includeRumors) params.set('rumors', 'false')
-              return (
-                <Link
-                  key={source}
-                  href={`/news?${params.toString()}`}
-                  className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
-                    selectedSource === source
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-white/5 text-muted-foreground hover:text-foreground border border-white/10'
+      {/* Filter Button */}
+      <div className="relative">
+        <button
+          onClick={() => setIsFilterOpen(!isFilterOpen)}
+          className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
+            selectedSource || !includeRumors
+              ? 'bg-primary/20 text-primary border border-primary/30'
+              : 'bg-white/5 text-muted-foreground hover:text-foreground border border-white/10'
+          }`}
+        >
+          <SlidersHorizontal className="w-4 h-4" />
+          Filters
+          {(selectedSource || !includeRumors) && (
+            <span className="px-1.5 py-0.5 rounded-full bg-primary text-primary-foreground text-xs">
+              {(selectedSource ? 1 : 0) + (!includeRumors ? 1 : 0)}
+            </span>
+          )}
+        </button>
+
+        {/* Filter Dropdown */}
+        {isFilterOpen && (
+          <>
+            {/* Backdrop */}
+            <div
+              className="fixed inset-0 z-40"
+              onClick={() => setIsFilterOpen(false)}
+            />
+
+            {/* Dropdown Panel */}
+            <div className="absolute top-full left-0 mt-2 w-72 rounded-xl border border-white/10 bg-[#0b1220] shadow-xl z-50 overflow-hidden">
+              {/* Header */}
+              <div className="flex items-center justify-between p-3 border-b border-white/10">
+                <span className="font-semibold text-sm">Filters</span>
+                <button
+                  onClick={() => setIsFilterOpen(false)}
+                  className="p-1 rounded-lg hover:bg-white/10 text-muted-foreground"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Sources Section */}
+              {sources.length > 0 && (
+                <div className="p-3 border-b border-white/10">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+                    Source
+                  </p>
+                  <div className="space-y-1">
+                    <button
+                      onClick={() => {
+                        const params = new URLSearchParams()
+                        if (!includeRumors) params.set('rumors', 'false')
+                        router.push(`/news${params.toString() ? `?${params.toString()}` : ''}`)
+                        setIsFilterOpen(false)
+                      }}
+                      className={`flex items-center justify-between w-full px-3 py-2 rounded-lg text-sm transition-colors ${
+                        !selectedSource
+                          ? 'bg-primary/20 text-primary'
+                          : 'hover:bg-white/5 text-foreground'
+                      }`}
+                    >
+                      All Sources
+                      {!selectedSource && <Check className="w-4 h-4" />}
+                    </button>
+                    {sources.map((source) => (
+                      <button
+                        key={source}
+                        onClick={() => {
+                          const params = new URLSearchParams()
+                          params.set('source', source)
+                          if (!includeRumors) params.set('rumors', 'false')
+                          router.push(`/news?${params.toString()}`)
+                          setIsFilterOpen(false)
+                        }}
+                        className={`flex items-center justify-between w-full px-3 py-2 rounded-lg text-sm transition-colors ${
+                          selectedSource === source
+                            ? 'bg-primary/20 text-primary'
+                            : 'hover:bg-white/5 text-foreground'
+                        }`}
+                      >
+                        {source}
+                        {selectedSource === source && <Check className="w-4 h-4" />}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Rumors Section */}
+              <div className="p-3">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+                  Content
+                </p>
+                <button
+                  onClick={() => {
+                    const params = new URLSearchParams()
+                    if (selectedSource) params.set('source', selectedSource)
+                    if (includeRumors) params.set('rumors', 'false')
+                    router.push(`/news${params.toString() ? `?${params.toString()}` : ''}`)
+                    setIsFilterOpen(false)
+                  }}
+                  className={`flex items-center justify-between w-full px-3 py-2 rounded-lg text-sm transition-colors ${
+                    !includeRumors
+                      ? 'bg-amber-500/20 text-amber-400'
+                      : 'hover:bg-white/5 text-foreground'
                   }`}
                 >
-                  {source}
-                </Link>
-              )
-            })}
-          </div>
-        )}
+                  Hide Rumors
+                  {!includeRumors && <Check className="w-4 h-4" />}
+                </button>
+              </div>
 
-        {/* Rumor filter */}
-        <div className="flex items-center gap-2">
-          <Link
-            href={(() => {
-              const params = new URLSearchParams()
-              if (selectedSource) params.set('source', selectedSource)
-              if (includeRumors) params.set('rumors', 'false')
-              const queryString = params.toString()
-              return `/news${queryString ? `?${queryString}` : ''}`
-            })()}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-              !includeRumors
-                ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                : 'bg-white/5 text-muted-foreground hover:text-foreground border border-white/10'
-            }`}
-          >
-            Hide Rumors
-          </Link>
-        </div>
+              {/* Clear All */}
+              {(selectedSource || !includeRumors) && (
+                <div className="p-3 border-t border-white/10">
+                  <button
+                    onClick={() => {
+                      router.push('/news')
+                      setIsFilterOpen(false)
+                    }}
+                    className="w-full px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors"
+                  >
+                    Clear All Filters
+                  </button>
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </div>
 
       {/* News grid - larger vertical cards */}

@@ -10,12 +10,10 @@ async function triggerBackfill(gameId: string) {
   try {
     const needs = await needsBackfill(gameId)
     if (needs) {
-      console.log(`Backfilling patches for game ${gameId}`)
-      const result = await backfillPatchesForGame(gameId)
-      console.log(`Backfill complete: ${result.addedCount} patches added`)
+      await backfillPatchesForGame(gameId)
     }
-  } catch (error) {
-    console.error('Backfill failed:', error)
+  } catch {
+    // Backfill failures are non-critical
   }
 }
 
