@@ -4,6 +4,9 @@ import Stripe from 'stripe'
 
 const stripeKey = process.env.STRIPE_SECRET_KEY?.trim()
 
+// Debug: Log first 15 chars of key to verify correct key is loaded
+console.log('Stripe key prefix:', stripeKey?.substring(0, 15) || 'NOT SET')
+
 if (!stripeKey) {
   console.error('STRIPE_SECRET_KEY is not configured')
 }
@@ -95,8 +98,9 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Checkout error:', error)
     const message = error instanceof Error ? error.message : 'Unknown error'
+    const keyPrefix = stripeKey?.substring(0, 20) || 'NOT SET'
     return NextResponse.json(
-      { error: `Failed to create checkout session: ${message}` },
+      { error: `Failed: ${message} (key: ${keyPrefix}...)` },
       { status: 500 }
     )
   }
