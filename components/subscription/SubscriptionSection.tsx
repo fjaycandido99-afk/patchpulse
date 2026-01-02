@@ -131,22 +131,17 @@ export function SubscriptionSection({ subscription }: Props) {
                 <span>Early access</span>
               </div>
             </div>
-          </div>
-        )}
 
-        {/* Subscription management for Pro users */}
-        {isPro && subscription.provider === 'stripe' && (
-          <div className="mt-4 pt-4 border-t border-border">
-            <a
-              href="/api/subscriptions/portal"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-muted hover:bg-muted/80 text-sm font-medium transition-colors"
-            >
-              <ExternalLink className="w-4 h-4" />
-              Manage Subscription
-            </a>
-            <p className="mt-2 text-xs text-muted-foreground">
-              Update payment method, view invoices, or cancel
-            </p>
+            {/* Manage Subscription button */}
+            {subscription.provider === 'stripe' && (
+              <a
+                href="/api/subscriptions/portal"
+                className="mt-4 w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-muted hover:bg-muted/80 text-sm font-medium transition-colors"
+              >
+                <ExternalLink className="w-4 h-4" />
+                Manage Subscription
+              </a>
+            )}
           </div>
         )}
       </div>
