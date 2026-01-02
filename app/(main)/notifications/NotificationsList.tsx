@@ -3,10 +3,10 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Bell, FileText, Newspaper, Sparkles, CheckCheck, ChevronRight, Calendar, Gamepad2 } from 'lucide-react'
+import { Bell, FileText, Newspaper, Sparkles, CheckCheck, ChevronRight, Calendar, Gamepad2, Tag } from 'lucide-react'
 import { type Notification, type NotificationStats, type TodaysNewsItem } from '@/lib/notifications'
 
-type FilterType = 'all' | 'unread' | 'patches' | 'news'
+type FilterType = 'all' | 'unread' | 'patches' | 'news' | 'deals'
 type TimeGroup = 'today' | 'yesterday' | 'this_week' | 'earlier'
 
 function getTimeGroup(date: string): TimeGroup {
@@ -59,12 +59,17 @@ function getNotificationIcon(type: string) {
       return <Newspaper className="w-4 h-4 text-blue-400" />
     case 'ai_digest':
       return <Sparkles className="w-4 h-4 text-violet-400" />
+    case 'price_drop':
+      return <Tag className="w-4 h-4 text-green-400" />
     default:
       return <Bell className="w-4 h-4 text-zinc-400" />
   }
 }
 
 function getNotificationLink(notification: Notification): string {
+  if (notification.type === 'price_drop' && notification.metadata?.deal_url) {
+    return notification.metadata.deal_url as string
+  }
   if (notification.patch_id) {
     return `/patches/${notification.patch_id}`
   }
@@ -94,6 +99,7 @@ export function NotificationsList({ initialNotifications, initialStats, todaysNe
     if (filter === 'unread') return !n.is_read
     if (filter === 'patches') return n.type === 'new_patch'
     if (filter === 'news') return n.type === 'new_news'
+    if (filter === 'deals') return n.type === 'price_drop'
     return true
   })
 
@@ -148,6 +154,7 @@ export function NotificationsList({ initialNotifications, initialStats, todaysNe
     { id: 'unread', label: 'Unread', count: stats.unread_count },
     { id: 'patches', label: 'Patches' },
     { id: 'news', label: 'News' },
+    { id: 'deals', label: 'Deals' },
   ]
 
   return (
@@ -295,10 +302,18 @@ export function NotificationsList({ initialNotifications, initialStats, todaysNe
 
                 {/* Notifications in this group */}
                 <div className="space-y-1">
-                  {groupNotifications.map(notification => (
-                    <Link
+                  {groupNotifications.map(notification => {
+                    const notificationLink = getNotificationLink(notification)
+                    const isExternal = notificationLink.startsWith('http')
+                    const LinkComponent = isExternal ? 'a' : Link
+                    const linkProps = isExternal
+                      ? { href: notificationLink, target: '_blank', rel: 'noopener noreferrer' }
+                      : { href: notificationLink }
+
+                    return (
+                    <LinkComponent
                       key={notification.id}
-                      href={getNotificationLink(notification)}
+                      {...linkProps}
                       onClick={() => !notification.is_read && handleMarkRead(notification.id)}
                       className={`flex gap-3 p-3 rounded-xl transition-colors ${
                         !notification.is_read
@@ -346,8 +361,9 @@ export function NotificationsList({ initialNotifications, initialStats, todaysNe
                           {notification.priority >= 4 && ' • Important'}
                         </p>
                       </div>
-                    </Link>
-                  ))}
+                    </LinkComponent>
+                    )
+                  })}
                 </div>
               </div>
             )
