@@ -35,7 +35,7 @@ export default async function InsightsPage() {
           {isPro && <ProBadge />}
         </div>
         <p className="mt-2 text-muted-foreground">
-          Early signals, smart decisions, and personalized game intelligence
+          Early signals, games on sale, and personalized game intelligence
         </p>
       </div>
 
