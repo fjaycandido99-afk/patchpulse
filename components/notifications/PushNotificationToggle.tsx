@@ -100,14 +100,14 @@ export function PushNotificationToggle({ className = '' }: Props) {
         <button
           onClick={handleToggle}
           disabled={isLoading}
-          className={`relative w-12 h-7 rounded-full transition-colors ${
+          className={`relative flex-shrink-0 w-12 h-7 rounded-full transition-colors ${
             isEnabled ? 'bg-primary' : 'bg-zinc-600'
           }`}
           aria-label={isEnabled ? 'Disable notifications' : 'Enable notifications'}
         >
           <span
-            className={`absolute top-1 w-5 h-5 rounded-full bg-white shadow transition-transform ${
-              isEnabled ? 'translate-x-6' : 'translate-x-1'
+            className={`absolute left-1 top-1 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-200 ${
+              isEnabled ? 'translate-x-5' : 'translate-x-0'
             }`}
           >
             {isLoading && (
