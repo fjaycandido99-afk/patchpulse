@@ -121,15 +121,15 @@ export function SubscriptionSection({ subscription }: Props) {
               </div>
               <div className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-green-400" />
-                <span>Smart notifications</span>
+                <span>Push notifications</span>
               </div>
               <div className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-green-400" />
-                <span>AI summaries</span>
+                <span>AI patch summaries</span>
               </div>
               <div className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-green-400" />
-                <span>Priority support</span>
+                <span>Early access</span>
               </div>
             </div>
           </div>
@@ -140,11 +140,14 @@ export function SubscriptionSection({ subscription }: Props) {
           <div className="mt-4 pt-4 border-t border-border">
             <a
               href="/api/subscriptions/portal"
-              className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-muted hover:bg-muted/80 text-sm font-medium transition-colors"
             >
               <ExternalLink className="w-4 h-4" />
-              Manage subscription
+              Manage Subscription
             </a>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Update payment method, view invoices, or cancel
+            </p>
           </div>
         )}
       </div>

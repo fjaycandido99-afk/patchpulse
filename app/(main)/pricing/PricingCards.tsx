@@ -18,10 +18,10 @@ const FREE_FEATURES = [
 
 const PRO_FEATURES = [
   'Unlimited backlog games',
-  'Unlimited favorites',
-  'Unlimited follows',
-  'Smart notifications',
-  'Smart patch summaries',
+  'Unlimited favorites & follows',
+  'Push notifications for patches',
+  'AI-powered patch summaries',
+  'Early access to new features',
   'Priority support',
 ]
 
@@ -165,7 +165,7 @@ export function PricingCards({ currentPlan, isLoggedIn }: Props) {
               </p>
             )}
             <p className="mt-2 text-sm text-muted-foreground">
-              Everything you need to stay on top of gaming
+              Never miss a patch. Always know what changed.
             </p>
           </div>
 
