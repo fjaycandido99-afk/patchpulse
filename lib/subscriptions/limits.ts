@@ -5,7 +5,6 @@ import { createAdminClient } from '@/lib/supabase/admin'
 export const PLAN_LIMITS = {
   free: {
     backlog: 5,
-    favorites: 5,
     followed: 10,
     hasNotifications: false,
     hasAISummaries: false,
@@ -14,7 +13,6 @@ export const PLAN_LIMITS = {
   },
   pro: {
     backlog: Infinity,
-    favorites: Infinity,
     followed: Infinity,
     hasNotifications: true,
     hasAISummaries: true,
@@ -24,7 +22,7 @@ export const PLAN_LIMITS = {
 } as const
 
 export type Plan = keyof typeof PLAN_LIMITS
-export type LimitType = 'backlog' | 'favorites' | 'followed'
+export type LimitType = 'backlog' | 'followed'
 
 export type LimitCheckResult = {
   allowed: boolean
@@ -41,7 +39,6 @@ export type SubscriptionInfo = {
   cancelAtPeriodEnd: boolean
   usage: {
     backlog: { used: number; limit: number }
-    favorites: { used: number; limit: number }
     followed: { used: number; limit: number }
   }
   features: {
@@ -103,34 +100,6 @@ export async function canAddToBacklog(userId?: string): Promise<LimitCheckResult
   }
 }
 
-// Check if user can add to favorites
-export async function canAddFavorite(userId?: string): Promise<LimitCheckResult> {
-  const supabase = await createClient()
-
-  const targetUserId = userId || (await supabase.auth.getUser()).data.user?.id
-  if (!targetUserId) {
-    return { allowed: false, currentCount: 0, maxCount: 0, plan: 'free' }
-  }
-
-  const plan = await getUserPlan(targetUserId)
-  const limit = PLAN_LIMITS[plan].favorites
-
-  const { count } = await supabase
-    .from('user_games')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', targetUserId)
-    .eq('is_favorite', true)
-
-  const currentCount = count || 0
-
-  return {
-    allowed: currentCount < limit,
-    currentCount,
-    maxCount: limit === Infinity ? -1 : limit,
-    plan,
-  }
-}
-
 // Check if user can follow more games
 export async function canFollowGame(userId?: string): Promise<LimitCheckResult> {
   const supabase = await createClient()
@@ -175,16 +144,11 @@ export async function getSubscriptionInfo(userId?: string): Promise<Subscription
     .single()
 
   // Get usage counts
-  const [backlogCount, favoritesCount, followedCount] = await Promise.all([
+  const [backlogCount, followedCount] = await Promise.all([
     supabase
       .from('backlog_items')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', targetUserId),
-    supabase
-      .from('user_games')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', targetUserId)
-      .eq('is_favorite', true),
     supabase
       .from('user_games')
       .select('*', { count: 'exact', head: true })
@@ -206,10 +170,6 @@ export async function getSubscriptionInfo(userId?: string): Promise<Subscription
       backlog: {
         used: backlogCount.count || 0,
         limit: limits.backlog === Infinity ? -1 : limits.backlog,
-      },
-      favorites: {
-        used: favoritesCount.count || 0,
-        limit: limits.favorites === Infinity ? -1 : limits.favorites,
       },
       followed: {
         used: followedCount.count || 0,
@@ -234,7 +194,6 @@ function getDefaultSubscriptionInfo(): SubscriptionInfo {
     cancelAtPeriodEnd: false,
     usage: {
       backlog: { used: 0, limit: PLAN_LIMITS.free.backlog },
-      favorites: { used: 0, limit: PLAN_LIMITS.free.favorites },
       followed: { used: 0, limit: PLAN_LIMITS.free.followed },
     },
     features: {

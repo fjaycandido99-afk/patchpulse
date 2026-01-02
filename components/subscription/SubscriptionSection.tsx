@@ -13,7 +13,6 @@ type SubscriptionInfo = {
   cancelAtPeriodEnd: boolean
   usage: {
     backlog: { used: number; limit: number }
-    favorites: { used: number; limit: number }
     followed: { used: number; limit: number }
   }
   features: {
@@ -161,13 +160,6 @@ export function SubscriptionSection({ subscription }: Props) {
             label="Backlog games"
             used={subscription.usage.backlog.used}
             limit={subscription.usage.backlog.limit}
-            showUpgrade={true}
-          />
-
-          <UsageBar
-            label="Favorite games"
-            used={subscription.usage.favorites.used}
-            limit={subscription.usage.favorites.limit}
             showUpgrade={true}
           />
 
