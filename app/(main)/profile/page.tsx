@@ -4,7 +4,6 @@ import Link from 'next/link'
 import { FileText, Shield, ChevronRight } from 'lucide-react'
 import { ConnectedAccounts } from './ConnectedAccounts'
 import { BiometricSettings } from '@/components/auth/BiometricSettings'
-import { PushNotificationToggle } from '@/components/notifications/PushNotificationToggle'
 import { LogoutButton } from '@/components/auth/LogoutButton'
 import {
   getConnectedAccounts,
@@ -104,12 +103,6 @@ export default async function ProfilePage() {
       {/* Connected Accounts */}
       <section className="rounded-xl border border-border bg-card p-6">
         <ConnectedAccounts accounts={accounts} />
-      </section>
-
-      {/* Notifications */}
-      <section className="rounded-xl border border-border bg-card p-6">
-        <h2 className="text-lg font-semibold mb-4">Notifications</h2>
-        <PushNotificationToggle />
       </section>
 
       {/* Security Settings */}

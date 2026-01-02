@@ -2,95 +2,27 @@
 
 import { useState, useEffect } from 'react'
 import { Bell, BellOff, Loader2 } from 'lucide-react'
-import {
-  isPushSupported,
-  getNotificationPermission,
-  requestNotificationPermission,
-  registerPushNotifications,
-  unregisterPushNotifications,
-} from '@/lib/push-notifications'
-import {
-  isNative,
-  registerNativePush,
-  unregisterNativePush,
-  isNativePushEnabled,
-} from '@/lib/capacitor/push-notifications'
 
 type Props = {
   className?: string
 }
 
 export function PushNotificationToggle({ className = '' }: Props) {
-  const [isSupported, setIsSupported] = useState(false)
-  const [permission, setPermission] = useState<NotificationPermission | 'unsupported' | 'native'>('default')
+  const [isSupported, setIsSupported] = useState(true)
+  const [permission, setPermission] = useState<NotificationPermission>('default')
   const [isEnabled, setIsEnabled] = useState(false)
-  const [isLoading, setIsLoading] = useState(true) // Start with loading
+  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const checkSubscription = async () => {
-      setIsLoading(true)
-
-      try {
-        // Check if running on native platform
-        if (isNative()) {
-          setIsSupported(true)
-          setPermission('native')
-
-          try {
-            const enabled = await isNativePushEnabled()
-            setIsEnabled(enabled)
-          } catch {
-            setIsEnabled(false)
-          }
-
-          setIsLoading(false)
-          return
-        }
-      } catch {
-        // isNative() check failed, continue with web check
-      }
-
-      // Web push check
-      const supported = isPushSupported()
-      setIsSupported(supported)
-
-      if (!supported) {
-        setIsLoading(false)
-        return
-      }
-
-      const perm = getNotificationPermission()
-      setPermission(perm)
-
-      // Check if there's an actual push subscription with timeout
-      if (perm === 'granted' && 'serviceWorker' in navigator) {
-        try {
-          // Add 3 second timeout to prevent hanging
-          const timeoutPromise = new Promise<null>((_, reject) =>
-            setTimeout(() => reject(new Error('Timeout')), 3000)
-          )
-
-          const registration = await Promise.race([
-            navigator.serviceWorker.ready,
-            timeoutPromise
-          ]) as ServiceWorkerRegistration
-
-          if (registration) {
-            const subscription = await registration.pushManager.getSubscription()
-            setIsEnabled(!!subscription)
-          }
-        } catch {
-          setIsEnabled(false)
-        }
-      } else {
-        setIsEnabled(false)
-      }
-
-      setIsLoading(false)
+    // Check if notifications are supported
+    if (!('Notification' in window)) {
+      setIsSupported(false)
+      return
     }
 
-    checkSubscription()
+    setPermission(Notification.permission)
+    setIsEnabled(Notification.permission === 'granted')
   }, [])
 
   const handleToggle = async () => {
@@ -100,51 +32,35 @@ export function PushNotificationToggle({ className = '' }: Props) {
     setError(null)
 
     try {
-      // Native push (iOS/Android)
-      if (isNative()) {
-        if (isEnabled) {
-          await unregisterNativePush()
-          setIsEnabled(false)
-        } else {
-          const result = await registerNativePush()
-          if (result.success) {
-            setIsEnabled(true)
-          } else {
-            setError(result.error || 'Failed to enable notifications')
-          }
-        }
-        setIsLoading(false)
-        return
-      }
-
-      // Web push
       if (isEnabled) {
-        await unregisterPushNotifications()
+        // Can't revoke permission, just disable locally
         setIsEnabled(false)
+        // Could save preference to backend here
       } else {
-        const perm = await requestNotificationPermission()
-        setPermission(perm)
+        // Request permission
+        const result = await Notification.requestPermission()
+        setPermission(result)
 
-        if (perm === 'granted') {
-          const subscription = await registerPushNotifications()
-          setIsEnabled(!!subscription)
-          if (!subscription) {
-            setError('Failed to register for notifications')
-          }
-        } else if (perm === 'denied') {
-          setError('Permission denied. Enable in settings.')
+        if (result === 'granted') {
+          setIsEnabled(true)
+          // Show test notification
+          new Notification('PatchPulse', {
+            body: 'Push notifications enabled!',
+            icon: '/logo.png',
+          })
+        } else if (result === 'denied') {
+          setError('Permission denied. Enable in browser/device settings.')
         }
       }
     } catch (err) {
-      console.error('Error toggling push notifications:', err)
-      setError('An error occurred. Please try again.')
+      console.error('Error toggling notifications:', err)
+      setError('Failed to enable notifications')
     } finally {
       setIsLoading(false)
     }
   }
 
-  // Don't show anything if not supported (after loading completes)
-  if (!isLoading && !isSupported) {
+  if (!isSupported) {
     return null
   }
 
@@ -155,11 +71,9 @@ export function PushNotificationToggle({ className = '' }: Props) {
           <BellOff className="w-5 h-5 text-zinc-400" />
         </div>
         <div className="flex-1">
-          <p className="text-sm font-medium text-zinc-300">Push Notifications Blocked</p>
+          <p className="text-sm font-medium text-zinc-300">Notifications Blocked</p>
           <p className="text-xs text-zinc-500">
-            {isNative()
-              ? 'Enable in Settings > PatchPulse > Notifications'
-              : 'Enable in browser settings to receive notifications'}
+            Enable in your browser or device settings
           </p>
         </div>
       </div>
@@ -178,7 +92,7 @@ export function PushNotificationToggle({ className = '' }: Props) {
           <div>
             <p className="text-sm font-medium">Push Notifications</p>
             <p className="text-xs text-muted-foreground">
-              {isLoading ? 'Checking...' : isEnabled ? 'Get notified even when away' : 'Stay updated on the go'}
+              {isEnabled ? 'You will receive notifications' : 'Get notified about patches and news'}
             </p>
           </div>
         </div>
@@ -187,9 +101,9 @@ export function PushNotificationToggle({ className = '' }: Props) {
           onClick={handleToggle}
           disabled={isLoading}
           className={`relative w-12 h-7 rounded-full transition-colors ${
-            isLoading ? 'bg-zinc-600' : isEnabled ? 'bg-primary' : 'bg-zinc-600'
+            isEnabled ? 'bg-primary' : 'bg-zinc-600'
           }`}
-          aria-label={isEnabled ? 'Disable push notifications' : 'Enable push notifications'}
+          aria-label={isEnabled ? 'Disable notifications' : 'Enable notifications'}
         >
           <span
             className={`absolute top-1 w-5 h-5 rounded-full bg-white shadow transition-transform ${
