@@ -4,22 +4,44 @@ import { createClient } from '@supabase/supabase-js'
 export const runtime = 'nodejs'
 export const maxDuration = 60
 
-type SteamSpecial = {
-  id: number
-  name: string
-  discounted: boolean
-  discount_percent: number
-  original_price: number
-  final_price: number
-  large_capsule_image: string
-  header_image: string
-  discount_expiration?: number
+type CheapSharkDeal = {
+  internalName: string
+  title: string
+  dealID: string
+  storeID: string
+  gameID: string
+  salePrice: string
+  normalPrice: string
+  savings: string
+  steamAppID: string | null
+  thumb: string
+  metacriticScore: string
+  steamRatingPercent: string
+  dealRating: string
 }
 
-type SteamFeaturedCategories = {
-  specials: {
-    items: SteamSpecial[]
-  }
+// Store names mapping
+const STORE_NAMES: Record<string, string> = {
+  '1': 'Steam',
+  '2': 'GamersGate',
+  '3': 'GreenManGaming',
+  '7': 'GOG',
+  '8': 'Origin',
+  '11': 'Humble Store',
+  '13': 'Uplay',
+  '15': 'Fanatical',
+  '21': 'WinGameStore',
+  '23': 'GameBillet',
+  '24': 'Voidu',
+  '25': 'Epic Games Store',
+  '27': 'Gamesplanet',
+  '28': 'Gamesload',
+  '29': '2Game',
+  '30': 'IndieGala',
+  '31': 'Blizzard Shop',
+  '33': 'DLGamer',
+  '34': 'Noctre',
+  '35': 'DreamGame',
 }
 
 function verifyAuth(req: Request): boolean {
@@ -31,14 +53,12 @@ function verifyAuth(req: Request): boolean {
   const token = authHeader?.replace('Bearer ', '').trim()
   const querySecret = url.searchParams.get('secret')?.trim()
 
-  // Hardcoded fallback (env var has issues)
   const expectedSecret = 'patchpulse-cron-secret-2024-secure'
 
   if (vercelCron === '1') return true
   if (cronSecretEnv && cronSecret === cronSecretEnv) return true
   if (cronSecretEnv && token === cronSecretEnv) return true
   if (cronSecretEnv && querySecret === cronSecretEnv) return true
-  // Fallback checks with hardcoded secret
   if (querySecret === expectedSecret) return true
   if (cronSecret === expectedSecret) return true
   if (token === expectedSecret) return true
@@ -53,51 +73,91 @@ export async function GET(req: Request) {
     return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 })
   }
 
-  // Use service role client for insert/update/delete
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
   try {
-    // Fetch deals from Steam
-    const response = await fetch(
-      'https://store.steampowered.com/api/featuredcategories/?cc=us&l=en',
-      {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-          'Accept': 'application/json',
-        },
-      }
-    )
+    // Fetch deals from CheapShark API - gets deals from multiple stores
+    // Parameters: storeID=1 (Steam), onSale=1, pageSize=60, sortBy=savings
+    const urls = [
+      // Steam deals sorted by savings
+      'https://www.cheapshark.com/api/1.0/deals?storeID=1&onSale=1&pageSize=60&sortBy=Savings',
+      // Epic Games deals
+      'https://www.cheapshark.com/api/1.0/deals?storeID=25&onSale=1&pageSize=30&sortBy=Savings',
+      // GOG deals
+      'https://www.cheapshark.com/api/1.0/deals?storeID=7&onSale=1&pageSize=30&sortBy=Savings',
+      // Humble Store deals
+      'https://www.cheapshark.com/api/1.0/deals?storeID=11&onSale=1&pageSize=20&sortBy=Savings',
+      // Top rated deals across all stores
+      'https://www.cheapshark.com/api/1.0/deals?onSale=1&pageSize=30&sortBy=DealRating&metacritic=70',
+    ]
 
-    if (!response.ok) {
-      throw new Error(`Steam API error: ${response.status}`)
+    const allDeals: Map<string, CheapSharkDeal> = new Map()
+
+    for (const url of urls) {
+      try {
+        const response = await fetch(url, {
+          headers: {
+            'User-Agent': 'PatchPulse/1.0 (https://patchpulse.app)',
+          },
+        })
+
+        if (response.ok) {
+          const deals: CheapSharkDeal[] = await response.json()
+          deals.forEach(deal => {
+            // Use gameID as unique key to avoid duplicates
+            if (!allDeals.has(deal.gameID)) {
+              allDeals.set(deal.gameID, deal)
+            }
+          })
+          console.log(`[CRON] Fetched ${deals.length} deals from: ${url.split('?')[1]?.slice(0, 30)}...`)
+        }
+      } catch (e) {
+        console.log(`[CRON] Failed to fetch from URL:`, e)
+      }
     }
 
-    const data: SteamFeaturedCategories = await response.json()
-    const steamDeals = data.specials?.items || []
-
-    console.log(`[CRON] Fetched ${steamDeals.length} deals from Steam`)
+    const cheapSharkDeals = Array.from(allDeals.values())
+    console.log(`[CRON] Total unique deals: ${cheapSharkDeals.length}`)
 
     // Transform deals for database
-    const deals = steamDeals
-      .filter(item => item.discounted && item.discount_percent >= 20)
-      .map(item => ({
-        id: item.id.toString(),
-        title: item.name,
-        sale_price: item.final_price / 100,
-        normal_price: item.original_price / 100,
-        discount_percent: item.discount_percent,
-        thumb_url: item.large_capsule_image,
-        header_url: item.header_image,
-        deal_url: `https://store.steampowered.com/app/${item.id}`,
-        expires_at: item.discount_expiration
-          ? new Date(item.discount_expiration * 1000).toISOString()
-          : null,
-      }))
+    const deals = cheapSharkDeals
+      .filter(deal => parseFloat(deal.savings) >= 20) // At least 20% off
+      .map(deal => {
+        const storeName = STORE_NAMES[deal.storeID] || 'Unknown'
+        const steamId = deal.steamAppID
 
-    // Get current deal IDs from Steam
+        // Build deal URL based on store
+        let dealUrl = `https://www.cheapshark.com/redirect?dealID=${deal.dealID}`
+        if (deal.storeID === '1' && steamId) {
+          dealUrl = `https://store.steampowered.com/app/${steamId}`
+        } else if (deal.storeID === '25') {
+          dealUrl = `https://store.epicgames.com/`
+        } else if (deal.storeID === '7') {
+          dealUrl = `https://www.gog.com/`
+        }
+
+        return {
+          id: deal.gameID,
+          title: deal.title,
+          sale_price: parseFloat(deal.salePrice),
+          normal_price: parseFloat(deal.normalPrice),
+          discount_percent: Math.round(parseFloat(deal.savings)),
+          thumb_url: deal.thumb,
+          header_url: steamId
+            ? `https://cdn.cloudflare.steamstatic.com/steam/apps/${steamId}/header.jpg`
+            : deal.thumb,
+          deal_url: dealUrl,
+          store: storeName,
+          steam_app_id: steamId,
+          metacritic_score: deal.metacriticScore ? parseInt(deal.metacriticScore) : null,
+          deal_rating: deal.dealRating ? parseFloat(deal.dealRating) : null,
+        }
+      })
+
+    // Get current deal IDs
     const currentDealIds = deals.map(d => d.id)
 
     // Upsert deals
@@ -112,7 +172,7 @@ export async function GET(req: Request) {
       }
     }
 
-    // Delete deals that are no longer on sale (not in Steam's response)
+    // Delete deals that are no longer on sale
     const { data: existingDeals } = await supabase
       .from('deals')
       .select('id')
@@ -127,28 +187,16 @@ export async function GET(req: Request) {
         .delete()
         .in('id', idsToDelete)
 
-      if (deleteError) {
-        console.error('[CRON] Delete error:', deleteError)
-      } else {
+      if (!deleteError) {
         deletedCount = idsToDelete.length
       }
-    }
-
-    // Also delete any expired deals (safety cleanup)
-    const { error: expiredError } = await supabase
-      .from('deals')
-      .delete()
-      .lt('expires_at', new Date().toISOString())
-
-    if (expiredError) {
-      console.error('[CRON] Expired cleanup error:', expiredError)
     }
 
     console.log(`[CRON] Upserted ${deals.length} deals, deleted ${deletedCount} ended deals`)
 
     return NextResponse.json({
       ok: true,
-      fetched: steamDeals.length,
+      fetched: cheapSharkDeals.length,
       upserted: deals.length,
       deleted: deletedCount,
     })
