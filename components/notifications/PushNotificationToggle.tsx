@@ -31,42 +31,49 @@ export function PushNotificationToggle({ className = '' }: Props) {
     const checkSubscription = async () => {
       setIsLoading(true)
 
-      // Check if running on native platform
-      if (isNative()) {
-        setIsSupported(true)
-        setPermission('native')
+      try {
+        // Check if running on native platform
+        if (isNative()) {
+          setIsSupported(true)
+          setPermission('native')
 
-        try {
-          const enabled = await isNativePushEnabled()
-          setIsEnabled(enabled)
-        } catch {
-          setIsEnabled(false)
+          try {
+            const enabled = await isNativePushEnabled()
+            setIsEnabled(enabled)
+          } catch {
+            setIsEnabled(false)
+          }
+
+          setIsLoading(false)
+          return
         }
-
-        setIsLoading(false)
-        return
+      } catch {
+        // isNative() check failed, continue with web check
       }
 
       // Web push check
       const supported = isPushSupported()
       setIsSupported(supported)
 
-      if (supported) {
-        const perm = getNotificationPermission()
-        setPermission(perm)
+      if (!supported) {
+        setIsLoading(false)
+        return
+      }
 
-        // Check if there's an actual push subscription
-        if (perm === 'granted' && 'serviceWorker' in navigator) {
-          try {
-            const registration = await navigator.serviceWorker.ready
-            const subscription = await registration.pushManager.getSubscription()
-            setIsEnabled(!!subscription)
-          } catch {
-            setIsEnabled(false)
-          }
-        } else {
+      const perm = getNotificationPermission()
+      setPermission(perm)
+
+      // Check if there's an actual push subscription
+      if (perm === 'granted' && 'serviceWorker' in navigator) {
+        try {
+          const registration = await navigator.serviceWorker.ready
+          const subscription = await registration.pushManager.getSubscription()
+          setIsEnabled(!!subscription)
+        } catch {
           setIsEnabled(false)
         }
+      } else {
+        setIsEnabled(false)
       }
 
       setIsLoading(false)
