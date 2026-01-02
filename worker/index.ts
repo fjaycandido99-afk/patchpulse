@@ -29,8 +29,8 @@ self.addEventListener('push', (event: PushEvent) => {
     // Use extended options with type assertion for browser-specific properties
     const options = {
       body: payload.body,
-      icon: payload.icon || '/icons/icon-192x192.png',
-      badge: '/icons/badge-72x72.png',
+      icon: payload.icon || '/logo.png',
+      badge: '/logo.png',
       tag: payload.tag || 'patchpulse-notification',
       data: {
         url: payload.url || '/',

@@ -21,14 +21,30 @@ export function PushNotificationToggle({ className = '' }: Props) {
   const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
-    const supported = isPushSupported()
-    setIsSupported(supported)
+    const checkSubscription = async () => {
+      const supported = isPushSupported()
+      setIsSupported(supported)
 
-    if (supported) {
-      const perm = getNotificationPermission()
-      setPermission(perm)
-      setIsEnabled(perm === 'granted')
+      if (supported) {
+        const perm = getNotificationPermission()
+        setPermission(perm)
+
+        // Check if there's an actual push subscription
+        if (perm === 'granted' && 'serviceWorker' in navigator) {
+          try {
+            const registration = await navigator.serviceWorker.ready
+            const subscription = await registration.pushManager.getSubscription()
+            setIsEnabled(!!subscription)
+          } catch {
+            setIsEnabled(false)
+          }
+        } else {
+          setIsEnabled(false)
+        }
+      }
     }
+
+    checkSubscription()
   }, [])
 
   const handleToggle = async () => {
