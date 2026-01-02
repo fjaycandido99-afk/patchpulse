@@ -8,7 +8,10 @@ if (!stripeKey) {
   console.error('STRIPE_SECRET_KEY is not configured')
 }
 
-const stripe = stripeKey ? new Stripe(stripeKey) : null
+const stripe = stripeKey ? new Stripe(stripeKey, {
+  typescript: true,
+  maxNetworkRetries: 3,
+}) : null
 
 export async function POST(request: Request) {
   if (!stripe) {
@@ -34,9 +37,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Price not configured' }, { status: 500 })
   }
 
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL
+  if (!appUrl) {
+    return NextResponse.json({ error: 'App URL not configured (NEXT_PUBLIC_APP_URL)' }, { status: 500 })
+  }
+
   // Check for test/live mode mismatch
   const isTestKey = stripeKey?.startsWith('sk_test_')
-  const isTestPrice = selectedPriceId.includes('test')
   console.log(`Stripe mode: ${isTestKey ? 'TEST' : 'LIVE'}, Price ID: ${selectedPriceId.substring(0, 20)}...`)
 
   try {
@@ -72,8 +79,8 @@ export async function POST(request: Request) {
           quantity: 1,
         },
       ],
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/profile?subscription=success`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/pricing?canceled=true`,
+      success_url: `${appUrl}/profile?subscription=success`,
+      cancel_url: `${appUrl}/pricing?canceled=true`,
       metadata: {
         user_id: user.id,
       },
