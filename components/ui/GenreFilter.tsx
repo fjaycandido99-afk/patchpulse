@@ -1,7 +1,7 @@
 'use client'
 
-import { useRef, useState, useEffect } from 'react'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { useState, useRef, useEffect } from 'react'
+import { Menu, Check, ChevronDown } from 'lucide-react'
 
 // Main genres that appear in the database
 const GENRES = [
@@ -26,8 +26,6 @@ const GENRES = [
   'Battle Royale',
 ] as const
 
-type Genre = typeof GENRES[number]
-
 type GenreFilterProps = {
   selected: string
   onChange: (genre: string) => void
@@ -35,76 +33,63 @@ type GenreFilterProps = {
 }
 
 export function GenreFilter({ selected, onChange, className = '' }: GenreFilterProps) {
-  const scrollRef = useRef<HTMLDivElement>(null)
-  const [showLeftArrow, setShowLeftArrow] = useState(false)
-  const [showRightArrow, setShowRightArrow] = useState(false)
+  const [isOpen, setIsOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
 
-  const checkScroll = () => {
-    if (!scrollRef.current) return
-    const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current
-    setShowLeftArrow(scrollLeft > 0)
-    setShowRightArrow(scrollLeft + clientWidth < scrollWidth - 10)
-  }
-
+  // Close menu when clicking outside
   useEffect(() => {
-    checkScroll()
-    window.addEventListener('resize', checkScroll)
-    return () => window.removeEventListener('resize', checkScroll)
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const scroll = (direction: 'left' | 'right') => {
-    if (!scrollRef.current) return
-    const scrollAmount = 200
-    scrollRef.current.scrollBy({
-      left: direction === 'left' ? -scrollAmount : scrollAmount,
-      behavior: 'smooth',
-    })
+  const handleSelect = (genre: string) => {
+    onChange(genre === 'All' ? '' : genre)
+    setIsOpen(false)
   }
 
+  const displayLabel = selected || 'All Genres'
+
   return (
-    <div className={`relative ${className}`}>
-      {/* Left Arrow */}
-      {showLeftArrow && (
-        <button
-          onClick={() => scroll('left')}
-          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 flex items-center justify-center bg-background/90 backdrop-blur rounded-full shadow-lg border border-border hover:bg-muted transition-colors"
-          aria-label="Scroll left"
-        >
-          <ChevronLeft className="w-4 h-4" />
-        </button>
-      )}
-
-      {/* Scrollable Genre Pills */}
-      <div
-        ref={scrollRef}
-        onScroll={checkScroll}
-        className="flex gap-2 overflow-x-auto scrollbar-hide px-1 py-1"
-        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+    <div className={`relative ${className}`} ref={menuRef}>
+      {/* Trigger Button */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-card hover:bg-muted transition-colors text-sm"
       >
-        {GENRES.map((genre) => (
-          <button
-            key={genre}
-            onClick={() => onChange(genre === 'All' ? '' : genre)}
-            className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-              (genre === 'All' && selected === '') || selected === genre
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            {genre}
-          </button>
-        ))}
-      </div>
+        <Menu className="w-4 h-4 text-muted-foreground" />
+        <span className="font-medium">{displayLabel}</span>
+        <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
 
-      {/* Right Arrow */}
-      {showRightArrow && (
-        <button
-          onClick={() => scroll('right')}
-          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 flex items-center justify-center bg-background/90 backdrop-blur rounded-full shadow-lg border border-border hover:bg-muted transition-colors"
-          aria-label="Scroll right"
-        >
-          <ChevronRight className="w-4 h-4" />
-        </button>
+      {/* Dropdown Menu */}
+      {isOpen && (
+        <div className="absolute top-full left-0 mt-1 w-48 max-h-80 overflow-y-auto rounded-lg border border-border bg-card shadow-lg z-50">
+          <div className="py-1">
+            {GENRES.map((genre) => {
+              const isSelected = (genre === 'All' && selected === '') || selected === genre
+              return (
+                <button
+                  key={genre}
+                  onClick={() => handleSelect(genre)}
+                  className={`w-full flex items-center justify-between px-3 py-2 text-sm transition-colors ${
+                    isSelected
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-foreground hover:bg-muted'
+                  }`}
+                >
+                  <span>{genre}</span>
+                  {isSelected && <Check className="w-4 h-4" />}
+                </button>
+              )
+            })}
+          </div>
+        </div>
       )}
     </div>
   )
