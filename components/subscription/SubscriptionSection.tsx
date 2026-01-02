@@ -133,15 +133,13 @@ export function SubscriptionSection({ subscription }: Props) {
             </div>
 
             {/* Manage Subscription button */}
-            {subscription.provider === 'stripe' && (
-              <a
-                href="/api/subscriptions/portal"
-                className="mt-4 w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-muted hover:bg-muted/80 text-sm font-medium transition-colors"
-              >
-                <ExternalLink className="w-4 h-4" />
-                Manage Subscription
-              </a>
-            )}
+            <a
+              href="/api/subscriptions/portal"
+              className="mt-4 w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-muted hover:bg-muted/80 text-sm font-medium transition-colors"
+            >
+              <ExternalLink className="w-4 h-4" />
+              Manage Subscription
+            </a>
           </div>
         )}
       </div>
