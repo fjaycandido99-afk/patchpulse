@@ -1,11 +1,13 @@
 'use client'
 
+import { useState, useMemo } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Eye, Gamepad2, FileText, ChevronRight, Bell, Clock, Newspaper } from 'lucide-react'
 import { relativeDaysText } from '@/lib/dates'
 import { ActivityBadge, UnreadDot } from './ActivityBadge'
 import { SteamStats } from './SteamStats'
+import { GenreFilter } from '@/components/ui/GenreFilter'
 
 type SteamStatsData = {
   playtime_minutes: number | null
@@ -18,6 +20,7 @@ type FollowedGameWithActivity = {
   slug: string
   cover_url: string | null
   steam_app_id?: number | null
+  genre?: string | null
   latestPatch: {
     id: string
     title: string
@@ -33,6 +36,7 @@ type FollowedGameWithActivity = {
 
 type WatchlistSectionProps = {
   games: FollowedGameWithActivity[]
+  showGenreFilter?: boolean
 }
 
 function WatchlistCard({ game }: { game: FollowedGameWithActivity }) {
@@ -136,7 +140,16 @@ function WatchlistCard({ game }: { game: FollowedGameWithActivity }) {
   )
 }
 
-export function WatchlistSection({ games }: WatchlistSectionProps) {
+export function WatchlistSection({ games, showGenreFilter = false }: WatchlistSectionProps) {
+  const [selectedGenre, setSelectedGenre] = useState('')
+
+  const filteredGames = useMemo(() => {
+    if (!selectedGenre) return games
+    return games.filter((game) =>
+      game.genre?.toLowerCase().includes(selectedGenre.toLowerCase())
+    )
+  }, [games, selectedGenre])
+
   if (games.length === 0) {
     return (
       <div className="text-center py-8">
@@ -156,7 +169,7 @@ export function WatchlistSection({ games }: WatchlistSectionProps) {
   }
 
   // Sort games: unread first, then by latest activity
-  const sortedGames = [...games].sort((a, b) => {
+  const sortedGames = [...filteredGames].sort((a, b) => {
     const aUnread = (a.unreadPatchCount || 0) + (a.unreadNewsCount || 0)
     const bUnread = (b.unreadPatchCount || 0) + (b.unreadNewsCount || 0)
     if (aUnread !== bUnread) return bUnread - aUnread
@@ -172,10 +185,25 @@ export function WatchlistSection({ games }: WatchlistSectionProps) {
   const withActivity = sortedGames.filter(g => g.latestPatch !== null && (g.unreadPatchCount || 0) + (g.unreadNewsCount || 0) === 0)
   const quiet = sortedGames.filter(g => g.latestPatch === null)
 
-  const totalUnread = games.reduce((sum, g) => sum + (g.unreadPatchCount || 0) + (g.unreadNewsCount || 0), 0)
+  const totalUnread = filteredGames.reduce((sum, g) => sum + (g.unreadPatchCount || 0) + (g.unreadNewsCount || 0), 0)
 
   return (
     <div className="space-y-4">
+      {/* Genre Filter */}
+      {showGenreFilter && (
+        <GenreFilter
+          selected={selectedGenre}
+          onChange={setSelectedGenre}
+        />
+      )}
+
+      {/* Filter results count */}
+      {selectedGenre && (
+        <p className="text-sm text-muted-foreground">
+          {filteredGames.length} {filteredGames.length === 1 ? 'game' : 'games'} in {selectedGenre}
+        </p>
+      )}
+
       {/* Unread updates header */}
       {withUnread.length > 0 && (
         <div className="flex items-center gap-2 text-sm">
@@ -229,7 +257,7 @@ export function WatchlistSection({ games }: WatchlistSectionProps) {
       )}
 
       {/* View all link */}
-      {games.length > 6 && (
+      {filteredGames.length > 6 && (
         <Link
           href="/search?category=games"
           className="flex items-center justify-center gap-1 text-sm text-primary hover:underline pt-2"

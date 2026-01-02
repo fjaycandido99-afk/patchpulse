@@ -146,6 +146,7 @@ export default async function ReleasesPage({
               }))}
               type="new"
               placeholder="Search releases..."
+              showGenreFilter
             />
           ) : (
             <div className="rounded-lg border border-dashed border-border py-12 text-center">

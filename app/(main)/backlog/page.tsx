@@ -3,11 +3,10 @@ import { Eye, Gamepad2 } from 'lucide-react'
 import { getBacklogBoard, getFollowedGamesForBacklogPicker, getFollowedGamesWithActivity } from './queries'
 import { getFollowedGames, getBacklogGames } from '../profile/actions'
 import { AddToBacklogPanel } from '@/components/backlog/AddToBacklogPanel'
-import { BacklogCard } from '@/components/backlog/BacklogCard'
 import { WatchlistSection } from '@/components/library/WatchlistSection'
 import { MobileLibraryView } from '@/components/library/MobileLibraryView'
 import { MarkAllReadButton } from '@/components/library/MarkAllReadButton'
-import { relativeDaysText } from '@/lib/dates'
+import { MyGamesGrid } from '@/components/library/MyGamesGrid'
 
 export default async function LibraryPage() {
   const supabase = await createClient()
@@ -74,35 +73,7 @@ export default async function LibraryPage() {
           </div>
 
           <div className="p-4">
-            {allBacklogItems.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-sm font-medium text-muted-foreground">No games in your library</p>
-                <p className="text-xs text-muted-foreground mt-1">Add games to start tracking</p>
-              </div>
-            ) : (
-              <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                {allBacklogItems.map((item) => (
-                  <BacklogCard
-                    key={item.id}
-                    href={`/backlog/${item.game_id}`}
-                    title={item.game.name}
-                    progress={item.progress}
-                    imageUrl={item.game.cover_url}
-                    status={item.status}
-                    nextNote={item.next_note}
-                    lastPlayedText={
-                      item.last_played_at
-                        ? `Last played ${relativeDaysText(item.last_played_at)}`
-                        : null
-                    }
-                    latestPatch={item.latestPatch}
-                    patchCount={item.recentPatches.length}
-                    steamAppId={item.game.steam_app_id}
-                    steamStats={item.steamStats}
-                  />
-                ))}
-              </div>
-            )}
+            <MyGamesGrid items={allBacklogItems} />
           </div>
         </section>
 
@@ -120,7 +91,7 @@ export default async function LibraryPage() {
           </div>
 
           <div className="p-4">
-            <WatchlistSection games={watchlistGames} />
+            <WatchlistSection games={watchlistGames} showGenreFilter />
           </div>
         </section>
       </div>

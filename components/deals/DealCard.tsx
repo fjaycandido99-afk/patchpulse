@@ -134,12 +134,25 @@ export function DealCard({
           <span className="text-xs text-muted-foreground line-through">${normalPrice.toFixed(2)}</span>
           <span className="text-lg font-bold text-green-400">${salePrice.toFixed(2)}</span>
         </div>
-        {expiresIn && (
-          <div className="flex items-center gap-1 text-muted-foreground">
-            <Clock className="h-3 w-3" />
-            <span className="text-xs font-medium">{expiresIn}</span>
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          {expiresIn && (
+            <div className="flex items-center gap-1 text-muted-foreground">
+              <Clock className="h-3 w-3" />
+              <span className="text-xs font-medium">{expiresIn}</span>
+            </div>
+          )}
+          {store && (
+            <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
+              store === 'Steam' ? 'bg-[#1b2838] text-[#66c0f4]' :
+              store === 'Epic Games Store' ? 'bg-black text-white' :
+              store === 'GOG' ? 'bg-[#86328a] text-white' :
+              store === 'Humble Store' ? 'bg-[#cc2929] text-white' :
+              'bg-zinc-700 text-zinc-300'
+            }`}>
+              {store === 'Epic Games Store' ? 'Epic' : store}
+            </span>
+          )}
+        </div>
       </div>
     </a>
   )

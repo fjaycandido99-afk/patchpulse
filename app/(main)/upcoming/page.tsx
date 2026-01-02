@@ -113,6 +113,7 @@ export default async function UpcomingPage() {
             }))}
             type="upcoming"
             placeholder="Search coming soon..."
+            showGenreFilter
           />
         ) : (
           <EmptyGameState

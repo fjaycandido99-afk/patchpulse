@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react'
 import { Search, X } from 'lucide-react'
 import { SpotlightGameCard } from './SpotlightGameCard'
+import { GenreFilter } from '@/components/ui/GenreFilter'
 
 type Game = {
   id: string
@@ -24,6 +25,7 @@ type GameGridWithSearchProps = {
   variant?: 'default' | 'featured'
   columns?: 'default' | 'featured'
   placeholder?: string
+  showGenreFilter?: boolean
 }
 
 export function GameGridWithSearch({
@@ -32,19 +34,33 @@ export function GameGridWithSearch({
   variant = 'default',
   columns = 'default',
   placeholder = 'Search games...',
+  showGenreFilter = false,
 }: GameGridWithSearchProps) {
   const [searchQuery, setSearchQuery] = useState('')
+  const [selectedGenre, setSelectedGenre] = useState('')
 
   const filteredGames = useMemo(() => {
-    if (!searchQuery.trim()) return games
+    let result = games
 
-    const query = searchQuery.toLowerCase().trim()
-    return games.filter((game) => {
-      const nameMatch = game.name.toLowerCase().includes(query)
-      const genreMatch = game.genre?.toLowerCase().includes(query)
-      return nameMatch || genreMatch
-    })
-  }, [games, searchQuery])
+    // Filter by genre
+    if (selectedGenre) {
+      result = result.filter((game) =>
+        game.genre?.toLowerCase().includes(selectedGenre.toLowerCase())
+      )
+    }
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim()
+      result = result.filter((game) => {
+        const nameMatch = game.name.toLowerCase().includes(query)
+        const genreMatch = game.genre?.toLowerCase().includes(query)
+        return nameMatch || genreMatch
+      })
+    }
+
+    return result
+  }, [games, searchQuery, selectedGenre])
 
   const gridClass =
     columns === 'featured'
@@ -53,6 +69,14 @@ export function GameGridWithSearch({
 
   return (
     <div className="space-y-4">
+      {/* Genre Filter */}
+      {showGenreFilter && (
+        <GenreFilter
+          selected={selectedGenre}
+          onChange={setSelectedGenre}
+        />
+      )}
+
       {/* Search Input */}
       <div className="relative max-w-sm">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -73,10 +97,11 @@ export function GameGridWithSearch({
         )}
       </div>
 
-      {/* Results count when searching */}
-      {searchQuery && (
+      {/* Results count when filtering */}
+      {(searchQuery || selectedGenre) && (
         <p className="text-sm text-muted-foreground">
           {filteredGames.length} {filteredGames.length === 1 ? 'game' : 'games'} found
+          {selectedGenre && ` in ${selectedGenre}`}
         </p>
       )}
 

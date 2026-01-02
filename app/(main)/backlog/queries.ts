@@ -8,6 +8,7 @@ type Game = {
   slug: string
   cover_url: string | null
   steam_app_id?: number | null
+  genre?: string | null
 }
 
 type SteamStats = {
@@ -87,7 +88,7 @@ export async function getBacklogBoard(): Promise<BacklogBoard> {
       started_at,
       finished_at,
       created_at,
-      games(id, name, slug, cover_url, steam_app_id)
+      games(id, name, slug, cover_url, steam_app_id, genre)
     `
     )
     .eq('user_id', user.id)
@@ -267,7 +268,7 @@ export async function getBacklogItem(
       started_at,
       finished_at,
       created_at,
-      games(id, name, slug, cover_url, steam_app_id)
+      games(id, name, slug, cover_url, steam_app_id, genre)
     `
     )
     .eq('user_id', user.id)
@@ -500,7 +501,7 @@ export async function getFollowedGamesWithActivity(): Promise<FollowedGameWithAc
   // Get followed games
   const { data: userGamesData, error: userGamesError } = await supabase
     .from('user_games')
-    .select('games(id, name, slug, cover_url, steam_app_id)')
+    .select('games(id, name, slug, cover_url, steam_app_id, genre)')
     .eq('user_id', user.id)
 
   if (userGamesError || !userGamesData) {
