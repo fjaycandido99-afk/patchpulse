@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import webpush from 'web-push'
+import { sendAPNsPushBatch } from '@/lib/apns'
 
 // Lazy initialization of web-push VAPID credentials
 let vapidConfigured = false
@@ -19,6 +20,11 @@ function configureWebPush() {
     return true
   }
   return false
+}
+
+// Check if APNs is configured
+function isAPNsConfigured(): boolean {
+  return !!(process.env.APNS_KEY_ID && process.env.APNS_TEAM_ID && process.env.APNS_KEY)
 }
 
 type PushPayload = {
@@ -76,48 +82,90 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Failed to fetch subscriptions' }, { status: 500 })
     }
 
-    if (!subscriptions || subscriptions.length === 0) {
+    // Also get device tokens for native push
+    let deviceTokensQuery = supabase.from('device_tokens').select('*')
+    if (userId) {
+      deviceTokensQuery = deviceTokensQuery.eq('user_id', userId)
+    } else if (userIds && userIds.length > 0) {
+      deviceTokensQuery = deviceTokensQuery.in('user_id', userIds)
+    }
+    const { data: deviceTokens } = await deviceTokensQuery
+
+    const hasWebSubscriptions = subscriptions && subscriptions.length > 0
+    const hasNativeDevices = deviceTokens && deviceTokens.length > 0
+
+    if (!hasWebSubscriptions && !hasNativeDevices) {
       return NextResponse.json({ sent: 0, message: 'No subscriptions found' })
     }
 
-    // Send push notifications
-    const results = await Promise.allSettled(
-      subscriptions.map(async (sub) => {
-        const pushSubscription = {
-          endpoint: sub.endpoint,
-          keys: {
-            p256dh: sub.p256dh,
-            auth: sub.auth,
-          },
-        }
+    let webSuccessful = 0
+    let webFailed = 0
+    let nativeSuccessful = 0
+    let nativeFailed = 0
 
-        try {
-          await webpush.sendNotification(
-            pushSubscription,
-            JSON.stringify(payload)
-          )
-          return { success: true, endpoint: sub.endpoint }
-        } catch (error: unknown) {
-          const pushError = error as { statusCode?: number }
-          // If subscription is invalid, remove it
-          if (pushError.statusCode === 410 || pushError.statusCode === 404) {
-            await supabase
-              .from('push_subscriptions')
-              .delete()
-              .eq('endpoint', sub.endpoint)
+    // Send web push notifications
+    if (hasWebSubscriptions && configureWebPush()) {
+      const results = await Promise.allSettled(
+        subscriptions.map(async (sub) => {
+          const pushSubscription = {
+            endpoint: sub.endpoint,
+            keys: {
+              p256dh: sub.p256dh,
+              auth: sub.auth,
+            },
           }
-          return { success: false, endpoint: sub.endpoint, error: String(error) }
-        }
-      })
-    )
 
-    const successful = results.filter(r => r.status === 'fulfilled' && (r.value as { success: boolean }).success).length
-    const failed = results.length - successful
+          try {
+            await webpush.sendNotification(
+              pushSubscription,
+              JSON.stringify(payload)
+            )
+            return { success: true, endpoint: sub.endpoint }
+          } catch (error: unknown) {
+            const pushError = error as { statusCode?: number }
+            // If subscription is invalid, remove it
+            if (pushError.statusCode === 410 || pushError.statusCode === 404) {
+              await supabase
+                .from('push_subscriptions')
+                .delete()
+                .eq('endpoint', sub.endpoint)
+            }
+            return { success: false, endpoint: sub.endpoint, error: String(error) }
+          }
+        })
+      )
+
+      webSuccessful = results.filter(r => r.status === 'fulfilled' && (r.value as { success: boolean }).success).length
+      webFailed = results.length - webSuccessful
+    }
+
+    // Send native push notifications (APNs for iOS)
+    if (hasNativeDevices && isAPNsConfigured()) {
+      const iosTokens = deviceTokens
+        .filter(d => d.platform === 'ios')
+        .map(d => d.token)
+
+      if (iosTokens.length > 0) {
+        const result = await sendAPNsPushBatch(iosTokens, payload)
+        nativeSuccessful = result.successful
+        nativeFailed = result.failed
+
+        // Remove invalid tokens
+        if (result.invalidTokens.length > 0) {
+          await supabase
+            .from('device_tokens')
+            .delete()
+            .in('token', result.invalidTokens)
+        }
+      }
+    }
 
     return NextResponse.json({
-      sent: successful,
-      failed,
-      total: subscriptions.length,
+      sent: webSuccessful + nativeSuccessful,
+      failed: webFailed + nativeFailed,
+      web: { sent: webSuccessful, failed: webFailed },
+      native: { sent: nativeSuccessful, failed: nativeFailed },
+      total: (subscriptions?.length || 0) + (deviceTokens?.length || 0),
     })
   } catch (error) {
     console.error('Error sending push notification:', error)
