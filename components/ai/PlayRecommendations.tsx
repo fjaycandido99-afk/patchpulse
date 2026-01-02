@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Sparkles, Clock, Gamepad2, Brain, ChevronRight, Loader2, Zap, Calendar, X, TrendingUp, Minus, TrendingDown, AlertTriangle, Users } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -92,10 +92,6 @@ export function PlayRecommendations() {
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set())
   const [dismissingId, setDismissingId] = useState<string | null>(null)
 
-  // Load cached recommendations on mount
-  useEffect(() => {
-    fetchRecommendations(false)
-  }, [])
 
   const fetchRecommendations = async (refresh: boolean) => {
     setLoading(true)
@@ -227,7 +223,7 @@ export function PlayRecommendations() {
         ) : (
           <Brain className="w-4 h-4" />
         )}
-        {result ? 'Get New Recommendations' : 'Get Recommendations'}
+        {result ? 'Refresh Recommendations' : 'Get Recommendations'}
       </button>
 
       {error && (
