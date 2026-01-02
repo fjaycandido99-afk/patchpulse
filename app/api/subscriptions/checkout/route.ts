@@ -2,9 +2,18 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import Stripe from 'stripe'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
+const stripeKey = process.env.STRIPE_SECRET_KEY?.trim()
+
+if (!stripeKey) {
+  console.error('STRIPE_SECRET_KEY is not configured')
+}
+
+const stripe = stripeKey ? new Stripe(stripeKey) : null
 
 export async function POST(request: Request) {
+  if (!stripe) {
+    return NextResponse.json({ error: 'Stripe is not configured' }, { status: 500 })
+  }
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -24,6 +33,11 @@ export async function POST(request: Request) {
   if (!selectedPriceId) {
     return NextResponse.json({ error: 'Price not configured' }, { status: 500 })
   }
+
+  // Check for test/live mode mismatch
+  const isTestKey = stripeKey?.startsWith('sk_test_')
+  const isTestPrice = selectedPriceId.includes('test')
+  console.log(`Stripe mode: ${isTestKey ? 'TEST' : 'LIVE'}, Price ID: ${selectedPriceId.substring(0, 20)}...`)
 
   try {
     // Check if user already has a Stripe customer ID
