@@ -63,12 +63,23 @@ export function PushNotificationToggle({ className = '' }: Props) {
       const perm = getNotificationPermission()
       setPermission(perm)
 
-      // Check if there's an actual push subscription
+      // Check if there's an actual push subscription with timeout
       if (perm === 'granted' && 'serviceWorker' in navigator) {
         try {
-          const registration = await navigator.serviceWorker.ready
-          const subscription = await registration.pushManager.getSubscription()
-          setIsEnabled(!!subscription)
+          // Add 3 second timeout to prevent hanging
+          const timeoutPromise = new Promise<null>((_, reject) =>
+            setTimeout(() => reject(new Error('Timeout')), 3000)
+          )
+
+          const registration = await Promise.race([
+            navigator.serviceWorker.ready,
+            timeoutPromise
+          ]) as ServiceWorkerRegistration
+
+          if (registration) {
+            const subscription = await registration.pushManager.getSubscription()
+            setIsEnabled(!!subscription)
+          }
         } catch {
           setIsEnabled(false)
         }
@@ -132,24 +143,8 @@ export function PushNotificationToggle({ className = '' }: Props) {
     }
   }
 
-  // Show loading state while checking
-  if (isLoading && !isSupported) {
-    return (
-      <div className={`flex items-center justify-between gap-4 p-4 rounded-xl bg-zinc-800/50 ${className}`}>
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-zinc-700 flex items-center justify-center">
-            <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
-          </div>
-          <div>
-            <p className="text-sm font-medium">Push Notifications</p>
-            <p className="text-xs text-muted-foreground">Checking status...</p>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (!isSupported) {
+  // Don't show anything if not supported (after loading completes)
+  if (!isLoading && !isSupported) {
     return null
   }
 
@@ -183,7 +178,7 @@ export function PushNotificationToggle({ className = '' }: Props) {
           <div>
             <p className="text-sm font-medium">Push Notifications</p>
             <p className="text-xs text-muted-foreground">
-              {isEnabled ? 'Get notified even when away' : 'Stay updated on the go'}
+              {isLoading ? 'Checking...' : isEnabled ? 'Get notified even when away' : 'Stay updated on the go'}
             </p>
           </div>
         </div>
@@ -192,7 +187,7 @@ export function PushNotificationToggle({ className = '' }: Props) {
           onClick={handleToggle}
           disabled={isLoading}
           className={`relative w-12 h-7 rounded-full transition-colors ${
-            isEnabled ? 'bg-primary' : 'bg-zinc-600'
+            isLoading ? 'bg-zinc-600' : isEnabled ? 'bg-primary' : 'bg-zinc-600'
           }`}
           aria-label={isEnabled ? 'Disable push notifications' : 'Enable push notifications'}
         >
