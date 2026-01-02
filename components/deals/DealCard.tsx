@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import Image from 'next/image'
 import { Gamepad2, Clock } from 'lucide-react'
 import { DealBookmarkButton } from './DealBookmarkButton'
@@ -37,10 +38,23 @@ export function DealCard({
   isBookmarked = false,
   isPro = false,
 }: DealCardProps) {
-  // Use Steam header image for better quality (460x215 aspect ratio)
-  const headerImage = steamAppId
-    ? `https://cdn.akamai.steamstatic.com/steam/apps/${steamAppId}/header.jpg`
-    : thumb
+  const [imageSrc, setImageSrc] = useState<string | null>(() => {
+    // Use Steam header image for better quality
+    if (steamAppId) {
+      return `https://cdn.akamai.steamstatic.com/steam/apps/${steamAppId}/header.jpg`
+    }
+    return thumb || null
+  })
+
+  const handleImageError = () => {
+    // If Steam image failed, try the thumbnail
+    if (steamAppId && imageSrc?.includes('steamstatic.com') && thumb) {
+      setImageSrc(thumb)
+    } else {
+      // Both failed, show fallback
+      setImageSrc(null)
+    }
+  }
 
   return (
     <a
@@ -55,17 +69,18 @@ export function DealCard({
     >
       {/* Cover Image - Steam header aspect ratio (460:215 ≈ 2.14:1) */}
       <div className="relative aspect-[460/215] w-full overflow-hidden bg-muted">
-        {headerImage ? (
+        {imageSrc ? (
           <Image
-            src={headerImage}
+            src={imageSrc}
             alt={title}
             fill
             className="object-cover transition-transform duration-300 group-hover:scale-105"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             unoptimized
+            onError={handleImageError}
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center">
+          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-zinc-800 to-zinc-900">
             <Gamepad2 className="h-12 w-12 text-muted-foreground" />
           </div>
         )}
