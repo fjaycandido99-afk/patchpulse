@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Crown, Check, Loader2, RotateCcw, ExternalLink } from 'lucide-react'
+import { Crown, Check, Loader2, RotateCcw, ExternalLink, XCircle } from 'lucide-react'
 import { UsageBar } from './UpgradePrompt'
 import { restorePurchases, isNative } from '@/lib/capacitor/purchases'
 
@@ -27,12 +27,52 @@ type Props = {
 
 export function SubscriptionSection({ subscription }: Props) {
   const [isRestoring, setIsRestoring] = useState(false)
+  const [isCanceling, setIsCanceling] = useState(false)
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false)
   const [restoreMessage, setRestoreMessage] = useState<{
+    type: 'success' | 'error'
+    text: string
+  } | null>(null)
+  const [cancelMessage, setCancelMessage] = useState<{
     type: 'success' | 'error'
     text: string
   } | null>(null)
 
   const isPro = subscription.plan === 'pro' && subscription.status === 'active'
+
+  const handleCancelSubscription = async () => {
+    setIsCanceling(true)
+    setCancelMessage(null)
+
+    try {
+      const response = await fetch('/api/subscriptions/cancel', {
+        method: 'POST',
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setCancelMessage({
+          type: 'success',
+          text: 'Subscription canceled. You will keep Pro access until the end of your billing period.',
+        })
+        setShowCancelConfirm(false)
+        setTimeout(() => window.location.reload(), 2000)
+      } else {
+        setCancelMessage({
+          type: 'error',
+          text: data.error || 'Failed to cancel subscription',
+        })
+      }
+    } catch {
+      setCancelMessage({
+        type: 'error',
+        text: 'Failed to cancel subscription. Please try again.',
+      })
+    } finally {
+      setIsCanceling(false)
+    }
+  }
 
   const handleRestorePurchases = async () => {
     setIsRestoring(true)
@@ -140,6 +180,63 @@ export function SubscriptionSection({ subscription }: Props) {
               <ExternalLink className="w-4 h-4" />
               Manage Subscription
             </a>
+
+            {/* Cancel Subscription */}
+            {!subscription.cancelAtPeriodEnd && (
+              <div className="mt-3">
+                {!showCancelConfirm ? (
+                  <button
+                    onClick={() => setShowCancelConfirm(true)}
+                    className="w-full text-center text-sm text-muted-foreground hover:text-red-400 transition-colors"
+                  >
+                    Cancel subscription
+                  </button>
+                ) : (
+                  <div className="p-3 rounded-lg border border-red-500/30 bg-red-500/10">
+                    <p className="text-sm text-center mb-3">
+                      Are you sure? You&apos;ll keep Pro until {subscription.currentPeriodEnd ? new Date(subscription.currentPeriodEnd).toLocaleDateString() : 'end of billing period'}.
+                    </p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setShowCancelConfirm(false)}
+                        className="flex-1 px-3 py-2 text-sm rounded-lg bg-muted hover:bg-muted/80 transition-colors"
+                      >
+                        Keep Pro
+                      </button>
+                      <button
+                        onClick={handleCancelSubscription}
+                        disabled={isCanceling}
+                        className="flex-1 px-3 py-2 text-sm rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors disabled:opacity-50"
+                      >
+                        {isCanceling ? (
+                          <Loader2 className="w-4 h-4 animate-spin mx-auto" />
+                        ) : (
+                          'Yes, Cancel'
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {cancelMessage && (
+                  <div
+                    className={`mt-3 px-3 py-2 rounded-lg text-sm ${
+                      cancelMessage.type === 'success'
+                        ? 'bg-green-500/10 text-green-400'
+                        : 'bg-red-500/10 text-red-400'
+                    }`}
+                  >
+                    {cancelMessage.text}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {subscription.cancelAtPeriodEnd && (
+              <p className="mt-3 text-center text-sm text-amber-400">
+                Your subscription will end on {subscription.currentPeriodEnd ? new Date(subscription.currentPeriodEnd).toLocaleDateString() : 'your billing date'}
+              </p>
+            )}
           </div>
         )}
       </div>
