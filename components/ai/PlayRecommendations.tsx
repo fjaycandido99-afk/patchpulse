@@ -219,10 +219,10 @@ export function PlayRecommendations() {
     }
   }
 
-  // Filter out dismissed recommendations
-  const visibleRecommendations = result?.recommendations.filter(
+  // Filter out dismissed recommendations and limit to 4 for the widget
+  const visibleRecommendations = (result?.recommendations.filter(
     rec => !dismissedIds.has(rec.game_id)
-  ) || []
+  ) || []).slice(0, 4)
 
   return (
     <div className="rounded-xl border border-border bg-card p-4 sm:p-6">

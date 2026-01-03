@@ -536,12 +536,12 @@ export async function getPlayRecommendations(
   // Limit to exactly 4 recommendations
   result.recommendations = result.recommendations.slice(0, 4)
 
-  // Save recommendations with long expiration (persist until user refreshes)
+  // Save recommendations with 24-hour expiration (unless user saves them)
   if (result.recommendations.length > 0) {
     try {
-      // Set expiration to 1 year from now - recommendations persist until user clicks refresh
+      // Set expiration to 24 hours from now
       const expiresAt = new Date()
-      expiresAt.setFullYear(expiresAt.getFullYear() + 1)
+      expiresAt.setHours(expiresAt.getHours() + 24)
 
       const toInsert = result.recommendations.map(rec => ({
         user_id: userId,

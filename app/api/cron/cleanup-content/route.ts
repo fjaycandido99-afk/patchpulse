@@ -20,6 +20,7 @@ export async function GET(req: Request) {
   const results = {
     patches: { deleted: 0, kept: 0, followedGamesKept: 0 },
     news: { deleted: 0, kept: 0, followedGamesKept: 0 },
+    recommendations: { deleted: 0, saved: 0 },
   }
 
   try {
@@ -116,6 +117,56 @@ export async function GET(req: Request) {
       .delete()
       .lt('created_at', cutoffDate)
       .eq('is_read', true)
+
+    // Clean up expired recommendations (24-hour expiration)
+    // Preserve recommendations that are saved/bookmarked by users
+    const now = new Date().toISOString()
+
+    // Get saved recommendation game IDs (entity_type = 'recommendation' in bookmarks)
+    const { data: savedRecs } = await supabase
+      .from('bookmarks')
+      .select('entity_id, user_id')
+      .eq('entity_type', 'recommendation')
+
+    // Build a map of user_id -> saved game_ids for preserved recommendations
+    const savedRecsByUser = new Map<string, Set<string>>()
+    savedRecs?.forEach(r => {
+      if (!savedRecsByUser.has(r.user_id)) {
+        savedRecsByUser.set(r.user_id, new Set())
+      }
+      savedRecsByUser.get(r.user_id)!.add(r.entity_id)
+    })
+
+    results.recommendations.saved = savedRecs?.length || 0
+
+    // Get expired recommendations
+    const { data: expiredRecs } = await supabase
+      .from('play_recommendations')
+      .select('id, user_id, game_id')
+      .lt('expires_at', now)
+      .eq('is_dismissed', false)
+
+    // Filter out saved recommendations and collect IDs to delete
+    const idsToDelete: string[] = []
+    expiredRecs?.forEach(rec => {
+      const userSaved = savedRecsByUser.get(rec.user_id)
+      if (!userSaved || !userSaved.has(rec.game_id)) {
+        idsToDelete.push(rec.id)
+      }
+    })
+
+    // Delete expired, non-saved recommendations in batches
+    if (idsToDelete.length > 0) {
+      const batchSize = 100
+      for (let i = 0; i < idsToDelete.length; i += batchSize) {
+        const batch = idsToDelete.slice(i, i + batchSize)
+        await supabase
+          .from('play_recommendations')
+          .delete()
+          .in('id', batch)
+      }
+      results.recommendations.deleted = idsToDelete.length
+    }
 
   } catch (error) {
     console.error('Cleanup error:', error)
