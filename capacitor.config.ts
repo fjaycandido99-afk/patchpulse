@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'app.patchpulse.ios',
+  appId: 'com.patchpulse.app',
   appName: 'PatchPulse',
   webDir: 'out',
   server: {
@@ -15,9 +15,9 @@ const config: CapacitorConfig = {
     scheme: 'patchpulse',
   },
   plugins: {
-    CapacitorPurchases: {
-      // RevenueCat API key will go here
-      // apiKey: 'your_revenuecat_api_key',
+    PurchasesPlugin: {
+      // Set via environment variable in Vercel
+      // NEXT_PUBLIC_REVENUECAT_API_KEY=appl_xxxxx
     },
   },
 };
