@@ -7,7 +7,8 @@ import { useRouter } from 'next/navigation'
 import { BiometricLogin } from '@/components/auth/BiometricLogin'
 import { BiometricPrompt } from '@/components/auth/BiometricPrompt'
 import { hasStoredCredential, checkBiometricAvailable } from '@/lib/webauthn'
-import { Gamepad2, ArrowRight, Zap, TrendingUp, Shield } from 'lucide-react'
+import { Gamepad2, ArrowRight, Zap, TrendingUp, Shield, User, Eye, EyeOff } from 'lucide-react'
+import { enableGuestMode, disableGuestMode } from '@/lib/guest'
 
 type LoginMode = 'biometric' | 'password'
 
@@ -15,6 +16,7 @@ export default function LoginPage() {
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [mode, setMode] = useState<LoginMode>('password')
@@ -47,7 +49,10 @@ export default function LoginPage() {
       setError(result.error)
       setLoading(false)
     } else {
-      // Login successful - check if we should prompt for biometric setup
+      // Login successful - clear guest mode cookie if it exists
+      disableGuestMode()
+
+      // Check if we should prompt for biometric setup
       const available = await checkBiometricAvailable()
       const hasCredential = hasStoredCredential()
 
@@ -76,6 +81,11 @@ export default function LoginPage() {
 
   const handleUsePassword = () => {
     setMode('password')
+  }
+
+  const handleContinueAsGuest = () => {
+    enableGuestMode()
+    router.push('/home')
   }
 
   // Show loading while checking biometric availability
@@ -191,15 +201,25 @@ export default function LoginPage() {
                     <label htmlFor="password" className="block text-sm font-medium">
                       Password
                     </label>
-                    <input
-                      id="password"
-                      type="password"
-                      required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="mt-1 block w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm transition-colors placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                      placeholder="••••••••"
-                    />
+                    <div className="relative mt-1">
+                      <input
+                        id="password"
+                        type={showPassword ? 'text' : 'password'}
+                        required
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="block w-full rounded-lg border border-input bg-background px-3 py-2.5 pr-10 text-sm transition-colors placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                        placeholder="••••••••"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -226,6 +246,27 @@ export default function LoginPage() {
                   <Link href="/signup" className="font-medium text-primary hover:underline">
                     Sign up
                   </Link>
+                </p>
+
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t border-border" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">Or</span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleContinueAsGuest}
+                  className="w-full flex items-center justify-center gap-2 rounded-lg border border-border bg-background px-4 py-2.5 text-sm font-medium text-muted-foreground transition-all hover:bg-accent hover:text-accent-foreground active:scale-[0.98]"
+                >
+                  <User className="w-4 h-4" />
+                  Continue as Guest
+                </button>
+                <p className="text-center text-xs text-muted-foreground">
+                  Browse games and patches without an account
                 </p>
               </form>
             </>

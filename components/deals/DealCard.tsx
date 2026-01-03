@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Image from 'next/image'
 import { Gamepad2, Clock } from 'lucide-react'
 import { DealBookmarkButton } from './DealBookmarkButton'
+import { useDealSpotlight } from './DealSpotlightProvider'
 
 type DealCardProps = {
   id: string
@@ -38,6 +39,7 @@ export function DealCard({
   isBookmarked = false,
   isPro = false,
 }: DealCardProps) {
+  const { openDealSpotlight } = useDealSpotlight()
   const [imageSrc, setImageSrc] = useState<string | null>(() => {
     // Use Steam header image for better quality
     if (steamAppId) {
@@ -56,12 +58,35 @@ export function DealCard({
     }
   }
 
+  const handleClick = () => {
+    openDealSpotlight({
+      id,
+      title,
+      salePrice,
+      normalPrice,
+      savings,
+      store,
+      thumb,
+      dealUrl,
+      isUserGame,
+      expiresIn,
+      steamAppId,
+      isBookmarked,
+    }, isPro)
+  }
+
   return (
-    <a
-      href={dealUrl}
-      target="_blank"
-      rel="noopener noreferrer"
-      className={`group relative flex flex-col overflow-hidden rounded-xl border transition-all hover:shadow-lg ${
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={handleClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          handleClick()
+        }
+      }}
+      className={`group relative flex flex-col overflow-hidden rounded-xl border transition-all hover:shadow-lg text-left w-full cursor-pointer ${
         isUserGame
           ? 'border-primary/30 hover:border-primary/50 hover:shadow-primary/10'
           : 'border-border hover:border-primary/50 hover:shadow-primary/5'
@@ -154,6 +179,6 @@ export function DealCard({
           )}
         </div>
       </div>
-    </a>
+    </div>
   )
 }

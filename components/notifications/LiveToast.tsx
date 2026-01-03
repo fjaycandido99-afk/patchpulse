@@ -3,11 +3,11 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { X, FileText, Newspaper, Sparkles, Bell, Zap } from 'lucide-react'
+import { X, FileText, Newspaper, Sparkles, Bell, Zap, Rocket, Bookmark, Tag } from 'lucide-react'
 
 type Notification = {
   id: string
-  type: 'new_patch' | 'new_news' | 'game_release' | 'ai_digest' | 'system'
+  type: 'new_patch' | 'new_news' | 'game_release' | 'ai_digest' | 'price_drop' | 'saved_reminder' | 'system'
   title: string
   body: string | null
   priority: number
@@ -37,6 +37,12 @@ function getNotificationIcon(type: string, priority: number) {
       return <Newspaper className={`${iconClass} ${priority < 4 ? 'text-blue-400' : ''}`} />
     case 'ai_digest':
       return <Sparkles className={`${iconClass} ${priority < 4 ? 'text-violet-400' : ''}`} />
+    case 'game_release':
+      return <Rocket className={`${iconClass} ${priority < 4 ? 'text-orange-400' : ''}`} />
+    case 'price_drop':
+      return <Tag className={`${iconClass} ${priority < 4 ? 'text-green-400' : ''}`} />
+    case 'saved_reminder':
+      return <Bookmark className={`${iconClass} ${priority < 4 ? 'text-amber-400' : ''}`} />
     default:
       return <Bell className={`${iconClass} ${priority < 4 ? 'text-zinc-400' : ''}`} />
   }
@@ -65,6 +71,10 @@ function getTypeLabel(type: string): string {
       return 'AI Digest'
     case 'game_release':
       return 'Game Release'
+    case 'price_drop':
+      return 'Price Drop'
+    case 'saved_reminder':
+      return 'Saved Items'
     default:
       return 'Update'
   }

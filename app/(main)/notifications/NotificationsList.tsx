@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Bell, FileText, Newspaper, Sparkles, CheckCheck, ChevronRight, Calendar, Gamepad2, Tag } from 'lucide-react'
+import { Bell, FileText, Newspaper, Sparkles, CheckCheck, ChevronRight, Calendar, Gamepad2, Tag, SlidersHorizontal, X, Check, Rocket, Bookmark } from 'lucide-react'
 import { type Notification, type NotificationStats, type TodaysNewsItem } from '@/lib/notifications'
 
 type FilterType = 'all' | 'unread' | 'patches' | 'news' | 'deals'
@@ -61,6 +61,10 @@ function getNotificationIcon(type: string) {
       return <Sparkles className="w-4 h-4 text-violet-400" />
     case 'price_drop':
       return <Tag className="w-4 h-4 text-green-400" />
+    case 'game_release':
+      return <Rocket className="w-4 h-4 text-orange-400" />
+    case 'saved_reminder':
+      return <Bookmark className="w-4 h-4 text-amber-400" />
     default:
       return <Bell className="w-4 h-4 text-zinc-400" />
   }
@@ -69,6 +73,12 @@ function getNotificationIcon(type: string) {
 function getNotificationLink(notification: Notification): string {
   if (notification.type === 'price_drop' && notification.metadata?.deal_url) {
     return notification.metadata.deal_url as string
+  }
+  if (notification.type === 'saved_reminder') {
+    return '/saved'
+  }
+  if (notification.type === 'game_release' && notification.metadata?.game_slug) {
+    return `/games/${notification.metadata.game_slug}`
   }
   if (notification.patch_id) {
     return `/patches/${notification.patch_id}`
@@ -94,6 +104,7 @@ export function NotificationsList({ initialNotifications, initialStats, todaysNe
   const [filter, setFilter] = useState<FilterType>('all')
   const [isMarkingAll, setIsMarkingAll] = useState(false)
   const [showTodaysNews, setShowTodaysNews] = useState(true)
+  const [isFilterOpen, setIsFilterOpen] = useState(false)
 
   const filteredNotifications = notifications.filter(n => {
     if (filter === 'unread') return !n.is_read
@@ -149,41 +160,103 @@ export function NotificationsList({ initialNotifications, initialStats, todaysNe
     }
   }
 
-  const filters: { id: FilterType; label: string; count?: number }[] = [
-    { id: 'all', label: 'All' },
-    { id: 'unread', label: 'Unread', count: stats.unread_count },
-    { id: 'patches', label: 'Patches' },
-    { id: 'news', label: 'News' },
-    { id: 'deals', label: 'Deals' },
+  const filters: { id: FilterType; label: string; icon: typeof Bell; count?: number }[] = [
+    { id: 'all', label: 'All Notifications', icon: Bell, count: notifications.length },
+    { id: 'unread', label: 'Unread', icon: Bell, count: stats.unread_count },
+    { id: 'patches', label: 'Patches', icon: FileText },
+    { id: 'news', label: 'News', icon: Newspaper },
+    { id: 'deals', label: 'Deals', icon: Tag },
   ]
+
+  const currentFilter = filters.find(f => f.id === filter)
 
   return (
     <div className="space-y-4">
-      {/* Filter Pills - YouTube style */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1">
-        {filters.map(f => (
+      {/* Filter Button & Mark All Read */}
+      <div className="flex items-center justify-between gap-2">
+        {/* Filter Dropdown */}
+        <div className="relative">
           <button
-            key={f.id}
-            onClick={() => setFilter(f.id)}
-            className={`px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap transition-all ${
-              filter === f.id
-                ? 'bg-foreground text-background'
-                : 'bg-white/10 text-foreground hover:bg-white/20'
+            onClick={() => setIsFilterOpen(!isFilterOpen)}
+            className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
+              filter !== 'all'
+                ? 'bg-primary/20 text-primary border border-primary/30'
+                : 'bg-white/5 text-muted-foreground hover:text-foreground border border-white/10'
             }`}
           >
-            {f.label}
-            {f.count !== undefined && f.count > 0 && (
-              <span className="ml-1.5 text-xs opacity-80">{f.count}</span>
+            <SlidersHorizontal className="w-4 h-4" />
+            {currentFilter?.label || 'Filter'}
+            {filter !== 'all' && (
+              <span className="px-1.5 py-0.5 rounded-full bg-primary text-primary-foreground text-xs">
+                1
+              </span>
             )}
           </button>
-        ))}
+
+          {/* Filter Dropdown Panel */}
+          {isFilterOpen && (
+            <>
+              {/* Backdrop */}
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setIsFilterOpen(false)}
+              />
+
+              {/* Dropdown Panel */}
+              <div className="absolute top-full left-0 mt-2 w-64 rounded-xl border border-white/10 bg-[#0b1220] shadow-xl z-50 overflow-hidden">
+                {/* Header */}
+                <div className="flex items-center justify-between p-3 border-b border-white/10">
+                  <span className="font-semibold text-sm">Filter by Type</span>
+                  <button
+                    onClick={() => setIsFilterOpen(false)}
+                    className="p-1 rounded-lg hover:bg-white/10 text-muted-foreground"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Filter Options */}
+                <div className="p-2">
+                  {filters.map((f) => {
+                    const Icon = f.icon
+                    return (
+                      <button
+                        key={f.id}
+                        onClick={() => {
+                          setFilter(f.id)
+                          setIsFilterOpen(false)
+                        }}
+                        className={`flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                          filter === f.id
+                            ? 'bg-primary/20 text-primary'
+                            : 'hover:bg-white/5 text-foreground'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <Icon className="w-4 h-4" />
+                          <span>{f.label}</span>
+                          {f.count !== undefined && f.count > 0 && (
+                            <span className="px-1.5 py-0.5 rounded-full bg-white/10 text-xs text-muted-foreground">
+                              {f.count}
+                            </span>
+                          )}
+                        </div>
+                        {filter === f.id && <Check className="w-4 h-4" />}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
 
         {/* Mark all read button */}
         {stats.unread_count > 0 && (
           <button
             onClick={handleMarkAllRead}
             disabled={isMarkingAll}
-            className="ml-auto flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-primary hover:bg-primary/10 rounded-lg transition-colors disabled:opacity-50 whitespace-nowrap"
+            className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-primary hover:bg-primary/10 rounded-lg transition-colors disabled:opacity-50 whitespace-nowrap"
           >
             <CheckCheck className="w-4 h-4" />
             {isMarkingAll ? 'Marking...' : 'Mark all read'}

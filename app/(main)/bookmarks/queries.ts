@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import type { DealMetadata } from '../actions/bookmarks'
+import type { DealMetadata, RecommendationMetadata } from '../actions/bookmarks'
 
 export type BookmarkedDeal = {
   id: string
@@ -213,5 +213,45 @@ export async function getBookmarkedDeals(): Promise<BookmarkedDeal[]> {
       entity_id: b.entity_id,
       created_at: b.created_at,
       metadata: b.metadata as DealMetadata,
+    }))
+}
+
+export type BookmarkedRecommendation = {
+  id: string
+  entity_id: string
+  created_at: string
+  metadata: RecommendationMetadata
+}
+
+export async function getBookmarkedRecommendations(): Promise<BookmarkedRecommendation[]> {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return []
+  }
+
+  const { data: bookmarks, error } = await supabase
+    .from('bookmarks')
+    .select('id, entity_id, created_at, metadata')
+    .eq('user_id', user.id)
+    .eq('entity_type', 'recommendation')
+    .order('created_at', { ascending: false })
+
+  if (error || !bookmarks) {
+    if (error) console.error('Error fetching recommendation bookmarks:', error)
+    return []
+  }
+
+  return bookmarks
+    .filter(b => b.metadata)
+    .map(b => ({
+      id: b.id,
+      entity_id: b.entity_id,
+      created_at: b.created_at,
+      metadata: b.metadata as RecommendationMetadata,
     }))
 }

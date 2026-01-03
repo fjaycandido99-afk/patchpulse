@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { verifyCronAuth } from '@/lib/cron-auth'
 
 export const runtime = 'nodejs'
 export const maxDuration = 120
@@ -44,31 +45,11 @@ const STORE_NAMES: Record<string, string> = {
   '35': 'DreamGame',
 }
 
-function verifyAuth(req: Request): boolean {
-  const url = new URL(req.url)
-  const vercelCron = req.headers.get('x-vercel-cron')
-  const cronSecret = req.headers.get('x-cron-secret')?.trim()
-  const cronSecretEnv = process.env.CRON_SECRET?.trim()
-  const authHeader = req.headers.get('authorization')
-  const token = authHeader?.replace('Bearer ', '').trim()
-  const querySecret = url.searchParams.get('secret')?.trim()
-
-  const expectedSecret = 'patchpulse-cron-secret-2024-secure'
-
-  if (vercelCron === '1') return true
-  if (cronSecretEnv && cronSecret === cronSecretEnv) return true
-  if (cronSecretEnv && token === cronSecretEnv) return true
-  if (cronSecretEnv && querySecret === cronSecretEnv) return true
-  if (querySecret === expectedSecret) return true
-  if (cronSecret === expectedSecret) return true
-  if (token === expectedSecret) return true
-  return false
-}
 
 export async function GET(req: Request) {
   console.log('[CRON] fetch-deals hit at', new Date().toISOString())
 
-  if (!verifyAuth(req)) {
+  if (!verifyCronAuth(req)) {
     console.log('[CRON] fetch-deals UNAUTHORIZED')
     return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 })
   }

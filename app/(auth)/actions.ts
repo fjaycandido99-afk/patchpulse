@@ -24,7 +24,7 @@ export async function signUpWithEmail(email: string, password: string) {
   const supabase = await createClient()
 
   // Get the site URL for email redirect
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
   const { data, error } = await supabase.auth.signUp({
     email,

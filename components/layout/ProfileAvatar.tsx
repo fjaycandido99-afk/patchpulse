@@ -8,6 +8,7 @@ type ProfileAvatarProps = {
   avatarUrl?: string | null
   displayName?: string | null
   size?: 'sm' | 'md' | 'lg'
+  isGuest?: boolean
 }
 
 const sizeClasses = {
@@ -22,18 +23,26 @@ const iconSizes = {
   lg: 'w-6 h-6',
 }
 
-export function ProfileAvatar({ avatarUrl, displayName, size = 'md' }: ProfileAvatarProps) {
+export function ProfileAvatar({ avatarUrl, displayName, size = 'md', isGuest = false }: ProfileAvatarProps) {
   const initials = displayName
     ? displayName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
     : null
 
+  // For guests, link to login page instead of profile
+  const href = isGuest ? '/login' : '/profile'
+  const title = isGuest ? 'Sign In' : 'Profile'
+
   return (
     <Link
-      href="/profile"
+      href={href}
       className={`${sizeClasses[size]} rounded-full overflow-hidden border-2 border-transparent hover:border-primary/50 transition-all duration-200 flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 focus:ring-offset-background`}
-      title="Profile"
+      title={title}
     >
-      {avatarUrl ? (
+      {isGuest ? (
+        <div className="w-full h-full bg-white/10 flex items-center justify-center text-muted-foreground">
+          <User className={iconSizes[size]} />
+        </div>
+      ) : avatarUrl ? (
         <Image
           src={avatarUrl}
           alt={displayName || 'Profile'}

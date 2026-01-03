@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Gamepad2, ExternalLink, Tag, Newspaper, FileText, SlidersHorizontal, X, Check } from 'lucide-react'
+import { Gamepad2, ExternalLink, Tag, Newspaper, FileText, SlidersHorizontal, X, Check, Sparkles } from 'lucide-react'
 import { MediaCard } from '@/components/media/MediaCard'
 import { formatDate } from '@/lib/dates'
 
@@ -43,25 +43,44 @@ type BookmarkedDeal = {
   }
 }
 
+type BookmarkedRecommendation = {
+  id: string
+  metadata: {
+    game_id: string
+    game_name: string
+    slug: string
+    cover_url: string | null
+    reason: string
+    why_now: string | null
+    recommendation_type: 'return' | 'start' | 'finish' | 'discover'
+    savedAt: string
+  }
+}
+
 type SavedContentProps = {
   deals: BookmarkedDeal[]
   patches: BookmarkedPatch[]
   news: BookmarkedNews[]
+  recommendations?: BookmarkedRecommendation[]
 }
 
-type FilterType = 'all' | 'deals' | 'patches' | 'news'
+type FilterType = 'all' | 'deals' | 'patches' | 'news' | 'recommendations'
 
-export function SavedContent({ deals, patches, news }: SavedContentProps) {
+export function SavedContent({ deals, patches, news, recommendations = [] }: SavedContentProps) {
   const [filter, setFilter] = useState<FilterType>('all')
   const [isFilterOpen, setIsFilterOpen] = useState(false)
 
+  const totalCount = deals.length + patches.length + news.length + recommendations.length
+
   const filters: { id: FilterType; label: string; icon: typeof Tag; count: number }[] = [
-    { id: 'all', label: 'All Saved', icon: Gamepad2, count: deals.length + patches.length + news.length },
+    { id: 'all', label: 'All Saved', icon: Gamepad2, count: totalCount },
+    { id: 'recommendations', label: 'Recommendations', icon: Sparkles, count: recommendations.length },
     { id: 'deals', label: 'Deals', icon: Tag, count: deals.length },
     { id: 'patches', label: 'Patches', icon: FileText, count: patches.length },
     { id: 'news', label: 'News', icon: Newspaper, count: news.length },
   ]
 
+  const showRecommendations = filter === 'all' || filter === 'recommendations'
   const showDeals = filter === 'all' || filter === 'deals'
   const showPatches = filter === 'all' || filter === 'patches'
   const showNews = filter === 'all' || filter === 'news'
@@ -149,6 +168,75 @@ export function SavedContent({ deals, patches, news }: SavedContentProps) {
 
       {/* Content */}
       <div className="space-y-6">
+        {/* Recommendations Section */}
+        {showRecommendations && recommendations.length > 0 && (
+          <section className="space-y-4">
+            {filter === 'all' && (
+              <h2 className="text-lg font-semibold flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-primary" />
+                Saved Recommendations
+                <span className="ml-1 text-sm font-normal text-muted-foreground">
+                  ({recommendations.length})
+                </span>
+              </h2>
+            )}
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {recommendations.map((item) => {
+                const typeLabels = {
+                  return: { label: 'Return', color: 'bg-blue-500/20 text-blue-400' },
+                  start: { label: 'Start', color: 'bg-green-500/20 text-green-400' },
+                  finish: { label: 'Finish', color: 'bg-purple-500/20 text-purple-400' },
+                  discover: { label: 'Discover', color: 'bg-amber-500/20 text-amber-400' },
+                }
+                const typeInfo = typeLabels[item.metadata.recommendation_type]
+
+                return (
+                  <Link
+                    key={item.id}
+                    href={`/games/${item.metadata.slug}`}
+                    className="group flex gap-3 p-3 rounded-xl border border-border hover:border-primary/50 bg-card transition-all"
+                  >
+                    <div className="relative w-16 h-20 rounded-lg overflow-hidden bg-zinc-800 flex-shrink-0">
+                      {item.metadata.cover_url ? (
+                        <Image
+                          src={item.metadata.cover_url}
+                          alt={item.metadata.game_name}
+                          fill
+                          className="object-cover"
+                          sizes="64px"
+                          unoptimized
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Gamepad2 className="w-6 h-6 text-zinc-600" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${typeInfo.color}`}>
+                          {typeInfo.label}
+                        </span>
+                      </div>
+                      <h3 className="font-medium text-sm line-clamp-1 group-hover:text-primary transition-colors">
+                        {item.metadata.game_name}
+                      </h3>
+                      <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
+                        {item.metadata.reason}
+                      </p>
+                      {item.metadata.why_now && (
+                        <p className="text-xs text-primary mt-1 line-clamp-1">
+                          {item.metadata.why_now}
+                        </p>
+                      )}
+                    </div>
+                  </Link>
+                )
+              })}
+            </div>
+          </section>
+        )}
+
         {/* Deals Section */}
         {showDeals && deals.length > 0 && (
           <section className="space-y-4">
@@ -274,15 +362,21 @@ export function SavedContent({ deals, patches, news }: SavedContentProps) {
         {filter !== 'all' && (
           (filter === 'deals' && deals.length === 0) ||
           (filter === 'patches' && patches.length === 0) ||
-          (filter === 'news' && news.length === 0)
+          (filter === 'news' && news.length === 0) ||
+          (filter === 'recommendations' && recommendations.length === 0)
         ) && (
           <div className="rounded-lg border border-dashed border-border py-12 text-center">
             <p className="text-muted-foreground">No saved {filter} yet</p>
             <Link
-              href={filter === 'deals' ? '/deals' : filter === 'patches' ? '/patches' : '/news'}
+              href={
+                filter === 'deals' ? '/deals' :
+                filter === 'patches' ? '/patches' :
+                filter === 'recommendations' ? '/insights' :
+                '/news'
+              }
               className="mt-2 inline-block text-sm text-primary hover:underline"
             >
-              Browse {filter}
+              {filter === 'recommendations' ? 'Get recommendations' : `Browse ${filter}`}
             </Link>
           </div>
         )}

@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
-import { Sparkles, Clock, Gamepad2, Brain, ChevronRight, Loader2, Zap, Calendar, X, TrendingUp, Minus, TrendingDown, AlertTriangle, Users } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Sparkles, Clock, Gamepad2, Brain, ChevronRight, Loader2, Zap, Calendar, X, TrendingUp, Minus, TrendingDown, AlertTriangle, Users, Library, BookOpen, Bookmark, RefreshCw } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { toggleRecommendationBookmark } from '@/app/(main)/actions/bookmarks'
 
 function GameCoverImage({ src, alt }: { src: string | null; alt: string }) {
   const [hasError, setHasError] = useState(false)
@@ -58,10 +59,11 @@ type RecommendationResult = {
 }
 
 const MOODS = [
-  { id: 'any', label: 'Surprise me', icon: Sparkles },
-  { id: 'chill', label: 'Chill', icon: Gamepad2 },
-  { id: 'challenge', label: 'Challenge', icon: Brain },
-  { id: 'story', label: 'Story', icon: ChevronRight },
+  { id: 'any', label: 'Surprise me', icon: Sparkles, description: 'Discover new games' },
+  { id: 'chill', label: 'Chill', icon: Gamepad2, description: 'Relaxing games' },
+  { id: 'challenge', label: 'Challenge', icon: Brain, description: 'Test your skills' },
+  { id: 'story', label: 'Story', icon: BookOpen, description: 'Narrative focused' },
+  { id: 'backlog', label: 'My Backlog', icon: Library, description: 'From your library' },
 ]
 
 const TIME_OPTIONS = [
@@ -87,11 +89,36 @@ export function PlayRecommendations() {
   const [mood, setMood] = useState<string>('any')
   const [time, setTime] = useState<number | null>(null)
   const [loading, setLoading] = useState(false)
+  const [initialLoading, setInitialLoading] = useState(true)
   const [result, setResult] = useState<RecommendationResult | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set())
   const [dismissingId, setDismissingId] = useState<string | null>(null)
+  const [savedIds, setSavedIds] = useState<Set<string>>(new Set())
+  const [savingId, setSavingId] = useState<string | null>(null)
 
+  // Load cached recommendations on mount (without refresh)
+  useEffect(() => {
+    const loadCached = async () => {
+      try {
+        const response = await fetch('/api/ai/recommendations')
+        const data = await response.json()
+
+        if (response.ok && data?.recommendations?.length > 0) {
+          setResult({
+            recommendations: data.recommendations,
+            message: data.message || 'Your recommendations',
+          })
+        }
+      } catch {
+        // Silently fail - user can manually fetch
+      } finally {
+        setInitialLoading(false)
+      }
+    }
+
+    loadCached()
+  }, [])
 
   const fetchRecommendations = async (refresh: boolean) => {
     setLoading(true)
@@ -99,7 +126,14 @@ export function PlayRecommendations() {
 
     try {
       const params = new URLSearchParams()
-      if (mood !== 'any') params.set('mood', mood)
+      // For backlog mode, we only want backlog games
+      if (mood === 'backlog') {
+        params.set('backlogOnly', 'true')
+      } else {
+        // For mood options, focus on discovery (new games to try)
+        if (mood !== 'any') params.set('mood', mood)
+        params.set('discoveryOnly', 'true')
+      }
       if (time) params.set('time', time.toString())
       if (refresh) params.set('refresh', 'true')
 
@@ -144,6 +178,47 @@ export function PlayRecommendations() {
     }
   }
 
+  const handleSave = async (rec: Recommendation, e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+
+    setSavingId(rec.game_id)
+
+    try {
+      const result = await toggleRecommendationBookmark(rec.game_id, {
+        game_id: rec.game_id,
+        game_name: rec.game_name,
+        slug: rec.slug,
+        cover_url: rec.cover_url,
+        reason: rec.reason,
+        why_now: rec.why_now,
+        recommendation_type: rec.recommendation_type,
+        savedAt: new Date().toISOString(),
+      })
+
+      if (result.error) {
+        console.error('Failed to save recommendation:', result.error)
+        setError(`Failed to save: ${result.error}`)
+        return
+      }
+
+      if (result.bookmarked) {
+        setSavedIds(prev => new Set([...prev, rec.game_id]))
+      } else {
+        setSavedIds(prev => {
+          const next = new Set(prev)
+          next.delete(rec.game_id)
+          return next
+        })
+      }
+    } catch (err) {
+      console.error('Failed to save:', err)
+      setError('Failed to save recommendation')
+    } finally {
+      setSavingId(null)
+    }
+  }
+
   // Filter out dismissed recommendations
   const visibleRecommendations = result?.recommendations.filter(
     rec => !dismissedIds.has(rec.game_id)
@@ -158,7 +233,9 @@ export function PlayRecommendations() {
           </div>
           <div>
             <h3 className="font-semibold">What Should I Play?</h3>
-            <p className="text-sm text-muted-foreground">From your backlog + trending discoveries</p>
+            <p className="text-sm text-muted-foreground">
+              {mood === 'backlog' ? 'Personalized picks from your library' : 'Discover games you\'ll love'}
+            </p>
           </div>
         </div>
         <Link
@@ -215,15 +292,17 @@ export function PlayRecommendations() {
 
       <button
         onClick={() => fetchRecommendations(true)}
-        disabled={loading}
+        disabled={loading || initialLoading}
         className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
       >
-        {loading ? (
+        {loading || initialLoading ? (
           <Loader2 className="w-4 h-4 animate-spin" />
+        ) : result ? (
+          <RefreshCw className="w-4 h-4" />
         ) : (
           <Brain className="w-4 h-4" />
         )}
-        {result ? 'Refresh Recommendations' : 'Get Recommendations'}
+        {initialLoading ? 'Loading...' : result ? 'Get New Recommendations' : 'Get Recommendations'}
       </button>
 
       {error && (
@@ -367,19 +446,40 @@ export function PlayRecommendations() {
                   </div>
                 </Link>
 
-                {/* Dismiss button */}
-                <button
-                  onClick={(e) => handleDismiss(rec.game_id, e)}
-                  disabled={dismissingId === rec.game_id}
-                  className="absolute top-3 right-3 p-1.5 rounded-full bg-zinc-800/80 text-zinc-400 opacity-0 group-hover:opacity-100 hover:bg-zinc-700 hover:text-zinc-200 transition-all disabled:opacity-50"
-                  title="Not interested"
-                >
-                  {dismissingId === rec.game_id ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  ) : (
-                    <X className="w-3.5 h-3.5" />
-                  )}
-                </button>
+                {/* Action buttons */}
+                <div className="absolute top-3 right-3 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all">
+                  {/* Save button */}
+                  <button
+                    onClick={(e) => handleSave(rec, e)}
+                    disabled={savingId === rec.game_id}
+                    className={`p-1.5 rounded-full transition-all disabled:opacity-50 ${
+                      savedIds.has(rec.game_id)
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-zinc-800/80 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200'
+                    }`}
+                    title={savedIds.has(rec.game_id) ? 'Remove from saved' : 'Save for later'}
+                  >
+                    {savingId === rec.game_id ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Bookmark className={`w-3.5 h-3.5 ${savedIds.has(rec.game_id) ? 'fill-current' : ''}`} />
+                    )}
+                  </button>
+
+                  {/* Dismiss button */}
+                  <button
+                    onClick={(e) => handleDismiss(rec.game_id, e)}
+                    disabled={dismissingId === rec.game_id}
+                    className="p-1.5 rounded-full bg-zinc-800/80 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200 transition-all disabled:opacity-50"
+                    title="Not interested"
+                  >
+                    {dismissingId === rec.game_id ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <X className="w-3.5 h-3.5" />
+                    )}
+                  </button>
+                </div>
               </div>
             )
           })}

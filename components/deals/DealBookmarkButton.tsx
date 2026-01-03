@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { Bookmark, Crown, AlertCircle } from 'lucide-react'
 import { toggleDealBookmark, type DealMetadata } from '@/app/(main)/actions/bookmarks'
-import Link from 'next/link'
 
 type DealBookmarkButtonProps = {
   dealId: string
@@ -18,20 +18,24 @@ export function DealBookmarkButton({
   initialBookmarked,
   isPro = false,
 }: DealBookmarkButtonProps) {
+  const router = useRouter()
   const [isBookmarked, setIsBookmarked] = useState(initialBookmarked)
   const [isPending, startTransition] = useTransition()
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
   if (!isPro) {
     return (
-      <Link
-        href="/pricing"
+      <button
+        onClick={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          router.push('/pricing')
+        }}
         className="flex items-center justify-center w-8 h-8 rounded-full bg-black/50 backdrop-blur-sm text-amber-400 hover:bg-black/70 transition-colors"
-        onClick={(e) => e.stopPropagation()}
         title="Pro feature - Save deals"
       >
         <Crown className="w-4 h-4" />
-      </Link>
+      </button>
     )
   }
 

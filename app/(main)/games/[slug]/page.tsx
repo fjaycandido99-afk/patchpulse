@@ -13,6 +13,7 @@ import { SteamStats } from '@/components/library/SteamStats'
 import { StudioInfoSection } from '@/components/games/StudioInfoSection'
 import { SentimentPulse } from '@/components/ai/SentimentPulse'
 import { BackButton } from '@/components/ui/BackButton'
+import { HeroBanner } from '@/components/ui/HeroBanner'
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
@@ -131,54 +132,6 @@ function WhatsNewSkeleton() {
   )
 }
 
-function GameBanner({
-  imageUrl,
-  gameName,
-  brandColor,
-}: {
-  imageUrl: string | null
-  gameName: string
-  brandColor?: string | null
-}) {
-  const fallbackColor = brandColor || '#1a1a2e'
-
-  return (
-    <div className="fixed inset-x-0 top-0 h-[320px] sm:h-[380px] lg:h-[440px] overflow-hidden -z-10">
-      {imageUrl ? (
-        <>
-          <Image
-            src={imageUrl}
-            alt={gameName}
-            fill
-            className="object-cover object-top"
-            sizes="100vw"
-            priority
-            unoptimized
-          />
-          <div
-            className="absolute inset-0"
-            style={{
-              background: 'linear-gradient(to bottom, rgba(10,10,25,0.05) 0%, rgba(10,10,25,0.2) 40%, rgba(10,10,25,0.8) 80%, rgb(10,10,25) 100%)'
-            }}
-          />
-          <div
-            className="absolute inset-x-0 top-0 h-20"
-            style={{
-              background: 'linear-gradient(to bottom, rgba(10,15,30,0.6) 0%, transparent 100%)'
-            }}
-          />
-        </>
-      ) : (
-        <div
-          className="absolute inset-0"
-          style={{
-            background: `linear-gradient(180deg, ${fallbackColor} 0%, rgb(10,10,25) 100%)`
-          }}
-        />
-      )}
-    </div>
-  )
-}
 
 function getImpactColor(score: number) {
   if (score >= 8) return 'text-red-400'
@@ -379,9 +332,9 @@ export default async function GamePage({
 
   return (
     <div className="relative overflow-x-hidden min-h-screen">
-      <GameBanner imageUrl={bannerUrl} gameName={game.name} brandColor={brandColor} />
+      <HeroBanner imageUrl={bannerUrl} altText={game.name} fallbackColor={brandColor || undefined} />
 
-      <div className="relative z-10 pt-[200px] sm:pt-[240px] lg:pt-[280px] space-y-6">
+      <div className="relative z-10 pt-[140px] sm:pt-[180px] md:pt-[220px] lg:pt-[280px] space-y-6">
         {/* Back Link */}
         <div>
           <BackButton defaultHref="/home" defaultLabel="Back" />

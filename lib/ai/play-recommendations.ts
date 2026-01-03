@@ -6,6 +6,7 @@ type PlayContext = {
   mood?: 'chill' | 'challenge' | 'story' | 'social' | 'any'
   includeDiscovery?: boolean  // Include games not in backlog
   discoveryOnly?: boolean  // Only show discovery games, exclude backlog
+  backlogOnly?: boolean  // Only show games from user's backlog
 }
 
 type GameRecommendation = {
@@ -72,6 +73,36 @@ IMPORTANT: Include at least 1 discovery game if available, showing users games t
 
 Be direct and strategic. Users pay for ADVANTAGE, not just suggestions.`
 
+const SYSTEM_PROMPT_BACKLOG = `You are a Pro gaming advisor helping players decide what to play from their personal library.
+
+Your job is to help users make STRATEGIC decisions about which game in their backlog deserves their attention NOW.
+
+Given the user's backlog and preferences, recommend the best games for them to play based on:
+- Time available (quick session vs long play)
+- Current mood/preference
+- Progress in each game (prioritize games close to completion)
+- Recent patches or updates (MAJOR patches = perfect re-entry point)
+- How long since they last played each game (don't let games go stale)
+- Game momentum (is this game "hot" right now?)
+
+For each recommendation provide:
+1. "reason" - WHY this game NOW in a personal, conversational way (1-2 sentences)
+2. "why_now" - A timely, punchy hook explaining why NOW is the optimal moment (e.g., "Patch dropped 3 days ago - perfect re-entry", "You're 80% through - one session to finish", "Been 2 weeks since you played")
+3. "what_youd_miss" - What they'd lose by skipping (e.g., "Limited-time event ends in 5 days", "Story momentum will fade", "Perfect for your current mood"). NULL if nothing urgent.
+4. "momentum" - Game's current activity level:
+   - "rising" = Recent patch, active updates, good time to jump in
+   - "stable" = Steady, no major changes
+   - "cooling" = No recent updates, quieting down
+5. "match_score" - How well this matches the user's mood/time (0-100)
+6. "is_discovery" - ALWAYS false (these are all backlog games)
+
+Recommendation types:
+- return: Resume a paused game (use when they have progress)
+- start: Begin a game they haven't started
+- finish: Push through to complete (when progress > 70%)
+
+Be direct and strategic. Help users make the most of their gaming time.`
+
 const SYSTEM_PROMPT_DISCOVERY = `You are a Pro gaming discovery advisor helping players find NEW games they'll love.
 
 Your job is to help users DISCOVER games outside their current library that match their mood and preferences.
@@ -124,9 +155,19 @@ export async function generatePlayRecommendations(
   context: PlayContext = {}
 ): Promise<RecommendationResult> {
   const discoveryOnly = context.discoveryOnly || false
+  const backlogOnly = context.backlogOnly || false
 
+  // In backlog-only mode, we only need backlog games
+  if (backlogOnly) {
+    if (backlogGames.length === 0) {
+      return {
+        recommendations: [],
+        message: "Your backlog is empty! Add some games to get personalized recommendations.",
+      }
+    }
+  }
   // In discovery-only mode, we only need discovery games
-  if (discoveryOnly) {
+  else if (discoveryOnly) {
     if (discoveryGames.length === 0) {
       return {
         recommendations: [],
@@ -144,14 +185,14 @@ export async function generatePlayRecommendations(
 
   const now = new Date()
 
-  // Format backlog games (only if not discovery-only mode)
-  const backlogSection = !discoveryOnly && backlogGames.length > 0 ? `
-User's Backlog (${backlogGames.length} games):
+  // Format backlog games (for backlog-only or mixed mode)
+  const backlogSection = (backlogOnly || !discoveryOnly) && backlogGames.length > 0 ? `
+Your Backlog (${backlogGames.length} games):
 ${backlogGames.map(g => {
   const lastPlayed = g.last_played_at ? new Date(g.last_played_at) : null
   const daysSincePlayed = lastPlayed ? Math.floor((now.getTime() - lastPlayed.getTime()) / (1000 * 60 * 60 * 24)) : null
   return `
-- ${g.game_name} [BACKLOG]
+- ${g.game_name}
   Status: ${g.status}
   Progress: ${g.progress}%
   Hours played: ${g.hours_played || 0}
@@ -159,8 +200,8 @@ ${backlogGames.map(g => {
   ${g.recent_patch ? `Recent patch (${new Date(g.recent_patch.published_at).toLocaleDateString()}): "${g.recent_patch.title}"${g.recent_patch.is_major ? ' [MAJOR UPDATE]' : ''}` : 'No recent patches'}`
 }).join('')}` : ''
 
-  // Format discovery games
-  const discoverySection = discoveryGames.length > 0 ? `
+  // Format discovery games (only if not backlog-only mode)
+  const discoverySection = !backlogOnly && discoveryGames.length > 0 ? `
 ${discoveryOnly ? 'Games to Discover' : 'Trending Games to Discover'} (${discoveryGames.length} games - NOT in user's library):
 ${discoveryGames.map(g => `
 - ${g.game_name} [DISCOVERY - NEW TO USER]
@@ -169,14 +210,45 @@ ${discoveryGames.map(g => `
   Momentum: ${g.recent_patch ? 'rising' : 'stable'}`
 ).join('')}` : ''
 
-  const userPrompt = discoveryOnly
-    ? `User Context:
+  // Build user prompt based on mode
+  let userPrompt: string
+  let systemPrompt: string
+
+  if (backlogOnly) {
+    // Backlog-only mode: only recommend from user's library
+    userPrompt = `User Context:
+- Available time: ${context.availableTime ? `${context.availableTime} minutes` : 'Not specified'}
+- Today: ${now.toLocaleDateString()}
+${backlogSection}
+
+Recommend exactly 4 games from the user's backlog. Focus on optimal timing - games with recent patches, games close to completion, or games they haven't touched in a while. You MUST provide exactly 4 recommendations.
+Return JSON:
+{
+  "recommendations": [
+    {
+      "game_name": "string",
+      "reason": "why this game deserves attention now",
+      "why_now": "timely hook for why NOW is the optimal moment",
+      "what_youd_miss": "what they lose by skipping (or null)",
+      "momentum": "rising|stable|cooling",
+      "match_score": 0-100,
+      "recommendation_type": "return|start|finish",
+      "factors": ["factor1", "factor2"],
+      "is_discovery": false
+    }
+  ],
+  "message": "brief personalized message about their backlog"
+}`
+    systemPrompt = SYSTEM_PROMPT_BACKLOG
+  } else if (discoveryOnly) {
+    // Discovery-only mode: only recommend new games
+    userPrompt = `User Context:
 - Available time: ${context.availableTime ? `${context.availableTime} minutes` : 'Not specified'}
 - Mood: ${context.mood || 'Not specified'}
 - Today: ${now.toLocaleDateString()}
 ${discoverySection}
 
-Recommend 4-6 NEW games for the user to try. Focus on games that match their mood and have good momentum. You MUST provide at least 4 recommendations.
+Recommend exactly 4 NEW games for the user to try. Focus on games that match their mood and have good momentum. You MUST provide exactly 4 recommendations.
 Return JSON:
 {
   "recommendations": [
@@ -194,13 +266,16 @@ Return JSON:
   ],
   "message": "brief discovery-focused message"
 }`
-    : `User Context:
+    systemPrompt = SYSTEM_PROMPT_DISCOVERY
+  } else {
+    // Mixed mode: recommend from both backlog and discovery
+    userPrompt = `User Context:
 - Available time: ${context.availableTime ? `${context.availableTime} minutes` : 'Not specified'}
 - Mood: ${context.mood || 'Not specified'}
 - Today: ${now.toLocaleDateString()}
 ${backlogSection}${discoverySection}
 
-Recommend 4-6 games to play. You MUST provide at least 4 recommendations. Include at least 1 discovery game if available to help user find new favorites.
+Recommend exactly 4 games to play. You MUST provide exactly 4 recommendations. Include at least 1 discovery game if available to help user find new favorites.
 Return JSON:
 {
   "recommendations": [
@@ -218,8 +293,8 @@ Return JSON:
   ],
   "message": "brief strategic message"
 }`
-
-  const systemPrompt = discoveryOnly ? SYSTEM_PROMPT_DISCOVERY : SYSTEM_PROMPT_MIXED
+    systemPrompt = SYSTEM_PROMPT_MIXED
+  }
 
   const result = await generateJSON<RecommendationResult>(systemPrompt, userPrompt, {
     maxTokens: 1500,
@@ -316,6 +391,7 @@ export async function getPlayRecommendations(
     })
 
   // Fetch discovery games: all games not in user's backlog
+  // Fetch more games to allow for variety
   const { data: discoveryData } = await supabase
     .from('games')
     .select(`
@@ -325,7 +401,7 @@ export async function getPlayRecommendations(
       cover_url
     `)
     .not('id', 'in', userGameIds.length > 0 ? `(${userGameIds.join(',')})` : '(00000000-0000-0000-0000-000000000000)')
-    .limit(100)
+    .limit(500)
 
   // Get follower counts for discovery games
   const discoveryIds = (discoveryData || []).map(g => g.id)
@@ -358,9 +434,18 @@ export async function getPlayRecommendations(
     }
   })
 
-  // Format discovery games - prioritize by follower count and recent patches
-  // Include all games in the database
-  const discoveryGames: BacklogGame[] = (discoveryData || [])
+  // Format discovery games with randomization for variety
+  // Shuffle function
+  const shuffleArray = <T>(array: T[]): T[] => {
+    const shuffled = [...array]
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+    }
+    return shuffled
+  }
+
+  const allDiscoveryGames: BacklogGame[] = (discoveryData || [])
     .map(g => ({
       game_id: g.id,
       game_name: g.name,
@@ -374,13 +459,16 @@ export async function getPlayRecommendations(
       is_discovery: true,
       follower_count: followerMap.get(g.id) || 0,
     }))
-    .sort((a, b) => {
-      // Prioritize games with recent patches and more followers
-      const aScore = (a.recent_patch ? 100 : 0) + (a.follower_count || 0) * 10
-      const bScore = (b.recent_patch ? 100 : 0) + (b.follower_count || 0) * 10
-      return bScore - aScore
-    })
-    .slice(0, 15) // Top 15 discovery games for AI to choose from
+
+  // Split into games with patches (priority) and others
+  const gamesWithPatches = shuffleArray(allDiscoveryGames.filter(g => g.recent_patch))
+  const gamesWithoutPatches = shuffleArray(allDiscoveryGames.filter(g => !g.recent_patch))
+
+  // Take a mix: some with patches (if available) and random others for variety
+  const discoveryGames: BacklogGame[] = [
+    ...gamesWithPatches.slice(0, 8),  // Up to 8 games with recent patches
+    ...gamesWithoutPatches.slice(0, 12), // Up to 12 random other games
+  ].slice(0, 20) // Total 20 games for AI to choose from
 
   const result = await generatePlayRecommendations(backlogGames, discoveryGames, context)
 
@@ -445,6 +533,9 @@ export async function getPlayRecommendations(
     return true
   })
 
+  // Limit to exactly 4 recommendations
+  result.recommendations = result.recommendations.slice(0, 4)
+
   // Save recommendations with long expiration (persist until user refreshes)
   if (result.recommendations.length > 0) {
     try {
@@ -460,6 +551,11 @@ export async function getPlayRecommendations(
         recommendation_type: rec.recommendation_type,
         context: {
           ...context,
+          // Game data (needed for cache retrieval without join)
+          game_name: rec.game_name,
+          slug: rec.slug,
+          cover_url: rec.cover_url,
+          // Recommendation details
           why_now: rec.why_now,
           what_youd_miss: rec.what_youd_miss,
           momentum: rec.momentum,
@@ -470,13 +566,16 @@ export async function getPlayRecommendations(
         is_dismissed: false,
       }))
 
-      // Use upsert to prevent duplicates (update if same user_id + game_id exists)
-      await supabase.from('play_recommendations').upsert(toInsert, {
-        onConflict: 'user_id,game_id',
-        ignoreDuplicates: false,
-      })
-    } catch {
-      // Silently fail - saving history is optional
+      // Insert new recommendations (old ones are already deleted in API route before calling this)
+      const { error: saveError } = await supabase.from('play_recommendations').insert(toInsert)
+
+      if (saveError) {
+        console.error('[Recommendations] Failed to save:', saveError)
+      } else {
+        console.log(`[Recommendations] Saved ${toInsert.length} recommendations to database`)
+      }
+    } catch (err) {
+      console.error('[Recommendations] Error saving:', err)
     }
   }
 

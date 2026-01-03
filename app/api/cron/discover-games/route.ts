@@ -7,36 +7,14 @@ import {
   getIndieGamesFromIgdb,
   igdbToGameRecord
 } from '@/lib/fetchers/igdb'
+import { discoverSteamGames } from '@/lib/fetchers/steam-discovery'
+import { verifyCronAuth } from '@/lib/cron-auth'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300 // 5 minutes max
 
-function verifyAuth(req: Request): boolean {
-  const cronSecretEnv = process.env.CRON_SECRET?.trim()
-  const expectedSecret = 'patchpulse-cron-secret-2024-secure'
-
-  const authHeader = req.headers.get('authorization')
-  if (authHeader) {
-    const token = authHeader.replace('Bearer ', '').trim()
-    if ((cronSecretEnv && token === cronSecretEnv) || token === expectedSecret) {
-      return true
-    }
-  }
-
-  const cronSecret = req.headers.get('x-cron-secret')?.trim()
-  if ((cronSecretEnv && cronSecret === cronSecretEnv) || cronSecret === expectedSecret) {
-    return true
-  }
-
-  if (req.headers.get('x-vercel-cron') === '1') {
-    return true
-  }
-
-  return false
-}
-
 export async function GET(req: Request) {
-  if (!verifyAuth(req)) {
+  if (!verifyCronAuth(req)) {
     console.log('[discover-games] Unauthorized request')
     return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 })
   }
@@ -49,6 +27,7 @@ export async function GET(req: Request) {
     upcoming: { fetched: 0, added: 0, errors: [] as string[] },
     tba: { fetched: 0, added: 0, errors: [] as string[] },
     indie: { fetched: 0, added: 0, errors: [] as string[] },
+    steam: { fetched: 0, added: 0, errors: [] as string[] },
   }
 
   // Helper to insert game if not exists
@@ -139,7 +118,21 @@ export async function GET(req: Request) {
     results.indie.errors.push(`Fetch failed: ${error}`)
   }
 
-  const totalAdded = results.newReleases.added + results.upcoming.added + results.tba.added + results.indie.added
+  // Fetch from Steam (featured, new releases, top sellers, coming soon)
+  try {
+    console.log('[discover-games] Fetching from Steam...')
+    const steamResults = await discoverSteamGames()
+    results.steam = {
+      fetched: steamResults.fetched,
+      added: steamResults.added,
+      errors: steamResults.errors,
+    }
+    console.log(`[discover-games] Steam: fetched ${steamResults.fetched}, added ${steamResults.added}`)
+  } catch (error) {
+    results.steam.errors.push(`Fetch failed: ${error}`)
+  }
+
+  const totalAdded = results.newReleases.added + results.upcoming.added + results.tba.added + results.indie.added + results.steam.added
 
   return NextResponse.json({
     ok: true,
@@ -148,5 +141,6 @@ export async function GET(req: Request) {
     upcoming: results.upcoming,
     tba: results.tba,
     indie: results.indie,
+    steam: results.steam,
   })
 }

@@ -6,9 +6,13 @@ import { queueAIJob } from '@/lib/ai/jobs'
 
 const parser = new Parser({
   headers: {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+    'Accept': 'application/rss+xml, application/xml, text/xml, */*',
+    'Accept-Language': 'en-US,en;q=0.9',
+    'Cache-Control': 'no-cache',
+    'Pragma': 'no-cache',
   },
-  timeout: 10000,
+  timeout: 15000,
 })
 
 // Epic Games titles with their patch note sources
@@ -120,8 +124,14 @@ export async function fetchEpicPatches(gameSlug: string, gameId: string, gameNam
 
     return { success: true, addedCount }
   } catch (error) {
+    // Epic often blocks server-side requests with 403 - this is expected
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    if (errorMessage.includes('403') || errorMessage.includes('Forbidden')) {
+      console.log(`[Epic] Feed blocked for ${gameName} (403) - Epic uses bot protection`)
+      return { success: true, addedCount: 0 } // Don't treat as error, just skip
+    }
     console.error(`Failed to fetch Epic patches for ${gameName}:`, error)
-    return { success: false, error: error instanceof Error ? error.message : 'Unknown error', addedCount: 0 }
+    return { success: false, error: errorMessage, addedCount: 0 }
   }
 }
 

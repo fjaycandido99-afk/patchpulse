@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import webpush from 'web-push'
+import { verifyCronAuth } from '@/lib/cron-auth'
 
 // Lazy initialization to avoid build-time errors
 let vapidConfigured = false
@@ -27,33 +28,9 @@ function configureVapid(): boolean {
   return false
 }
 
-function verifyAuth(req: Request): boolean {
-  const cronSecretEnv = process.env.CRON_SECRET?.trim()
-  const expectedSecret = 'patchpulse-cron-secret-2024-secure'
-
-  const authHeader = req.headers.get('authorization')
-  if (authHeader) {
-    const token = authHeader.replace('Bearer ', '').trim()
-    if ((cronSecretEnv && token === cronSecretEnv) || token === expectedSecret) {
-      return true
-    }
-  }
-
-  const cronSecret = req.headers.get('x-cron-secret')?.trim()
-  if ((cronSecretEnv && cronSecret === cronSecretEnv) || cronSecret === expectedSecret) {
-    return true
-  }
-
-  if (req.headers.get('x-vercel-cron') === '1') {
-    return true
-  }
-
-  return false
-}
-
 // GET /api/cron/send-push - Send push notifications for recent notifications
 export async function GET(request: Request) {
-  if (!verifyAuth(request)) {
+  if (!verifyCronAuth(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

@@ -1,6 +1,17 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
+// Helper to create redirect response with guest cookie cleared
+function createRedirectWithClearedGuest(url: URL): NextResponse {
+  const response = NextResponse.redirect(url)
+  // Clear guest mode cookie on successful auth
+  response.cookies.set('patchpulse_guest_mode', '', {
+    path: '/',
+    expires: new Date(0),
+  })
+  return response
+}
+
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
@@ -34,11 +45,12 @@ export async function GET(request: Request) {
           .single()
 
         // Redirect to onboarding if not completed, otherwise home
+        // Also clear guest cookie since user is now authenticated
         const redirectTo = profile?.onboarding_completed ? '/home' : '/onboarding'
-        return NextResponse.redirect(new URL(redirectTo, origin))
+        return createRedirectWithClearedGuest(new URL(redirectTo, origin))
       }
 
-      return NextResponse.redirect(new URL(next, origin))
+      return createRedirectWithClearedGuest(new URL(next, origin))
     }
   }
 

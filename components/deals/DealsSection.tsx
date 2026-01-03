@@ -28,14 +28,31 @@ type DealsResult = {
   isPro: boolean
 }
 
-export function DealsSection() {
-  const [deals, setDeals] = useState<DealsResult | null>(null)
-  const [dealsLoading, setDealsLoading] = useState(true)
+type DealsSectionProps = {
+  initialDeals?: Deal[]
+  isPro?: boolean
+}
+
+export function DealsSection({ initialDeals, isPro = true }: DealsSectionProps) {
+  const [deals, setDeals] = useState<DealsResult | null>(
+    initialDeals ? { deals: initialDeals, total: initialDeals.length, source: 'Steam', isPro } : null
+  )
+  const [dealsLoading, setDealsLoading] = useState(!initialDeals)
   const [minDiscount, setMinDiscount] = useState(20)
 
-  // Fetch deals when discount filter changes
+  // Only fetch on mount if no initial deals provided
   useEffect(() => {
-    fetchDeals()
+    if (!initialDeals) {
+      fetchDeals()
+    }
+  }, [])
+
+  // Fetch when discount filter changes (if user changes it)
+  useEffect(() => {
+    // Only refetch if filter changed from default and we have initial deals
+    if (minDiscount !== 20) {
+      fetchDeals()
+    }
   }, [minDiscount])
 
   // Auto-refresh deals every 5 minutes (silent)
@@ -47,7 +64,7 @@ export function DealsSection() {
   const fetchDeals = async (silent = false) => {
     if (!silent) setDealsLoading(true)
     try {
-      const response = await fetch(`/api/deals?limit=30&minDiscount=${minDiscount}`)
+      const response = await fetch(`/api/deals?limit=100&minDiscount=${minDiscount}`)
       const data = await response.json()
 
       if (response.ok) {

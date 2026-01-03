@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { Gamepad2, Clock } from 'lucide-react'
 import { DealBookmarkButton } from './DealBookmarkButton'
-import type { DealMetadata } from '@/app/(main)/actions/bookmarks'
+import { useDealSpotlight } from './DealSpotlightProvider'
 
 type Deal = {
   id: string
@@ -32,6 +32,7 @@ export function DealsCarousel({
   autoPlayInterval = 4000,
   isPro = false,
 }: DealsCarouselProps) {
+  const { openDealSpotlight } = useDealSpotlight()
   // 5 slots: 1 featured (large) + 4 grid items
   const [slots, setSlots] = useState([0, 1, 2, 3, 4])
   // Track which slot is currently transitioning
@@ -84,13 +85,36 @@ export function DealsCarousel({
     const deal = deals[dealIndex % deals.length]
     const isFading = fadingSlot === slotIndex
 
+    const handleClick = () => {
+      openDealSpotlight({
+        id: deal.id,
+        title: deal.title,
+        salePrice: deal.salePrice,
+        normalPrice: deal.normalPrice,
+        savings: deal.savings,
+        store: deal.store,
+        thumb: deal.thumb,
+        dealUrl: deal.dealUrl,
+        isUserGame: deal.isUserGame,
+        expiresIn: deal.expiresIn,
+        steamAppId: deal.steamAppId,
+        isBookmarked: deal.isBookmarked,
+      }, isPro)
+    }
+
     return (
-      <a
+      <div
         key={`slot-${slotIndex}`}
-        href={deal.dealUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="group active:scale-[0.98] text-left block h-full"
+        role="button"
+        tabIndex={0}
+        onClick={handleClick}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            handleClick()
+          }
+        }}
+        className="group active:scale-[0.98] text-left block h-full w-full cursor-pointer"
         style={{
           opacity: isFading ? 0 : 1,
           transform: isFading ? 'scale(0.97)' : 'scale(1)',
@@ -172,7 +196,7 @@ export function DealsCarousel({
             </div>
           </div>
         </div>
-      </a>
+      </div>
     )
   }
 

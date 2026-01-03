@@ -1,6 +1,6 @@
 'use client'
 
-import { Home, Newspaper, Library, User, Sparkles, Brain, Crown, Bell, Gamepad2, Bookmark } from 'lucide-react'
+import { Home, Newspaper, Library, User, Sparkles, Brain, Crown, Bell, Gamepad2, Bookmark, LogIn, UserPlus } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { ProBadge } from '@/components/ui/ProBadge'
@@ -26,9 +26,10 @@ type DesktopSidebarProps = {
   counts?: SidebarCounts | null
   notificationStats?: NotificationStats
   patchesStats?: PatchesStats
+  isGuest?: boolean
 }
 
-export function DesktopSidebar({ counts, notificationStats, patchesStats }: DesktopSidebarProps) {
+export function DesktopSidebar({ counts, notificationStats, patchesStats, isGuest = false }: DesktopSidebarProps) {
   return (
     <aside className="hidden md:fixed md:inset-y-0 md:flex md:w-64 md:flex-col">
       <div className="flex flex-col gap-y-5 border-r border-border bg-background px-6 py-8">
@@ -85,14 +86,16 @@ export function DesktopSidebar({ counts, notificationStats, patchesStats }: Desk
               badgeLabel="today"
               isLive={patchesStats?.high_impact_count ? patchesStats.high_impact_count > 0 : false}
             />
-            <NavItem
-              icon={Bell}
-              label="Notifications"
-              href="/notifications"
-              badge={notificationStats?.unread_count}
-              badgeLabel="unread"
-              isLive={notificationStats?.high_priority_count ? notificationStats.high_priority_count > 0 : false}
-            />
+            {!isGuest && (
+              <NavItem
+                icon={Bell}
+                label="Notifications"
+                href="/notifications"
+                badge={notificationStats?.unread_count}
+                badgeLabel="unread"
+                isLive={notificationStats?.high_priority_count ? notificationStats.high_priority_count > 0 : false}
+              />
+            )}
           </div>
         </nav>
       </div>

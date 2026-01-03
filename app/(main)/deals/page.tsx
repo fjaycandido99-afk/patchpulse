@@ -45,7 +45,7 @@ export default function DealsPage() {
   const fetchDeals = async (silent = false) => {
     if (!silent) setLoading(true)
     try {
-      const response = await fetch(`/api/deals?limit=50&minDiscount=${minDiscount}`)
+      const response = await fetch(`/api/deals?limit=150&minDiscount=${minDiscount}`)
       const data = await response.json()
 
       if (response.ok) {

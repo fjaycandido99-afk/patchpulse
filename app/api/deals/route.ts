@@ -12,13 +12,15 @@ type DbDeal = {
   header_url: string | null
   deal_url: string
   expires_at: string | null
+  steam_app_id: string | null
+  store: string | null
 }
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
-    const limit = parseInt(searchParams.get('limit') || '50')
-    const minDiscount = parseInt(searchParams.get('minDiscount') || '40')
+    const limit = parseInt(searchParams.get('limit') || '100')
+    const minDiscount = parseInt(searchParams.get('minDiscount') || '20')
 
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -111,9 +113,9 @@ export async function GET(request: Request) {
         salePrice: item.sale_price,
         normalPrice: item.normal_price,
         savings: item.discount_percent,
-        store: 'Steam',
+        store: item.store || 'Steam',
         storeIcon: null,
-        steamAppId: item.id,
+        steamAppId: item.steam_app_id || null,
         thumb: item.header_url || item.thumb_url || '',
         dealUrl: item.deal_url,
         isUserGame,

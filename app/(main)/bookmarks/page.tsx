@@ -1,21 +1,34 @@
+import { cookies } from 'next/headers'
 import Link from 'next/link'
-import { getBookmarkedPatches, getBookmarkedNews, getBookmarkedDeals } from './queries'
+import { getBookmarkedPatches, getBookmarkedNews, getBookmarkedDeals, getBookmarkedRecommendations } from './queries'
 import { createClient } from '@/lib/supabase/server'
+import { isGuestModeFromCookies } from '@/lib/guest'
 import { getUserPlan } from '@/lib/subscriptions/limits'
 import { redirect } from 'next/navigation'
 import { ProUpgradeCTA } from '@/components/ui/ProUpgradeCTA'
 import { SavedContent } from '@/components/bookmarks/SavedContent'
 
 export default async function BookmarksPage() {
+  const cookieStore = await cookies()
+  const hasGuestCookie = isGuestModeFromCookies(cookieStore)
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  if (!user) {
+  // User is only a guest if they have the cookie AND are not logged in
+  const isGuest = !user && hasGuestCookie
+
+  if (!user && !isGuest) {
     redirect('/login')
   }
 
-  const plan = await getUserPlan(user.id)
-  const isPro = plan === 'pro'
+  let isPro = false
+
+  // For authenticated users, check their plan
+  if (user) {
+    const plan = await getUserPlan(user.id)
+    isPro = plan === 'pro'
+  }
 
   if (!isPro) {
     return (
@@ -41,13 +54,14 @@ export default async function BookmarksPage() {
     )
   }
 
-  const [patches, news, deals] = await Promise.all([
+  const [patches, news, deals, recommendations] = await Promise.all([
     getBookmarkedPatches(),
     getBookmarkedNews(),
     getBookmarkedDeals(),
+    getBookmarkedRecommendations(),
   ])
 
-  const hasBookmarks = patches.length > 0 || news.length > 0 || deals.length > 0
+  const hasBookmarks = patches.length > 0 || news.length > 0 || deals.length > 0 || recommendations.length > 0
 
   return (
     <div className="space-y-6">
@@ -86,7 +100,7 @@ export default async function BookmarksPage() {
           </div>
         </div>
       ) : (
-        <SavedContent deals={deals} patches={patches} news={news} />
+        <SavedContent deals={deals} patches={patches} news={news} recommendations={recommendations} />
       )}
     </div>
   )

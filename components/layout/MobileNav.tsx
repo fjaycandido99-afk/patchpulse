@@ -1,6 +1,6 @@
 'use client'
 
-import { Home, Newspaper, Library, User, Brain, Crown, Bookmark } from 'lucide-react'
+import { Home, Newspaper, Library, User, Brain, Crown, Bookmark, LogIn } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
@@ -16,6 +16,7 @@ type NavItemConfig = {
   href: string
   badge?: NavBadge
   isPro?: boolean
+  guestHidden?: boolean
 }
 
 const navItems: NavItemConfig[] = [
@@ -27,11 +28,13 @@ const navItems: NavItemConfig[] = [
   { icon: User, label: 'Profile', href: '/profile' },
 ]
 
-export function MobileNav({ badges }: { badges?: Record<string, NavBadge> }) {
+export function MobileNav({ badges, isGuest = false }: { badges?: Record<string, NavBadge>; isGuest?: boolean }) {
+  const items = navItems
+
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 glass-nav md:hidden safe-area-pb">
       <div className="flex items-center justify-around">
-        {navItems.map((item) => (
+        {items.map((item) => (
           <NavItem
             key={item.href}
             {...item}

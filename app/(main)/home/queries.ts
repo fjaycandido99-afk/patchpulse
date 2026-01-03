@@ -112,6 +112,18 @@ export type NewReleaseGame = {
   is_live_service: boolean
 }
 
+export type Deal = {
+  id: string
+  title: string
+  salePrice: number
+  normalPrice: number
+  savings: number
+  store: string
+  thumb: string
+  dealUrl: string
+  expiresIn: string | null
+}
+
 export type HomeFeed = {
   followedGames: FollowedGame[]
   topPatches: PatchNote[]
@@ -121,6 +133,7 @@ export type HomeFeed = {
   upcomingReleases: UpcomingReleaseItem[]
   upcomingGames: UpcomingGame[]
   newReleases: NewReleaseGame[]
+  deals: Deal[]  // Games on sale
   gamePlatforms: Map<string, Platform[]>
   seasonalImages: Map<string, SeasonalImage>
 }
@@ -183,47 +196,7 @@ export async function getHomeFeed(): Promise<HomeFeed> {
     data: { user },
   } = await supabase.auth.getUser()
 
-  if (!user) {
-    return {
-      followedGames: [],
-      topPatches: [],
-      userNews: [],
-      latestNews: [],
-      backlogNudge: null,
-      upcomingReleases: [],
-      upcomingGames: [],
-      newReleases: [],
-      gamePlatforms: emptyPlatforms,
-      seasonalImages: emptySeasonalImages,
-    }
-  }
-
-  // Get followed games (user_games)
-  const { data: userGames } = await supabase
-    .from('user_games')
-    .select('game_id, games!inner(id, name, slug, cover_url, platforms)')
-    .eq('user_id', user.id)
-
-  const followedGames: FollowedGame[] =
-    userGames
-      ?.map((ug: any) => ug.games as FollowedGame)
-      .filter((g): g is FollowedGame => g !== null) || []
-
-  const followedGameIds = followedGames.map((g) => g.id)
-
-  // Get backlog games
-  const { data: backlogGames } = await supabase
-    .from('backlog_items')
-    .select('game_id')
-    .eq('user_id', user.id)
-
-  const backlogGameIds = backlogGames?.map((bg) => bg.game_id) || []
-
-  // Combine followed + backlog game IDs (deduplicated)
-  const allUserGameIds = [...new Set([...followedGameIds, ...backlogGameIds])]
-
-  // Fetch upcoming games (releasing within 1 year) and new releases (last 30 days)
-  // These are global, not filtered by followed games
+  // Fetch upcoming games and new releases (global, not user-specific)
   const today = new Date()
   const oneYearFromNow = new Date(today)
   oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1)
@@ -286,6 +259,110 @@ export async function getHomeFeed(): Promise<HomeFeed> {
     }
   })
 
+  // Fetch ALL news (for Latest Headlines grid - not filtered by user's games)
+  const { data: allNewsRaw } = await supabase
+    .from('news_items')
+    .select('*, games(name, slug, cover_url, hero_url, logo_url, brand_color)')
+    .order('published_at', { ascending: false })
+    .limit(50)
+
+  // Sort all news by date (most recent first), non-rumors prioritized
+  let allNews: typeof allNewsRaw = []
+  if (allNewsRaw && allNewsRaw.length > 0) {
+    allNews = [...allNewsRaw].sort((a, b) => {
+      // Non-rumors first
+      if (a.is_rumor !== b.is_rumor) return a.is_rumor ? 1 : -1
+      // Then by date
+      return new Date(b.published_at).getTime() - new Date(a.published_at).getTime()
+    })
+  }
+
+  // Fetch deals from database (populated by cron job)
+  let deals: Deal[] = []
+  try {
+    const { data: dealsData } = await supabase
+      .from('deals')
+      .select('id, title, sale_price, normal_price, discount_percent, header_url, thumb_url, deal_url, store, expires_at')
+      .gte('discount_percent', 30)
+      .order('discount_percent', { ascending: false })
+      .limit(20)
+
+    if (dealsData && dealsData.length > 0) {
+      deals = dealsData.map(deal => {
+        // Calculate expiration
+        let expiresIn: string | null = null
+        if (deal.expires_at) {
+          const expirationDate = new Date(deal.expires_at)
+          const now = new Date()
+          const hoursLeft = Math.floor((expirationDate.getTime() - now.getTime()) / (1000 * 60 * 60))
+          if (hoursLeft > 0) {
+            if (hoursLeft < 24) {
+              expiresIn = `${hoursLeft}h left`
+            } else {
+              const daysLeft = Math.floor(hoursLeft / 24)
+              expiresIn = `${daysLeft}d left`
+            }
+          }
+        }
+
+        return {
+          id: deal.id,
+          title: deal.title,
+          salePrice: deal.sale_price,
+          normalPrice: deal.normal_price,
+          savings: deal.discount_percent,
+          store: deal.store || 'Steam',
+          thumb: deal.header_url || deal.thumb_url || '',
+          dealUrl: deal.deal_url,
+          expiresIn,
+        }
+      })
+    }
+  } catch {
+    // Deals table might not exist
+  }
+
+  // For guests (no user), return global content only
+  if (!user) {
+    return {
+      followedGames: [],
+      topPatches: [],
+      userNews: [],
+      latestNews: (allNews || []) as NewsItem[],
+      backlogNudge: null,
+      upcomingReleases: [],
+      upcomingGames,
+      newReleases,
+      deals,
+      gamePlatforms: emptyPlatforms,
+      seasonalImages: emptySeasonalImages,
+    }
+  }
+
+  // Get followed games (user_games)
+  const { data: userGames } = await supabase
+    .from('user_games')
+    .select('game_id, games!inner(id, name, slug, cover_url, platforms)')
+    .eq('user_id', user.id)
+
+  const followedGames: FollowedGame[] =
+    userGames
+      ?.map((ug: any) => ug.games as FollowedGame)
+      .filter((g): g is FollowedGame => g !== null) || []
+
+  const followedGameIds = followedGames.map((g) => g.id)
+
+  // Get backlog games
+  const { data: backlogGames } = await supabase
+    .from('backlog_items')
+    .select('game_id')
+    .eq('user_id', user.id)
+
+  const backlogGameIds = backlogGames?.map((bg) => bg.game_id) || []
+
+  // Combine followed + backlog game IDs (deduplicated)
+  const allUserGameIds = [...new Set([...followedGameIds, ...backlogGameIds])]
+
   // Fetch patches with game info including logo (only if user follows games)
   let patches: any[] = []
   if (followedGameIds.length > 0) {
@@ -315,24 +392,6 @@ export async function getHomeFeed(): Promise<HomeFeed> {
   let userNews: typeof userNewsRaw = []
   if (userNewsRaw && userNewsRaw.length > 0) {
     userNews = [...userNewsRaw].sort((a, b) => {
-      // Non-rumors first
-      if (a.is_rumor !== b.is_rumor) return a.is_rumor ? 1 : -1
-      // Then by date
-      return new Date(b.published_at).getTime() - new Date(a.published_at).getTime()
-    })
-  }
-
-  // Fetch ALL news (for Latest Headlines grid - not filtered by user's games)
-  const { data: allNewsRaw } = await supabase
-    .from('news_items')
-    .select('*, games(name, slug, cover_url, hero_url, logo_url, brand_color)')
-    .order('published_at', { ascending: false })
-    .limit(50)
-
-  // Sort all news by date (most recent first), non-rumors prioritized
-  let allNews: typeof allNewsRaw = []
-  if (allNewsRaw && allNewsRaw.length > 0) {
-    allNews = [...allNewsRaw].sort((a, b) => {
       // Non-rumors first
       if (a.is_rumor !== b.is_rumor) return a.is_rumor ? 1 : -1
       // Then by date
@@ -437,6 +496,7 @@ export async function getHomeFeed(): Promise<HomeFeed> {
     upcomingReleases,
     upcomingGames,
     newReleases,
+    deals,
     gamePlatforms,
     seasonalImages,
   }

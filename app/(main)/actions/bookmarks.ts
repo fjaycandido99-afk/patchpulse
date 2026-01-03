@@ -170,3 +170,77 @@ export async function isBookmarked(
 
   return !!data
 }
+
+export type RecommendationMetadata = {
+  game_id: string
+  game_name: string
+  slug: string
+  cover_url: string | null
+  reason: string
+  why_now: string | null
+  recommendation_type: 'return' | 'start' | 'finish' | 'discover'
+  savedAt: string
+}
+
+export async function toggleRecommendationBookmark(
+  gameId: string,
+  metadata: RecommendationMetadata
+) {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    console.error('[toggleRecommendationBookmark] Not authenticated')
+    return { error: 'Not authenticated' }
+  }
+
+  console.log('[toggleRecommendationBookmark] Saving for user:', user.id, 'gameId:', gameId)
+
+  const { data: existing, error: selectError } = await supabase
+    .from('bookmarks')
+    .select('id')
+    .eq('user_id', user.id)
+    .eq('entity_type', 'recommendation')
+    .eq('entity_id', gameId)
+    .single()
+
+  if (selectError && selectError.code !== 'PGRST116') {
+    console.error('[toggleRecommendationBookmark] Select error:', selectError)
+  }
+
+  if (existing) {
+    console.log('[toggleRecommendationBookmark] Removing existing bookmark:', existing.id)
+    const { error } = await supabase
+      .from('bookmarks')
+      .delete()
+      .eq('id', existing.id)
+
+    if (error) {
+      console.error('[toggleRecommendationBookmark] Delete error:', error)
+      return { error: 'Failed to remove bookmark' }
+    }
+
+    revalidatePath('/', 'layout')
+    return { success: true, bookmarked: false }
+  } else {
+    console.log('[toggleRecommendationBookmark] Creating new bookmark with metadata:', JSON.stringify(metadata))
+    const { error } = await supabase.from('bookmarks').insert({
+      user_id: user.id,
+      entity_type: 'recommendation',
+      entity_id: gameId,
+      metadata: metadata,
+    })
+
+    if (error) {
+      console.error('[toggleRecommendationBookmark] Insert error:', error)
+      return { error: `Failed to save recommendation: ${error.message}` }
+    }
+
+    console.log('[toggleRecommendationBookmark] Successfully saved bookmark')
+    revalidatePath('/', 'layout')
+    return { success: true, bookmarked: true }
+  }
+}

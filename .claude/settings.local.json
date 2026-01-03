@@ -20,7 +20,8 @@
       "Bash(del \"C:\\\\Users\\\\fjayc\\\\OneDrive\\\\Documents\\\\Gaming app\\\\components\\\\backlog\\\\BacklogControls.tsx\")",
       "Bash(cmd /c move \"C:\\\\Users\\\\fjayc\\\\OneDrive\\\\Documents\\\\Gaming app\" \"C:\\\\Dev\\\\patchpulse\")",
       "Bash(explorer \"C:\\\\Users\\\\fjayc\\\\OneDrive\\\\Documents\\\\Gaming app\\\\public\")",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(tasklist:*)"
     ]
   }
 }

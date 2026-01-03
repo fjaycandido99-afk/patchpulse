@@ -1,8 +1,10 @@
+import { cookies } from 'next/headers'
 import { getUpcomingGames, getUpcomingCounts } from './queries'
 import { EmptyGameState, GameGridWithSearch } from '@/components/games'
 import { Calendar, Sparkles } from 'lucide-react'
 import { UpcomingCalendar } from './UpcomingCalendar'
 import { createClient } from '@/lib/supabase/server'
+import { isGuestModeFromCookies } from '@/lib/guest'
 import { getUserPlan } from '@/lib/subscriptions/limits'
 import { redirect } from 'next/navigation'
 import { ProUpgradeCTA } from '@/components/ui/ProUpgradeCTA'
@@ -13,15 +15,26 @@ export const metadata = {
 }
 
 export default async function UpcomingPage() {
+  const cookieStore = await cookies()
+  const hasGuestCookie = isGuestModeFromCookies(cookieStore)
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  if (!user) {
+  // User is only a guest if they have the cookie AND are not logged in
+  const isGuest = !user && hasGuestCookie
+
+  if (!user && !isGuest) {
     redirect('/login')
   }
 
-  const plan = await getUserPlan(user.id)
-  const isPro = plan === 'pro'
+  let isPro = false
+
+  // For authenticated users, check their plan
+  if (user) {
+    const plan = await getUserPlan(user.id)
+    isPro = plan === 'pro'
+  }
 
   if (!isPro) {
     return (

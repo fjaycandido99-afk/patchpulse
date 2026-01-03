@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { toggleBookmark } from '@/app/(main)/actions/bookmarks'
-import Link from 'next/link'
 import { Crown } from 'lucide-react'
 
 type BookmarkButtonProps = {
@@ -32,6 +32,7 @@ export function BookmarkButton({
   size = 'md',
   isPro = true,
 }: BookmarkButtonProps) {
+  const router = useRouter()
   const [isBookmarked, setIsBookmarked] = useState(initialBookmarked)
   const [isPending, startTransition] = useTransition()
 
@@ -50,17 +51,21 @@ export function BookmarkButton({
     })
   }
 
-  // Non-Pro users see a locked bookmark that links to pricing
+  // Non-Pro users see a locked bookmark that navigates to pricing
   if (!isPro) {
     return (
-      <Link
-        href="/pricing"
+      <button
+        onClick={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          router.push('/pricing')
+        }}
         aria-label="Upgrade to save items"
         title="Pro feature - Upgrade to save"
         className={`rounded-lg border border-primary/30 bg-primary/10 text-primary transition-colors hover:bg-primary/20 flex items-center justify-center ${sizeClasses[size]}`}
       >
         <Crown className={iconSizes[size]} />
-      </Link>
+      </button>
     )
   }
 

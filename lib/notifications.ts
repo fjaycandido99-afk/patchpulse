@@ -18,7 +18,7 @@ export type TodaysNewsItem = {
 
 export type Notification = {
   id: string
-  type: 'new_patch' | 'new_news' | 'game_release' | 'ai_digest' | 'price_drop' | 'system'
+  type: 'new_patch' | 'new_news' | 'game_release' | 'ai_digest' | 'price_drop' | 'saved_reminder' | 'system'
   title: string
   body: string | null
   priority: number

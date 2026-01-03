@@ -3,6 +3,7 @@ import Image from 'next/image'
 import { Suspense } from 'react'
 import { ExternalLink, Sparkles, Zap, Users, Trophy, Target, ChevronRight, Map, Swords, Shield, Settings, Gamepad2, BarChart3, Clock, Flame, Star, ArrowLeft } from 'lucide-react'
 import { BackButton } from '@/components/ui/BackButton'
+import { HeroBanner } from '@/components/ui/HeroBanner'
 import { getPatchById, getRelatedPatches } from '../queries'
 import { isBookmarked } from '@/app/(main)/actions/bookmarks'
 import { isFollowingGame } from '@/app/(main)/actions/games'
@@ -221,44 +222,10 @@ export default async function PatchDetailPage({
       <AutoMarkRead contentType="patch" contentId={id} />
 
       {/* Full-bleed Hero Image */}
-      <div className="fixed inset-x-0 top-0 h-[320px] sm:h-[380px] lg:h-[440px] overflow-hidden -z-10">
-        {heroImage ? (
-          <>
-            <Image
-              src={heroImage}
-              alt={patch.title}
-              fill
-              className="object-cover object-top"
-              priority
-              sizes="100vw"
-              unoptimized
-            />
-            <div
-              className="absolute inset-0"
-              style={{
-                background: 'linear-gradient(to bottom, rgba(10,10,25,0.05) 0%, rgba(10,10,25,0.2) 40%, rgba(10,10,25,0.8) 80%, rgb(10,10,25) 100%)'
-              }}
-            />
-            {/* Top gradient to blend with header */}
-            <div
-              className="absolute inset-x-0 top-0 h-20"
-              style={{
-                background: 'linear-gradient(to bottom, rgba(10,15,30,0.6) 0%, transparent 100%)'
-              }}
-            />
-          </>
-        ) : (
-          <div
-            className="absolute inset-0"
-            style={{
-              background: `linear-gradient(180deg, ${brandColor}40 0%, rgb(10,10,25) 100%)`
-            }}
-          />
-        )}
-      </div>
+      <HeroBanner imageUrl={heroImage} altText={patch.title} fallbackColor={brandColor} />
 
       {/* Content pushed below hero */}
-      <div className="relative z-10 pt-[200px] sm:pt-[240px] lg:pt-[280px] space-y-6">
+      <div className="relative z-10 pt-[140px] sm:pt-[180px] md:pt-[220px] lg:pt-[280px] space-y-6">
         {/* Back Button */}
         <Suspense fallback={
           <span className="inline-flex items-center gap-1.5 text-sm text-white/70">

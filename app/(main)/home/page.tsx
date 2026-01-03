@@ -1,6 +1,9 @@
+import { cookies } from 'next/headers'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Sparkles, Gamepad2 } from 'lucide-react'
+import { isGuestModeFromCookies } from '@/lib/guest'
+import { createClient } from '@/lib/supabase/server'
 import { getPatchesList } from '../patches/queries'
 import { getHomeFeed } from './queries'
 import { getStalePlayingGames, getReturnSuggestions } from '../backlog/queries'
@@ -18,11 +21,21 @@ import { HeadlinesSection } from './HeadlinesSection'
 import { HomeGameStrip } from './HomeGameStrip'
 
 export default async function HomePage() {
+  const cookieStore = await cookies()
+  const hasGuestCookie = isGuestModeFromCookies(cookieStore)
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  // User is only a guest if they have the cookie AND are not logged in
+  const isGuest = !user && hasGuestCookie
+
+  // For guests, skip user-specific queries
   const [feed, staleGames, returnSuggestions, patchesResult] = await Promise.all([
     getHomeFeed(),
-    getStalePlayingGames(14),
-    getReturnSuggestions(),
-    getPatchesList({ page: 1, followedOnly: true }),
+    isGuest ? [] : getStalePlayingGames(14),
+    isGuest ? [] : getReturnSuggestions(),
+    isGuest ? { items: [], total: 0 } : getPatchesList({ page: 1, followedOnly: true }),
   ])
 
   return (
@@ -33,9 +46,11 @@ export default async function HomePage() {
         <section className="flex items-center gap-2">
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gradient-to-r from-violet-500/20 to-purple-500/20 border border-violet-500/30">
             <Sparkles className="w-3.5 h-3.5 text-violet-400" />
-            <span className="text-xs font-medium text-violet-300">For You</span>
+            <span className="text-xs font-medium text-violet-300">{isGuest ? 'Discover' : 'For You'}</span>
           </div>
-          <span className="text-[11px] text-zinc-500 hidden sm:inline">Based on games you follow</span>
+          <span className="text-[11px] text-zinc-500 hidden sm:inline">
+            {isGuest ? 'Latest gaming updates' : 'Based on games you follow'}
+          </span>
         </section>
 
         {/* Mobile-First: Game Strips at Top */}
@@ -58,7 +73,6 @@ export default async function HomePage() {
             </div>
           </section>
         )}
-
 
         {/* Latest Headlines */}
         <HeadlinesSection

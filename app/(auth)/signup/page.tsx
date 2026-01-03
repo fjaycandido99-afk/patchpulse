@@ -1,13 +1,17 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { signUpWithEmail } from '../actions'
 import Link from 'next/link'
-import { Mail, Check, ArrowRight, Gamepad2, Zap, Bell } from 'lucide-react'
+import { Mail, Check, ArrowRight, Gamepad2, Zap, Bell, User, Eye, EyeOff } from 'lucide-react'
+import { enableGuestMode } from '@/lib/guest'
 
 export default function SignupPage() {
+  const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [emailSent, setEmailSent] = useState(false)
@@ -28,6 +32,11 @@ export default function SignupPage() {
       setEmailSent(true)
       setLoading(false)
     }
+  }
+
+  const handleContinueAsGuest = () => {
+    enableGuestMode()
+    router.push('/home')
   }
 
   // Email confirmation sent screen
@@ -170,6 +179,13 @@ export default function SignupPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+            {/* Email confirmation notice */}
+            <div className="rounded-lg bg-blue-500/10 border border-blue-500/20 p-3">
+              <p className="text-sm text-blue-400">
+                <strong>Note:</strong> You'll need to confirm your email address before you can sign in. Check your inbox after signing up.
+              </p>
+            </div>
+
             {error && (
               <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
                 {error}
@@ -196,16 +212,26 @@ export default function SignupPage() {
                 <label htmlFor="password" className="block text-sm font-medium">
                   Password
                 </label>
-                <input
-                  id="password"
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="mt-1 block w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm transition-colors placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                  placeholder="••••••••"
-                  minLength={6}
-                />
+                <div className="relative mt-1">
+                  <input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="block w-full rounded-lg border border-input bg-background px-3 py-2.5 pr-10 text-sm transition-colors placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                    placeholder="••••••••"
+                    minLength={6}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
                 <p className="mt-1 text-xs text-muted-foreground">
                   Must be at least 6 characters
                 </p>
@@ -235,6 +261,27 @@ export default function SignupPage() {
               <Link href="/login" className="font-medium text-primary hover:underline">
                 Sign in
               </Link>
+            </p>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-border" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">Or</span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleContinueAsGuest}
+              className="w-full flex items-center justify-center gap-2 rounded-lg border border-border bg-background px-4 py-2.5 text-sm font-medium text-muted-foreground transition-all hover:bg-accent hover:text-accent-foreground active:scale-[0.98]"
+            >
+              <User className="w-4 h-4" />
+              Continue as Guest
+            </button>
+            <p className="text-center text-xs text-muted-foreground">
+              Browse games and patches without an account
             </p>
           </form>
         </div>

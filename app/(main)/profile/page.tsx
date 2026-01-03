@@ -1,7 +1,9 @@
+import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { FileText, Shield, ChevronRight } from 'lucide-react'
+import { FileText, Shield, ChevronRight, User, UserPlus, LogIn, Sparkles } from 'lucide-react'
+import { isGuestModeFromCookies } from '@/lib/guest'
 import { ConnectedAccounts } from './ConnectedAccounts'
 import { BiometricSettings } from '@/components/auth/BiometricSettings'
 import { LogoutButton } from '@/components/auth/LogoutButton'
@@ -18,9 +20,135 @@ import { SubscriptionSection } from '@/components/subscription/SubscriptionSecti
 import { getSubscriptionInfo } from '@/lib/subscriptions/limits'
 
 export default async function ProfilePage() {
+  const cookieStore = await cookies()
+  const hasGuestCookie = isGuestModeFromCookies(cookieStore)
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
+  // User is only a guest if they have the cookie AND are not logged in
+  const isGuest = !user && hasGuestCookie
+
+  // Redirect to login if not logged in and not a guest
+  if (!user && !isGuest) {
+    redirect('/login')
+  }
+
+  // Show sign-in prompt for guests
+  if (isGuest) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Profile</h1>
+          <p className="mt-2 text-muted-foreground">
+            Manage your account settings and gaming preferences.
+          </p>
+        </div>
+
+        {/* Guest profile card */}
+        <div className="rounded-xl border border-border bg-card p-8 text-center">
+          <div className="mx-auto w-20 h-20 rounded-full bg-white/10 flex items-center justify-center mb-4">
+            <User className="w-10 h-10 text-muted-foreground" />
+          </div>
+          <h2 className="text-xl font-semibold mb-2">You're browsing as a guest</h2>
+          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+            Create an account to save your progress, follow games, and sync across devices.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link
+              href="/signup"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
+            >
+              <UserPlus className="w-4 h-4" />
+              Create Account
+            </Link>
+            <Link
+              href="/login"
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-border px-6 py-2.5 text-sm font-medium hover:bg-accent transition-colors"
+            >
+              <LogIn className="w-4 h-4" />
+              Sign In
+            </Link>
+          </div>
+        </div>
+
+        {/* Benefits of signing up */}
+        <div className="rounded-xl border border-border bg-card p-6">
+          <h3 className="font-semibold mb-4 flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-primary" />
+            Why create an account?
+          </h3>
+          <div className="grid sm:grid-cols-2 gap-4 text-sm">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <span className="text-primary font-bold">1</span>
+              </div>
+              <div>
+                <p className="font-medium">Follow your favorite games</p>
+                <p className="text-muted-foreground text-xs">Get notified about patches and updates</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <span className="text-primary font-bold">2</span>
+              </div>
+              <div>
+                <p className="font-medium">Track your backlog</p>
+                <p className="text-muted-foreground text-xs">Manage what you're playing and want to play</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <span className="text-primary font-bold">3</span>
+              </div>
+              <div>
+                <p className="font-medium">Connect gaming accounts</p>
+                <p className="text-muted-foreground text-xs">Sync with Steam, Xbox, and more</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <span className="text-primary font-bold">4</span>
+              </div>
+              <div>
+                <p className="font-medium">Sync across devices</p>
+                <p className="text-muted-foreground text-xs">Access your library anywhere</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Legal */}
+        <section className="rounded-xl border border-border bg-card p-6">
+          <h2 className="text-lg font-semibold mb-4">Legal</h2>
+          <div className="space-y-1">
+            <Link
+              href="/privacy"
+              className="flex items-center justify-between p-3 -mx-3 rounded-lg hover:bg-white/5 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <Shield className="w-5 h-5 text-muted-foreground" />
+                <span>Privacy Policy</span>
+              </div>
+              <ChevronRight className="w-4 h-4 text-muted-foreground" />
+            </Link>
+            <Link
+              href="/terms"
+              className="flex items-center justify-between p-3 -mx-3 rounded-lg hover:bg-white/5 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <FileText className="w-5 h-5 text-muted-foreground" />
+                <span>Terms of Service</span>
+              </div>
+              <ChevronRight className="w-4 h-4 text-muted-foreground" />
+            </Link>
+          </div>
+        </section>
+      </div>
+    )
+  }
+
+  // At this point, user must exist (we redirect if !user && !isGuest, and isGuest returns early)
   if (!user) {
     redirect('/login')
   }
