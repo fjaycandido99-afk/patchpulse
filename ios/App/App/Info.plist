@@ -47,5 +47,39 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+
+	<!-- Push Notifications Background Mode -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
+
+	<!-- App Tracking Transparency (if personalized ads/recommendations) -->
+	<key>NSUserTrackingUsageDescription</key>
+	<string>PatchPulse uses this to provide personalized game recommendations based on your preferences.</string>
+
+	<!-- Export Compliance - No encryption beyond HTTPS -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+
+	<!-- App Transport Security - Allow web content -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoadsInWebContent</key>
+		<true/>
+	</dict>
+
+	<!-- URL Scheme for OAuth callbacks -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>app.patchpulse.ios</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>patchpulse</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>
