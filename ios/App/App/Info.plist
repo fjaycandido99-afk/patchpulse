@@ -54,10 +54,6 @@
 		<string>remote-notification</string>
 	</array>
 
-	<!-- App Tracking Transparency (if personalized ads/recommendations) -->
-	<key>NSUserTrackingUsageDescription</key>
-	<string>PatchPulse uses this to provide personalized game recommendations based on your preferences.</string>
-
 	<!-- Export Compliance - No encryption beyond HTTPS -->
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
