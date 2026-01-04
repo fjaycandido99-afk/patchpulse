@@ -21,7 +21,9 @@
       "Bash(cmd /c move \"C:\\\\Users\\\\fjayc\\\\OneDrive\\\\Documents\\\\Gaming app\" \"C:\\\\Dev\\\\patchpulse\")",
       "Bash(explorer \"C:\\\\Users\\\\fjayc\\\\OneDrive\\\\Documents\\\\Gaming app\\\\public\")",
       "Bash(npm install:*)",
-      "Bash(tasklist:*)"
+      "Bash(tasklist:*)",
+      "Bash(explorer \"screenshots\\\\screenshot-generator.html\")",
+      "Bash(explorer \"C:\\\\Users\\\\fjayc\\\\OneDrive\\\\Documents\\\\Gaming app\\\\screenshots\\\\appstore\")"
     ]
   }
 }
