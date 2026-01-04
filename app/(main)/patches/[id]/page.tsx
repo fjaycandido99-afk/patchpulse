@@ -9,6 +9,8 @@ import { isBookmarked } from '@/app/(main)/actions/bookmarks'
 import { isFollowingGame } from '@/app/(main)/actions/games'
 import { getBacklogItem } from '@/app/(main)/backlog/queries'
 import { BookmarkButton } from '@/components/ui/BookmarkButton'
+import { CopyButton } from '@/components/ui/CopyButton'
+import { ShareButton } from '@/components/ui/ShareButton'
 import { FollowGameButton } from '@/components/games'
 import { Badge, ImpactBadge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
@@ -276,13 +278,16 @@ export default async function PatchDetailPage({
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-white leading-tight">
               {patch.title}
             </h1>
-            <BookmarkButton
-              entityType="patch"
-              entityId={patch.id}
-              initialBookmarked={bookmarked}
-              size="lg"
-              isPro={isPro}
-            />
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <ShareButton title={patch.title} size="md" variant="icon" />
+              <BookmarkButton
+                entityType="patch"
+                entityId={patch.id}
+                initialBookmarked={bookmarked}
+                size="lg"
+                isPro={isPro}
+              />
+            </div>
           </div>
         </div>
 
@@ -322,11 +327,14 @@ export default async function PatchDetailPage({
         {patch.summary_tldr && (
           <>
             <Card className="p-5 space-y-3">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                  <span className="text-lg">⚡</span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                    <span className="text-lg">⚡</span>
+                  </div>
+                  <h2 className="text-lg font-semibold">Summary</h2>
                 </div>
-                <h2 className="text-lg font-semibold">Summary</h2>
+                <CopyButton text={patch.summary_tldr} label="Copy" size="sm" variant="button" />
               </div>
               <p className="text-zinc-300 leading-relaxed">{patch.summary_tldr}</p>
             </Card>
@@ -418,11 +426,14 @@ export default async function PatchDetailPage({
           <>
             <SectionDivider />
             <Card className="p-5 space-y-3">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-zinc-500/10 flex items-center justify-center">
-                  <span className="text-lg">📜</span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-zinc-500/10 flex items-center justify-center">
+                    <span className="text-lg">📜</span>
+                  </div>
+                  <h2 className="text-lg font-semibold">Full Patch Notes</h2>
                 </div>
-                <h2 className="text-lg font-semibold">Full Patch Notes</h2>
+                <CopyButton text={patch.raw_text} label="Copy All" size="sm" variant="button" />
               </div>
               <div className="rounded-lg border border-white/10 bg-black/40 p-4 max-h-96 overflow-y-auto">
                 <pre className="whitespace-pre-wrap text-sm text-zinc-400 font-mono">
