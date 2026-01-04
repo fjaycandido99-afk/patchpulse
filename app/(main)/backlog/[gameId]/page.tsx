@@ -10,6 +10,7 @@ import { WhatsNew } from '@/components/backlog/WhatsNew'
 import { formatDate, relativeDaysText } from '@/lib/dates'
 import { AddToBacklogButton } from '@/components/backlog/AddToBacklogButton'
 import { StoreLinkButtons } from '@/components/ui/StoreLinkButtons'
+import { PlayNowButton } from '@/components/ui/PlayNowButton'
 import { SteamStats } from '@/components/library/SteamStats'
 import { GameManagement } from '@/components/backlog/GameManagement'
 import { StudioInfoSection } from '@/components/games/StudioInfoSection'
@@ -548,6 +549,16 @@ export default async function BacklogDetailPage({
                   {backlogItem.progress}%
                 </span>
               </div>
+
+              {/* Play Now Button - Desktop browser only */}
+              {game.steam_app_id && (
+                <PlayNowButton
+                  gameName={game.name}
+                  steamAppId={game.steam_app_id}
+                  size="sm"
+                  variant="primary"
+                />
+              )}
 
               {/* Latest Patch Info */}
               {backlogItem.latestPatch && (
