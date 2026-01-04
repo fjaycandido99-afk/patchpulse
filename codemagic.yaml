@@ -1,37 +1,55 @@
+definitions:
+  scripts:
+    - &install_deps
+      name: Install dependencies
+      script: npm ci
+    - &cap_sync
+      name: Capacitor sync
+      script: npx cap sync ios
+    - &pod_install
+      name: Pod install
+      script: cd ios/App && pod install --repo-update
+    - &build_ios
+      name: Build iOS
+      script: |
+        cd ios/App
+        xcodebuild -workspace App.xcworkspace \
+          -scheme App \
+          -configuration Release \
+          -sdk iphoneos \
+          -destination 'generic/platform=iOS' \
+          CODE_SIGNING_ALLOWED=NO \
+          build
+
 workflows:
   ios-build:
     name: iOS Build
     max_build_duration: 60
     instance_type: mac_mini_m2
+    working_directory: .
+    labels:
+      - capacitor
 
     environment:
       node: 18
       xcode: 15.4
       cocoapods: default
 
+    cache:
+      cache_paths:
+        - $HOME/.npm
+        - $HOME/Library/Caches/CocoaPods
+
+    triggering:
+      events:
+        - push
+      cancel_previous_builds: true
+
     scripts:
-      - name: Install dependencies
-        script: |
-          npm ci
-
-      - name: Capacitor sync
-        script: |
-          npx cap sync ios
-
-      - name: Pod install
-        script: |
-          cd ios/App && pod install --repo-update
-
-      - name: Build
-        script: |
-          cd ios/App
-          xcodebuild -workspace App.xcworkspace \
-            -scheme App \
-            -configuration Release \
-            -sdk iphoneos \
-            -destination 'generic/platform=iOS' \
-            CODE_SIGNING_ALLOWED=NO \
-            build
+      - *install_deps
+      - *cap_sync
+      - *pod_install
+      - *build_ios
 
     artifacts:
       - ios/App/build/**/*
