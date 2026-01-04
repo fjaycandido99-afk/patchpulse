@@ -7,7 +7,7 @@ workflows:
     environment:
       ios_signing:
         distribution_type: app_store
-        bundle_identifier: app.patchpulse.ios
+        bundle_identifier: com.patchpulse.app
       vars:
         XCODE_WORKSPACE: "ios/App/App.xcworkspace"
         XCODE_SCHEME: "App"
@@ -16,15 +16,20 @@ workflows:
     scripts:
       - name: Install npm dependencies
         script: |
-          npm install
+          npm ci
 
-      - name: Update Capacitor
+      - name: Sync Capacitor iOS
         script: |
           npx cap sync ios
 
       - name: Install CocoaPods dependencies
         script: |
           cd ios/App && pod install
+
+      - name: Resolve Swift Package dependencies
+        script: |
+          cd ios/App
+          xcodebuild -resolvePackageDependencies -workspace App.xcworkspace -scheme App
 
       - name: Set up code signing
         script: |
