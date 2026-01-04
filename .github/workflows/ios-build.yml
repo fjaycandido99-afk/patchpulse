@@ -4,6 +4,11 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      marketing_version:
+        description: 'Marketing version (e.g., 1.1) - leave empty to keep current'
+        required: false
+        type: string
 
 jobs:
   build:
@@ -11,6 +16,26 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Bump Version Numbers
+        run: |
+          PROJECT_FILE="ios/App/App.xcodeproj/project.pbxproj"
+          BUILD_NUMBER=${{ github.run_number }}
+
+          echo "Setting build number to: $BUILD_NUMBER"
+
+          # Update CURRENT_PROJECT_VERSION (build number) - auto-increments with each run
+          sed -i '' "s/CURRENT_PROJECT_VERSION = [0-9]*;/CURRENT_PROJECT_VERSION = $BUILD_NUMBER;/g" "$PROJECT_FILE"
+
+          # Update MARKETING_VERSION if provided via workflow_dispatch
+          if [ -n "${{ inputs.marketing_version }}" ]; then
+            echo "Setting marketing version to: ${{ inputs.marketing_version }}"
+            sed -i '' "s/MARKETING_VERSION = [0-9.]*;/MARKETING_VERSION = ${{ inputs.marketing_version }};/g" "$PROJECT_FILE"
+          fi
+
+          # Show what was set
+          echo "=== Version settings ==="
+          grep -E "(CURRENT_PROJECT_VERSION|MARKETING_VERSION)" "$PROJECT_FILE" | head -4
 
       - name: Select Xcode 16
         run: sudo xcode-select -s /Applications/Xcode_16.1.app/Contents/Developer
