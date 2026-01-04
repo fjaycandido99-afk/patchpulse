@@ -24,12 +24,8 @@ workflows:
 
       - name: Install CocoaPods dependencies
         script: |
-          cd ios/App && pod install
-
-      - name: Resolve Swift Package dependencies
-        script: |
           cd ios/App
-          xcodebuild -resolvePackageDependencies -workspace App.xcworkspace -scheme App
+          pod install --repo-update
 
       - name: Set up code signing
         script: |
