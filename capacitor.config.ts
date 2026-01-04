@@ -13,8 +13,6 @@ const config: CapacitorConfig = {
     contentInset: 'automatic',
     preferredContentMode: 'mobile',
     scheme: 'patchpulse',
-    // Use CocoaPods instead of SPM for plugins
-    useCocoaPods: true,
   },
   plugins: {
     PurchasesPlugin: {
