@@ -4,19 +4,12 @@ workflows:
     max_build_duration: 60
     instance_type: mac_mini_m2
 
-    # Skip automatic project detection - we handle everything in scripts
-    integrations:
-      app_store_connect: codemagic
-
     environment:
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.patchpulse.app
       vars:
-        XCODE_WORKSPACE: "ios/App/App.xcworkspace"
         XCODE_SCHEME: "App"
-        # Skip automatic SPM resolution
-        SKIP_PACKAGE_RESOLUTION: "true"
       node: 18
       xcode: 15.4
       cocoapods: default
@@ -41,18 +34,30 @@ workflows:
 
       - name: Build iOS app
         script: |
-          xcode-project build-ipa \
-            --workspace "$XCODE_WORKSPACE" \
-            --scheme "$XCODE_SCHEME"
+          cd ios/App
+          xcodebuild -workspace App.xcworkspace \
+            -scheme App \
+            -configuration Release \
+            -archivePath build/App.xcarchive \
+            archive \
+            CODE_SIGN_IDENTITY="iPhone Distribution" \
+            CODE_SIGNING_REQUIRED=YES
+
+      - name: Export IPA
+        script: |
+          cd ios/App
+          xcodebuild -exportArchive \
+            -archivePath build/App.xcarchive \
+            -exportPath build/ipa \
+            -exportOptionsPlist ../../exportOptions.plist
 
     artifacts:
-      - build/ios/ipa/*.ipa
+      - ios/App/build/ipa/*.ipa
+      - ios/App/build/*.xcarchive
       - /tmp/xcodebuild_logs/*.log
-      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
 
     publishing:
       app_store_connect:
-        # Add your API key in Codemagic dashboard
         auth: integration
         submit_to_testflight: true
         submit_to_app_store: false
