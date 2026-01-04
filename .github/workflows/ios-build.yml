@@ -84,19 +84,19 @@ jobs:
           # Decode provisioning profile
           echo -n "$IOS_PROVISIONING_PROFILE_BASE64" | base64 --decode -o $PP_PATH
 
-          # Install provisioning profile
+          # Extract UUID from provisioning profile
+          PP_UUID=$(/usr/libexec/PlistBuddy -c "Print UUID" /dev/stdin <<< $(/usr/bin/security cms -D -i $PP_PATH))
+          echo "PP_UUID=$PP_UUID" >> $GITHUB_ENV
+          echo "Provisioning Profile UUID: $PP_UUID"
+
+          # Install provisioning profile with UUID as filename
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles/
+          cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles/$PP_UUID.mobileprovision
 
       - name: Build and Archive iOS
         run: |
           cd ios/App
-          # Clean first
-          xcodebuild -workspace App.xcworkspace \
-            -scheme App \
-            -configuration Release \
-            clean
-          # Build archive
+          # Build archive with provisioning profile
           xcodebuild -workspace App.xcworkspace \
             -scheme App \
             -configuration Release \
@@ -106,7 +106,7 @@ jobs:
             DEVELOPMENT_TEAM=FX8T7ASYCL \
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="Apple Distribution" \
-            PROVISIONING_PROFILE_SPECIFIER="" \
+            PROVISIONING_PROFILE=$PP_UUID \
             archive
 
       - name: Export IPA
