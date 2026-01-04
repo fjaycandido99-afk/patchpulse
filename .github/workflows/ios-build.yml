@@ -96,15 +96,13 @@ jobs:
       - name: Build and Archive iOS
         run: |
           cd ios/App
-          # Build archive - only set signing for App target, not Pods
+          # Build archive - signing configured in project file for App target only
           xcodebuild -workspace App.xcworkspace \
             -scheme App \
             -configuration Release \
             -sdk iphoneos \
             -destination 'generic/platform=iOS' \
             -archivePath $RUNNER_TEMP/App.xcarchive \
-            -allowProvisioningUpdates \
-            DEVELOPMENT_TEAM=FX8T7ASYCL \
             archive
 
       - name: Export IPA
