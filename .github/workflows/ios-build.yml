@@ -35,6 +35,23 @@ jobs:
           gem install cocoapods
           cd ios/App && pod install --repo-update
 
+      - name: Verify Pod Installation
+        run: |
+          echo "=== Checking node_modules/@capacitor/ios ==="
+          ls -la node_modules/@capacitor/ios || echo "Capacitor iOS not found"
+          echo ""
+          echo "=== Checking Podfile.lock ==="
+          cat ios/App/Podfile.lock || echo "No Podfile.lock found"
+          echo ""
+          echo "=== Checking Pods directory ==="
+          ls -la ios/App/Pods/ || echo "No Pods directory found"
+          echo ""
+          echo "=== Checking Pods/Capacitor ==="
+          ls -la ios/App/Pods/Capacitor || echo "Capacitor pod not found"
+          echo ""
+          echo "=== Checking workspace ==="
+          ls -la ios/App/*.xcworkspace || echo "No workspace found"
+
       - name: Install Apple Certificate
         env:
           IOS_CERTIFICATE_BASE64: ${{ secrets.IOS_CERTIFICATE_BASE64 }}
@@ -80,6 +97,8 @@ jobs:
             -sdk iphoneos \
             -destination 'generic/platform=iOS' \
             -archivePath $RUNNER_TEMP/App.xcarchive \
+            -allowProvisioningUpdates \
+            COMPILER_INDEX_STORE_ENABLE=NO \
             archive
 
       - name: Export IPA
