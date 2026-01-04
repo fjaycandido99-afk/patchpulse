@@ -419,6 +419,7 @@ export function NewsFeed({ news, topStories, includeRumors, sources, selectedSou
         {filteredNews.map((item, index) => (
           <div
             key={item.id}
+            data-keyboard-nav
             className="animate-soft-entry h-full"
             style={{ animationDelay: `${index * 30}ms` }}
           >

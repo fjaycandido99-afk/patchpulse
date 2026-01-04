@@ -21,6 +21,7 @@ import { getNotificationStats } from '@/lib/notifications'
 import { getLatestPatchesStats } from '@/lib/patches-stats'
 import { ScrollToTop } from '@/components/ui/ScrollToTop'
 import { CommandPalette } from '@/components/command-palette'
+import { KeyboardShortcuts } from '@/components/keyboard'
 
 export default async function MainLayout({
   children,
@@ -155,6 +156,7 @@ export default async function MainLayout({
 
             <MobileNav badges={navBadges} isGuest={isGuest} />
             <ScrollToTop />
+            <KeyboardShortcuts />
           </div>
         </DealSpotlightProvider>
         </SpotlightProvider>

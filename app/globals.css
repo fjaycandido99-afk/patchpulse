@@ -311,6 +311,13 @@
     padding: 0 16px;
   }
 
+  /* Keyboard navigation focus style */
+  .keyboard-focused {
+    outline: 2px solid hsl(var(--primary));
+    outline-offset: 2px;
+    border-radius: 12px;
+  }
+
   /* Search bar - normal flow, not absolute */
   .search-bar {
     height: 64px;

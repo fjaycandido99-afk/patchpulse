@@ -149,6 +149,7 @@ export function PatchesList({ initialPatches, followedGameIds = [] }: Props) {
               <Link
                 key={patch.id}
                 href={`/patches/${patch.id}`}
+                data-keyboard-nav
                 className="group flex gap-4 p-4 hover:bg-white/5 transition-colors"
               >
                 {/* Game Cover */}
