@@ -128,7 +128,7 @@ export async function GET(req: Request) {
           discount_percent: Math.round(parseFloat(deal.savings)),
           thumb_url: deal.thumb,
           header_url: steamId
-            ? `https://cdn.cloudflare.steamstatic.com/steam/apps/${steamId}/header.jpg`
+            ? `https://cdn.akamai.steamstatic.com/steam/apps/${steamId}/header.jpg`
             : deal.thumb,
           deal_url: dealUrl,
           store: storeName,
