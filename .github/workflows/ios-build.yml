@@ -99,6 +99,9 @@ jobs:
             -archivePath $RUNNER_TEMP/App.xcarchive \
             -allowProvisioningUpdates \
             COMPILER_INDEX_STORE_ENABLE=NO \
+            DEVELOPMENT_TEAM=FX8T7ASYCL \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="Apple Distribution" \
             archive
 
       - name: Export IPA
@@ -111,10 +114,14 @@ jobs:
           <dict>
               <key>method</key>
               <string>app-store</string>
+              <key>teamID</key>
+              <string>FX8T7ASYCL</string>
               <key>uploadSymbols</key>
               <true/>
               <key>uploadBitcode</key>
               <false/>
+              <key>signingStyle</key>
+              <string>manual</string>
           </dict>
           </plist>
           EOF
