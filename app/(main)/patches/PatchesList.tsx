@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { FileText, ChevronRight, Flame, Filter, Plus, Loader2, Check } from 'lucide-react'
 import { followGame } from '@/app/(main)/actions/games'
+import { PatchHoverPreview } from '@/components/patches/PatchHoverPreview'
 
 type Patch = {
   id: string
@@ -146,12 +147,21 @@ export function PatchesList({ initialPatches, followedGameIds = [] }: Props) {
         ) : (
           <div className="divide-y divide-border">
             {filteredPatches.map(patch => (
-              <Link
+              <PatchHoverPreview
                 key={patch.id}
-                href={`/patches/${patch.id}`}
-                data-keyboard-nav
-                className="group flex gap-4 p-4 hover:bg-white/5 transition-colors"
+                patch={{
+                  title: patch.title,
+                  gameName: patch.game.name,
+                  impactScore: patch.impact_score,
+                  summary: patch.summary_tldr,
+                  publishedAt: patch.published_at,
+                }}
               >
+                <Link
+                  href={`/patches/${patch.id}`}
+                  data-keyboard-nav
+                  className="group flex gap-4 p-4 hover:bg-white/5 transition-colors"
+                >
                 {/* Game Cover */}
                 <div className="flex-shrink-0">
                   {patch.game.cover_url ? (
@@ -238,6 +248,7 @@ export function PatchesList({ initialPatches, followedGameIds = [] }: Props) {
                   </div>
                 </div>
               </Link>
+              </PatchHoverPreview>
             ))}
           </div>
         )}
