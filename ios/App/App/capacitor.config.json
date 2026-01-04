@@ -1,0 +1,22 @@
+{
+	"appId": "com.patchpulse.app",
+	"appName": "PatchPulse",
+	"webDir": "out",
+	"server": {
+		"url": "https://patchpulse.app",
+		"cleartext": false
+	},
+	"ios": {
+		"contentInset": "automatic",
+		"preferredContentMode": "mobile",
+		"scheme": "patchpulse",
+		"useCocoaPods": true
+	},
+	"plugins": {
+		"PurchasesPlugin": {}
+	},
+	"packageClassList": [
+		"PushNotificationsPlugin",
+		"PurchasesPlugin"
+	]
+}
