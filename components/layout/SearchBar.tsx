@@ -45,14 +45,9 @@ export function SearchBar({ placeholder = 'Search games, patches, news...', clas
     }
   }, [])
 
-  // Keyboard shortcut: Cmd/Ctrl + K
+  // Keyboard shortcut: Escape to close (Cmd+K now handled by CommandPalette on desktop)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault()
-        setIsOpen(true)
-        setTimeout(() => inputRef.current?.focus(), 100)
-      }
       if (e.key === 'Escape' && isOpen) {
         setIsOpen(false)
         setQuery('')
@@ -182,9 +177,6 @@ export function SearchBar({ placeholder = 'Search games, patches, news...', clas
         <Search className="w-4 h-4" />
         <span className="hidden sm:inline">{placeholder}</span>
         <span className="sm:hidden">Search</span>
-        <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-white/10 text-xs text-muted-foreground ml-2">
-          <span className="text-[10px]">⌘</span>K
-        </kbd>
       </button>
 
       {/* Search overlay - single fixed container */}
