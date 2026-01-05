@@ -11,6 +11,9 @@ import { SteamStats } from '@/components/library/SteamStats'
 import { GameManagement } from '@/components/backlog/GameManagement'
 import { BackButton } from '@/components/ui/BackButton'
 
+// Force dynamic rendering - no caching
+export const dynamic = 'force-dynamic'
+
 // Get game data (using admin client to bypass RLS)
 async function getGame(gameId: string) {
   console.log('[getGame] Starting fetch for:', gameId)
