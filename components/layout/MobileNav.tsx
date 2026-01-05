@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Home, Newspaper, Library, Brain, Crown, Bookmark, Video, Menu, X, Gamepad2, CalendarDays, ChevronRight, Tag } from 'lucide-react'
+import { Home, Newspaper, Library, Brain, Crown, Bookmark, Video, Menu, X, Gamepad2, CalendarDays, ChevronRight, Tag, CalendarClock } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
@@ -32,6 +32,7 @@ const menuItems: NavItemConfig[] = [
   { icon: Bookmark, label: 'Saved', href: '/bookmarks', isPro: true },
   { icon: Tag, label: 'Deals', href: '/deals' },
   { icon: Gamepad2, label: 'Patches', href: '/patches' },
+  { icon: CalendarClock, label: 'Upcoming', href: '/upcoming' },
   { icon: CalendarDays, label: 'Releases', href: '/releases' },
 ]
 

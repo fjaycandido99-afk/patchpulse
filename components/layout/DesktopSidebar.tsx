@@ -1,6 +1,6 @@
 'use client'
 
-import { Home, Newspaper, Library, User, Sparkles, Brain, Crown, Bell, Gamepad2, Bookmark, LogIn, UserPlus, Video, CalendarDays, Tag } from 'lucide-react'
+import { Home, Newspaper, Library, User, Sparkles, Brain, Crown, Bell, Gamepad2, Bookmark, LogIn, UserPlus, Video, CalendarDays, Tag, CalendarClock } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { ProBadge } from '@/components/ui/ProBadge'
@@ -106,6 +106,11 @@ export function DesktopSidebar({ counts, notificationStats, patchesStats, isGues
                 isLive={notificationStats?.high_priority_count ? notificationStats.high_priority_count > 0 : false}
               />
             )}
+            <NavItem
+              icon={CalendarClock}
+              label="Upcoming"
+              href="/upcoming"
+            />
             <NavItem
               icon={CalendarDays}
               label="Releases"
