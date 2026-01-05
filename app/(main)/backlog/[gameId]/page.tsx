@@ -219,13 +219,14 @@ export default async function BacklogDetailPage({
 }) {
   const { gameId } = await params
 
+  // Fetch all data with error handling - don't let one failure crash the page
   const [game, backlogItem, seasonalImage, activity, isFollowing, videos] = await Promise.all([
     getGame(gameId),
-    getBacklogItem(gameId),
-    getSeasonalGameImage(gameId),
-    getGameActivity(gameId),
-    isFollowingGame(gameId),
-    getGameVideos(gameId, undefined, 20),
+    getBacklogItem(gameId).catch(() => null),
+    getSeasonalGameImage(gameId).catch(() => ({ coverUrl: null, logoUrl: null, heroUrl: null, brandColor: null, isSeasonal: false, eventName: null, eventType: null })),
+    getGameActivity(gameId).catch(() => ({ recentPatches: [], recentNews: [] })),
+    isFollowingGame(gameId).catch(() => false),
+    getGameVideos(gameId, undefined, 20).catch(() => []),
   ])
 
   if (!game) {

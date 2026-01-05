@@ -296,10 +296,11 @@ export default async function GamePage({
     )
   }
 
+  // Fetch additional data with error handling
   const [seasonalImage, activity, inBacklog] = await Promise.all([
-    getSeasonalGameImage(game.id),
-    getGameActivity(game.id),
-    isInBacklog(game.id),
+    getSeasonalGameImage(game.id).catch(() => ({ coverUrl: null, logoUrl: null, heroUrl: null, brandColor: null, isSeasonal: false, eventName: null, eventType: null })),
+    getGameActivity(game.id).catch(() => ({ recentPatches: [], recentNews: [], totalPatches: 0, totalNews: 0 })),
+    isInBacklog(game.id).catch(() => false),
   ])
 
   const bannerUrl = getHeroImage(game, seasonalImage)
