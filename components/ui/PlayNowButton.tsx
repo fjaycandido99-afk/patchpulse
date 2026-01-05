@@ -1,13 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Play, ExternalLink } from 'lucide-react'
+import { Play, ExternalLink, AlertCircle } from 'lucide-react'
 import { SteamIcon, XboxIcon } from './StoreLinkButtons'
 
 type PlayNowButtonProps = {
   gameName: string
   steamAppId?: number | string | null
-  xboxTitleId?: string | null  // For future Xbox Game Pass support
+  xboxProductId?: string | null  // Microsoft Store product ID (e.g., "9NBLGGH4R5PB")
+  hasXbox?: boolean  // True if game is available on Xbox (for fallback search)
   size?: 'sm' | 'md' | 'lg'
   variant?: 'primary' | 'outline'
   showLabel?: boolean
@@ -17,7 +18,8 @@ type PlayNowButtonProps = {
 export function PlayNowButton({
   gameName,
   steamAppId,
-  xboxTitleId,
+  xboxProductId,
+  hasXbox = false,
   size = 'md',
   variant = 'primary',
   showLabel = true,
@@ -25,6 +27,7 @@ export function PlayNowButton({
 }: PlayNowButtonProps) {
   const [isBrowser, setIsBrowser] = useState(false)
   const [launched, setLaunched] = useState(false)
+  const [showNotInstalledHint, setShowNotInstalledHint] = useState(false)
 
   // Check if we're in a browser (not Capacitor native app)
   useEffect(() => {
@@ -33,8 +36,11 @@ export function PlayNowButton({
     setIsBrowser(!isNative)
   }, [])
 
-  // Don't render if no launch IDs or on native app
-  if (!isBrowser || (!steamAppId && !xboxTitleId)) {
+  // Xbox is available if we have a product ID OR the game is marked as available on Xbox
+  const xboxAvailable = !!xboxProductId || hasXbox
+
+  // Don't render if no launch options or on native app
+  if (!isBrowser || (!steamAppId && !xboxAvailable)) {
     return null
   }
 
@@ -44,17 +50,32 @@ export function PlayNowButton({
     if (platform === 'steam' && steamAppId) {
       // Steam protocol to launch game directly
       launchUrl = `steam://run/${steamAppId}`
-    } else if (platform === 'xbox' && xboxTitleId) {
-      // Xbox Game Pass protocol (Windows 10/11)
-      launchUrl = `ms-xboxgamepass://play/${xboxTitleId}`
+    } else if (platform === 'xbox') {
+      if (xboxProductId) {
+        // Direct launch via Xbox Game Pass app (Windows 10/11)
+        launchUrl = `ms-xboxgamepass://play/?productId=${xboxProductId}`
+      } else {
+        // Fallback: Open Microsoft Store search for the game
+        const searchQuery = encodeURIComponent(gameName)
+        launchUrl = `ms-windows-store://search/?query=${searchQuery}`
+      }
     }
 
     if (launchUrl) {
       // Open the protocol URL
       window.location.href = launchUrl
       setLaunched(true)
-      // Reset after a few seconds
-      setTimeout(() => setLaunched(false), 3000)
+
+      // Show hint after a short delay
+      setTimeout(() => {
+        setShowNotInstalledHint(true)
+      }, 1500)
+
+      // Reset states after a few seconds
+      setTimeout(() => {
+        setLaunched(false)
+        setShowNotInstalledHint(false)
+      }, 8000)
     }
   }
 
@@ -79,28 +100,41 @@ export function PlayNowButton({
 
   // If both Steam and Xbox are available, show both options
   const hasSteam = !!steamAppId
-  const hasXbox = !!xboxTitleId
-  const hasMultiple = hasSteam && hasXbox
+  const hasXboxOption = xboxAvailable
+  const hasMultiple = hasSteam && hasXboxOption
+
+  // Not installed hint message
+  const NotInstalledHint = () => showNotInstalledHint ? (
+    <div className="flex items-start gap-2 mt-2 p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 animate-in fade-in slide-in-from-top-1 duration-200">
+      <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+      <p className="text-xs">
+        Game not launching? Make sure it&apos;s installed on {hasSteam ? 'Steam' : 'Xbox/Microsoft Store'}.
+      </p>
+    </div>
+  ) : null
 
   if (hasMultiple) {
     return (
-      <div className={`flex gap-2 ${className}`}>
-        <button
-          onClick={() => handleLaunch('steam')}
-          className={`${baseStyles} ${sizeClasses[size]} bg-[#1b2838] hover:bg-[#2a475e] text-white`}
-          title={`Launch ${gameName} on Steam`}
-        >
-          <SteamIcon className={iconSizes[size]} />
-          {showLabel && <span>Play on Steam</span>}
-        </button>
-        <button
-          onClick={() => handleLaunch('xbox')}
-          className={`${baseStyles} ${sizeClasses[size]} bg-[#107c10] hover:bg-[#0e6b0e] text-white`}
-          title={`Launch ${gameName} on Xbox`}
-        >
-          <XboxIcon className={iconSizes[size]} />
-          {showLabel && <span>Play on Xbox</span>}
-        </button>
+      <div className={className}>
+        <div className="flex gap-2">
+          <button
+            onClick={() => handleLaunch('steam')}
+            className={`${baseStyles} ${sizeClasses[size]} bg-[#1b2838] hover:bg-[#2a475e] text-white`}
+            title={`Launch ${gameName} on Steam`}
+          >
+            <SteamIcon className={iconSizes[size]} />
+            {showLabel && <span>Play on Steam</span>}
+          </button>
+          <button
+            onClick={() => handleLaunch('xbox')}
+            className={`${baseStyles} ${sizeClasses[size]} bg-[#107c10] hover:bg-[#0e6b0e] text-white`}
+            title={`Launch ${gameName} on Xbox`}
+          >
+            <XboxIcon className={iconSizes[size]} />
+            {showLabel && <span>Play on Xbox</span>}
+          </button>
+        </div>
+        <NotInstalledHint />
       </div>
     )
   }
@@ -112,39 +146,57 @@ export function PlayNowButton({
   const platformColor = hasSteam
     ? 'bg-[#1b2838] hover:bg-[#2a475e]'
     : 'bg-[#107c10] hover:bg-[#0e6b0e]'
+  const buttonTitle = hasSteam
+    ? `Launch ${gameName} on Steam`
+    : xboxProductId
+      ? `Launch ${gameName} on Xbox`
+      : `Find ${gameName} in Microsoft Store`
 
   return (
-    <button
-      onClick={() => handleLaunch(platform)}
-      className={`${baseStyles} ${sizeClasses[size]} ${
-        variant === 'primary' ? platformColor + ' text-white' : variantStyles.outline
-      } ${className}`}
-      title={`Launch ${gameName} on ${platformLabel}`}
-    >
-      {launched ? (
-        <>
-          <Play className={`${iconSizes[size]} fill-current`} />
-          {showLabel && <span>Launching...</span>}
-        </>
-      ) : (
-        <>
-          <PlatformIcon className={iconSizes[size]} />
-          {showLabel && <span>Play on {platformLabel}</span>}
-        </>
-      )}
-    </button>
+    <div className={className}>
+      <button
+        onClick={() => handleLaunch(platform)}
+        className={`${baseStyles} ${sizeClasses[size]} ${
+          variant === 'primary' ? platformColor + ' text-white' : variantStyles.outline
+        }`}
+        title={buttonTitle}
+      >
+        {launched ? (
+          <>
+            <Play className={`${iconSizes[size]} fill-current`} />
+            {showLabel && <span>Launching...</span>}
+          </>
+        ) : (
+          <>
+            <PlatformIcon className={iconSizes[size]} />
+            {showLabel && (
+              <span>
+                {hasSteam
+                  ? 'Play on Steam'
+                  : xboxProductId
+                    ? 'Play on Xbox'
+                    : 'Find on Xbox'}
+              </span>
+            )}
+          </>
+        )}
+      </button>
+      <NotInstalledHint />
+    </div>
   )
 }
 
 // Compact version for lists/cards
 export function PlayNowIcon({
   steamAppId,
-  xboxTitleId,
+  xboxProductId,
+  hasXbox = false,
   gameName,
   className = '',
 }: {
   steamAppId?: number | string | null
-  xboxTitleId?: string | null
+  xboxProductId?: string | null
+  hasXbox?: boolean
   gameName: string
   className?: string
 }) {
@@ -156,7 +208,9 @@ export function PlayNowIcon({
     setIsBrowser(!isNative)
   }, [])
 
-  if (!isBrowser || (!steamAppId && !xboxTitleId)) {
+  const xboxAvailable = !!xboxProductId || hasXbox
+
+  if (!isBrowser || (!steamAppId && !xboxAvailable)) {
     return null
   }
 
@@ -166,8 +220,12 @@ export function PlayNowIcon({
 
     if (steamAppId) {
       window.location.href = `steam://run/${steamAppId}`
-    } else if (xboxTitleId) {
-      window.location.href = `ms-xboxgamepass://play/${xboxTitleId}`
+    } else if (xboxProductId) {
+      window.location.href = `ms-xboxgamepass://play/?productId=${xboxProductId}`
+    } else if (hasXbox) {
+      // Fallback: Open Microsoft Store search
+      const searchQuery = encodeURIComponent(gameName)
+      window.location.href = `ms-windows-store://search/?query=${searchQuery}`
     }
   }
 
