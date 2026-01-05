@@ -160,29 +160,35 @@ export async function getBacklogBoard(): Promise<BacklogBoard> {
     }
   }
 
-  const items: BacklogItem[] = data.map((item) => {
-    const patches = patchesMap.get(item.game_id) || []
-    const game = item.games as unknown as Game
-    const steamStats = game?.steam_app_id
-      ? steamStatsMap.get(game.steam_app_id) ?? null
-      : null
-    return {
-      id: item.id,
-      game_id: item.game_id,
-      status: item.status as BacklogStatus,
-      progress: item.progress,
-      next_note: item.next_note,
-      pause_reason: item.pause_reason,
-      last_played_at: item.last_played_at,
-      started_at: item.started_at,
-      finished_at: item.finished_at,
-      created_at: item.created_at,
-      game,
-      latestPatch: patches[0] ?? null,
-      recentPatches: patches.slice(0, 5), // Keep last 5 patches
-      steamStats,
-    }
-  })
+  const items: BacklogItem[] = data
+    .filter((item) => {
+      // Filter out orphaned backlog items where the game has been deleted
+      const game = item.games as unknown as Game
+      return game && game.id && game.name
+    })
+    .map((item) => {
+      const patches = patchesMap.get(item.game_id) || []
+      const game = item.games as unknown as Game
+      const steamStats = game?.steam_app_id
+        ? steamStatsMap.get(game.steam_app_id) ?? null
+        : null
+      return {
+        id: item.id,
+        game_id: item.game_id,
+        status: item.status as BacklogStatus,
+        progress: item.progress,
+        next_note: item.next_note,
+        pause_reason: item.pause_reason,
+        last_played_at: item.last_played_at,
+        started_at: item.started_at,
+        finished_at: item.finished_at,
+        created_at: item.created_at,
+        game,
+        latestPatch: patches[0] ?? null,
+        recentPatches: patches.slice(0, 5), // Keep last 5 patches
+        steamStats,
+      }
+    })
 
   const board: BacklogBoard = {
     playing: [],
@@ -510,7 +516,7 @@ export async function getFollowedGamesWithActivity(): Promise<FollowedGameWithAc
 
   const games = userGamesData
     .map((ug) => ug.games as unknown as Game)
-    .filter(Boolean)
+    .filter((game): game is Game => Boolean(game && game.id && game.name))
 
   if (games.length === 0) {
     return []
@@ -697,7 +703,8 @@ export async function getFollowedGamesForBacklogPicker(): Promise<
   const games: FollowedGameForPicker[] = userGamesResult.data
     .map((ug) => {
       const game = ug.games as unknown as Game
-      if (!game) return null
+      // Filter out orphaned entries where the game has been deleted
+      if (!game || !game.id || !game.name) return null
       return {
         id: game.id,
         name: game.name,
