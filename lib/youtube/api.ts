@@ -272,24 +272,80 @@ export async function getGameVideos(
 export async function fetchAllGameVideos() {
   const supabase = createAdminClient()
 
-  // Get popular games (with steam_app_id or marked as live service)
+  // Get games that users are actively playing/following (most relevant)
   // Limit to 5 games per run to stay within YouTube API quota (10k units/day)
   // Each game uses ~400 units (4 video types × 100 units per search)
   // 5 games × 400 units = 2,000 units per run
   // 4 runs per day (every 6 hours) = 8,000 units/day (under 10k limit)
-  // Rotate through games based on hour of year so we cover all games over time
+
+  // First, get popular games based on user engagement (backlog + following)
+  const { data: popularGameIds } = await supabase
+    .from('backlog_items')
+    .select('game_id')
+
+  const { data: followedGameIds } = await supabase
+    .from('user_games')
+    .select('game_id')
+
+  // Combine and count occurrences to find most popular
+  const gamePopularity = new Map<string, number>()
+
+  popularGameIds?.forEach(item => {
+    if (item.game_id) {
+      gamePopularity.set(item.game_id, (gamePopularity.get(item.game_id) || 0) + 2) // Backlog = higher weight
+    }
+  })
+
+  followedGameIds?.forEach(item => {
+    if (item.game_id) {
+      gamePopularity.set(item.game_id, (gamePopularity.get(item.game_id) || 0) + 1)
+    }
+  })
+
+  // Sort by popularity and rotate through top games
+  const sortedGameIds = Array.from(gamePopularity.entries())
+    .sort((a, b) => b[1] - a[1])
+    .map(([id]) => id)
+    .slice(0, 50) // Top 50 most popular games
+
+  // Rotate through popular games based on hour
   const hoursOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 3600000)
-  const offset = (hoursOfYear * 5) % 200 // Rotate through ~200 games
+  const offset = (hoursOfYear * 5) % Math.max(sortedGameIds.length, 1)
+  const selectedIds = sortedGameIds.slice(offset, offset + 5)
 
-  const { data: games, error } = await supabase
-    .from('games')
-    .select('id, name, slug')
-    .or('steam_app_id.not.is.null,is_live_service.eq.true')
-    .order('name')
-    .range(offset, offset + 4)
+  // If we don't have enough from rotation, wrap around
+  if (selectedIds.length < 5 && sortedGameIds.length > 0) {
+    const remaining = 5 - selectedIds.length
+    selectedIds.push(...sortedGameIds.slice(0, remaining))
+  }
 
-  if (error || !games) {
-    return { success: false, error: error?.message || 'No games found', totalAdded: 0 }
+  // Fallback: if no popular games, get live service games
+  let games: { id: string; name: string; slug: string }[] = []
+
+  if (selectedIds.length > 0) {
+    const { data } = await supabase
+      .from('games')
+      .select('id, name, slug')
+      .in('id', selectedIds)
+    games = data || []
+  }
+
+  // Fallback to live service games if no user engagement data
+  if (games.length === 0) {
+    const { data, error } = await supabase
+      .from('games')
+      .select('id, name, slug')
+      .eq('is_live_service', true)
+      .limit(5)
+
+    if (error) {
+      return { success: false, error: error.message, totalAdded: 0 }
+    }
+    games = data || []
+  }
+
+  if (games.length === 0) {
+    return { success: false, error: 'No games found', totalAdded: 0 }
   }
 
   let totalAdded = 0
