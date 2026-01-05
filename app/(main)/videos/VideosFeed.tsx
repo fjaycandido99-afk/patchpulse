@@ -522,17 +522,6 @@ function DesktopVideoCard({
             </>
           )}
         </div>
-
-        {video.game && (
-          <div className="flex items-center gap-2 mt-2">
-            {video.game.logo_url && (
-              <div className="relative w-4 h-4 rounded overflow-hidden bg-white/10">
-                <Image src={video.game.logo_url} alt="" fill className="object-contain" sizes="16px" unoptimized />
-              </div>
-            )}
-            <span className="text-xs text-muted-foreground/70">{video.game.name}</span>
-          </div>
-        )}
       </button>
     </div>
   )
