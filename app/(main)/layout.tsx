@@ -116,7 +116,6 @@ export default async function MainLayout({
                   </Link>
                   {!isGuest && (
                     <div className="flex items-center gap-1 ml-1">
-                      <LatestPatchesBell initialStats={patchesStats} size="sm" />
                       <NotificationBell initialStats={notificationStats} size="sm" />
                     </div>
                   )}
