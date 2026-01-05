@@ -24,14 +24,15 @@ export async function GET(request: Request) {
   try {
     const result = await fetchAllGameVideos()
 
-    console.log(`[CRON] Video fetch complete: ${result.totalAdded} videos added from ${result.gamesChecked} games`)
+    console.log(`[CRON] Video fetch complete: ${result.totalAdded} videos added from ${result.gamesChecked} games (${result.viralVideosAdded || 0} viral)`)
 
     return NextResponse.json({
       ok: true,
       success: true,
-      message: `Fetched videos for ${result.gamesChecked} games`,
+      message: `Fetched videos for ${result.gamesChecked} games + viral content`,
       totalAdded: result.totalAdded,
       gamesChecked: result.gamesChecked,
+      viralVideosAdded: result.viralVideosAdded,
       errors: result.errors,
     })
   } catch (error) {
