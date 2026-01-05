@@ -272,66 +272,102 @@ export async function getGameVideos(
 export async function fetchAllGameVideos() {
   const supabase = createAdminClient()
 
-  // Get games that users are actively playing/following (most relevant)
+  // Get games that are popular - combining user engagement + Steam player counts
   // Limit to 5 games per run to stay within YouTube API quota (10k units/day)
   // Each game uses ~400 units (4 video types × 100 units per search)
   // 5 games × 400 units = 2,000 units per run
   // 4 runs per day (every 6 hours) = 8,000 units/day (under 10k limit)
 
-  // First, get popular games based on user engagement (backlog + following)
-  const { data: popularGameIds } = await supabase
+  // Get all games with Steam App IDs for player count check
+  const { data: steamGames } = await supabase
+    .from('games')
+    .select('id, name, slug, steam_app_id')
+    .not('steam_app_id', 'is', null)
+    .limit(100)
+
+  // Get user engagement data
+  const { data: backlogItems } = await supabase
     .from('backlog_items')
     .select('game_id')
 
-  const { data: followedGameIds } = await supabase
+  const { data: followedGames } = await supabase
     .from('user_games')
     .select('game_id')
 
-  // Combine and count occurrences to find most popular
-  const gamePopularity = new Map<string, number>()
+  // Build popularity score combining multiple signals
+  const gameScores = new Map<string, { score: number; game: { id: string; name: string; slug: string; steam_app_id: number | null } }>()
 
-  popularGameIds?.forEach(item => {
-    if (item.game_id) {
-      gamePopularity.set(item.game_id, (gamePopularity.get(item.game_id) || 0) + 2) // Backlog = higher weight
+  // Add Steam games to map
+  steamGames?.forEach(game => {
+    if (game.steam_app_id) {
+      gameScores.set(game.id, {
+        score: 0,
+        game: { id: game.id, name: game.name, slug: game.slug, steam_app_id: game.steam_app_id }
+      })
     }
   })
 
-  followedGameIds?.forEach(item => {
-    if (item.game_id) {
-      gamePopularity.set(item.game_id, (gamePopularity.get(item.game_id) || 0) + 1)
+  // Add user engagement scores
+  backlogItems?.forEach(item => {
+    if (item.game_id && gameScores.has(item.game_id)) {
+      const entry = gameScores.get(item.game_id)!
+      entry.score += 10 // Backlog = high engagement
     }
   })
 
-  // Sort by popularity and rotate through top games
-  const sortedGameIds = Array.from(gamePopularity.entries())
-    .sort((a, b) => b[1] - a[1])
-    .map(([id]) => id)
-    .slice(0, 50) // Top 50 most popular games
+  followedGames?.forEach(item => {
+    if (item.game_id && gameScores.has(item.game_id)) {
+      const entry = gameScores.get(item.game_id)!
+      entry.score += 5 // Following = medium engagement
+    }
+  })
 
-  // Rotate through popular games based on hour
+  // Fetch Steam player counts for top candidates (limit API calls)
+  const topCandidates = Array.from(gameScores.values())
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 30) // Check top 30 by engagement
+
+  // Fetch player counts in parallel
+  const playerCountPromises = topCandidates
+    .filter(c => c.game.steam_app_id)
+    .map(async (candidate) => {
+      try {
+        const response = await fetch(
+          `https://api.steampowered.com/ISteamUserStats/GetNumberOfCurrentPlayers/v1/?appid=${candidate.game.steam_app_id}`
+        )
+        if (response.ok) {
+          const data = await response.json()
+          if (data.response?.player_count) {
+            // Add player count to score (normalized - 1 point per 1000 players)
+            candidate.score += Math.floor(data.response.player_count / 1000)
+          }
+        }
+      } catch {
+        // Ignore errors, keep existing score
+      }
+    })
+
+  await Promise.all(playerCountPromises)
+
+  // Sort by final score and pick top 5
+  const sortedGames = Array.from(gameScores.values())
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 20) // Top 20 most popular
+
+  // Rotate through top games based on hour to cover variety
   const hoursOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 3600000)
-  const offset = (hoursOfYear * 5) % Math.max(sortedGameIds.length, 1)
-  const selectedIds = sortedGameIds.slice(offset, offset + 5)
+  const offset = (hoursOfYear * 5) % Math.max(sortedGames.length, 1)
 
-  // If we don't have enough from rotation, wrap around
-  if (selectedIds.length < 5 && sortedGameIds.length > 0) {
-    const remaining = 5 - selectedIds.length
-    selectedIds.push(...sortedGameIds.slice(0, remaining))
+  let selectedGames = sortedGames.slice(offset, offset + 5).map(g => g.game)
+
+  // Wrap around if needed
+  if (selectedGames.length < 5 && sortedGames.length > 0) {
+    const remaining = 5 - selectedGames.length
+    selectedGames.push(...sortedGames.slice(0, remaining).map(g => g.game))
   }
 
-  // Fallback: if no popular games, get live service games
-  let games: { id: string; name: string; slug: string }[] = []
-
-  if (selectedIds.length > 0) {
-    const { data } = await supabase
-      .from('games')
-      .select('id, name, slug')
-      .in('id', selectedIds)
-    games = data || []
-  }
-
-  // Fallback to live service games if no user engagement data
-  if (games.length === 0) {
+  // Fallback to live service games if no data
+  if (selectedGames.length === 0) {
     const { data, error } = await supabase
       .from('games')
       .select('id, name, slug')
@@ -341,8 +377,10 @@ export async function fetchAllGameVideos() {
     if (error) {
       return { success: false, error: error.message, totalAdded: 0 }
     }
-    games = data || []
+    selectedGames = data || []
   }
+
+  const games = selectedGames
 
   if (games.length === 0) {
     return { success: false, error: 'No games found', totalAdded: 0 }
