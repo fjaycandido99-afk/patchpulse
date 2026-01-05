@@ -55,13 +55,10 @@ export function MobileNav({ badges, isGuest = false }: { badges?: Record<string,
         />
       )}
 
-      {/* Menu Drawer */}
-      <div
-        className={`fixed bottom-0 left-0 right-0 z-50 md:hidden transition-transform duration-300 ease-out ${
-          isMenuOpen ? 'translate-y-0' : 'translate-y-full'
-        }`}
-      >
-        <div className="bg-background/95 backdrop-blur-xl border-t border-white/10 rounded-t-3xl safe-area-pb">
+      {/* Menu Drawer - only render when open */}
+      {isMenuOpen && (
+        <div className="fixed bottom-0 inset-x-0 z-[60] md:hidden animate-in slide-in-from-bottom duration-300">
+          <div className="bg-background border-t border-white/10 rounded-t-3xl safe-area-pb">
           {/* Drag handle */}
           <div className="flex justify-center pt-3 pb-2">
             <div className="w-10 h-1 bg-white/20 rounded-full" />
@@ -115,11 +112,12 @@ export function MobileNav({ badges, isGuest = false }: { badges?: Record<string,
               )
             })}
           </div>
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 glass-nav md:hidden safe-area-pb">
+      {/* Bottom Navigation - Always fixed at bottom */}
+      <nav className="fixed bottom-0 inset-x-0 z-50 glass-nav md:hidden safe-area-pb">
         <div className="flex items-center justify-around">
           {navItems.map((item) => (
             <NavItem

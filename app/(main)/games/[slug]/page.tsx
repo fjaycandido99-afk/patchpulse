@@ -335,7 +335,7 @@ export default async function GamePage({
     <div className="relative overflow-x-hidden min-h-screen">
       <HeroBanner imageUrl={bannerUrl} altText={game.name} fallbackColor={brandColor || undefined} />
 
-      <div className="relative z-10 pt-[140px] sm:pt-[180px] md:pt-[220px] lg:pt-[280px] space-y-6">
+      <div className="relative z-0 pt-[140px] sm:pt-[180px] md:pt-[220px] lg:pt-[280px] space-y-6">
         {/* Back Link */}
         <div>
           <BackButton defaultHref="/home" defaultLabel="Back" />

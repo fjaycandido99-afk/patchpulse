@@ -184,7 +184,7 @@ export default async function NewsDetailPage({
       <HeroBanner imageUrl={heroImage} altText={news.title} fallbackColor={brandColor} />
 
       {/* Content pushed below hero */}
-      <div className="relative z-10 pt-[140px] sm:pt-[180px] md:pt-[220px] lg:pt-[280px] space-y-6">
+      <div className="relative z-0 pt-[140px] sm:pt-[180px] md:pt-[220px] lg:pt-[280px] space-y-6">
         {/* Back Button */}
         <Suspense fallback={
           <span className="inline-flex items-center gap-1.5 text-sm text-white/70">

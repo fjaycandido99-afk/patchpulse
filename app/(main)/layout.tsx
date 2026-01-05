@@ -102,12 +102,12 @@ export default async function MainLayout({
           <div className="flex min-h-screen">
             <DesktopSidebar counts={sidebarCounts} notificationStats={notificationStats} patchesStats={patchesStats} isGuest={isGuest} />
 
-          <main className="flex-1 pb-20 md:ml-64 md:pb-0">
+          <main className="flex-1 pb-24 md:ml-64 md:pb-0">
             {/* Guest banner - shown at top for guest users */}
             {isGuest && <GuestBanner />}
 
             {/* Mobile header with search - Apple Music/App Store style, fixed for edge-to-edge */}
-            <header className="fixed inset-x-0 top-0 z-40 md:hidden bg-[rgba(10,15,30,0.85)] backdrop-blur-xl border-b border-white/10" style={{ paddingTop: 'env(safe-area-inset-top, 0)' }}>
+            <header className="fixed inset-x-0 top-0 z-40 md:hidden bg-[rgba(9,9,11,0.98)] backdrop-blur-xl border-b border-white/10" style={{ paddingTop: 'env(safe-area-inset-top, 0)' }}>
               <div className="flex items-center justify-between gap-2 px-4 py-3">
                 <div className="flex items-center gap-3">
                   <Link href="/home" className="text-lg font-bold tracking-tight flex-shrink-0 hover:opacity-80 transition-opacity">
@@ -146,7 +146,7 @@ export default async function MainLayout({
               </div>
             </header>
 
-            <div className="mx-auto h-full max-w-7xl px-4 pt-16 pb-6 md:pt-6 sm:px-6 lg:px-8 w-full overflow-hidden">
+            <div className="mx-auto h-full max-w-7xl px-4 pt-20 pb-6 md:pt-6 sm:px-6 lg:px-8 w-full overflow-hidden">
               {children}
             </div>
           </main>

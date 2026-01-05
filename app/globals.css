@@ -33,6 +33,7 @@
 
   body {
     @apply bg-background text-foreground antialiased;
+    overscroll-behavior: none;
   }
 
   /* Typography improvements */
@@ -285,7 +286,7 @@
   /* Glassmorphism nav */
   .glass-nav {
     @apply backdrop-blur-xl;
-    background: rgba(0, 0, 0, 0.7);
+    background: rgb(9, 9, 11);
     border-top: 1px solid rgba(255, 255, 255, 0.1);
   }
 

@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { FileText, RefreshCw, Gamepad2, Home, ArrowLeft, Plus, Play, Pause, Clock, Check, X } from 'lucide-react'
+import { Suspense } from 'react'
+import { FileText, RefreshCw, Gamepad2, Home, ArrowLeft, Plus, Play, Pause, Clock, Check, X, Calendar, Monitor, Newspaper, ChevronRight, Flame } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { relativeDaysText } from '@/lib/dates'
@@ -10,32 +11,26 @@ import { PlayNowButton } from '@/components/ui/PlayNowButton'
 import { SteamStats } from '@/components/library/SteamStats'
 import { GameManagement } from '@/components/backlog/GameManagement'
 import { BackButton } from '@/components/ui/BackButton'
+import { StudioInfoSection } from '@/components/games/StudioInfoSection'
+import { SentimentPulse } from '@/components/ai/SentimentPulse'
+import { WhatsNew } from '@/components/backlog/WhatsNew'
 
 // Force dynamic rendering - no caching
 export const dynamic = 'force-dynamic'
 
 // Get game data (using admin client to bypass RLS)
 async function getGame(gameId: string) {
-  console.log('[getGame] Starting fetch for:', gameId)
   try {
     const supabase = createAdminClient()
-    console.log('[getGame] Admin client created')
-
     const { data, error } = await supabase
       .from('games')
-      .select('id, name, slug, cover_url, hero_url, brand_color, release_date, genre, is_live_service, platforms, steam_app_id, developer, publisher')
+      .select('id, name, slug, cover_url, hero_url, brand_color, release_date, genre, is_live_service, platforms, steam_app_id, developer, publisher, studio_type, similar_games, developer_notable_games')
       .eq('id', gameId)
       .single()
 
-    console.log('[getGame] Query result - data:', !!data, 'error:', error?.message || 'none')
-
-    if (error) {
-      console.error('[getGame] Error:', error)
-      return null
-    }
+    if (error) return null
     return data
-  } catch (e) {
-    console.error('[getGame] Exception:', e)
+  } catch {
     return null
   }
 }
@@ -75,6 +70,22 @@ async function getRecentPatches(gameId: string) {
   }
 }
 
+// Get recent news for this game
+async function getRecentNews(gameId: string) {
+  try {
+    const supabase = createAdminClient()
+    const { data } = await supabase
+      .from('news_items')
+      .select('id, title, published_at, summary')
+      .eq('game_id', gameId)
+      .order('published_at', { ascending: false })
+      .limit(5)
+    return data || []
+  } catch {
+    return []
+  }
+}
+
 // Check if user is following this game
 async function isFollowingGame(gameId: string) {
   try {
@@ -92,6 +103,37 @@ async function isFollowingGame(gameId: string) {
   } catch {
     return false
   }
+}
+
+// Impact score colors
+function getImpactColor(score: number) {
+  if (score >= 8) return 'text-red-400'
+  if (score >= 6) return 'text-amber-400'
+  if (score >= 4) return 'text-cyan-400'
+  return 'text-zinc-400'
+}
+
+function getImpactBg(score: number) {
+  if (score >= 8) return 'bg-red-500/20 border-red-500/30'
+  if (score >= 6) return 'bg-amber-500/20 border-amber-500/30'
+  if (score >= 4) return 'bg-cyan-500/20 border-cyan-500/30'
+  return 'bg-zinc-500/20 border-zinc-500/30'
+}
+
+// WhatsNew skeleton
+function WhatsNewSkeleton() {
+  return (
+    <div className="rounded-xl border border-border bg-card p-4 animate-pulse">
+      <div className="flex items-center gap-2 mb-3">
+        <div className="h-5 w-5 rounded bg-muted" />
+        <div className="h-5 w-24 rounded bg-muted" />
+      </div>
+      <div className="space-y-2">
+        <div className="h-4 w-full rounded bg-muted" />
+        <div className="h-4 w-3/4 rounded bg-muted" />
+      </div>
+    </div>
+  )
 }
 
 // Game banner component
@@ -176,9 +218,10 @@ export default async function BacklogDetailPage({
   }
 
   // Fetch additional data in parallel
-  const [backlogItem, recentPatches, isFollowing] = await Promise.all([
+  const [backlogItem, recentPatches, recentNews, isFollowing] = await Promise.all([
     getBacklogItem(gameId),
     getRecentPatches(gameId),
+    getRecentNews(gameId),
     isFollowingGame(gameId),
   ])
 
@@ -187,14 +230,19 @@ export default async function BacklogDetailPage({
 
   // Format release date
   const formattedReleaseDate = game.release_date
-    ? new Date(game.release_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+    ? new Date(game.release_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    : null
+
+  // Format platforms
+  const platformsDisplay = game.platforms?.length > 0
+    ? game.platforms.join(', ')
     : null
 
   return (
     <div className="relative overflow-x-hidden min-h-screen">
       <GameBanner imageUrl={bannerUrl} gameName={game.name} brandColor={game.brand_color} />
 
-      <div className="relative z-10 pt-[180px] sm:pt-[220px] space-y-6">
+      <div className="relative z-0 pt-[180px] sm:pt-[220px] space-y-6">
         {/* Back button */}
         <BackButton defaultHref="/backlog" defaultLabel="Back" />
 
@@ -284,6 +332,67 @@ export default async function BacklogDetailPage({
           )}
         </div>
 
+        {/* At a Glance */}
+        <div className="rounded-xl border border-border bg-card p-4">
+          <h2 className="font-semibold mb-4">At a Glance</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {game.genre && (
+              <div className="space-y-1">
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Gamepad2 className="h-3.5 w-3.5" />
+                  Genre
+                </div>
+                <p className="text-sm font-medium">{game.genre}</p>
+              </div>
+            )}
+            {platformsDisplay && (
+              <div className="space-y-1">
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Monitor className="h-3.5 w-3.5" />
+                  Platforms
+                </div>
+                <p className="text-sm font-medium">{platformsDisplay}</p>
+              </div>
+            )}
+            <div className="space-y-1">
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <RefreshCw className="h-3.5 w-3.5" />
+                Type
+              </div>
+              <p className="text-sm font-medium">
+                {game.is_live_service ? 'Live Service' : 'Standard'}
+              </p>
+            </div>
+            {formattedReleaseDate && (
+              <div className="space-y-1">
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Calendar className="h-3.5 w-3.5" />
+                  Released
+                </div>
+                <p className="text-sm font-medium">{formattedReleaseDate}</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Sentiment Pulse - Community Mood */}
+        <SentimentPulse gameId={gameId} />
+
+        {/* Studio Info Section */}
+        <StudioInfoSection
+          developer={game.developer}
+          publisher={game.publisher}
+          studioType={game.studio_type as 'AAA' | 'AA' | 'indie' | null}
+          genre={game.genre}
+          similarGames={game.similar_games}
+          developerNotableGames={game.developer_notable_games}
+        />
+
+        {/* AI Summary - What's New */}
+        <Suspense fallback={<WhatsNewSkeleton />}>
+          <WhatsNew gameId={gameId} />
+        </Suspense>
+
         {/* Recent patches */}
         {recentPatches.length > 0 && (
           <div className="rounded-xl border border-border bg-card p-4">
@@ -294,24 +403,95 @@ export default async function BacklogDetailPage({
                 {recentPatches.length} patch{recentPatches.length !== 1 ? 'es' : ''}
               </span>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-2">
               {recentPatches.map((patch) => (
                 <Link
                   key={patch.id}
                   href={`/patches/${patch.id}`}
-                  className="block p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+                  className="group flex gap-3 p-3 rounded-xl border border-border bg-card/50 hover:bg-card hover:border-primary/30 transition-all"
                 >
-                  <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-medium text-sm line-clamp-1">{patch.title}</h3>
-                    <span className="text-xs text-muted-foreground whitespace-nowrap">
-                      {relativeDaysText(patch.published_at)}
-                    </span>
+                  <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                    <FileText className="w-5 h-5 text-amber-400" />
                   </div>
-                  {patch.summary_tldr && (
-                    <p className="mt-1 text-xs text-muted-foreground line-clamp-2">
-                      {patch.summary_tldr}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-sm font-semibold line-clamp-1 group-hover:text-primary transition-colors">
+                            {patch.title}
+                          </p>
+                          {patch.impact_score >= 8 && (
+                            <span className="flex items-center gap-0.5 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded bg-red-500/20 text-red-400">
+                              <Flame className="w-2.5 h-2.5 fill-red-400" />
+                              Major
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <span className={`flex-shrink-0 px-1.5 py-0.5 text-[10px] font-bold rounded border ${getImpactBg(patch.impact_score)} ${getImpactColor(patch.impact_score)}`}>
+                        {patch.impact_score}/10
+                      </span>
+                    </div>
+                    {patch.summary_tldr && (
+                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                        {patch.summary_tldr}
+                      </p>
+                    )}
+                    <div className="flex items-center justify-between mt-2">
+                      <span className="text-[11px] text-muted-foreground">
+                        {relativeDaysText(patch.published_at)}
+                      </span>
+                      <span className="flex items-center gap-0.5 text-[11px] text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                        View
+                        <ChevronRight className="w-3 h-3" />
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Recent news */}
+        {recentNews.length > 0 && (
+          <div className="rounded-xl border border-border bg-card p-4">
+            <div className="flex items-center gap-2 mb-4">
+              <Newspaper className="h-5 w-5 text-emerald-400" />
+              <h2 className="font-semibold">Related News</h2>
+              <span className="text-xs text-muted-foreground ml-auto">
+                {recentNews.length} article{recentNews.length !== 1 ? 's' : ''}
+              </span>
+            </div>
+            <div className="space-y-2">
+              {recentNews.map((news) => (
+                <Link
+                  key={news.id}
+                  href={`/news/${news.id}`}
+                  className="group flex gap-3 p-3 rounded-xl border border-border bg-card/50 hover:bg-card hover:border-primary/30 transition-all"
+                >
+                  <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                    <Newspaper className="w-5 h-5 text-emerald-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold line-clamp-2 group-hover:text-primary transition-colors">
+                      {news.title}
                     </p>
-                  )}
+                    {news.summary && (
+                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                        {news.summary}
+                      </p>
+                    )}
+                    <div className="flex items-center justify-between mt-2">
+                      <span className="text-[11px] text-muted-foreground">
+                        {relativeDaysText(news.published_at)}
+                      </span>
+                      <span className="flex items-center gap-0.5 text-[11px] text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                        Read
+                        <ChevronRight className="w-3 h-3" />
+                      </span>
+                    </div>
+                  </div>
                 </Link>
               ))}
             </div>
