@@ -1,10 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Sparkles, Clock, Gamepad2, Brain, ChevronRight, Loader2, Zap, Calendar, X, TrendingUp, Minus, TrendingDown, AlertTriangle, Users, Library, BookOpen, Bookmark, RefreshCw } from 'lucide-react'
+import { Sparkles, Clock, Gamepad2, Brain, ChevronRight, Loader2, X, Library, BookOpen, RefreshCw } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { toggleRecommendationBookmark } from '@/app/(main)/actions/bookmarks'
 
 function GameCoverImage({ src, alt }: { src: string | null; alt: string }) {
   const [hasError, setHasError] = useState(false)
@@ -79,12 +78,6 @@ const TYPE_LABELS = {
   discover: { label: 'Discover', color: 'text-amber-400', bg: 'bg-amber-500/20' },
 }
 
-const MOMENTUM_CONFIG = {
-  rising: { icon: TrendingUp, color: 'text-green-400', bg: 'bg-green-500/20', label: 'Rising', glow: 'shadow-green-500/20' },
-  stable: { icon: Minus, color: 'text-blue-400', bg: 'bg-blue-500/20', label: 'Stable', glow: '' },
-  cooling: { icon: TrendingDown, color: 'text-zinc-400', bg: 'bg-zinc-500/20', label: 'Cooling', glow: '' },
-}
-
 export function PlayRecommendations() {
   const [mood, setMood] = useState<string>('any')
   const [time, setTime] = useState<number | null>(null)
@@ -94,8 +87,6 @@ export function PlayRecommendations() {
   const [error, setError] = useState<string | null>(null)
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set())
   const [dismissingId, setDismissingId] = useState<string | null>(null)
-  const [savedIds, setSavedIds] = useState<Set<string>>(new Set())
-  const [savingId, setSavingId] = useState<string | null>(null)
 
   // Load cached recommendations and dismissed IDs on mount
   useEffect(() => {
@@ -188,47 +179,6 @@ export function PlayRecommendations() {
       console.error('Failed to dismiss:', err)
     } finally {
       setDismissingId(null)
-    }
-  }
-
-  const handleSave = async (rec: Recommendation, e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-
-    setSavingId(rec.game_id)
-
-    try {
-      const result = await toggleRecommendationBookmark(rec.game_id, {
-        game_id: rec.game_id,
-        game_name: rec.game_name,
-        slug: rec.slug,
-        cover_url: rec.cover_url,
-        reason: rec.reason,
-        why_now: rec.why_now,
-        recommendation_type: rec.recommendation_type,
-        savedAt: new Date().toISOString(),
-      })
-
-      if (result.error) {
-        console.error('Failed to save recommendation:', result.error)
-        setError(`Failed to save: ${result.error}`)
-        return
-      }
-
-      if (result.bookmarked) {
-        setSavedIds(prev => new Set([...prev, rec.game_id]))
-      } else {
-        setSavedIds(prev => {
-          const next = new Set(prev)
-          next.delete(rec.game_id)
-          return next
-        })
-      }
-    } catch (err) {
-      console.error('Failed to save:', err)
-      setError('Failed to save recommendation')
-    } finally {
-      setSavingId(null)
     }
   }
 
@@ -325,9 +275,7 @@ export function PlayRecommendations() {
       )}
 
       {result && (
-        <div className="mt-4 space-y-2">
-          <p className="text-sm text-muted-foreground italic">{result.message}</p>
-
+        <div className="mt-4">
           {visibleRecommendations.length === 0 && dismissedIds.size > 0 && (
             <div className="text-center py-6 text-muted-foreground">
               <p className="text-sm">You dismissed all recommendations.</p>
@@ -340,96 +288,50 @@ export function PlayRecommendations() {
             </div>
           )}
 
-          {visibleRecommendations.map((rec, i) => {
-            const momentum = rec.momentum || 'stable'
-            const momentumConfig = MOMENTUM_CONFIG[momentum]
-            const MomentumIcon = momentumConfig.icon
-            const isHot = momentum === 'rising' || rec.recent_patch?.is_major
-            const isDiscovery = rec.is_discovery || false
-
-            return (
+          <div className="grid grid-cols-2 gap-3">
+            {visibleRecommendations.map((rec) => (
               <div key={rec.game_id} className="relative group">
                 <Link
                   href={`/games/${rec.slug || rec.game_id}`}
-                  className={`block rounded-xl border transition-all overflow-hidden ${
-                    isDiscovery
-                      ? 'border-amber-500/30 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent hover:border-amber-500/50 shadow-lg shadow-amber-500/5'
-                      : isHot
-                        ? 'border-primary/30 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent hover:border-primary/50 shadow-lg shadow-primary/5'
-                        : 'border-border bg-muted/30 hover:bg-muted/50 hover:border-border/80'
-                  }`}
+                  className="block relative overflow-hidden rounded-xl border border-white/10 bg-black/40"
                 >
-                  <div className="flex gap-3 p-2.5">
-                    {/* Game Cover - Larger */}
-                    <div className={`relative flex-shrink-0 w-16 h-22 sm:w-20 sm:h-28 rounded-lg overflow-hidden bg-zinc-800 ${
-                      isDiscovery
-                        ? 'ring-1 ring-amber-500/40'
-                        : isHot
-                          ? 'ring-1 ring-primary/40'
-                          : 'ring-1 ring-white/10'
-                    }`}>
-                      <GameCoverImage src={rec.cover_url} alt={rec.game_name} />
-                      {/* Rank badge */}
-                      <div className="absolute -top-0.5 -left-0.5 w-5 h-5 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-xs shadow">
-                        {i + 1}
-                      </div>
-                    </div>
+                  {/* Image */}
+                  <div className="relative aspect-[4/3]">
+                    <GameCoverImage src={rec.cover_url} alt={rec.game_name} />
 
-                    {/* Content - Minimal */}
-                    <div className="flex-1 min-w-0 py-1">
-                      <div className="flex items-center gap-1.5 mb-1">
-                        <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${TYPE_LABELS[rec.recommendation_type].bg} ${TYPE_LABELS[rec.recommendation_type].color}`}>
-                          {TYPE_LABELS[rec.recommendation_type].label}
-                        </span>
-                        {isHot && (
-                          <TrendingUp className="w-3 h-3 text-green-400" />
-                        )}
-                      </div>
+                    {/* Gradient overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
 
-                      <h4 className="font-semibold text-sm truncate">{rec.game_name}</h4>
+                    {/* Type badge */}
+                    <span className={`absolute top-2 left-2 px-1.5 py-0.5 rounded text-[10px] font-medium backdrop-blur-sm ${TYPE_LABELS[rec.recommendation_type].bg} ${TYPE_LABELS[rec.recommendation_type].color}`}>
+                      {TYPE_LABELS[rec.recommendation_type].label}
+                    </span>
 
-                      <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{rec.reason}</p>
+                    {/* Content at bottom */}
+                    <div className="absolute bottom-0 left-0 right-0 p-3">
+                      <h4 className="font-semibold text-sm text-white line-clamp-2 leading-tight group-hover:text-primary transition-colors">
+                        {rec.game_name}
+                      </h4>
                     </div>
                   </div>
                 </Link>
 
-                {/* Action buttons */}
-                <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
-                  {/* Save button */}
-                  <button
-                    onClick={(e) => handleSave(rec, e)}
-                    disabled={savingId === rec.game_id}
-                    className={`p-1.5 rounded-full transition-all disabled:opacity-50 ${
-                      savedIds.has(rec.game_id)
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-zinc-800/80 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200'
-                    }`}
-                    title={savedIds.has(rec.game_id) ? 'Remove from saved' : 'Save for later'}
-                  >
-                    {savingId === rec.game_id ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <Bookmark className={`w-3.5 h-3.5 ${savedIds.has(rec.game_id) ? 'fill-current' : ''}`} />
-                    )}
-                  </button>
-
-                  {/* Dismiss button */}
-                  <button
-                    onClick={(e) => handleDismiss(rec.game_id, e)}
-                    disabled={dismissingId === rec.game_id}
-                    className="p-1.5 rounded-full bg-zinc-800/80 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200 transition-all disabled:opacity-50"
-                    title="Not interested"
-                  >
-                    {dismissingId === rec.game_id ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <X className="w-3.5 h-3.5" />
-                    )}
-                  </button>
-                </div>
+                {/* Dismiss button */}
+                <button
+                  onClick={(e) => handleDismiss(rec.game_id, e)}
+                  disabled={dismissingId === rec.game_id}
+                  className="absolute top-2 right-2 p-1.5 rounded-full bg-black/50 text-white/70 hover:bg-black/70 hover:text-white transition-all disabled:opacity-50 backdrop-blur-sm"
+                  title="Not interested"
+                >
+                  {dismissingId === rec.game_id ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <X className="w-3 h-3" />
+                  )}
+                </button>
               </div>
-            )
-          })}
+            ))}
+          </div>
         </div>
       )}
     </div>
