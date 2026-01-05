@@ -128,10 +128,7 @@ export async function getFeaturedVideos(limit = 6): Promise<VideoWithGame[]> {
 export async function getTrendingVideos(limit = 10): Promise<VideoWithGame[]> {
   const supabase = await createClient()
 
-  // Get videos from the last 7 days sorted by view count
-  const sevenDaysAgo = new Date()
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
-
+  // Get top videos by view count (no date filter - shows best performing videos)
   const { data, error } = await supabase
     .from('game_videos')
     .select(`
@@ -154,7 +151,6 @@ export async function getTrendingVideos(limit = 10): Promise<VideoWithGame[]> {
         logo_url
       )
     `)
-    .gte('published_at', sevenDaysAgo.toISOString())
     .order('view_count', { ascending: false })
     .limit(limit)
 

@@ -25,7 +25,7 @@ export default async function VideosPage({
 
   const [videos, trendingVideos, videoTypes, games] = await Promise.all([
     getVideos({ videoType: selectedType || undefined, gameId: selectedGame || undefined, limit: 50 }),
-    getTrendingVideos(4),
+    getTrendingVideos(10),
     getVideoTypes(),
     getGamesWithVideos(),
   ])
