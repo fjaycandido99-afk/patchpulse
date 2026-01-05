@@ -5,6 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 // Steam Store API endpoints
 const STEAM_FEATURED_URL = 'https://store.steampowered.com/api/featured/'
 const STEAM_FEATURED_CATEGORIES_URL = 'https://store.steampowered.com/api/featuredcategories/'
+const STEAM_TOP_GAMES_URL = 'https://api.steampowered.com/ISteamChartsService/GetMostPlayedGames/v1/'
 
 type SteamFeaturedGame = {
   id: number
@@ -167,7 +168,7 @@ export async function discoverSteamGames(): Promise<{
 
       // Specials (on sale)
       if (categories.specials?.items) {
-        categories.specials.items.slice(0, 20).forEach((game: SteamFeaturedGame) => {
+        categories.specials.items.slice(0, 30).forEach((game: SteamFeaturedGame) => {
           if (game.id) allAppIds.add(game.id)
         })
       }
@@ -176,11 +177,29 @@ export async function discoverSteamGames(): Promise<{
     results.errors.push(`Categories fetch failed: ${error}`)
   }
 
+  // 3. Fetch most played games from Steam Charts
+  try {
+    const topGamesRes = await fetch(STEAM_TOP_GAMES_URL, {
+      headers: { 'User-Agent': 'PatchPulse/1.0' },
+    })
+
+    if (topGamesRes.ok) {
+      const topGames = await topGamesRes.json()
+      if (topGames.response?.ranks) {
+        topGames.response.ranks.slice(0, 100).forEach((game: { appid: number }) => {
+          if (game.appid) allAppIds.add(game.appid)
+        })
+      }
+    }
+  } catch (error) {
+    results.errors.push(`Top games fetch failed: ${error}`)
+  }
+
   results.fetched = allAppIds.size
   console.log(`[Steam Discovery] Found ${allAppIds.size} unique app IDs`)
 
   // Process each app (with rate limiting)
-  const appIds = Array.from(allAppIds).slice(0, 50) // Limit to 50 per run
+  const appIds = Array.from(allAppIds).slice(0, 100) // Increased to 100 per run
 
   for (const appId of appIds) {
     try {

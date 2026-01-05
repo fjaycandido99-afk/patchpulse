@@ -70,9 +70,9 @@ export async function GET(req: Request) {
     }
   }
 
-  // Fetch new releases from IGDB (last 60 days to catch more)
+  // Fetch new releases from IGDB (last 90 days, more games)
   try {
-    const newReleases = await getNewReleasesFromIgdb(40, 60)
+    const newReleases = await getNewReleasesFromIgdb(100, 90)
     results.newReleases.fetched = newReleases.length
 
     for (const game of newReleases) {
@@ -84,7 +84,7 @@ export async function GET(req: Request) {
 
   // Fetch upcoming games from IGDB (next 365 days - full year)
   try {
-    const upcoming = await getUpcomingFromIgdb(50, 365)
+    const upcoming = await getUpcomingFromIgdb(100, 365)
     results.upcoming.fetched = upcoming.length
 
     for (const game of upcoming) {
@@ -96,7 +96,7 @@ export async function GET(req: Request) {
 
   // Fetch TBA games (announced but no release date)
   try {
-    const tbaGames = await getTBAGamesFromIgdb(30)
+    const tbaGames = await getTBAGamesFromIgdb(50)
     results.tba.fetched = tbaGames.length
 
     for (const game of tbaGames) {
@@ -108,7 +108,7 @@ export async function GET(req: Request) {
 
   // Fetch indie games specifically
   try {
-    const indieGames = await getIndieGamesFromIgdb(30)
+    const indieGames = await getIndieGamesFromIgdb(50)
     results.indie.fetched = indieGames.length
 
     for (const game of indieGames) {

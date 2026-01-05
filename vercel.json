@@ -22,7 +22,7 @@
     },
     {
       "path": "/api/cron/discover-games",
-      "schedule": "0 */6 * * *"
+      "schedule": "0 */2 * * *"
     },
     {
       "path": "/api/cron/backfill-images",
