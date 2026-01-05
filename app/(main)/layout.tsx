@@ -133,7 +133,7 @@ export default async function MainLayout({
 
             {/* Desktop search in header area */}
             <header className="hidden md:block sticky top-0 z-40 bg-background/95 backdrop-blur-xl border-b border-white/10">
-              <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
+              <div className="px-6 lg:px-8 py-3">
                 <div className="flex items-center justify-end gap-3">
                   <SearchBar />
                   <ProfileAvatar
@@ -146,7 +146,7 @@ export default async function MainLayout({
               </div>
             </header>
 
-            <div className="mx-auto h-full max-w-7xl px-4 pt-16 pb-6 md:pt-6 sm:px-6 lg:px-8 w-full overflow-hidden">
+            <div className="h-full px-4 pt-16 pb-6 md:pt-6 md:px-6 lg:px-8 w-full overflow-hidden">
               {children}
             </div>
           </main>

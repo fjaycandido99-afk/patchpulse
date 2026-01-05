@@ -770,8 +770,8 @@ export function VideosFeed({
         )}
       </div>
 
-      {/* Desktop: 2-column grid, 3 columns on xl screens */}
-      <div className="hidden md:grid md:grid-cols-2 xl:grid-cols-3 gap-5">
+      {/* Desktop: responsive grid - 2/3/4 columns based on screen size */}
+      <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {displayVideos.map((video, index) => (
           <div
             key={video.id}
