@@ -19,6 +19,7 @@ import {
 import Link from 'next/link'
 import { VideoPlayer } from '@/components/videos'
 import { toggleVideoBookmark, type VideoMetadata } from '../actions/bookmarks'
+import { useToastUI } from '@/components/ui/toast'
 import type { VideoWithGame } from './queries'
 
 type VideoType = 'trailer' | 'clips' | 'gameplay' | 'esports' | 'review' | 'other'
@@ -547,6 +548,7 @@ export function VideosFeed({
   const [localSavedIds, setLocalSavedIds] = useState<Set<string>>(new Set(savedVideoIds))
   const [savingIds, setSavingIds] = useState<Set<string>>(new Set())
   const router = useRouter()
+  const { toast } = useToastUI()
 
   // Limit videos for non-Pro users
   const displayVideos = isPro ? videos : videos.slice(0, FREE_VIDEO_LIMIT)
@@ -598,6 +600,7 @@ export function VideosFeed({
         }
         return next
       })
+      toast.error(result.error)
     }
 
     setSavingIds(prev => {

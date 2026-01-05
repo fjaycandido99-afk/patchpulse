@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers'
 import Link from 'next/link'
 import { Crown } from 'lucide-react'
-import { getBookmarkedPatches, getBookmarkedNews, getBookmarkedDeals, getBookmarkedRecommendations } from './queries'
+import { getBookmarkedPatches, getBookmarkedNews, getBookmarkedDeals, getBookmarkedRecommendations, getBookmarkedVideos } from './queries'
 import { createClient } from '@/lib/supabase/server'
 import { isGuestModeFromCookies } from '@/lib/guest'
 import { getUserPlan } from '@/lib/subscriptions/limits'
@@ -58,14 +58,15 @@ export default async function BookmarksPage() {
     )
   }
 
-  const [patches, news, deals, recommendations] = await Promise.all([
+  const [patches, news, deals, recommendations, videos] = await Promise.all([
     getBookmarkedPatches(),
     getBookmarkedNews(),
     getBookmarkedDeals(),
     getBookmarkedRecommendations(),
+    getBookmarkedVideos(),
   ])
 
-  const totalSaved = patches.length + news.length + deals.length + recommendations.length
+  const totalSaved = patches.length + news.length + deals.length + recommendations.length + videos.length
   const hasBookmarks = totalSaved > 0
   const isAtLimit = !isPro && totalSaved >= FREE_SAVED_LIMIT
   const remainingSlots = isPro ? Infinity : Math.max(0, FREE_SAVED_LIMIT - totalSaved)
@@ -146,7 +147,7 @@ export default async function BookmarksPage() {
           </div>
         </div>
       ) : (
-        <SavedContent deals={deals} patches={patches} news={news} recommendations={recommendations} />
+        <SavedContent deals={deals} patches={patches} news={news} recommendations={recommendations} videos={videos} />
       )}
     </div>
   )

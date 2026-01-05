@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Gamepad2, ExternalLink, Tag, Newspaper, FileText, SlidersHorizontal, X, Check, Sparkles } from 'lucide-react'
+import { Gamepad2, ExternalLink, Tag, Newspaper, FileText, SlidersHorizontal, X, Check, Sparkles, Video, Play } from 'lucide-react'
 import { MediaCard } from '@/components/media/MediaCard'
 import { formatDate } from '@/lib/dates'
 
@@ -57,30 +57,47 @@ type BookmarkedRecommendation = {
   }
 }
 
+type BookmarkedVideo = {
+  id: string
+  entity_id: string
+  metadata: {
+    youtube_id: string
+    title: string
+    thumbnail_url: string | null
+    channel_name: string | null
+    video_type: string
+    game_name: string | null
+    savedAt: string
+  }
+}
+
 type SavedContentProps = {
   deals: BookmarkedDeal[]
   patches: BookmarkedPatch[]
   news: BookmarkedNews[]
   recommendations?: BookmarkedRecommendation[]
+  videos?: BookmarkedVideo[]
 }
 
-type FilterType = 'all' | 'deals' | 'patches' | 'news' | 'recommendations'
+type FilterType = 'all' | 'deals' | 'patches' | 'news' | 'recommendations' | 'videos'
 
-export function SavedContent({ deals, patches, news, recommendations = [] }: SavedContentProps) {
+export function SavedContent({ deals, patches, news, recommendations = [], videos = [] }: SavedContentProps) {
   const [filter, setFilter] = useState<FilterType>('all')
   const [isFilterOpen, setIsFilterOpen] = useState(false)
 
-  const totalCount = deals.length + patches.length + news.length + recommendations.length
+  const totalCount = deals.length + patches.length + news.length + recommendations.length + videos.length
 
   const filters: { id: FilterType; label: string; icon: typeof Tag; count: number }[] = [
     { id: 'all', label: 'All Saved', icon: Gamepad2, count: totalCount },
     { id: 'recommendations', label: 'Recommendations', icon: Sparkles, count: recommendations.length },
+    { id: 'videos', label: 'Videos', icon: Video, count: videos.length },
     { id: 'deals', label: 'Deals', icon: Tag, count: deals.length },
     { id: 'patches', label: 'Patches', icon: FileText, count: patches.length },
     { id: 'news', label: 'News', icon: Newspaper, count: news.length },
   ]
 
   const showRecommendations = filter === 'all' || filter === 'recommendations'
+  const showVideos = filter === 'all' || filter === 'videos'
   const showDeals = filter === 'all' || filter === 'deals'
   const showPatches = filter === 'all' || filter === 'patches'
   const showNews = filter === 'all' || filter === 'news'
@@ -237,6 +254,68 @@ export function SavedContent({ deals, patches, news, recommendations = [] }: Sav
           </section>
         )}
 
+        {/* Videos Section */}
+        {showVideos && videos.length > 0 && (
+          <section className="space-y-4">
+            {filter === 'all' && (
+              <h2 className="text-lg font-semibold flex items-center gap-2">
+                <Video className="w-5 h-5 text-red-400" />
+                Saved Videos
+                <span className="ml-1 text-sm font-normal text-muted-foreground">
+                  ({videos.length})
+                </span>
+              </h2>
+            )}
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {videos.map((item) => {
+                const thumbnail = item.metadata.thumbnail_url || `https://img.youtube.com/vi/${item.metadata.youtube_id}/hqdefault.jpg`
+                return (
+                  <a
+                    key={item.id}
+                    href={`https://www.youtube.com/watch?v=${item.metadata.youtube_id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group relative flex flex-col overflow-hidden rounded-xl border border-border hover:border-primary/50 transition-all bg-card"
+                  >
+                    <div className="relative aspect-video w-full overflow-hidden bg-zinc-800">
+                      <Image
+                        src={thumbnail}
+                        alt={item.metadata.title}
+                        fill
+                        className="object-cover transition-transform duration-300 group-hover:scale-105"
+                        sizes="(max-width: 640px) 50vw, 33vw"
+                        unoptimized
+                      />
+                      {/* Play button overlay */}
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="w-12 h-12 rounded-full bg-red-600 flex items-center justify-center">
+                          <Play className="w-5 h-5 text-white fill-white ml-0.5" />
+                        </div>
+                      </div>
+                      {/* Gradient */}
+                      <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 to-transparent" />
+                    </div>
+                    <div className="p-3">
+                      <h3 className="text-sm font-medium line-clamp-2 group-hover:text-primary transition-colors">
+                        {item.metadata.title}
+                      </h3>
+                      <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                        {item.metadata.game_name && (
+                          <>
+                            <span className="truncate">{item.metadata.game_name}</span>
+                            <span>·</span>
+                          </>
+                        )}
+                        <span className="capitalize">{item.metadata.video_type}</span>
+                      </div>
+                    </div>
+                  </a>
+                )
+              })}
+            </div>
+          </section>
+        )}
+
         {/* Deals Section */}
         {showDeals && deals.length > 0 && (
           <section className="space-y-4">
@@ -363,7 +442,8 @@ export function SavedContent({ deals, patches, news, recommendations = [] }: Sav
           (filter === 'deals' && deals.length === 0) ||
           (filter === 'patches' && patches.length === 0) ||
           (filter === 'news' && news.length === 0) ||
-          (filter === 'recommendations' && recommendations.length === 0)
+          (filter === 'recommendations' && recommendations.length === 0) ||
+          (filter === 'videos' && videos.length === 0)
         ) && (
           <div className="rounded-lg border border-dashed border-border py-12 text-center">
             <p className="text-muted-foreground">No saved {filter} yet</p>
@@ -372,6 +452,7 @@ export function SavedContent({ deals, patches, news, recommendations = [] }: Sav
                 filter === 'deals' ? '/deals' :
                 filter === 'patches' ? '/patches' :
                 filter === 'recommendations' ? '/insights' :
+                filter === 'videos' ? '/videos' :
                 '/news'
               }
               className="mt-2 inline-block text-sm text-primary hover:underline"

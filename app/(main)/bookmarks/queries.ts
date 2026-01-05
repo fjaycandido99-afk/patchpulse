@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import type { DealMetadata, RecommendationMetadata } from '../actions/bookmarks'
+import type { DealMetadata, RecommendationMetadata, VideoMetadata } from '../actions/bookmarks'
 
 export type BookmarkedDeal = {
   id: string
@@ -253,5 +253,45 @@ export async function getBookmarkedRecommendations(): Promise<BookmarkedRecommen
       entity_id: b.entity_id,
       created_at: b.created_at,
       metadata: b.metadata as RecommendationMetadata,
+    }))
+}
+
+export type BookmarkedVideo = {
+  id: string
+  entity_id: string
+  created_at: string
+  metadata: VideoMetadata
+}
+
+export async function getBookmarkedVideos(): Promise<BookmarkedVideo[]> {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return []
+  }
+
+  const { data: bookmarks, error } = await supabase
+    .from('bookmarks')
+    .select('id, entity_id, created_at, metadata')
+    .eq('user_id', user.id)
+    .eq('entity_type', 'video')
+    .order('created_at', { ascending: false })
+
+  if (error || !bookmarks) {
+    if (error) console.error('Error fetching video bookmarks:', error)
+    return []
+  }
+
+  return bookmarks
+    .filter(b => b.metadata)
+    .map(b => ({
+      id: b.id,
+      entity_id: b.entity_id,
+      created_at: b.created_at,
+      metadata: b.metadata as VideoMetadata,
     }))
 }
