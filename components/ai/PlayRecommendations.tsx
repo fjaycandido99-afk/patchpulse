@@ -23,7 +23,7 @@ function GameCoverImage({ src, alt }: { src: string | null; alt: string }) {
       alt={alt}
       fill
       className="object-cover"
-      sizes="80px"
+      sizes="56px"
       unoptimized
       onError={() => setHasError(true)}
     />
@@ -97,14 +97,27 @@ export function PlayRecommendations() {
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set())
   const [savingId, setSavingId] = useState<string | null>(null)
 
-  // Load cached recommendations on mount (without refresh)
+  // Load cached recommendations and dismissed IDs on mount
   useEffect(() => {
     const loadCached = async () => {
       try {
-        const response = await fetch('/api/ai/recommendations')
-        const data = await response.json()
+        // Load dismissed IDs and cached recommendations in parallel
+        const [dismissedRes, recsRes] = await Promise.all([
+          fetch('/api/ai/recommendations/dismiss'),
+          fetch('/api/ai/recommendations'),
+        ])
 
-        if (response.ok && data?.recommendations?.length > 0) {
+        // Load dismissed IDs
+        if (dismissedRes.ok) {
+          const dismissedData = await dismissedRes.json()
+          if (dismissedData?.dismissed_game_ids?.length > 0) {
+            setDismissedIds(new Set(dismissedData.dismissed_game_ids))
+          }
+        }
+
+        // Load cached recommendations
+        const data = await recsRes.json()
+        if (recsRes.ok && data?.recommendations?.length > 0) {
           setResult({
             recommendations: data.recommendations,
             message: data.message || 'Your recommendations',
@@ -312,7 +325,7 @@ export function PlayRecommendations() {
       )}
 
       {result && (
-        <div className="mt-6 space-y-4">
+        <div className="mt-4 space-y-2">
           <p className="text-sm text-muted-foreground italic">{result.message}</p>
 
           {visibleRecommendations.length === 0 && dismissedIds.size > 0 && (
@@ -346,100 +359,69 @@ export function PlayRecommendations() {
                         : 'border-border bg-muted/30 hover:bg-muted/50 hover:border-border/80'
                   }`}
                 >
-                  <div className="flex gap-4 p-4">
-                    {/* Game Cover - Larger with glow */}
-                    <div className={`relative flex-shrink-0 w-20 h-28 rounded-lg overflow-hidden bg-zinc-800 ${
+                  <div className="flex gap-3 p-3">
+                    {/* Game Cover - Compact */}
+                    <div className={`relative flex-shrink-0 w-12 h-16 sm:w-14 sm:h-20 rounded-lg overflow-hidden bg-zinc-800 ${
                       isDiscovery
-                        ? 'ring-2 ring-amber-500/30 shadow-lg shadow-amber-500/20'
+                        ? 'ring-1 ring-amber-500/40'
                         : isHot
-                          ? 'ring-2 ring-primary/30 shadow-lg shadow-primary/20'
+                          ? 'ring-1 ring-primary/40'
                           : 'ring-1 ring-white/10'
                     }`}>
                       <GameCoverImage src={rec.cover_url} alt={rec.game_name} />
                       {/* Rank badge */}
-                      <div className="absolute -top-1 -left-1 w-7 h-7 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm shadow-lg">
+                      <div className="absolute -top-0.5 -left-0.5 w-5 h-5 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-xs shadow">
                         {i + 1}
                       </div>
-                      {/* Momentum indicator on cover */}
-                      {isHot && !rec.is_discovery && (
-                        <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-green-500 flex items-center justify-center shadow-lg animate-pulse">
-                          <TrendingUp className="w-3.5 h-3.5 text-white" />
-                        </div>
-                      )}
-                      {/* Discovery badge on cover */}
-                      {rec.is_discovery && (
-                        <div className="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded-full bg-amber-500 text-[10px] font-bold text-black shadow-lg">
-                          NEW
+                      {/* Hot/Discovery indicator */}
+                      {(isHot || rec.is_discovery) && (
+                        <div className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full flex items-center justify-center shadow ${
+                          rec.is_discovery ? 'bg-amber-500' : 'bg-green-500'
+                        }`}>
+                          {rec.is_discovery ? (
+                            <Sparkles className="w-2.5 h-2.5 text-black" />
+                          ) : (
+                            <TrendingUp className="w-2.5 h-2.5 text-white" />
+                          )}
                         </div>
                       )}
                     </div>
 
                     {/* Content */}
                     <div className="flex-1 min-w-0 pr-6">
-                      {/* Signal Chips Row */}
-                      <div className="flex items-center gap-2 mb-2 flex-wrap">
-                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${TYPE_LABELS[rec.recommendation_type].bg} ${TYPE_LABELS[rec.recommendation_type].color}`}>
+                      {/* Compact chips row */}
+                      <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                        <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${TYPE_LABELS[rec.recommendation_type].bg} ${TYPE_LABELS[rec.recommendation_type].color}`}>
                           {TYPE_LABELS[rec.recommendation_type].label}
                         </span>
-                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs ${momentumConfig.bg} ${momentumConfig.color}`}>
-                          <MomentumIcon className="w-3 h-3" />
-                          {momentumConfig.label}
-                        </span>
                         {rec.recent_patch && (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-amber-500/20 text-amber-400">
-                            <Calendar className="w-3 h-3" />
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] bg-amber-500/20 text-amber-400">
                             Patch
-                          </span>
-                        )}
-                        {rec.is_discovery && rec.follower_count && rec.follower_count > 0 && (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-purple-500/20 text-purple-400">
-                            <Users className="w-3 h-3" />
-                            {rec.follower_count} following
                           </span>
                         )}
                       </div>
 
-                      <h4 className="font-semibold text-lg truncate">{rec.game_name}</h4>
+                      <h4 className="font-semibold text-sm sm:text-base truncate">{rec.game_name}</h4>
 
                       {rec.progress > 0 && (
-                        <div className="flex items-center gap-2 mt-1">
-                          <div className="flex-1 h-1.5 bg-zinc-700 rounded-full overflow-hidden">
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <div className="flex-1 h-1 bg-zinc-700 rounded-full overflow-hidden">
                             <div
-                              className="h-full bg-primary rounded-full transition-all"
+                              className="h-full bg-primary rounded-full"
                               style={{ width: `${rec.progress}%` }}
                             />
                           </div>
-                          <span className="text-xs text-muted-foreground">{rec.progress}%</span>
+                          <span className="text-[10px] text-muted-foreground">{rec.progress}%</span>
                         </div>
                       )}
 
-                      <p className="text-sm text-muted-foreground mt-1.5 line-clamp-2">{rec.reason}</p>
+                      <p className="text-xs text-muted-foreground mt-1 line-clamp-1 sm:line-clamp-2">{rec.reason}</p>
 
-                      {/* Why Now - the key selling point */}
+                      {/* Why Now - compact */}
                       {rec.why_now && (
-                        <div className="mt-3 p-2 rounded-lg bg-primary/10 border border-primary/20">
-                          <div className="flex items-start gap-2 text-sm">
-                            <Zap className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
-                            <span className="font-medium text-primary">{rec.why_now}</span>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* What You'd Miss */}
-                      {rec.what_youd_miss && (
-                        <div className="mt-2 flex items-start gap-2 text-xs text-amber-400">
-                          <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
-                          <span>{rec.what_youd_miss}</span>
-                        </div>
-                      )}
-
-                      {/* Patch indicator */}
-                      {rec.recent_patch && (
-                        <div className="mt-2 text-xs text-muted-foreground">
-                          <span className={rec.recent_patch.is_major ? 'text-amber-400 font-medium' : ''}>
-                            {rec.recent_patch.is_major ? '🔥 Major: ' : ''}
-                            {rec.recent_patch.title}
-                          </span>
+                        <div className="mt-1.5 flex items-center gap-1.5 text-xs text-primary">
+                          <Zap className="w-3 h-3 flex-shrink-0" />
+                          <span className="font-medium truncate">{rec.why_now}</span>
                         </div>
                       )}
                     </div>
@@ -447,7 +429,7 @@ export function PlayRecommendations() {
                 </Link>
 
                 {/* Action buttons */}
-                <div className="absolute top-3 right-3 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all">
+                <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
                   {/* Save button */}
                   <button
                     onClick={(e) => handleSave(rec, e)}

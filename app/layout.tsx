@@ -3,7 +3,7 @@ import './globals.css'
 
 export const metadata: Metadata = {
   title: {
-    default: 'PatchPulse - Track Game Patches & Manage Your Backlog',
+    default: 'PatchPulse - Track Games',
     template: '%s | PatchPulse',
   },
   description: 'Track gaming patch notes, manage your backlog, and get AI-powered recommendations on what to play next. Stay updated with the latest game updates.',
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     locale: 'en_US',
     url: 'https://patchpulse.app',
     siteName: 'PatchPulse',
-    title: 'PatchPulse - Track Game Patches & Manage Your Backlog',
+    title: 'PatchPulse - Track Games',
     description: 'Track gaming patch notes, manage your backlog, and get AI-powered recommendations on what to play next.',
     images: [
       {
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'PatchPulse - Track Game Patches & Manage Your Backlog',
+    title: 'PatchPulse - Track Games',
     description: 'Track gaming patch notes, manage your backlog, and get AI-powered recommendations on what to play next.',
     images: ['/opengraph-image'],
   },
@@ -64,6 +64,31 @@ export const viewport: Viewport = {
   userScalable: false,
 }
 
+// JSON-LD structured data for Google
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: 'PatchPulse',
+  url: 'https://patchpulse.app',
+  logo: 'https://patchpulse.app/logo.png',
+  description: 'Track gaming patch notes, manage your backlog, and get AI-powered recommendations on what to play next.',
+  applicationCategory: 'GameApplication',
+  operatingSystem: 'Web, iOS',
+  offers: {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'USD',
+  },
+  publisher: {
+    '@type': 'Organization',
+    name: 'PatchPulse',
+    logo: {
+      '@type': 'ImageObject',
+      url: 'https://patchpulse.app/logo.png',
+    },
+  },
+}
+
 export default function RootLayout({
   children,
 }: {
@@ -71,7 +96,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
-      <head />
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
       <body className="bg-background text-foreground antialiased">
         <main className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
           {children}

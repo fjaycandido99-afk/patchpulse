@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Loader2, Sparkles, RefreshCw } from 'lucide-react'
+import { Loader2, Sparkles, RefreshCw, Newspaper } from 'lucide-react'
 
 type DigestResult = {
   summary: string
@@ -99,11 +99,18 @@ export function NewsDigest() {
           {error}
         </div>
       ) : digest ? (
-        <div className="p-4 rounded-lg bg-gradient-to-br from-primary/10 via-primary/5 to-transparent">
-          <p className="text-sm">{digest.summary}</p>
-          <p className="text-xs text-muted-foreground mt-2">
-            {digest.total_news} articles from your followed games
-          </p>
+        <div className="flex gap-4 p-4 rounded-lg bg-gradient-to-br from-primary/10 via-primary/5 to-transparent">
+          {/* Visual */}
+          <div className="hidden sm:flex flex-shrink-0 w-16 h-16 rounded-xl bg-primary/20 items-center justify-center">
+            <Newspaper className="w-8 h-8 text-primary" />
+          </div>
+          {/* Content */}
+          <div className="flex-1 min-w-0">
+            <p className="text-sm leading-relaxed">{digest.summary}</p>
+            <p className="text-xs text-muted-foreground mt-2">
+              {digest.total_news} articles from your followed games
+            </p>
+          </div>
         </div>
       ) : null}
     </div>
