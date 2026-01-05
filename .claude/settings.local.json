@@ -31,7 +31,9 @@
       "WebFetch(domain:patchpulse.app)",
       "Bash(git restore:*)",
       "Bash(grep:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(npm run)"
     ]
   }
 }

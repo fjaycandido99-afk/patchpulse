@@ -23,7 +23,7 @@ function GameCoverImage({ src, alt }: { src: string | null; alt: string }) {
       alt={alt}
       fill
       className="object-cover"
-      sizes="56px"
+      sizes="80px"
       unoptimized
       onError={() => setHasError(true)}
     />
@@ -359,9 +359,9 @@ export function PlayRecommendations() {
                         : 'border-border bg-muted/30 hover:bg-muted/50 hover:border-border/80'
                   }`}
                 >
-                  <div className="flex gap-3 p-3">
-                    {/* Game Cover - Compact */}
-                    <div className={`relative flex-shrink-0 w-12 h-16 sm:w-14 sm:h-20 rounded-lg overflow-hidden bg-zinc-800 ${
+                  <div className="flex gap-3 p-2.5">
+                    {/* Game Cover - Larger */}
+                    <div className={`relative flex-shrink-0 w-16 h-22 sm:w-20 sm:h-28 rounded-lg overflow-hidden bg-zinc-800 ${
                       isDiscovery
                         ? 'ring-1 ring-amber-500/40'
                         : isHot
@@ -373,57 +373,22 @@ export function PlayRecommendations() {
                       <div className="absolute -top-0.5 -left-0.5 w-5 h-5 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-xs shadow">
                         {i + 1}
                       </div>
-                      {/* Hot/Discovery indicator */}
-                      {(isHot || rec.is_discovery) && (
-                        <div className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full flex items-center justify-center shadow ${
-                          rec.is_discovery ? 'bg-amber-500' : 'bg-green-500'
-                        }`}>
-                          {rec.is_discovery ? (
-                            <Sparkles className="w-2.5 h-2.5 text-black" />
-                          ) : (
-                            <TrendingUp className="w-2.5 h-2.5 text-white" />
-                          )}
-                        </div>
-                      )}
                     </div>
 
-                    {/* Content */}
-                    <div className="flex-1 min-w-0 pr-6">
-                      {/* Compact chips row */}
-                      <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                    {/* Content - Minimal */}
+                    <div className="flex-1 min-w-0 py-1">
+                      <div className="flex items-center gap-1.5 mb-1">
                         <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${TYPE_LABELS[rec.recommendation_type].bg} ${TYPE_LABELS[rec.recommendation_type].color}`}>
                           {TYPE_LABELS[rec.recommendation_type].label}
                         </span>
-                        {rec.recent_patch && (
-                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] bg-amber-500/20 text-amber-400">
-                            Patch
-                          </span>
+                        {isHot && (
+                          <TrendingUp className="w-3 h-3 text-green-400" />
                         )}
                       </div>
 
-                      <h4 className="font-semibold text-sm sm:text-base truncate">{rec.game_name}</h4>
+                      <h4 className="font-semibold text-sm truncate">{rec.game_name}</h4>
 
-                      {rec.progress > 0 && (
-                        <div className="flex items-center gap-1.5 mt-0.5">
-                          <div className="flex-1 h-1 bg-zinc-700 rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-primary rounded-full"
-                              style={{ width: `${rec.progress}%` }}
-                            />
-                          </div>
-                          <span className="text-[10px] text-muted-foreground">{rec.progress}%</span>
-                        </div>
-                      )}
-
-                      <p className="text-xs text-muted-foreground mt-1 line-clamp-1 sm:line-clamp-2">{rec.reason}</p>
-
-                      {/* Why Now - compact */}
-                      {rec.why_now && (
-                        <div className="mt-1.5 flex items-center gap-1.5 text-xs text-primary">
-                          <Zap className="w-3 h-3 flex-shrink-0" />
-                          <span className="font-medium truncate">{rec.why_now}</span>
-                        </div>
-                      )}
+                      <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{rec.reason}</p>
                     </div>
                   </div>
                 </Link>
