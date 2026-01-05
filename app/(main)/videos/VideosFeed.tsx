@@ -14,7 +14,9 @@ import {
   ChevronRight,
   ExternalLink,
   Bookmark,
+  Crown,
 } from 'lucide-react'
+import Link from 'next/link'
 import { VideoPlayer } from '@/components/videos'
 import { toggleVideoBookmark, type VideoMetadata } from '../actions/bookmarks'
 import type { VideoWithGame } from './queries'
@@ -441,7 +443,11 @@ function DesktopVideoCard({
 
   return (
     <div
-      className="group w-full rounded-xl overflow-hidden bg-card border border-border hover:border-primary/50 transition-all hover:shadow-lg hover:shadow-primary/5"
+      className={`group w-full rounded-xl overflow-hidden bg-card border transition-all duration-300 ${
+        isHovering
+          ? 'border-primary/60 shadow-xl shadow-primary/10 scale-[1.02] -translate-y-1'
+          : 'border-border hover:border-white/20'
+      }`}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
@@ -462,62 +468,71 @@ function DesktopVideoCard({
           src={thumbnail}
           alt={video.title}
           fill
-          className={`object-cover transition-transform duration-300 ${isHovering ? 'scale-105' : ''}`}
+          className={`object-cover transition-transform duration-300 ${isHovering ? 'scale-110' : ''}`}
           sizes="50vw"
           unoptimized
         />
 
+        {/* Gradient overlay for better text contrast */}
+        <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none" />
+
         {/* Play button - hide when preview is showing */}
         {!showPreview && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className={`w-12 h-12 rounded-full bg-black/60 flex items-center justify-center backdrop-blur-sm border border-white/10 transition-all ${isHovering ? 'w-14 h-14 bg-red-600/90' : ''}`}>
-              <Play className={`w-5 h-5 text-white fill-white ml-0.5 transition-all ${isHovering ? 'w-6 h-6' : ''}`} />
+            <div className={`rounded-full flex items-center justify-center backdrop-blur-sm border transition-all duration-300 ${
+              isHovering
+                ? 'w-16 h-16 bg-red-600 border-red-500/50 shadow-lg shadow-red-600/30'
+                : 'w-12 h-12 bg-black/60 border-white/10'
+            }`}>
+              <Play className={`text-white fill-white ml-0.5 transition-all duration-300 ${isHovering ? 'w-7 h-7' : 'w-5 h-5'}`} />
             </div>
           </div>
         )}
 
-        {/* Duration - hide when preview is showing */}
+        {/* Duration badge - bottom right with pill style */}
         {video.duration_seconds > 0 && !showPreview && (
-          <span className="absolute bottom-2 right-2 px-1.5 py-0.5 text-xs font-medium rounded bg-black/80 text-white">
+          <span className="absolute bottom-2 right-2 px-2 py-1 text-xs font-semibold rounded-md bg-black/90 text-white shadow-lg">
             {formatDuration(video.duration_seconds)}
           </span>
         )}
 
         {/* Type badge */}
-        <span className={`absolute top-2 left-2 px-2 py-0.5 text-xs font-medium rounded ${typeConfig.color} z-20`}>
+        <span className={`absolute top-2 left-2 px-2.5 py-1 text-xs font-semibold rounded-md ${typeConfig.color} backdrop-blur-sm shadow-lg z-20`}>
           {typeConfig.label}
         </span>
 
         {/* Save button - top right */}
         <button
           onClick={onSave}
-          className={`absolute top-2 right-2 p-1.5 rounded-full backdrop-blur-sm transition-all z-20 ${
+          className={`absolute top-2 right-2 p-2 rounded-full backdrop-blur-sm transition-all z-20 shadow-lg ${
             isSaved
-              ? 'bg-primary/90 text-white'
-              : 'bg-black/50 text-white/80 hover:bg-black/70 hover:text-white'
+              ? 'bg-primary text-white'
+              : 'bg-black/60 text-white/90 hover:bg-black/80 hover:text-white hover:scale-110'
           }`}
         >
           <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-current' : ''}`} />
         </button>
       </button>
 
-      {/* Info */}
-      <button onClick={onPlay} className="w-full p-4 text-left">
-        <h3 className="font-semibold text-base line-clamp-2 group-hover:text-primary transition-colors">
+      {/* Info section with better styling */}
+      <button onClick={onPlay} className="w-full p-4 text-left bg-gradient-to-b from-card to-card/80">
+        <h3 className={`font-semibold text-base line-clamp-2 transition-colors duration-200 ${
+          isHovering ? 'text-primary' : 'text-foreground'
+        }`} style={{ textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}>
           {video.title}
         </h3>
 
-        <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2 mt-2.5 text-sm text-muted-foreground">
           <span className="truncate max-w-[180px]">{video.channel_name || 'Unknown Channel'}</span>
           {video.view_count > 0 && (
             <>
-              <span>•</span>
-              <span>{formatViewCount(video.view_count)}</span>
+              <span className="text-muted-foreground/50">•</span>
+              <span className="font-medium">{formatViewCount(video.view_count)}</span>
             </>
           )}
           {video.published_at && (
             <>
-              <span>•</span>
+              <span className="text-muted-foreground/50">•</span>
               <span>{getRelativeTime(video.published_at)}</span>
             </>
           )}
@@ -533,7 +548,10 @@ type VideosFeedProps = {
   videoTypes: { type: VideoType; count: number }[]
   selectedType: VideoType | null
   savedVideoIds: string[]
+  isPro?: boolean
 }
+
+const FREE_VIDEO_LIMIT = 10
 
 export function VideosFeed({
   videos,
@@ -541,12 +559,17 @@ export function VideosFeed({
   videoTypes,
   selectedType,
   savedVideoIds,
+  isPro = false,
 }: VideosFeedProps) {
   const [isBrowser, setIsBrowser] = useState(false)
   const [selectedVideo, setSelectedVideo] = useState<VideoWithGame | null>(null)
   const [localSavedIds, setLocalSavedIds] = useState<Set<string>>(new Set(savedVideoIds))
   const [savingIds, setSavingIds] = useState<Set<string>>(new Set())
   const router = useRouter()
+
+  // Limit videos for non-Pro users
+  const displayVideos = isPro ? videos : videos.slice(0, FREE_VIDEO_LIMIT)
+  const hasMoreVideos = !isPro && videos.length > FREE_VIDEO_LIMIT
 
   // Sync with server state
   useEffect(() => {
@@ -700,7 +723,7 @@ export function VideosFeed({
 
       {/* Mobile: YouTube-style vertical list */}
       <div className="md:hidden space-y-6">
-        {videos.map((video, index) => (
+        {displayVideos.map((video, index) => (
           <div
             key={video.id}
             className="animate-soft-entry"
@@ -714,11 +737,32 @@ export function VideosFeed({
             />
           </div>
         ))}
+
+        {/* Upgrade CTA for mobile */}
+        {hasMoreVideos && (
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent -top-20 pointer-events-none" />
+            <div className="rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 via-background to-violet-500/10 p-6 text-center">
+              <Crown className="w-10 h-10 mx-auto text-primary mb-3" />
+              <h3 className="text-lg font-bold mb-2">Unlock All Videos</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Upgrade to Pro for unlimited access to trailers, gameplay, and esports highlights
+              </p>
+              <Link
+                href="/pricing"
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
+              >
+                <Crown className="w-4 h-4" />
+                Upgrade to Pro
+              </Link>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Desktop: 2-column grid */}
       <div className="hidden md:grid md:grid-cols-2 gap-6">
-        {videos.map((video, index) => (
+        {displayVideos.map((video, index) => (
           <div
             key={video.id}
             className="animate-soft-entry"
@@ -733,6 +777,27 @@ export function VideosFeed({
           </div>
         ))}
       </div>
+
+      {/* Desktop Upgrade CTA */}
+      {hasMoreVideos && (
+        <div className="hidden md:block relative">
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent -top-24 pointer-events-none" />
+          <div className="rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 via-background to-violet-500/10 p-8 text-center">
+            <Crown className="w-12 h-12 mx-auto text-primary mb-4" />
+            <h3 className="text-xl font-bold mb-2">Unlock All {videos.length} Videos</h3>
+            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+              Upgrade to Pro for unlimited access to trailers, gameplay clips, and esports highlights
+            </p>
+            <Link
+              href="/pricing"
+              className="inline-flex items-center gap-2 px-8 py-3 rounded-full bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
+            >
+              <Crown className="w-5 h-5" />
+              Upgrade to Pro
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* Video Player Modal */}
       {selectedVideo && (

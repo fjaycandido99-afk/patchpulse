@@ -63,7 +63,6 @@ export function DesktopSidebar({ counts, notificationStats, patchesStats, isGues
             icon={Brain}
             label="Insights"
             href="/insights"
-            isPro
           />
           <NavItem
             icon={Library}
@@ -78,12 +77,12 @@ export function DesktopSidebar({ counts, notificationStats, patchesStats, isGues
             href="/bookmarks"
             badge={counts?.savedUpdates}
             badgeLabel="saved"
-            isPro
           />
           <NavItem
             icon={Tag}
             label="Deals"
             href="/deals"
+            isPro
           />
           <NavItem icon={User} label="Profile" href="/profile" />
 

@@ -166,17 +166,21 @@ export function SearchBar({ placeholder = 'Search games, patches, news...', clas
 
   return (
     <>
-      {/* Search trigger button */}
+      {/* Search trigger button - Desktop polished */}
       <button
         onClick={() => {
           setIsOpen(true)
           setTimeout(() => inputRef.current?.focus(), 100)
         }}
-        className={`flex items-center gap-2 px-3 py-2 rounded-xl bg-white/10 border border-white/15 text-foreground/80 text-sm hover:bg-white/15 hover:border-white/25 transition-all duration-200 ${className}`}
+        className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-white/5 border border-white/20 text-foreground/70 text-sm hover:bg-white/10 hover:border-white/40 hover:text-foreground transition-all duration-200 shadow-sm hover:shadow-md ${className}`}
       >
-        <Search className="w-4 h-4" />
-        <span className="hidden sm:inline">{placeholder}</span>
+        <Search className="w-4 h-4 text-muted-foreground" />
+        <span className="hidden sm:inline text-muted-foreground">{placeholder}</span>
         <span className="sm:hidden">Search</span>
+        {/* Keyboard shortcut hint for desktop */}
+        <kbd className="hidden md:inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground/60 bg-white/5 border border-white/10 rounded ml-2">
+          <span className="text-xs">⌘</span>K
+        </kbd>
       </button>
 
       {/* Search overlay - single fixed container */}

@@ -28,9 +28,9 @@ const navItems: NavItemConfig[] = [
 ]
 
 const menuItems: NavItemConfig[] = [
-  { icon: Brain, label: 'Insights', href: '/insights', isPro: true },
-  { icon: Bookmark, label: 'Saved', href: '/bookmarks', isPro: true },
-  { icon: Tag, label: 'Deals', href: '/deals' },
+  { icon: Brain, label: 'Insights', href: '/insights' },
+  { icon: Bookmark, label: 'Saved', href: '/bookmarks' },
+  { icon: Tag, label: 'Deals', href: '/deals', isPro: true },
   { icon: Gamepad2, label: 'Patches', href: '/patches' },
   { icon: CalendarClock, label: 'Upcoming', href: '/upcoming' },
   { icon: CalendarDays, label: 'Releases', href: '/releases' },

@@ -2,6 +2,34 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { getUserPlan } from '@/lib/subscriptions/limits'
+
+const FREE_SAVED_LIMIT = 10
+
+// Helper to check if user can save more items
+async function canUserSave(userId: string, supabase: Awaited<ReturnType<typeof createClient>>): Promise<{ allowed: boolean; error?: string }> {
+  const plan = await getUserPlan(userId)
+  if (plan === 'pro') {
+    return { allowed: true }
+  }
+
+  // Count existing bookmarks
+  const { count, error } = await supabase
+    .from('bookmarks')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId)
+
+  if (error) {
+    console.error('[canUserSave] Count error:', error)
+    return { allowed: false, error: 'Failed to check bookmark limit' }
+  }
+
+  if ((count || 0) >= FREE_SAVED_LIMIT) {
+    return { allowed: false, error: `You've reached the limit of ${FREE_SAVED_LIMIT} saved items. Upgrade to Pro for unlimited saves.` }
+  }
+
+  return { allowed: true }
+}
 
 export type DealMetadata = {
   title: string
@@ -50,6 +78,12 @@ export async function toggleBookmark(
     revalidatePath('/', 'layout')
     return { success: true, bookmarked: false }
   } else {
+    // Check limit before adding
+    const canSave = await canUserSave(user.id, supabase)
+    if (!canSave.allowed) {
+      return { error: canSave.error || 'Save limit reached' }
+    }
+
     const { error } = await supabase.from('bookmarks').insert({
       user_id: user.id,
       entity_type: entityType,
@@ -107,6 +141,12 @@ export async function toggleDealBookmark(
     revalidatePath('/', 'layout')
     return { success: true, bookmarked: false }
   } else {
+    // Check limit before adding
+    const canSave = await canUserSave(user.id, supabase)
+    if (!canSave.allowed) {
+      return { error: canSave.error || 'Save limit reached' }
+    }
+
     const { error } = await supabase.from('bookmarks').insert({
       user_id: user.id,
       entity_type: 'deal',
@@ -221,6 +261,12 @@ export async function toggleVideoBookmark(
     revalidatePath('/bookmarks', 'page')
     return { success: true, bookmarked: false }
   } else {
+    // Check limit before adding
+    const canSave = await canUserSave(user.id, supabase)
+    if (!canSave.allowed) {
+      return { error: canSave.error || 'Save limit reached' }
+    }
+
     const { error } = await supabase.from('bookmarks').insert({
       user_id: user.id,
       entity_type: 'video',
@@ -313,6 +359,12 @@ export async function toggleRecommendationBookmark(
     revalidatePath('/', 'layout')
     return { success: true, bookmarked: false }
   } else {
+    // Check limit before adding
+    const canSave = await canUserSave(user.id, supabase)
+    if (!canSave.allowed) {
+      return { error: canSave.error || 'Save limit reached' }
+    }
+
     console.log('[toggleRecommendationBookmark] Creating new bookmark with metadata:', JSON.stringify(metadata))
     const { error } = await supabase.from('bookmarks').insert({
       user_id: user.id,

@@ -12,6 +12,7 @@ type VideoPlayerProps = {
 
 export function VideoPlayer({ youtubeId, title, isOpen, onClose }: VideoPlayerProps) {
   const [isBrowser, setIsBrowser] = useState(false)
+  const [embedFailed, setEmbedFailed] = useState(false)
 
   // Check if we're in a browser (not Capacitor native app)
   useEffect(() => {
@@ -19,6 +20,11 @@ export function VideoPlayer({ youtubeId, title, isOpen, onClose }: VideoPlayerPr
       (window as Window & { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.()
     setIsBrowser(!isNative)
   }, [])
+
+  // Reset embed failed state when video changes
+  useEffect(() => {
+    setEmbedFailed(false)
+  }, [youtubeId])
 
   // Handle escape key to close
   useEffect(() => {
@@ -41,6 +47,9 @@ export function VideoPlayer({ youtubeId, title, isOpen, onClose }: VideoPlayerPr
     return null
   }
 
+  const youtubeUrl = `https://www.youtube.com/watch?v=${youtubeId}`
+  const thumbnailUrl = `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
@@ -58,7 +67,7 @@ export function VideoPlayer({ youtubeId, title, isOpen, onClose }: VideoPlayerPr
           </h3>
           <div className="flex items-center gap-2">
             <a
-              href={`https://www.youtube.com/watch?v=${youtubeId}`}
+              href={youtubeUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-zinc-400 hover:text-white transition-colors"
@@ -77,13 +86,63 @@ export function VideoPlayer({ youtubeId, title, isOpen, onClose }: VideoPlayerPr
 
         {/* Video Player - 16:9 aspect ratio */}
         <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-zinc-900 shadow-2xl">
-          <iframe
-            src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0&modestbranding=1`}
-            title={title}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            className="absolute inset-0 w-full h-full"
+          {/* Thumbnail as fallback background */}
+          <img
+            src={thumbnailUrl}
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover opacity-30"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`
+            }}
           />
+
+          {embedFailed ? (
+            /* Fallback UI for age-restricted or unembeddable videos */
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-900/80 backdrop-blur-sm">
+              <div className="text-center p-6">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-600 flex items-center justify-center">
+                  <Play className="w-8 h-8 text-white fill-white ml-1" />
+                </div>
+                <h4 className="text-lg font-semibold text-white mb-2">Video unavailable here</h4>
+                <p className="text-zinc-400 text-sm mb-6 max-w-md">
+                  This video may be age-restricted or unavailable for embedding. Watch it directly on YouTube.
+                </p>
+                <a
+                  href={youtubeUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-full transition-colors"
+                >
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                  </svg>
+                  Watch on YouTube
+                </a>
+              </div>
+            </div>
+          ) : (
+            /* YouTube embed iframe */
+            <iframe
+              src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0&modestbranding=1`}
+              title={title}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              className="absolute inset-0 w-full h-full"
+              onError={() => setEmbedFailed(true)}
+            />
+          )}
+
+          {/* Manual fallback button - shown when embed is loading/failed */}
+          {!embedFailed && (
+            <div className="absolute bottom-4 right-4 z-10">
+              <button
+                onClick={() => setEmbedFailed(true)}
+                className="px-3 py-1.5 text-xs bg-black/60 hover:bg-black/80 text-zinc-300 hover:text-white rounded-lg backdrop-blur-sm transition-colors"
+              >
+                Video not loading?
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

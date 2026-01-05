@@ -2,6 +2,8 @@ import { Video } from 'lucide-react'
 import { getVideos, getTrendingVideos, getVideoTypes } from './queries'
 import { VideosFeed } from './VideosFeed'
 import { getUserVideoBookmarks } from '../actions/bookmarks'
+import { getSession } from '@/lib/auth'
+import { getUserPlan } from '@/lib/subscriptions/limits'
 
 type VideoType = 'trailer' | 'clips' | 'gameplay' | 'esports' | 'review' | 'other'
 
@@ -21,6 +23,10 @@ export default async function VideosPage({
 }) {
   const params = await searchParams
   const selectedType = (params.type as VideoType) || null
+
+  const { user } = await getSession()
+  const plan = user ? await getUserPlan(user.id) : 'free'
+  const isPro = plan === 'pro'
 
   const [videos, trendingVideos, videoTypes, savedVideoIds] = await Promise.all([
     getVideos({ videoType: selectedType || undefined, limit: 50 }),
@@ -53,6 +59,7 @@ export default async function VideosPage({
         videoTypes={videoTypes}
         selectedType={selectedType}
         savedVideoIds={savedVideoIds}
+        isPro={isPro}
       />
     </div>
   )
