@@ -291,7 +291,7 @@ function MobileVideoCard({
             {video.title}
           </h3>
           <div className="flex flex-wrap items-center gap-x-1 mt-1 text-xs text-muted-foreground">
-            <span>{video.game?.name || video.channel_name || 'Gaming'}</span>
+            <span className="truncate max-w-[140px]">{video.channel_name || 'Unknown Channel'}</span>
             {video.view_count > 0 && (
               <>
                 <span>•</span>
@@ -305,6 +305,11 @@ function MobileVideoCard({
               </>
             )}
           </div>
+          {video.game && (
+            <p className="text-[10px] text-muted-foreground/70 mt-0.5 truncate">
+              {video.game.name}
+            </p>
+          )}
         </button>
 
         {/* Save button */}
@@ -385,29 +390,18 @@ function DesktopVideoCard({
 
       {/* Info */}
       <button onClick={onPlay} className="w-full p-4 text-left">
-        {video.game && (
-          <div className="flex items-center gap-2 mb-2">
-            {video.game.logo_url && (
-              <div className="relative w-5 h-5 rounded overflow-hidden bg-white/10">
-                <Image src={video.game.logo_url} alt="" fill className="object-contain" sizes="20px" unoptimized />
-              </div>
-            )}
-            <span className="text-xs text-muted-foreground">{video.game.name}</span>
-          </div>
-        )}
-
         <h3 className="font-semibold text-base line-clamp-2 group-hover:text-primary transition-colors">
           {video.title}
         </h3>
 
         <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
-          {video.channel_name && (
+          <span className="truncate max-w-[180px]">{video.channel_name || 'Unknown Channel'}</span>
+          {video.view_count > 0 && (
             <>
-              <span className="truncate max-w-[150px]">{video.channel_name}</span>
               <span>•</span>
+              <span>{formatViewCount(video.view_count)}</span>
             </>
           )}
-          {video.view_count > 0 && <span>{formatViewCount(video.view_count)}</span>}
           {video.published_at && (
             <>
               <span>•</span>
@@ -415,6 +409,17 @@ function DesktopVideoCard({
             </>
           )}
         </div>
+
+        {video.game && (
+          <div className="flex items-center gap-2 mt-2">
+            {video.game.logo_url && (
+              <div className="relative w-4 h-4 rounded overflow-hidden bg-white/10">
+                <Image src={video.game.logo_url} alt="" fill className="object-contain" sizes="16px" unoptimized />
+              </div>
+            )}
+            <span className="text-xs text-muted-foreground/70">{video.game.name}</span>
+          </div>
+        )}
       </button>
     </div>
   )
