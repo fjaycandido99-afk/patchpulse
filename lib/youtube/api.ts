@@ -273,18 +273,20 @@ export async function fetchAllGameVideos() {
   const supabase = createAdminClient()
 
   // Get popular games (with steam_app_id or marked as live service)
-  // Limit to 10 games per day to stay within YouTube API quota (10k units/day)
+  // Limit to 5 games per run to stay within YouTube API quota (10k units/day)
   // Each game uses ~400 units (4 video types × 100 units per search)
-  // Rotate through games based on day of year so we cover all games over time
-  const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000)
-  const offset = (dayOfYear * 10) % 200 // Rotate through ~200 games
+  // 5 games × 400 units = 2,000 units per run
+  // 4 runs per day (every 6 hours) = 8,000 units/day (under 10k limit)
+  // Rotate through games based on hour of year so we cover all games over time
+  const hoursOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 3600000)
+  const offset = (hoursOfYear * 5) % 200 // Rotate through ~200 games
 
   const { data: games, error } = await supabase
     .from('games')
     .select('id, name, slug')
     .or('steam_app_id.not.is.null,is_live_service.eq.true')
     .order('name')
-    .range(offset, offset + 9)
+    .range(offset, offset + 4)
 
   if (error || !games) {
     return { success: false, error: error?.message || 'No games found', totalAdded: 0 }
