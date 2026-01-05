@@ -17,9 +17,15 @@ export async function GET(req: Request) {
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
   const cutoffDate = sevenDaysAgo.toISOString()
 
+  // Videos have shorter retention (3 days)
+  const threeDaysAgo = new Date()
+  threeDaysAgo.setDate(threeDaysAgo.getDate() - 3)
+  const videoCutoffDate = threeDaysAgo.toISOString()
+
   const results = {
     patches: { deleted: 0, kept: 0, followedGamesKept: 0 },
     news: { deleted: 0, kept: 0, followedGamesKept: 0 },
+    videos: { deleted: 0, kept: 0, followedGamesKept: 0 },
     recommendations: { deleted: 0, saved: 0 },
   }
 
@@ -108,6 +114,43 @@ export async function GET(req: Request) {
     results.news.deleted = newsCount || 0
     results.news.kept = bookmarkedNewsIds.length
     results.news.followedGamesKept = preservedGameIds.length
+
+    // Clean up old videos (3 days retention)
+    // Get bookmarked video IDs to preserve
+    const { data: bookmarkedVideos } = await supabase
+      .from('bookmarks')
+      .select('entity_id')
+      .eq('entity_type', 'video')
+
+    const bookmarkedVideoIds = (bookmarkedVideos?.map(b => b.entity_id).filter(Boolean) || []) as string[]
+
+    // Count videos to delete
+    const { count: videoCount } = await supabase
+      .from('game_videos')
+      .select('*', { count: 'exact', head: true })
+      .lt('created_at', videoCutoffDate)
+      .eq('is_featured', false) // Never delete featured videos
+
+    // Delete old videos not bookmarked AND not for followed/backlog games AND not featured
+    let videoQuery = supabase
+      .from('game_videos')
+      .delete()
+      .lt('created_at', videoCutoffDate)
+      .eq('is_featured', false)
+
+    if (bookmarkedVideoIds.length > 0) {
+      videoQuery = videoQuery.not('id', 'in', `(${bookmarkedVideoIds.join(',')})`)
+    }
+
+    if (preservedGameIds.length > 0) {
+      videoQuery = videoQuery.not('game_id', 'in', `(${preservedGameIds.join(',')})`)
+    }
+
+    await videoQuery
+
+    results.videos.deleted = videoCount || 0
+    results.videos.kept = bookmarkedVideoIds.length
+    results.videos.followedGamesKept = preservedGameIds.length
 
     // Clean up old read notifications (older than 7 days)
     // Using same cutoffDate as above

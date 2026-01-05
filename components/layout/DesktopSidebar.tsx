@@ -1,6 +1,6 @@
 'use client'
 
-import { Home, Newspaper, Library, User, Sparkles, Brain, Crown, Bell, Gamepad2, Bookmark, LogIn, UserPlus } from 'lucide-react'
+import { Home, Newspaper, Library, User, Sparkles, Brain, Crown, Bell, Gamepad2, Bookmark, LogIn, UserPlus, Video } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { ProBadge } from '@/components/ui/ProBadge'
@@ -53,6 +53,11 @@ export function DesktopSidebar({ counts, notificationStats, patchesStats, isGues
             badge={counts?.newNewsToday}
             badgeLabel="new"
             isLive={counts?.newNewsToday ? counts.newNewsToday > 0 : false}
+          />
+          <NavItem
+            icon={Video}
+            label="Videos"
+            href="/videos"
           />
           <NavItem
             icon={Brain}

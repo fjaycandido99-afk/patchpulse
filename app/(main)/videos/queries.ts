@@ -1,0 +1,235 @@
+'use server'
+
+import { createClient } from '@/lib/supabase/server'
+
+type VideoType = 'trailer' | 'clips' | 'gameplay' | 'esports' | 'review' | 'other'
+
+export type VideoWithGame = {
+  id: string
+  youtube_id: string
+  title: string
+  description: string | null
+  thumbnail_url: string | null
+  channel_name: string | null
+  video_type: VideoType
+  published_at: string | null
+  view_count: number
+  duration_seconds: number
+  is_featured: boolean
+  game: {
+    id: string
+    name: string
+    slug: string
+    cover_url: string | null
+    logo_url: string | null
+  } | null
+}
+
+export async function getVideos({
+  videoType,
+  gameId,
+  limit = 50,
+  offset = 0,
+}: {
+  videoType?: VideoType
+  gameId?: string
+  limit?: number
+  offset?: number
+} = {}): Promise<VideoWithGame[]> {
+  const supabase = await createClient()
+
+  let query = supabase
+    .from('game_videos')
+    .select(`
+      id,
+      youtube_id,
+      title,
+      description,
+      thumbnail_url,
+      channel_name,
+      video_type,
+      published_at,
+      view_count,
+      duration_seconds,
+      is_featured,
+      game:games!game_id (
+        id,
+        name,
+        slug,
+        cover_url,
+        logo_url
+      )
+    `)
+    .order('published_at', { ascending: false })
+    .range(offset, offset + limit - 1)
+
+  if (videoType) {
+    query = query.eq('video_type', videoType)
+  }
+
+  if (gameId) {
+    query = query.eq('game_id', gameId)
+  }
+
+  const { data, error } = await query
+
+  if (error) {
+    console.error('Failed to fetch videos:', error)
+    return []
+  }
+
+  // Transform the data to match our type (Supabase returns game as array for joins)
+  return (data || []).map((item) => ({
+    ...item,
+    game: Array.isArray(item.game) ? item.game[0] || null : item.game,
+  })) as VideoWithGame[]
+}
+
+export async function getFeaturedVideos(limit = 6): Promise<VideoWithGame[]> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('game_videos')
+    .select(`
+      id,
+      youtube_id,
+      title,
+      description,
+      thumbnail_url,
+      channel_name,
+      video_type,
+      published_at,
+      view_count,
+      duration_seconds,
+      is_featured,
+      game:games!game_id (
+        id,
+        name,
+        slug,
+        cover_url,
+        logo_url
+      )
+    `)
+    .eq('is_featured', true)
+    .order('published_at', { ascending: false })
+    .limit(limit)
+
+  if (error) {
+    console.error('Failed to fetch featured videos:', error)
+    return []
+  }
+
+  return (data || []).map((item) => ({
+    ...item,
+    game: Array.isArray(item.game) ? item.game[0] || null : item.game,
+  })) as VideoWithGame[]
+}
+
+export async function getTrendingVideos(limit = 10): Promise<VideoWithGame[]> {
+  const supabase = await createClient()
+
+  // Get videos from the last 7 days sorted by view count
+  const sevenDaysAgo = new Date()
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+
+  const { data, error } = await supabase
+    .from('game_videos')
+    .select(`
+      id,
+      youtube_id,
+      title,
+      description,
+      thumbnail_url,
+      channel_name,
+      video_type,
+      published_at,
+      view_count,
+      duration_seconds,
+      is_featured,
+      game:games!game_id (
+        id,
+        name,
+        slug,
+        cover_url,
+        logo_url
+      )
+    `)
+    .gte('published_at', sevenDaysAgo.toISOString())
+    .order('view_count', { ascending: false })
+    .limit(limit)
+
+  if (error) {
+    console.error('Failed to fetch trending videos:', error)
+    return []
+  }
+
+  return (data || []).map((item) => ({
+    ...item,
+    game: Array.isArray(item.game) ? item.game[0] || null : item.game,
+  })) as VideoWithGame[]
+}
+
+export async function getVideoTypes(): Promise<{ type: VideoType; count: number }[]> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('game_videos')
+    .select('video_type')
+
+  if (error || !data) {
+    return []
+  }
+
+  // Count by type
+  const counts = data.reduce((acc, item) => {
+    const type = item.video_type as VideoType
+    acc[type] = (acc[type] || 0) + 1
+    return acc
+  }, {} as Record<VideoType, number>)
+
+  return Object.entries(counts)
+    .map(([type, count]) => ({ type: type as VideoType, count }))
+    .sort((a, b) => b.count - a.count)
+}
+
+export async function getGamesWithVideos(): Promise<{ id: string; name: string; videoCount: number }[]> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('game_videos')
+    .select(`
+      game_id,
+      game:games!game_id (
+        id,
+        name
+      )
+    `)
+
+  if (error || !data) {
+    return []
+  }
+
+  // Count videos per game
+  const gameMap = new Map<string, { name: string; count: number }>()
+
+  for (const item of data) {
+    if (item.game && item.game_id) {
+      // Handle array from Supabase join
+      const gameData = Array.isArray(item.game) ? item.game[0] : item.game
+      if (!gameData) continue
+
+      const game = gameData as { id: string; name: string }
+      const existing = gameMap.get(game.id)
+      if (existing) {
+        existing.count++
+      } else {
+        gameMap.set(game.id, { name: game.name, count: 1 })
+      }
+    }
+  }
+
+  return Array.from(gameMap.entries())
+    .map(([id, { name, count }]) => ({ id, name, videoCount: count }))
+    .sort((a, b) => b.videoCount - a.videoCount)
+    .slice(0, 20) // Top 20 games
+}

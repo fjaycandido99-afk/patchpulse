@@ -201,6 +201,17 @@ const nextConfig = {
         hostname: 'images.unsplash.com',
         pathname: '/**',
       },
+      // YouTube thumbnails
+      {
+        protocol: 'https',
+        hostname: 'img.youtube.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'i.ytimg.com',
+        pathname: '/**',
+      },
     ],
   },
   // Empty turbopack config to acknowledge webpack configs from plugins
@@ -243,7 +254,7 @@ const nextConfig = {
               "img-src 'self' data: blob: https: http:",
               "font-src 'self' data:",
               "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://api.steampowered.com https://api.igdb.com https://id.twitch.tv https://www.cheapshark.com https://api.rawg.io",
-              "frame-src 'self' https://js.stripe.com https://challenges.cloudflare.com",
+              "frame-src 'self' https://js.stripe.com https://challenges.cloudflare.com https://www.youtube.com https://youtube.com",
               "frame-ancestors 'self'",
               "form-action 'self'",
               "base-uri 'self'",
