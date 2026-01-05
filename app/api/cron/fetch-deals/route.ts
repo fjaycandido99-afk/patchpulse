@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { verifyCronAuth } from '@/lib/cron-auth'
+import { fetchRedditDeals, fetchEpicFreeGames } from '@/lib/fetchers/reddit-deals'
 
 export const runtime = 'nodejs'
 export const maxDuration = 120
@@ -61,18 +62,32 @@ export async function GET(req: Request) {
 
   try {
     // Fetch deals from CheapShark API - gets deals from multiple stores
-    // Parameters: storeID=1 (Steam), onSale=1, pageSize=60, sortBy=savings
+    // Enhanced with more sources for better coverage
     const urls = [
-      // Steam deals sorted by savings
+      // Steam deals - multiple sorting options for variety
       'https://www.cheapshark.com/api/1.0/deals?storeID=1&onSale=1&pageSize=60&sortBy=Savings',
+      'https://www.cheapshark.com/api/1.0/deals?storeID=1&onSale=1&pageSize=40&sortBy=Recent',
+      'https://www.cheapshark.com/api/1.0/deals?storeID=1&onSale=1&pageSize=30&sortBy=DealRating',
       // Epic Games deals
-      'https://www.cheapshark.com/api/1.0/deals?storeID=25&onSale=1&pageSize=30&sortBy=Savings',
+      'https://www.cheapshark.com/api/1.0/deals?storeID=25&onSale=1&pageSize=40&sortBy=Savings',
+      'https://www.cheapshark.com/api/1.0/deals?storeID=25&onSale=1&pageSize=20&sortBy=Recent',
       // GOG deals
-      'https://www.cheapshark.com/api/1.0/deals?storeID=7&onSale=1&pageSize=30&sortBy=Savings',
+      'https://www.cheapshark.com/api/1.0/deals?storeID=7&onSale=1&pageSize=40&sortBy=Savings',
+      'https://www.cheapshark.com/api/1.0/deals?storeID=7&onSale=1&pageSize=20&sortBy=Recent',
       // Humble Store deals
-      'https://www.cheapshark.com/api/1.0/deals?storeID=11&onSale=1&pageSize=20&sortBy=Savings',
+      'https://www.cheapshark.com/api/1.0/deals?storeID=11&onSale=1&pageSize=30&sortBy=Savings',
+      // Fanatical deals
+      'https://www.cheapshark.com/api/1.0/deals?storeID=15&onSale=1&pageSize=30&sortBy=Savings',
+      // GreenManGaming deals
+      'https://www.cheapshark.com/api/1.0/deals?storeID=3&onSale=1&pageSize=30&sortBy=Savings',
+      // GameBillet deals
+      'https://www.cheapshark.com/api/1.0/deals?storeID=23&onSale=1&pageSize=20&sortBy=Savings',
       // Top rated deals across all stores
-      'https://www.cheapshark.com/api/1.0/deals?onSale=1&pageSize=30&sortBy=DealRating&metacritic=70',
+      'https://www.cheapshark.com/api/1.0/deals?onSale=1&pageSize=40&sortBy=DealRating&metacritic=70',
+      // Recent deals across all stores
+      'https://www.cheapshark.com/api/1.0/deals?onSale=1&pageSize=40&sortBy=Recent',
+      // Free games (100% off) - highly valued
+      'https://www.cheapshark.com/api/1.0/deals?onSale=1&pageSize=30&upperPrice=0',
     ]
 
     const allDeals: Map<string, CheapSharkDeal> = new Map()
@@ -89,12 +104,17 @@ export async function GET(req: Request) {
           const deals: CheapSharkDeal[] = await response.json()
           deals.forEach(deal => {
             // Use gameID as unique key to avoid duplicates
-            if (!allDeals.has(deal.gameID)) {
+            // Keep the deal with highest savings if duplicate
+            const existing = allDeals.get(deal.gameID)
+            if (!existing || parseFloat(deal.savings) > parseFloat(existing.savings)) {
               allDeals.set(deal.gameID, deal)
             }
           })
           console.log(`[CRON] Fetched ${deals.length} deals from: ${url.split('?')[1]?.slice(0, 30)}...`)
         }
+
+        // Small delay between requests to avoid rate limiting
+        await new Promise(resolve => setTimeout(resolve, 200))
       } catch (e) {
         console.log(`[CRON] Failed to fetch from URL:`, e)
       }
@@ -105,20 +125,26 @@ export async function GET(req: Request) {
 
     // Transform deals for database
     const deals = cheapSharkDeals
-      .filter(deal => parseFloat(deal.savings) >= 20) // At least 20% off
+      .filter(deal => {
+        const savings = parseFloat(deal.savings)
+        const salePrice = parseFloat(deal.salePrice)
+        // At least 15% off, OR free games (always include)
+        return savings >= 15 || salePrice === 0
+      })
       .map(deal => {
         const storeName = STORE_NAMES[deal.storeID] || 'Unknown'
         const steamId = deal.steamAppID
 
         // Build deal URL based on store
+        // Use CheapShark redirect for all stores - it redirects to the correct game page
+        // Only use direct Steam URL when we have the app ID for better UX
         let dealUrl = `https://www.cheapshark.com/redirect?dealID=${deal.dealID}`
         if (deal.storeID === '1' && steamId) {
+          // Direct Steam link for better experience
           dealUrl = `https://store.steampowered.com/app/${steamId}`
-        } else if (deal.storeID === '25') {
-          dealUrl = `https://store.epicgames.com/`
-        } else if (deal.storeID === '7') {
-          dealUrl = `https://www.gog.com/`
         }
+        // For all other stores (Epic, GOG, Humble, Fanatical, etc.),
+        // CheapShark redirect handles the correct game page
 
         return {
           id: deal.gameID,
@@ -153,13 +179,18 @@ export async function GET(req: Request) {
       }
     }
 
-    // Delete deals that are no longer on sale
+    // Delete CheapShark deals that are no longer on sale
+    // Don't delete Reddit/Epic deals as they have different lifecycles
     const { data: existingDeals } = await supabase
       .from('deals')
       .select('id')
 
     const existingIds = existingDeals?.map(d => d.id) || []
-    const idsToDelete = existingIds.filter(id => !currentDealIds.includes(id))
+    const idsToDelete = existingIds.filter(id =>
+      !currentDealIds.includes(id) &&
+      !id.startsWith('reddit_') &&
+      !id.startsWith('epic_free_')
+    )
 
     let deletedCount = 0
     if (idsToDelete.length > 0) {
@@ -173,7 +204,33 @@ export async function GET(req: Request) {
       }
     }
 
-    console.log(`[CRON] Upserted ${deals.length} deals, deleted ${deletedCount} ended deals`)
+    console.log(`[CRON] Upserted ${deals.length} CheapShark deals, deleted ${deletedCount} ended deals`)
+
+    // === FETCH ADDITIONAL DEAL SOURCES ===
+    let redditDealsCount = 0
+    let epicFreeCount = 0
+
+    // Fetch Reddit r/GameDeals
+    try {
+      const redditResult = await fetchRedditDeals()
+      if (redditResult.success) {
+        redditDealsCount = redditResult.addedCount
+        console.log(`[CRON] Added ${redditDealsCount} deals from Reddit`)
+      }
+    } catch (e) {
+      console.error('[CRON] Failed to fetch Reddit deals:', e)
+    }
+
+    // Fetch Epic Games free games
+    try {
+      const epicResult = await fetchEpicFreeGames()
+      if (epicResult.success) {
+        epicFreeCount = epicResult.addedCount
+        console.log(`[CRON] Added ${epicFreeCount} Epic free games`)
+      }
+    } catch (e) {
+      console.error('[CRON] Failed to fetch Epic free games:', e)
+    }
 
     // === NOTIFY PRO USERS ABOUT DEALS ON THEIR GAMES ===
     let notificationsSent = 0
@@ -331,8 +388,12 @@ export async function GET(req: Request) {
 
     return NextResponse.json({
       ok: true,
-      fetched: cheapSharkDeals.length,
-      upserted: deals.length,
+      sources: {
+        cheapshark: { fetched: cheapSharkDeals.length, upserted: deals.length },
+        reddit: { added: redditDealsCount },
+        epic_free: { added: epicFreeCount },
+      },
+      total_upserted: deals.length + redditDealsCount + epicFreeCount,
       deleted: deletedCount,
       notifications_sent: notificationsSent,
     })

@@ -47,16 +47,49 @@ export function DealSpotlightPanel({ deal, isOpen, onClose, isPro = false }: Dea
         return 'bg-[#cc2929] text-white'
       case 'Fanatical':
         return 'bg-orange-600 text-white'
-      case 'Green Man Gaming':
+      case 'GreenManGaming':
         return 'bg-green-600 text-white'
+      case 'GameBillet':
+        return 'bg-blue-600 text-white'
+      case 'Gamesplanet':
+        return 'bg-cyan-600 text-white'
+      case 'IndieGala':
+        return 'bg-pink-600 text-white'
+      case 'GamersGate':
+        return 'bg-amber-600 text-white'
+      case 'Blizzard Shop':
+        return 'bg-[#00aeff] text-white'
+      case 'Ubisoft Store':
+        return 'bg-[#0070ff] text-white'
+      case 'Origin':
+      case 'EA App':
+        return 'bg-[#f56c2d] text-white'
+      case 'Microsoft Store':
+      case 'Xbox Store':
+        return 'bg-[#107c10] text-white'
+      case 'PlayStation Store':
+        return 'bg-[#003791] text-white'
+      case 'Nintendo eShop':
+        return 'bg-[#e60012] text-white'
+      case 'Prime Gaming':
+      case 'Amazon':
+        return 'bg-[#ff9900] text-black'
+      case 'itch.io':
+        return 'bg-[#fa5c5c] text-white'
       default:
         return 'bg-zinc-700 text-zinc-300'
     }
   }
 
   const getStoreDisplayName = (store: string) => {
-    if (store === 'Epic Games Store') return 'Epic'
-    return store
+    switch (store) {
+      case 'Epic Games Store': return 'Epic'
+      case 'GreenManGaming': return 'GMG'
+      case 'PlayStation Store': return 'PSN'
+      case 'Nintendo eShop': return 'eShop'
+      case 'Microsoft Store': return 'MS Store'
+      default: return store
+    }
   }
 
   return (

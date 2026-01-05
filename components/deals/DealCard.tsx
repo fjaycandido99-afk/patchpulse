@@ -172,9 +172,20 @@ export function DealCard({
               store === 'Epic Games Store' ? 'bg-black text-white' :
               store === 'GOG' ? 'bg-[#86328a] text-white' :
               store === 'Humble Store' ? 'bg-[#cc2929] text-white' :
+              store === 'Fanatical' ? 'bg-orange-600 text-white' :
+              store === 'GreenManGaming' ? 'bg-green-600 text-white' :
+              store === 'GameBillet' ? 'bg-blue-600 text-white' :
+              store === 'Gamesplanet' ? 'bg-cyan-600 text-white' :
+              store === 'IndieGala' ? 'bg-pink-600 text-white' :
+              store === 'Blizzard Shop' ? 'bg-[#00aeff] text-white' :
+              store === 'Prime Gaming' || store === 'Amazon' ? 'bg-[#ff9900] text-black' :
+              store === 'itch.io' ? 'bg-[#fa5c5c] text-white' :
               'bg-zinc-700 text-zinc-300'
             }`}>
-              {store === 'Epic Games Store' ? 'Epic' : store}
+              {store === 'Epic Games Store' ? 'Epic' :
+               store === 'GreenManGaming' ? 'GMG' :
+               store === 'PlayStation Store' ? 'PSN' :
+               store}
             </span>
           )}
         </div>

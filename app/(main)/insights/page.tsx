@@ -5,7 +5,6 @@ import { redirect } from 'next/navigation'
 import { isGuestModeFromCookies } from '@/lib/guest'
 import { getUserPlan } from '@/lib/subscriptions/limits'
 import { PlayRecommendations } from '@/components/ai/PlayRecommendations'
-import { DealsSection } from '@/components/deals/DealsSection'
 import { NewsDigest } from '@/components/ai/NewsDigest'
 import { BacklogHealth } from '@/components/ai/BacklogHealth'
 import { ProPowerTools } from '@/components/ai/ProPowerTools'
@@ -13,7 +12,6 @@ import { GuestGuard } from '@/components/auth/GuestGuard'
 import { Brain, Crown, Sparkles } from 'lucide-react'
 import Link from 'next/link'
 import { ProBadge } from '@/components/ui/ProBadge'
-import { getDeals } from './queries'
 
 export const metadata: Metadata = {
   title: 'PatchPulse Insights',
@@ -35,16 +33,11 @@ export default async function InsightsPage() {
   }
 
   let isPro = false
-  let initialDeals: Awaited<ReturnType<typeof getDeals>>['deals'] = []
 
-  // For authenticated users, check their plan and fetch deals
+  // For authenticated users, check their plan
   if (user) {
-    const [plan, dealsResult] = await Promise.all([
-      getUserPlan(user.id),
-      getDeals(user.id),
-    ])
+    const plan = await getUserPlan(user.id)
     isPro = plan === 'pro'
-    initialDeals = dealsResult.deals
   }
 
   return (
@@ -55,7 +48,7 @@ export default async function InsightsPage() {
           {isPro && <ProBadge />}
         </div>
         <p className="mt-2 text-muted-foreground">
-          Early signals, games on sale, and personalized game intelligence
+          Early signals and personalized game intelligence
         </p>
       </div>
 
@@ -114,9 +107,6 @@ export default async function InsightsPage() {
         <div className="space-y-6">
           {/* What Should I Play */}
           <PlayRecommendations />
-
-          {/* Games on Sale */}
-          <DealsSection initialDeals={initialDeals} isPro={isPro} />
 
           {/* News Summary */}
           <NewsDigest />

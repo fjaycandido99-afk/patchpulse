@@ -4,6 +4,7 @@ import { fetchAllBattlenetPatches } from '@/lib/fetchers/battlenet-patches'
 import { fetchAllEpicPatches } from '@/lib/fetchers/epic-patches'
 import { fetchAllRiotPatches } from '@/lib/fetchers/riot-patches'
 import { fetchAllRedditPatches } from '@/lib/fetchers/reddit-patches'
+import { fetchAllExternalPatches } from '@/lib/fetchers/patch-sources'
 import { fetchAllGamingNews } from '@/lib/fetchers/gaming-news'
 import { verifyCronAuth } from '@/lib/cron-auth'
 
@@ -37,6 +38,7 @@ export async function GET(req: Request) {
       epic: { success: false, totalAdded: 0, error: null } as PatchResult,
       riot: { success: false, totalAdded: 0, error: null } as PatchResult,
       reddit: { success: false, totalAdded: 0, error: null } as PatchResult,
+      external: { success: false, totalAdded: 0, error: null } as PatchResult,
     },
     news: { success: false, totalAdded: 0, error: null as string | null },
   }
@@ -104,6 +106,19 @@ export async function GET(req: Request) {
     }
   } catch (error) {
     results.patches.reddit.error = error instanceof Error ? error.message : 'Unknown error'
+  }
+
+  // Fetch external patches (PC Gamer, Rock Paper Shotgun, etc.)
+  try {
+    const patchResult = await fetchAllExternalPatches()
+    results.patches.external = {
+      success: patchResult.success,
+      totalAdded: patchResult.totalAdded || 0,
+      gamesChecked: patchResult.sourcesChecked,
+      error: patchResult.errors?.join(', ') || null,
+    }
+  } catch (error) {
+    results.patches.external.error = error instanceof Error ? error.message : 'Unknown error'
   }
 
   // Fetch gaming news

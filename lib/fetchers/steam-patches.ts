@@ -37,7 +37,7 @@ export async function fetchSteamPatches(steamAppId: number, gameId: string, game
       const title = item.title?.toLowerCase() || ''
       const content = (item.contentSnippet || item.content || '').toLowerCase()
 
-      // Title-based detection
+      // Title-based detection (expanded keywords)
       const titleIsPatch = title.includes('update') ||
                       title.includes('patch') ||
                       title.includes('hotfix') ||
@@ -47,12 +47,24 @@ export async function fetchSteamPatches(steamAppId: number, gameId: string, game
                       title.includes('release note') ||
                       title.includes('maintenance') ||
                       title.includes('notes') ||
+                      title.includes('build') ||
+                      title.includes('release') ||
+                      title.includes('season') ||
+                      title.includes('chapter') ||
+                      title.includes('balance') ||
+                      title.includes('nerf') ||
+                      title.includes('buff') ||
+                      title.includes('rework') ||
+                      title.includes('changes') ||
+                      title.includes('adjustment') ||
                       // Version patterns like v0.15.1.0, v1.2, etc.
                       /v\d+\.\d+/.test(title) ||
-                      // Numbered updates like "1.14.105"
-                      /\d+\.\d+\.\d+/.test(title)
+                      // Numbered updates like "1.14.105" or "1.14"
+                      /\d+\.\d+(\.\d+)?/.test(title) ||
+                      // Build numbers like "Build 12345"
+                      /build\s*\d+/i.test(title)
 
-      // Content-based detection (if title doesn't match)
+      // Content-based detection (expanded - if title doesn't match)
       const contentIsPatch = content.includes('bug fix') ||
                              content.includes('patch note') ||
                              content.includes('changelog') ||
@@ -60,7 +72,19 @@ export async function fetchSteamPatches(steamAppId: number, gameId: string, game
                              content.includes('we have released') ||
                              content.includes('has been released') ||
                              content.includes('now live') ||
-                             content.includes('is now available')
+                             content.includes('is now available') ||
+                             content.includes('fixed') ||
+                             content.includes('improved') ||
+                             content.includes('added') ||
+                             content.includes('removed') ||
+                             content.includes('changed') ||
+                             content.includes('nerfed') ||
+                             content.includes('buffed') ||
+                             content.includes('tweaked') ||
+                             content.includes('addressed') ||
+                             content.includes('resolved') ||
+                             content.includes('stability') ||
+                             content.includes('performance')
 
       if (!titleIsPatch && !contentIsPatch) continue
 
@@ -86,7 +110,7 @@ export async function fetchSteamPatches(steamAppId: number, gameId: string, game
       // Extract raw text from content
       const rawText = item.contentSnippet || item.content || ''
 
-      if (rawText.length < 50) continue // Skip too-short entries
+      if (rawText.length < 20) continue // Skip too-short entries (reduced threshold)
 
       // Insert the patch
       const { data: newPatch, error } = await supabase
@@ -128,12 +152,12 @@ export async function fetchSteamPatches(steamAppId: number, gameId: string, game
 export async function fetchAllSteamPatches() {
   const supabase = createAdminClient()
 
-  // Get games with Steam App IDs
+  // Get ALL games with Steam App IDs (no limit)
   const { data: games, error } = await supabase
     .from('games')
     .select('id, name, steam_app_id')
     .not('steam_app_id', 'is', null)
-    .limit(50) // Process in batches
+    .order('name')
 
   if (error || !games) {
     return { success: false, error: error?.message || 'No games found' }

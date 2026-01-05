@@ -16,6 +16,8 @@ import { GameManagement } from '@/components/backlog/GameManagement'
 import { StudioInfoSection } from '@/components/games/StudioInfoSection'
 import { SentimentPulse } from '@/components/ai/SentimentPulse'
 import { BackButton } from '@/components/ui/BackButton'
+import { GameVideosSection } from '@/components/videos'
+import { getGameVideos } from '@/lib/youtube/api'
 
 // Fix #3: Image source priority helper
 function getHeroImage(game: { hero_url?: string | null; cover_url: string | null }, seasonal: { heroUrl: string | null; coverUrl: string | null }): string | null {
@@ -49,7 +51,7 @@ async function getGame(gameId: string) {
 
   const { data } = await supabase
     .from('games')
-    .select('id, name, slug, cover_url, hero_url, logo_url, brand_color, release_date, genre, is_live_service, platforms, steam_app_id, developer, publisher, studio_type, similar_games, developer_notable_games')
+    .select('id, name, slug, cover_url, hero_url, logo_url, brand_color, release_date, genre, is_live_service, platforms, steam_app_id, xbox_product_id, developer, publisher, studio_type, similar_games, developer_notable_games')
     .eq('id', gameId)
     .single()
 
@@ -218,12 +220,13 @@ export default async function BacklogDetailPage({
 }) {
   const { gameId } = await params
 
-  const [game, backlogItem, seasonalImage, activity, isFollowing] = await Promise.all([
+  const [game, backlogItem, seasonalImage, activity, isFollowing, videos] = await Promise.all([
     getGame(gameId),
     getBacklogItem(gameId),
     getSeasonalGameImage(gameId),
     getGameActivity(gameId),
     isFollowingGame(gameId),
+    getGameVideos(gameId, undefined, 20),
   ])
 
   if (!game) {
@@ -398,6 +401,14 @@ export default async function BacklogDetailPage({
             </div>
           )}
 
+          {/* Videos Section - Browser only */}
+          <GameVideosSection
+            gameId={gameId}
+            gameName={game.name}
+            videos={videos}
+            className="rounded-xl border border-border bg-card p-4 sm:p-6"
+          />
+
           {/* AI Summary - What's New */}
           <Suspense fallback={<WhatsNewSkeleton />}>
             <WhatsNew gameId={gameId} />
@@ -551,10 +562,12 @@ export default async function BacklogDetailPage({
               </div>
 
               {/* Play Now Button - Desktop browser only */}
-              {game.steam_app_id && (
+              {(game.steam_app_id || game.xbox_product_id || game.platforms?.some((p: string) => p.toLowerCase().includes('xbox'))) && (
                 <PlayNowButton
                   gameName={game.name}
                   steamAppId={game.steam_app_id}
+                  xboxProductId={game.xbox_product_id}
+                  hasXbox={game.platforms?.some((p: string) => p.toLowerCase().includes('xbox'))}
                   size="sm"
                   variant="primary"
                 />
@@ -575,6 +588,14 @@ export default async function BacklogDetailPage({
 
         {/* Sentiment Pulse - Community Mood (Pro) */}
         <SentimentPulse gameId={gameId} />
+
+        {/* Videos Section - Browser only */}
+        <GameVideosSection
+          gameId={gameId}
+          gameName={game.name}
+          videos={videos}
+          className="rounded-xl border border-border bg-card p-4 sm:p-6"
+        />
 
         {/* Studio Info Section */}
         <StudioInfoSection

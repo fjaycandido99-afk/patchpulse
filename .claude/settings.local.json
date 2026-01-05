@@ -23,7 +23,15 @@
       "Bash(npm install:*)",
       "Bash(tasklist:*)",
       "Bash(explorer \"screenshots\\\\screenshot-generator.html\")",
-      "Bash(explorer \"C:\\\\Users\\\\fjayc\\\\OneDrive\\\\Documents\\\\Gaming app\\\\screenshots\\\\appstore\")"
+      "Bash(explorer \"C:\\\\Users\\\\fjayc\\\\OneDrive\\\\Documents\\\\Gaming app\\\\screenshots\\\\appstore\")",
+      "Bash(git check-ignore:*)",
+      "Bash(gh run list:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(powershell:*)",
+      "WebFetch(domain:patchpulse.app)",
+      "Bash(git restore:*)",
+      "Bash(grep:*)",
+      "Bash(ls:*)"
     ]
   }
 }
