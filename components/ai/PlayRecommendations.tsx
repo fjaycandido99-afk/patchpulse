@@ -10,8 +10,8 @@ function GameCoverImage({ src, alt }: { src: string | null; alt: string }) {
 
   if (!src || hasError) {
     return (
-      <div className="w-full h-full flex items-center justify-center text-zinc-600 bg-gradient-to-br from-zinc-800 to-zinc-900">
-        <Gamepad2 className="w-8 h-8" />
+      <div className="absolute inset-0 flex items-center justify-center text-zinc-600 bg-gradient-to-br from-zinc-800 to-zinc-900">
+        <Gamepad2 className="w-10 h-10" />
       </div>
     )
   }
@@ -22,7 +22,7 @@ function GameCoverImage({ src, alt }: { src: string | null; alt: string }) {
       alt={alt}
       fill
       className="object-cover"
-      sizes="80px"
+      sizes="(max-width: 640px) 50vw, 200px"
       unoptimized
       onError={() => setHasError(true)}
     />
@@ -293,14 +293,14 @@ export function PlayRecommendations() {
               <div key={rec.game_id} className="relative group">
                 <Link
                   href={`/games/${rec.slug || rec.game_id}`}
-                  className="block relative overflow-hidden rounded-xl border border-white/10 bg-black/40"
+                  className="block relative overflow-hidden rounded-xl border border-white/10 bg-black/40 h-full"
                 >
-                  {/* Image */}
-                  <div className="relative aspect-[4/3]">
+                  {/* Image - 3:4 aspect for game covers */}
+                  <div className="relative aspect-[3/4]">
                     <GameCoverImage src={rec.cover_url} alt={rec.game_name} />
 
                     {/* Gradient overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
 
                     {/* Type badge */}
                     <span className={`absolute top-2 left-2 px-1.5 py-0.5 rounded text-[10px] font-medium backdrop-blur-sm ${TYPE_LABELS[rec.recommendation_type].bg} ${TYPE_LABELS[rec.recommendation_type].color}`}>
@@ -309,9 +309,12 @@ export function PlayRecommendations() {
 
                     {/* Content at bottom */}
                     <div className="absolute bottom-0 left-0 right-0 p-3">
-                      <h4 className="font-semibold text-sm text-white line-clamp-2 leading-tight group-hover:text-primary transition-colors">
+                      <h4 className="font-semibold text-sm text-white line-clamp-1 leading-tight group-hover:text-primary transition-colors">
                         {rec.game_name}
                       </h4>
+                      <p className="text-[11px] text-white/60 mt-1 line-clamp-2 leading-snug">
+                        {rec.reason}
+                      </p>
                     </div>
                   </div>
                 </Link>
