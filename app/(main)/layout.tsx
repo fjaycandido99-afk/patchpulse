@@ -20,7 +20,6 @@ import { getSidebarCounts } from '@/lib/sidebar-data'
 import { getNotificationStats } from '@/lib/notifications'
 import { getLatestPatchesStats } from '@/lib/patches-stats'
 import { ScrollToTop } from '@/components/ui/ScrollToTop'
-import { CommandPalette } from '@/components/command-palette'
 import { KeyboardShortcuts, KeyboardHint } from '@/components/keyboard'
 
 export default async function MainLayout({
@@ -135,9 +134,8 @@ export default async function MainLayout({
             {/* Desktop search in header area */}
             <header className="hidden md:block sticky top-0 z-40 bg-background/95 backdrop-blur-xl border-b border-white/10">
               <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
-                <div className="flex items-center justify-end gap-4">
-                  <CommandPalette />
-                  <SearchBar className="w-72" />
+                <div className="flex items-center justify-end gap-3">
+                  <SearchBar />
                   <ProfileAvatar
                     avatarUrl={userProfile.avatarUrl}
                     displayName={userProfile.displayName}
