@@ -128,7 +128,10 @@ export async function getFeaturedVideos(limit = 6): Promise<VideoWithGame[]> {
 export async function getTrendingVideos(limit = 10): Promise<VideoWithGame[]> {
   const supabase = await createClient()
 
-  // Get top videos by view count (no date filter - shows best performing videos)
+  // Get top videos by view count from last 6 months for relevance
+  const sixMonthsAgo = new Date()
+  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6)
+
   const { data, error } = await supabase
     .from('game_videos')
     .select(`
@@ -151,6 +154,7 @@ export async function getTrendingVideos(limit = 10): Promise<VideoWithGame[]> {
         logo_url
       )
     `)
+    .gte('published_at', sixMonthsAgo.toISOString())
     .order('view_count', { ascending: false })
     .limit(limit)
 

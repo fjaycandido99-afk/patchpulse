@@ -13,8 +13,10 @@ import {
   ChevronLeft,
   ChevronRight,
   ExternalLink,
+  Bookmark,
 } from 'lucide-react'
 import { VideoPlayer } from '@/components/videos'
+import { toggleVideoBookmark, type VideoMetadata } from '../actions/bookmarks'
 import type { VideoWithGame } from './queries'
 
 type VideoType = 'trailer' | 'clips' | 'gameplay' | 'esports' | 'review' | 'other'
@@ -226,17 +228,21 @@ function HeroCarousel({
 function MobileVideoCard({
   video,
   onPlay,
+  isSaved,
+  onSave,
 }: {
   video: VideoWithGame
   onPlay: () => void
+  isSaved: boolean
+  onSave: (e: React.MouseEvent) => void
 }) {
   const typeConfig = TYPE_CONFIG[video.video_type] || TYPE_CONFIG.other
   const thumbnail = video.thumbnail_url || `https://img.youtube.com/vi/${video.youtube_id}/hqdefault.jpg`
 
   return (
-    <button onClick={onPlay} className="w-full text-left">
+    <div className="w-full">
       {/* Thumbnail - full width */}
-      <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-zinc-800">
+      <button onClick={onPlay} className="relative w-full aspect-video rounded-xl overflow-hidden bg-zinc-800">
         <Image
           src={thumbnail}
           alt={video.title}
@@ -262,12 +268,12 @@ function MobileVideoCard({
         <span className={`absolute top-2 left-2 px-2 py-0.5 text-[10px] font-semibold rounded ${typeConfig.color}`}>
           {typeConfig.label}
         </span>
-      </div>
+      </button>
 
       {/* Info - YouTube style */}
       <div className="flex gap-3 mt-3">
         {/* Channel avatar / Game logo */}
-        <div className="flex-shrink-0">
+        <button onClick={onPlay} className="flex-shrink-0">
           {video.game?.logo_url ? (
             <div className="relative w-9 h-9 rounded-full overflow-hidden bg-zinc-700">
               <Image src={video.game.logo_url} alt="" fill className="object-cover" sizes="36px" unoptimized />
@@ -277,10 +283,10 @@ function MobileVideoCard({
               <Video className="w-4 h-4 text-zinc-500" />
             </div>
           )}
-        </div>
+        </button>
 
         {/* Title and meta */}
-        <div className="flex-1 min-w-0">
+        <button onClick={onPlay} className="flex-1 min-w-0 text-left">
           <h3 className="font-medium text-sm line-clamp-2 leading-snug">
             {video.title}
           </h3>
@@ -299,9 +305,21 @@ function MobileVideoCard({
               </>
             )}
           </div>
-        </div>
+        </button>
+
+        {/* Save button */}
+        <button
+          onClick={onSave}
+          className={`flex-shrink-0 p-2 rounded-full transition-colors ${
+            isSaved
+              ? 'text-primary bg-primary/10'
+              : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
+          }`}
+        >
+          <Bookmark className={`w-5 h-5 ${isSaved ? 'fill-current' : ''}`} />
+        </button>
       </div>
-    </button>
+    </div>
   )
 }
 
@@ -309,20 +327,21 @@ function MobileVideoCard({
 function DesktopVideoCard({
   video,
   onPlay,
+  isSaved,
+  onSave,
 }: {
   video: VideoWithGame
   onPlay: () => void
+  isSaved: boolean
+  onSave: (e: React.MouseEvent) => void
 }) {
   const typeConfig = TYPE_CONFIG[video.video_type] || TYPE_CONFIG.other
   const thumbnail = video.thumbnail_url || `https://img.youtube.com/vi/${video.youtube_id}/hqdefault.jpg`
 
   return (
-    <button
-      onClick={onPlay}
-      className="group w-full text-left rounded-xl overflow-hidden bg-card border border-border hover:border-primary/50 transition-all hover:shadow-lg hover:shadow-primary/5"
-    >
+    <div className="group w-full rounded-xl overflow-hidden bg-card border border-border hover:border-primary/50 transition-all hover:shadow-lg hover:shadow-primary/5">
       {/* Thumbnail */}
-      <div className="relative aspect-video overflow-hidden bg-zinc-800">
+      <button onClick={onPlay} className="relative w-full aspect-video overflow-hidden bg-zinc-800">
         <Image
           src={thumbnail}
           alt={video.title}
@@ -350,10 +369,22 @@ function DesktopVideoCard({
         <span className={`absolute top-2 left-2 px-2 py-0.5 text-xs font-medium rounded ${typeConfig.color}`}>
           {typeConfig.label}
         </span>
-      </div>
+
+        {/* Save button - top right */}
+        <button
+          onClick={onSave}
+          className={`absolute top-2 right-2 p-1.5 rounded-full backdrop-blur-sm transition-all ${
+            isSaved
+              ? 'bg-primary/90 text-white'
+              : 'bg-black/50 text-white/80 hover:bg-black/70 hover:text-white'
+          }`}
+        >
+          <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-current' : ''}`} />
+        </button>
+      </button>
 
       {/* Info */}
-      <div className="p-4">
+      <button onClick={onPlay} className="w-full p-4 text-left">
         {video.game && (
           <div className="flex items-center gap-2 mb-2">
             {video.game.logo_url && (
@@ -384,8 +415,8 @@ function DesktopVideoCard({
             </>
           )}
         </div>
-      </div>
-    </button>
+      </button>
+    </div>
   )
 }
 
@@ -394,6 +425,7 @@ type VideosFeedProps = {
   trendingVideos: VideoWithGame[]
   videoTypes: { type: VideoType; count: number }[]
   selectedType: VideoType | null
+  savedVideoIds: string[]
 }
 
 export function VideosFeed({
@@ -401,10 +433,70 @@ export function VideosFeed({
   trendingVideos,
   videoTypes,
   selectedType,
+  savedVideoIds,
 }: VideosFeedProps) {
   const [isBrowser, setIsBrowser] = useState(false)
   const [selectedVideo, setSelectedVideo] = useState<VideoWithGame | null>(null)
+  const [localSavedIds, setLocalSavedIds] = useState<Set<string>>(new Set(savedVideoIds))
+  const [savingIds, setSavingIds] = useState<Set<string>>(new Set())
   const router = useRouter()
+
+  // Sync with server state
+  useEffect(() => {
+    setLocalSavedIds(new Set(savedVideoIds))
+  }, [savedVideoIds])
+
+  const handleSave = async (video: VideoWithGame, e: React.MouseEvent) => {
+    e.stopPropagation()
+
+    if (savingIds.has(video.id)) return
+
+    setSavingIds(prev => new Set(prev).add(video.id))
+
+    // Optimistic update
+    setLocalSavedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(video.id)) {
+        next.delete(video.id)
+      } else {
+        next.add(video.id)
+      }
+      return next
+    })
+
+    const metadata: VideoMetadata = {
+      youtube_id: video.youtube_id,
+      title: video.title,
+      thumbnail_url: video.thumbnail_url,
+      channel_name: video.channel_name,
+      video_type: video.video_type,
+      game_name: video.game?.name || null,
+      savedAt: new Date().toISOString(),
+    }
+
+    const result = await toggleVideoBookmark(video.id, metadata)
+
+    if (result.error) {
+      // Revert on error
+      setLocalSavedIds(prev => {
+        const next = new Set(prev)
+        if (next.has(video.id)) {
+          next.delete(video.id)
+        } else {
+          next.add(video.id)
+        }
+        return next
+      })
+    }
+
+    setSavingIds(prev => {
+      const next = new Set(prev)
+      next.delete(video.id)
+      return next
+    })
+
+    router.refresh()
+  }
 
   useEffect(() => {
     const isNative =
@@ -507,7 +599,12 @@ export function VideosFeed({
             className="animate-soft-entry"
             style={{ animationDelay: `${index * 30}ms` }}
           >
-            <MobileVideoCard video={video} onPlay={() => setSelectedVideo(video)} />
+            <MobileVideoCard
+              video={video}
+              onPlay={() => setSelectedVideo(video)}
+              isSaved={localSavedIds.has(video.id)}
+              onSave={(e) => handleSave(video, e)}
+            />
           </div>
         ))}
       </div>
@@ -520,7 +617,12 @@ export function VideosFeed({
             className="animate-soft-entry"
             style={{ animationDelay: `${index * 30}ms` }}
           >
-            <DesktopVideoCard video={video} onPlay={() => setSelectedVideo(video)} />
+            <DesktopVideoCard
+              video={video}
+              onPlay={() => setSelectedVideo(video)}
+              isSaved={localSavedIds.has(video.id)}
+              onSave={(e) => handleSave(video, e)}
+            />
           </div>
         ))}
       </div>

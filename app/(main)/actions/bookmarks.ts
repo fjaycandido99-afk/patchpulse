@@ -147,7 +147,7 @@ export async function isDealBookmarked(dealId: string): Promise<boolean> {
 }
 
 export async function isBookmarked(
-  entityType: 'patch' | 'news',
+  entityType: 'patch' | 'news' | 'video',
   entityId: string
 ): Promise<boolean> {
   const supabase = await createClient()
@@ -169,6 +169,93 @@ export async function isBookmarked(
     .single()
 
   return !!data
+}
+
+export type VideoMetadata = {
+  youtube_id: string
+  title: string
+  thumbnail_url: string | null
+  channel_name: string | null
+  video_type: string
+  game_name: string | null
+  savedAt: string
+}
+
+export async function toggleVideoBookmark(
+  videoId: string,
+  metadata: VideoMetadata
+) {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: 'Not authenticated' }
+  }
+
+  const { data: existing, error: selectError } = await supabase
+    .from('bookmarks')
+    .select('id')
+    .eq('user_id', user.id)
+    .eq('entity_type', 'video')
+    .eq('entity_id', videoId)
+    .single()
+
+  if (selectError && selectError.code !== 'PGRST116') {
+    console.error('[toggleVideoBookmark] Select error:', selectError)
+  }
+
+  if (existing) {
+    const { error } = await supabase
+      .from('bookmarks')
+      .delete()
+      .eq('id', existing.id)
+
+    if (error) {
+      return { error: 'Failed to remove bookmark' }
+    }
+
+    revalidatePath('/videos', 'page')
+    revalidatePath('/bookmarks', 'page')
+    return { success: true, bookmarked: false }
+  } else {
+    const { error } = await supabase.from('bookmarks').insert({
+      user_id: user.id,
+      entity_type: 'video',
+      entity_id: videoId,
+      metadata: metadata,
+    })
+
+    if (error) {
+      return { error: `Failed to save video: ${error.message}` }
+    }
+
+    revalidatePath('/videos', 'page')
+    revalidatePath('/bookmarks', 'page')
+    return { success: true, bookmarked: true }
+  }
+}
+
+export async function getUserVideoBookmarks(): Promise<string[]> {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return []
+  }
+
+  const { data } = await supabase
+    .from('bookmarks')
+    .select('entity_id')
+    .eq('user_id', user.id)
+    .eq('entity_type', 'video')
+
+  return data?.map(b => b.entity_id) || []
 }
 
 export type RecommendationMetadata = {
