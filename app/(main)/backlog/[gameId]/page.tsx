@@ -13,17 +13,26 @@ import { BackButton } from '@/components/ui/BackButton'
 
 // Get game data (using admin client to bypass RLS)
 async function getGame(gameId: string) {
+  console.log('[getGame] Starting fetch for:', gameId)
   try {
     const supabase = createAdminClient()
+    console.log('[getGame] Admin client created')
+
     const { data, error } = await supabase
       .from('games')
       .select('id, name, slug, cover_url, hero_url, brand_color, release_date, genre, is_live_service, platforms, steam_app_id, xbox_product_id, developer, publisher')
       .eq('id', gameId)
       .single()
 
-    if (error) return null
+    console.log('[getGame] Query result - data:', !!data, 'error:', error?.message || 'none')
+
+    if (error) {
+      console.error('[getGame] Error:', error)
+      return null
+    }
     return data
-  } catch {
+  } catch (e) {
+    console.error('[getGame] Exception:', e)
     return null
   }
 }
