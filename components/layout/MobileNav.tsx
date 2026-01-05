@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Home, Newspaper, Library, User, Brain, Crown, Bookmark, Video, Menu, X, Gamepad2, CalendarDays, Compass, ChevronRight, Tag } from 'lucide-react'
+import { Home, Newspaper, Library, Brain, Crown, Bookmark, Video, Menu, X, Gamepad2, CalendarDays, ChevronRight, Tag } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
@@ -28,8 +28,6 @@ const navItems: NavItemConfig[] = [
 ]
 
 const menuItems: NavItemConfig[] = [
-  { icon: User, label: 'Profile', href: '/profile' },
-  { icon: Compass, label: 'For You', href: '/recommendations' },
   { icon: Brain, label: 'Insights', href: '/insights', isPro: true },
   { icon: Bookmark, label: 'Saved', href: '/bookmarks', isPro: true },
   { icon: Tag, label: 'Deals', href: '/deals' },
