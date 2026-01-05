@@ -245,7 +245,7 @@ function HeroCarousel({
   )
 }
 
-// YouTube-style Mobile Card
+// YouTube-style Mobile Card with press-and-hold preview
 function MobileVideoCard({
   video,
   onPlay,
@@ -257,13 +257,58 @@ function MobileVideoCard({
   isSaved: boolean
   onSave: (e: React.MouseEvent) => void
 }) {
+  const [showPreview, setShowPreview] = useState(false)
+  const pressTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const didPreviewRef = useRef(false)
+
   const typeConfig = TYPE_CONFIG[video.video_type] || TYPE_CONFIG.other
   const thumbnail = video.thumbnail_url || `https://img.youtube.com/vi/${video.youtube_id}/hqdefault.jpg`
+
+  const handleTouchStart = () => {
+    didPreviewRef.current = false
+    // Start preview after 600ms press
+    pressTimeoutRef.current = setTimeout(() => {
+      setShowPreview(true)
+      didPreviewRef.current = true
+    }, 600)
+  }
+
+  const handleTouchEnd = () => {
+    if (pressTimeoutRef.current) {
+      clearTimeout(pressTimeoutRef.current)
+      pressTimeoutRef.current = null
+    }
+    setShowPreview(false)
+  }
+
+  const handleClick = () => {
+    // Only trigger play if we didn't just show a preview
+    if (!didPreviewRef.current) {
+      onPlay()
+    }
+    didPreviewRef.current = false
+  }
 
   return (
     <div className="w-full">
       {/* Thumbnail - full width */}
-      <button onClick={onPlay} className="relative w-full aspect-video rounded-xl overflow-hidden bg-zinc-800">
+      <button
+        onClick={handleClick}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchEnd}
+        className="relative w-full aspect-video rounded-xl overflow-hidden bg-zinc-800"
+      >
+        {/* YouTube Preview - shows on press and hold */}
+        {showPreview && (
+          <iframe
+            src={`https://www.youtube.com/embed/${video.youtube_id}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&showinfo=0&start=5&playsinline=1`}
+            className="absolute inset-0 w-full h-full z-10"
+            allow="autoplay; encrypted-media"
+            allowFullScreen
+          />
+        )}
+
         <Image
           src={thumbnail}
           alt={video.title}
@@ -273,22 +318,31 @@ function MobileVideoCard({
           unoptimized
         />
 
-        {/* Subtle play button - always visible */}
-        <div className="absolute bottom-2 right-2 flex items-center gap-1.5">
-          {video.duration_seconds > 0 && (
-            <span className="px-1.5 py-0.5 text-xs font-medium rounded bg-black/80 text-white">
-              {formatDuration(video.duration_seconds)}
-            </span>
-          )}
-          <div className="w-8 h-8 rounded-full bg-black/70 flex items-center justify-center">
-            <Play className="w-4 h-4 text-white fill-white ml-0.5" />
+        {/* Subtle play button - hide when preview showing */}
+        {!showPreview && (
+          <div className="absolute bottom-2 right-2 flex items-center gap-1.5">
+            {video.duration_seconds > 0 && (
+              <span className="px-1.5 py-0.5 text-xs font-medium rounded bg-black/80 text-white">
+                {formatDuration(video.duration_seconds)}
+              </span>
+            )}
+            <div className="w-8 h-8 rounded-full bg-black/70 flex items-center justify-center">
+              <Play className="w-4 h-4 text-white fill-white ml-0.5" />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Type badge */}
-        <span className={`absolute top-2 left-2 px-2 py-0.5 text-[10px] font-semibold rounded ${typeConfig.color}`}>
+        <span className={`absolute top-2 left-2 px-2 py-0.5 text-[10px] font-semibold rounded ${typeConfig.color} z-20`}>
           {typeConfig.label}
         </span>
+
+        {/* Preview hint - shows briefly */}
+        {showPreview && (
+          <div className="absolute bottom-2 left-2 px-2 py-1 rounded bg-black/80 text-white text-xs z-20 animate-pulse">
+            Previewing...
+          </div>
+        )}
       </button>
 
       {/* Info - YouTube style */}
@@ -349,7 +403,7 @@ function MobileVideoCard({
   )
 }
 
-// Desktop Grid Card (2-column)
+// Desktop Grid Card (2-column) with hover preview
 function DesktopVideoCard({
   video,
   onPlay,
@@ -361,45 +415,83 @@ function DesktopVideoCard({
   isSaved: boolean
   onSave: (e: React.MouseEvent) => void
 }) {
+  const [isHovering, setIsHovering] = useState(false)
+  const [showPreview, setShowPreview] = useState(false)
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
   const typeConfig = TYPE_CONFIG[video.video_type] || TYPE_CONFIG.other
   const thumbnail = video.thumbnail_url || `https://img.youtube.com/vi/${video.youtube_id}/hqdefault.jpg`
 
+  const handleMouseEnter = () => {
+    setIsHovering(true)
+    // Start preview after 800ms hover
+    hoverTimeoutRef.current = setTimeout(() => {
+      setShowPreview(true)
+    }, 800)
+  }
+
+  const handleMouseLeave = () => {
+    setIsHovering(false)
+    setShowPreview(false)
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current)
+      hoverTimeoutRef.current = null
+    }
+  }
+
   return (
-    <div className="group w-full rounded-xl overflow-hidden bg-card border border-border hover:border-primary/50 transition-all hover:shadow-lg hover:shadow-primary/5">
-      {/* Thumbnail */}
+    <div
+      className="group w-full rounded-xl overflow-hidden bg-card border border-border hover:border-primary/50 transition-all hover:shadow-lg hover:shadow-primary/5"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      {/* Thumbnail / Preview */}
       <button onClick={onPlay} className="relative w-full aspect-video overflow-hidden bg-zinc-800">
+        {/* YouTube Preview - shows after hover delay */}
+        {showPreview && (
+          <iframe
+            src={`https://www.youtube.com/embed/${video.youtube_id}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&showinfo=0&start=5`}
+            className="absolute inset-0 w-full h-full z-10"
+            allow="autoplay; encrypted-media"
+            allowFullScreen
+          />
+        )}
+
+        {/* Thumbnail */}
         <Image
           src={thumbnail}
           alt={video.title}
           fill
-          className="object-cover group-hover:scale-105 transition-transform duration-300"
+          className={`object-cover transition-transform duration-300 ${isHovering ? 'scale-105' : ''}`}
           sizes="50vw"
           unoptimized
         />
 
-        {/* Subtle play button - always visible, grows on hover */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-12 h-12 rounded-full bg-black/60 flex items-center justify-center backdrop-blur-sm border border-white/10 group-hover:w-14 group-hover:h-14 group-hover:bg-red-600/90 transition-all">
-            <Play className="w-5 h-5 text-white fill-white ml-0.5 group-hover:w-6 group-hover:h-6 transition-all" />
+        {/* Play button - hide when preview is showing */}
+        {!showPreview && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className={`w-12 h-12 rounded-full bg-black/60 flex items-center justify-center backdrop-blur-sm border border-white/10 transition-all ${isHovering ? 'w-14 h-14 bg-red-600/90' : ''}`}>
+              <Play className={`w-5 h-5 text-white fill-white ml-0.5 transition-all ${isHovering ? 'w-6 h-6' : ''}`} />
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Duration */}
-        {video.duration_seconds > 0 && (
+        {/* Duration - hide when preview is showing */}
+        {video.duration_seconds > 0 && !showPreview && (
           <span className="absolute bottom-2 right-2 px-1.5 py-0.5 text-xs font-medium rounded bg-black/80 text-white">
             {formatDuration(video.duration_seconds)}
           </span>
         )}
 
         {/* Type badge */}
-        <span className={`absolute top-2 left-2 px-2 py-0.5 text-xs font-medium rounded ${typeConfig.color}`}>
+        <span className={`absolute top-2 left-2 px-2 py-0.5 text-xs font-medium rounded ${typeConfig.color} z-20`}>
           {typeConfig.label}
         </span>
 
         {/* Save button - top right */}
         <button
           onClick={onSave}
-          className={`absolute top-2 right-2 p-1.5 rounded-full backdrop-blur-sm transition-all ${
+          className={`absolute top-2 right-2 p-1.5 rounded-full backdrop-blur-sm transition-all z-20 ${
             isSaved
               ? 'bg-primary/90 text-white'
               : 'bg-black/50 text-white/80 hover:bg-black/70 hover:text-white'
