@@ -1,10 +1,12 @@
 name: iOS Build
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
     inputs:
+      build_number:
+        description: 'Build number (required)'
+        required: true
+        type: string
       marketing_version:
         description: 'Marketing version (e.g., 1.1) - leave empty to keep current'
         required: false
@@ -20,14 +22,14 @@ jobs:
       - name: Bump Version Numbers
         run: |
           PROJECT_FILE="ios/App/App.xcodeproj/project.pbxproj"
-          BUILD_NUMBER=${{ github.run_number }}
+          BUILD_NUMBER=${{ inputs.build_number }}
 
           echo "Setting build number to: $BUILD_NUMBER"
 
-          # Update CURRENT_PROJECT_VERSION (build number) - auto-increments with each run
+          # Update CURRENT_PROJECT_VERSION (build number)
           sed -i '' "s/CURRENT_PROJECT_VERSION = [0-9]*;/CURRENT_PROJECT_VERSION = $BUILD_NUMBER;/g" "$PROJECT_FILE"
 
-          # Update MARKETING_VERSION if provided via workflow_dispatch
+          # Update MARKETING_VERSION if provided
           if [ -n "${{ inputs.marketing_version }}" ]; then
             echo "Setting marketing version to: ${{ inputs.marketing_version }}"
             sed -i '' "s/MARKETING_VERSION = [0-9.]*;/MARKETING_VERSION = ${{ inputs.marketing_version }};/g" "$PROJECT_FILE"
