@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { fetchAllGameVideos } from '@/lib/youtube/api'
 import { verifyCronAuth } from '@/lib/cron-auth'
 
-// Vercel Cron: Run every 6 hours
+// Vercel Cron: Run daily at 5 AM UTC
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 export const maxDuration = 300 // 5 minutes
