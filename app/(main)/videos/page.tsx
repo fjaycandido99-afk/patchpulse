@@ -1,12 +1,11 @@
 import { Video } from 'lucide-react'
-import { getVideos, getTrendingVideos, getVideoTypes, getGamesWithVideos } from './queries'
+import { getVideos, getTrendingVideos, getVideoTypes } from './queries'
 import { VideosFeed } from './VideosFeed'
 
 type VideoType = 'trailer' | 'clips' | 'gameplay' | 'esports' | 'review' | 'other'
 
 type SearchParams = {
   type?: string
-  game?: string
 }
 
 export const metadata = {
@@ -21,13 +20,11 @@ export default async function VideosPage({
 }) {
   const params = await searchParams
   const selectedType = (params.type as VideoType) || null
-  const selectedGame = params.game || null
 
-  const [videos, trendingVideos, videoTypes, games] = await Promise.all([
-    getVideos({ videoType: selectedType || undefined, gameId: selectedGame || undefined, limit: 50 }),
+  const [videos, trendingVideos, videoTypes] = await Promise.all([
+    getVideos({ videoType: selectedType || undefined, limit: 50 }),
     getTrendingVideos(10),
     getVideoTypes(),
-    getGamesWithVideos(),
   ])
 
   return (
@@ -52,9 +49,7 @@ export default async function VideosPage({
         videos={videos}
         trendingVideos={trendingVideos}
         videoTypes={videoTypes}
-        games={games}
         selectedType={selectedType}
-        selectedGame={selectedGame}
       />
     </div>
   )

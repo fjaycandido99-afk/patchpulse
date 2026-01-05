@@ -10,10 +10,6 @@ import {
   Gamepad2,
   Trophy,
   Clapperboard,
-  Star,
-  SlidersHorizontal,
-  X,
-  Check,
   ChevronLeft,
   ChevronRight,
   ExternalLink,
@@ -29,7 +25,7 @@ const TYPE_CONFIG: Record<VideoType | 'all', { label: string; icon: React.ReactN
   clips: { label: 'Clips', icon: <Clapperboard className="w-4 h-4" />, color: 'bg-purple-500/20 text-purple-400' },
   gameplay: { label: 'Gameplay', icon: <Gamepad2 className="w-4 h-4" />, color: 'bg-blue-500/20 text-blue-400' },
   esports: { label: 'Esports', icon: <Trophy className="w-4 h-4" />, color: 'bg-amber-500/20 text-amber-400' },
-  review: { label: 'Reviews', icon: <Star className="w-4 h-4" />, color: 'bg-green-500/20 text-green-400' },
+  review: { label: 'Reviews', icon: <Video className="w-4 h-4" />, color: 'bg-green-500/20 text-green-400' },
   other: { label: 'Other', icon: <Video className="w-4 h-4" />, color: 'bg-zinc-500/20 text-zinc-400' },
 }
 
@@ -397,22 +393,17 @@ type VideosFeedProps = {
   videos: VideoWithGame[]
   trendingVideos: VideoWithGame[]
   videoTypes: { type: VideoType; count: number }[]
-  games: { id: string; name: string; videoCount: number }[]
   selectedType: VideoType | null
-  selectedGame: string | null
 }
 
 export function VideosFeed({
   videos,
   trendingVideos,
   videoTypes,
-  games,
   selectedType,
-  selectedGame,
 }: VideosFeedProps) {
   const [isBrowser, setIsBrowser] = useState(false)
   const [selectedVideo, setSelectedVideo] = useState<VideoWithGame | null>(null)
-  const [isFilterOpen, setIsFilterOpen] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -441,10 +432,9 @@ export function VideosFeed({
     )
   }
 
-  const updateFilters = (type: VideoType | null, game: string | null) => {
+  const updateFilters = (type: VideoType | null) => {
     const params = new URLSearchParams()
     if (type) params.set('type', type)
-    if (game) params.set('game', game)
     router.push(`/videos${params.toString() ? `?${params.toString()}` : ''}`)
   }
 
@@ -453,7 +443,7 @@ export function VideosFeed({
     .sort((a, b) => b.view_count - a.view_count)
     .slice(0, 6)
 
-  const showHero = !selectedType && !selectedGame && heroVideos.length > 0
+  const showHero = !selectedType && heroVideos.length > 0
 
   if (videos.length === 0 && trendingVideos.length === 0) {
     return (
@@ -478,7 +468,7 @@ export function VideosFeed({
       <div className="sticky top-0 z-30 -mx-4 px-4 py-3 bg-background/95 backdrop-blur-sm md:relative md:mx-0 md:px-0 md:py-0 md:bg-transparent md:backdrop-blur-none">
         <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
           <button
-            onClick={() => updateFilters(null, selectedGame)}
+            onClick={() => updateFilters(null)}
             className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-full whitespace-nowrap transition-colors ${
               !selectedType
                 ? 'bg-white text-black'
@@ -488,88 +478,25 @@ export function VideosFeed({
             All
           </button>
 
-          {videoTypes.map(({ type }) => {
-            const config = TYPE_CONFIG[type]
-            return (
-              <button
-                key={type}
-                onClick={() => updateFilters(type, selectedGame)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-full whitespace-nowrap transition-colors ${
-                  selectedType === type
-                    ? 'bg-white text-black'
-                    : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
-                }`}
-              >
-                {config.label}
-              </button>
-            )
-          })}
-
-          {/* Game filter button */}
-          <button
-            onClick={() => setIsFilterOpen(!isFilterOpen)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-full whitespace-nowrap transition-colors ${
-              selectedGame
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
-            }`}
-          >
-            <SlidersHorizontal className="w-3.5 h-3.5" />
-            {selectedGame ? games.find((g) => g.id === selectedGame)?.name || 'Game' : 'Game'}
-          </button>
-        </div>
-
-        {/* Game Filter Dropdown */}
-        {isFilterOpen && (
-          <>
-            <div className="fixed inset-0 z-40" onClick={() => setIsFilterOpen(false)} />
-            <div className="absolute top-full right-0 mt-2 w-72 max-h-80 overflow-y-auto rounded-xl border border-white/10 bg-[#0b1220] shadow-xl z-50">
-              <div className="flex items-center justify-between p-3 border-b border-white/10 sticky top-0 bg-[#0b1220]">
-                <span className="font-semibold text-sm">Filter by Game</span>
+          {videoTypes
+            .filter(({ type }) => ['trailer', 'clips', 'gameplay', 'esports'].includes(type))
+            .map(({ type }) => {
+              const config = TYPE_CONFIG[type]
+              return (
                 <button
-                  onClick={() => setIsFilterOpen(false)}
-                  className="p-1 rounded-lg hover:bg-white/10 text-muted-foreground"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              <div className="p-2">
-                <button
-                  onClick={() => {
-                    updateFilters(selectedType, null)
-                    setIsFilterOpen(false)
-                  }}
-                  className={`flex items-center justify-between w-full px-3 py-2 rounded-lg text-sm transition-colors ${
-                    !selectedGame ? 'bg-primary/20 text-primary' : 'hover:bg-white/5 text-foreground'
+                  key={type}
+                  onClick={() => updateFilters(type)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-full whitespace-nowrap transition-colors ${
+                    selectedType === type
+                      ? 'bg-white text-black'
+                      : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
                   }`}
                 >
-                  All Games
-                  {!selectedGame && <Check className="w-4 h-4" />}
+                  {config.label}
                 </button>
-
-                {games.map((game) => (
-                  <button
-                    key={game.id}
-                    onClick={() => {
-                      updateFilters(selectedType, game.id)
-                      setIsFilterOpen(false)
-                    }}
-                    className={`flex items-center justify-between w-full px-3 py-2 rounded-lg text-sm transition-colors ${
-                      selectedGame === game.id ? 'bg-primary/20 text-primary' : 'hover:bg-white/5 text-foreground'
-                    }`}
-                  >
-                    <span className="truncate">{game.name}</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-muted-foreground">{game.videoCount}</span>
-                      {selectedGame === game.id && <Check className="w-4 h-4" />}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </>
-        )}
+              )
+            })}
+        </div>
       </div>
 
       {/* Mobile: YouTube-style vertical list */}
