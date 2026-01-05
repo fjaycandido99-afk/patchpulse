@@ -66,6 +66,16 @@ function getRelativeTime(date: string): string {
   return `${Math.floor(diffDays / 365)} years ago`
 }
 
+// Get best quality YouTube thumbnail with fallback
+function getYouTubeThumbnail(youtubeId: string, quality: 'max' | 'sd' | 'hq' = 'max') {
+  const qualityMap = {
+    max: 'maxresdefault',  // 1280x720
+    sd: 'sddefault',       // 640x480
+    hq: 'hqdefault',       // 480x360
+  }
+  return `https://img.youtube.com/vi/${youtubeId}/${qualityMap[quality]}.jpg`
+}
+
 // Hero Carousel for Desktop
 function HeroCarousel({
   videos,
@@ -75,6 +85,7 @@ function HeroCarousel({
   onPlay: (video: VideoWithGame) => void
 }) {
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set())
   const carouselRef = useRef<HTMLDivElement>(null)
 
   const scrollTo = (index: number) => {
@@ -109,7 +120,11 @@ function HeroCarousel({
         }}
       >
         {videos.map((video) => {
-          const thumbnail = video.thumbnail_url || `https://img.youtube.com/vi/${video.youtube_id}/maxresdefault.jpg`
+          // Always use YouTube's best quality for hero - maxresdefault with sddefault fallback
+          const hasFailed = failedImages.has(video.youtube_id)
+          const thumbnail = hasFailed
+            ? getYouTubeThumbnail(video.youtube_id, 'sd')
+            : getYouTubeThumbnail(video.youtube_id, 'max')
           const typeConfig = TYPE_CONFIG[video.video_type] || TYPE_CONFIG.other
 
           return (
@@ -126,6 +141,12 @@ function HeroCarousel({
                 sizes="100vw"
                 priority
                 unoptimized
+                onError={() => {
+                  // Fallback to SD quality if maxres fails
+                  if (!hasFailed) {
+                    setFailedImages(prev => new Set([...prev, video.youtube_id]))
+                  }
+                }}
               />
 
               {/* Gradient overlay */}
