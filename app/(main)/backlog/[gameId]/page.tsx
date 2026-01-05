@@ -1,8 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { Suspense } from 'react'
-import { FileText, Newspaper, Plus, Clock, RefreshCw, Calendar, Gamepad2, Monitor } from 'lucide-react'
-import { notFound } from 'next/navigation'
+import { FileText, Newspaper, Plus, Clock, RefreshCw, Calendar, Gamepad2, Monitor, Home, ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { getBacklogItem, getGameActivity, isFollowingGame } from '../queries'
 import { getSeasonalGameImage } from '@/lib/images/seasonal'
@@ -230,7 +229,33 @@ export default async function BacklogDetailPage({
   ])
 
   if (!game) {
-    notFound()
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] px-6 text-center">
+        <div className="w-20 h-20 rounded-full bg-muted/50 flex items-center justify-center mb-6">
+          <Gamepad2 className="w-10 h-10 text-muted-foreground/50" />
+        </div>
+        <h1 className="text-2xl font-bold mb-2">Game Not Found</h1>
+        <p className="text-muted-foreground max-w-md mb-6">
+          This game may have been removed from our database. You can remove it from your backlog or go back to your library.
+        </p>
+        <div className="flex gap-3">
+          <Link
+            href="/backlog"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Library
+          </Link>
+          <Link
+            href="/home"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-muted hover:bg-muted/80 font-medium transition-colors"
+          >
+            <Home className="w-4 h-4" />
+            Go Home
+          </Link>
+        </div>
+      </div>
+    )
   }
 
   // Simple check: is this game in the user's backlog?
