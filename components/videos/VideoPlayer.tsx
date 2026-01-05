@@ -48,18 +48,17 @@ export function VideoPlayer({ youtubeId, title, isOpen, onClose }: VideoPlayerPr
   }
 
   const youtubeUrl = `https://www.youtube.com/watch?v=${youtubeId}`
-  const thumbnailUrl = `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/90 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/95"
         onClick={onClose}
       />
 
-      {/* Modal */}
-      <div className="relative z-10 w-full max-w-5xl mx-4">
+      {/* Modal - fills most of the screen on desktop */}
+      <div className="relative z-10 w-full max-w-[1600px] max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-lg font-semibold text-white line-clamp-1 pr-4">
@@ -84,36 +83,26 @@ export function VideoPlayer({ youtubeId, title, isOpen, onClose }: VideoPlayerPr
           </div>
         </div>
 
-        {/* Video Player - 16:9 aspect ratio */}
-        <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-zinc-900 shadow-2xl">
-          {/* Thumbnail as fallback background */}
-          <img
-            src={thumbnailUrl}
-            alt=""
-            className="absolute inset-0 w-full h-full object-cover opacity-30"
-            onError={(e) => {
-              (e.target as HTMLImageElement).src = `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`
-            }}
-          />
-
+        {/* Video Player - 16:9 aspect ratio, fills available space */}
+        <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-black shadow-2xl flex-1 min-h-0">
           {embedFailed ? (
             /* Fallback UI for age-restricted or unembeddable videos */
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-900/80 backdrop-blur-sm">
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900">
               <div className="text-center p-6">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-600 flex items-center justify-center">
-                  <Play className="w-8 h-8 text-white fill-white ml-1" />
+                <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-red-600 flex items-center justify-center shadow-lg shadow-red-600/30">
+                  <Play className="w-10 h-10 text-white fill-white ml-1" />
                 </div>
-                <h4 className="text-lg font-semibold text-white mb-2">Video unavailable here</h4>
-                <p className="text-zinc-400 text-sm mb-6 max-w-md">
-                  This video may be age-restricted or unavailable for embedding. Watch it directly on YouTube.
+                <h4 className="text-xl font-semibold text-white mb-3">Video unavailable here</h4>
+                <p className="text-zinc-400 mb-8 max-w-md">
+                  This video may be age-restricted or unavailable for embedding.<br />Watch it directly on YouTube.
                 </p>
                 <a
                   href={youtubeUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-full transition-colors"
+                  className="inline-flex items-center gap-3 px-8 py-4 bg-red-600 hover:bg-red-500 text-white font-semibold rounded-full transition-colors shadow-lg"
                 >
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
                   </svg>
                   Watch on YouTube

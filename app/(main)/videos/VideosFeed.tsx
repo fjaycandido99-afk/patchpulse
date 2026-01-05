@@ -260,11 +260,15 @@ function MobileVideoCard({
   onSave: (e: React.MouseEvent) => void
 }) {
   const [showPreview, setShowPreview] = useState(false)
+  const [imgError, setImgError] = useState(false)
   const pressTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const didPreviewRef = useRef(false)
 
   const typeConfig = TYPE_CONFIG[video.video_type] || TYPE_CONFIG.other
-  const thumbnail = video.thumbnail_url || `https://img.youtube.com/vi/${video.youtube_id}/hqdefault.jpg`
+  // Fallback chain: stored thumbnail -> YouTube maxres -> YouTube hq
+  const thumbnail = imgError
+    ? `https://img.youtube.com/vi/${video.youtube_id}/hqdefault.jpg`
+    : (video.thumbnail_url || `https://img.youtube.com/vi/${video.youtube_id}/maxresdefault.jpg`)
 
   const handleTouchStart = () => {
     didPreviewRef.current = false
@@ -318,6 +322,7 @@ function MobileVideoCard({
           className="object-cover"
           sizes="100vw"
           unoptimized
+          onError={() => setImgError(true)}
         />
 
         {/* Subtle play button - hide when preview showing */}
@@ -419,10 +424,14 @@ function DesktopVideoCard({
 }) {
   const [isHovering, setIsHovering] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
+  const [imgError, setImgError] = useState(false)
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const typeConfig = TYPE_CONFIG[video.video_type] || TYPE_CONFIG.other
-  const thumbnail = video.thumbnail_url || `https://img.youtube.com/vi/${video.youtube_id}/hqdefault.jpg`
+  // Fallback chain: stored thumbnail -> YouTube maxres -> YouTube hq
+  const thumbnail = imgError
+    ? `https://img.youtube.com/vi/${video.youtube_id}/hqdefault.jpg`
+    : (video.thumbnail_url || `https://img.youtube.com/vi/${video.youtube_id}/maxresdefault.jpg`)
 
   const handleMouseEnter = () => {
     setIsHovering(true)
@@ -470,6 +479,7 @@ function DesktopVideoCard({
           fill
           className={`object-cover transition-transform duration-300 ${isHovering ? 'scale-110' : ''}`}
           sizes="50vw"
+          onError={() => setImgError(true)}
           unoptimized
         />
 
