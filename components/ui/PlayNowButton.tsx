@@ -25,22 +25,29 @@ export function PlayNowButton({
   showLabel = true,
   className = '',
 }: PlayNowButtonProps) {
-  const [isBrowser, setIsBrowser] = useState(false)
+  const [isDesktopBrowser, setIsDesktopBrowser] = useState(false)
   const [launched, setLaunched] = useState(false)
   const [showNotInstalledHint, setShowNotInstalledHint] = useState(false)
 
-  // Check if we're in a browser (not Capacitor native app)
+  // Check if we're in a desktop browser (not native app, not mobile)
   useEffect(() => {
-    const isNative = typeof window !== 'undefined' &&
-      (window as Window & { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.()
-    setIsBrowser(!isNative)
+    if (typeof window === 'undefined') return
+
+    const isNative = (window as Window & { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.()
+
+    // Check if mobile device
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+      (navigator.maxTouchPoints > 0 && window.innerWidth < 1024)
+
+    setIsDesktopBrowser(!isNative && !isMobile)
   }, [])
 
   // Xbox is available if we have a product ID OR the game is marked as available on Xbox
   const xboxAvailable = !!xboxProductId || hasXbox
 
-  // Don't render if no launch options or on native app
-  if (!isBrowser || (!steamAppId && !xboxAvailable)) {
+  // Don't render if no launch options or not on desktop browser
+  // Steam/Xbox protocols only work on desktop, not mobile browsers
+  if (!isDesktopBrowser || (!steamAppId && !xboxAvailable)) {
     return null
   }
 
@@ -200,17 +207,24 @@ export function PlayNowIcon({
   gameName: string
   className?: string
 }) {
-  const [isBrowser, setIsBrowser] = useState(false)
+  const [isDesktopBrowser, setIsDesktopBrowser] = useState(false)
 
   useEffect(() => {
-    const isNative = typeof window !== 'undefined' &&
-      (window as Window & { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.()
-    setIsBrowser(!isNative)
+    if (typeof window === 'undefined') return
+
+    const isNative = (window as Window & { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.()
+
+    // Check if mobile device
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+      (navigator.maxTouchPoints > 0 && window.innerWidth < 1024)
+
+    setIsDesktopBrowser(!isNative && !isMobile)
   }, [])
 
   const xboxAvailable = !!xboxProductId || hasXbox
 
-  if (!isBrowser || (!steamAppId && !xboxAvailable)) {
+  // Only show on desktop browsers
+  if (!isDesktopBrowser || (!steamAppId && !xboxAvailable)) {
     return null
   }
 

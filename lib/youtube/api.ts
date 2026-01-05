@@ -96,6 +96,10 @@ export async function searchGameVideos(
   const officialChannels = OFFICIAL_CHANNELS[gameSlug]
 
   try {
+    // Only fetch videos from the last 2 years for relevance
+    const twoYearsAgo = new Date()
+    twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2)
+
     const params = new URLSearchParams({
       part: 'snippet',
       q: searchTerms,
@@ -103,6 +107,7 @@ export async function searchGameVideos(
       maxResults: maxResults.toString(),
       order: 'relevance',
       videoDuration: videoType === 'trailer' ? 'short' : 'medium',
+      publishedAfter: twoYearsAgo.toISOString(),
       key: YOUTUBE_API_KEY,
     })
 
