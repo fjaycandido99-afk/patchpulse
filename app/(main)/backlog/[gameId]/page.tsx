@@ -268,7 +268,6 @@ export default async function BacklogDetailPage({
                 hasXbox={game.platforms?.some((p: string) => p.toLowerCase().includes('xbox'))}
                 size="md"
                 variant="primary"
-                fullWidth
               />
             </div>
           )}
