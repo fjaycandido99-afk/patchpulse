@@ -1,88 +1,89 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { Suspense } from 'react'
-import { FileText, Newspaper, Plus, Clock, RefreshCw, Calendar, Gamepad2, Monitor, Home, ArrowLeft } from 'lucide-react'
+import { FileText, Clock, RefreshCw, Calendar, Gamepad2, Monitor, Home, ArrowLeft, Plus } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
-import { getBacklogItem, getGameActivity, isFollowingGame } from '../queries'
-import { getSeasonalGameImage } from '@/lib/images/seasonal'
-import { WhatsNew } from '@/components/backlog/WhatsNew'
 import { formatDate, relativeDaysText } from '@/lib/dates'
 import { AddToBacklogButton } from '@/components/backlog/AddToBacklogButton'
 import { StoreLinkButtons } from '@/components/ui/StoreLinkButtons'
 import { PlayNowButton } from '@/components/ui/PlayNowButton'
 import { SteamStats } from '@/components/library/SteamStats'
 import { GameManagement } from '@/components/backlog/GameManagement'
-import { StudioInfoSection } from '@/components/games/StudioInfoSection'
-import { SentimentPulse } from '@/components/ai/SentimentPulse'
 import { BackButton } from '@/components/ui/BackButton'
-import { GameVideosSection } from '@/components/videos'
-import { getGameVideos } from '@/lib/youtube/api'
 
-// Fix #3: Image source priority helper
-function getHeroImage(game: { hero_url?: string | null; cover_url: string | null }, seasonal: { heroUrl: string | null; coverUrl: string | null }): string | null {
-  // Priority: seasonal hero > seasonal cover > game hero > game cover
-  return seasonal.heroUrl || seasonal.coverUrl || game.hero_url || game.cover_url
-}
-
-function getIconImage(game: { logo_url: string | null; cover_url: string | null }, seasonal: { logoUrl: string | null }): string | null {
-  // Priority: seasonal logo > game logo > game cover (cropped)
-  return seasonal.logoUrl || game.logo_url || game.cover_url
-}
-
-function WhatsNewSkeleton() {
-  return (
-    <div className="rounded-lg border border-border bg-card p-4 sm:p-6 animate-pulse">
-      <div className="flex items-center gap-2 mb-3">
-        <div className="h-5 w-5 rounded bg-muted" />
-        <div className="h-5 w-24 rounded bg-muted" />
-      </div>
-      <div className="space-y-2">
-        <div className="h-4 w-full rounded bg-muted" />
-        <div className="h-4 w-3/4 rounded bg-muted" />
-        <div className="h-4 w-1/2 rounded bg-muted" />
-      </div>
-    </div>
-  )
-}
-
+// Get game data
 async function getGame(gameId: string) {
-  const supabase = await createClient()
-
-  const { data } = await supabase
-    .from('games')
-    .select('id, name, slug, cover_url, hero_url, logo_url, brand_color, release_date, genre, is_live_service, platforms, steam_app_id, xbox_product_id, developer, publisher, studio_type, similar_games, developer_notable_games')
-    .eq('id', gameId)
-    .single()
-
-  return data
+  try {
+    const supabase = await createClient()
+    const { data } = await supabase
+      .from('games')
+      .select('id, name, slug, cover_url, hero_url, logo_url, brand_color, release_date, genre, is_live_service, platforms, steam_app_id, xbox_product_id, developer, publisher')
+      .eq('id', gameId)
+      .single()
+    return data
+  } catch {
+    return null
+  }
 }
 
-function getInitials(name: string): string {
-  return name
-    .split(' ')
-    .slice(0, 2)
-    .map((word) => word[0])
-    .join('')
-    .toUpperCase()
+// Get backlog item for this game
+async function getBacklogItem(gameId: string) {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return null
+
+    const { data } = await supabase
+      .from('backlog_items')
+      .select('id, status, progress, next_note, last_played_at')
+      .eq('user_id', user.id)
+      .eq('game_id', gameId)
+      .single()
+    return data
+  } catch {
+    return null
+  }
 }
 
-// Fix #1: Game Banner Component - Full bleed hero, no edges visible
-function GameBanner({
-  imageUrl,
-  gameName,
-  isInBacklog,
-  brandColor,
-}: {
-  imageUrl: string | null
-  gameName: string
-  isInBacklog: boolean
-  brandColor?: string | null
-}) {
-  // Fallback gradient color based on brand or default
-  const fallbackColor = brandColor || (isInBacklog ? '#1e3a5f' : '#1a1a2e')
+// Get recent patches for this game
+async function getRecentPatches(gameId: string) {
+  try {
+    const supabase = await createClient()
+    const { data } = await supabase
+      .from('patch_notes')
+      .select('id, title, published_at, summary_tldr, impact_score')
+      .eq('game_id', gameId)
+      .order('published_at', { ascending: false })
+      .limit(5)
+    return data || []
+  } catch {
+    return []
+  }
+}
 
+// Check if user is following this game
+async function isFollowingGame(gameId: string) {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return false
+
+    const { data } = await supabase
+      .from('user_games')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('game_id', gameId)
+      .single()
+    return !!data
+  } catch {
+    return false
+  }
+}
+
+// Game banner component
+function GameBanner({ imageUrl, gameName }: { imageUrl: string | null; gameName: string }) {
   return (
-    <div className="fixed inset-x-0 top-0 h-[320px] sm:h-[380px] lg:h-[440px] overflow-hidden -z-10">
+    <div className="fixed inset-x-0 top-0 h-[280px] sm:h-[340px] overflow-hidden -z-10">
       {imageUrl ? (
         <>
           <Image
@@ -94,121 +95,34 @@ function GameBanner({
             priority
             unoptimized
           />
-          {/* Gradient overlay - seamless fade to background */}
           <div
             className="absolute inset-0"
             style={{
-              background: isInBacklog
-                ? 'linear-gradient(to bottom, rgba(30,58,95,0.05) 0%, rgba(10,10,25,0.2) 40%, rgba(10,10,25,0.8) 80%, rgb(10,10,25) 100%)'
-                : 'linear-gradient(to bottom, rgba(10,10,25,0.05) 0%, rgba(10,10,25,0.2) 40%, rgba(10,10,25,0.8) 80%, rgb(10,10,25) 100%)'
-            }}
-          />
-          {/* Top gradient to blend with header */}
-          <div
-            className="absolute inset-x-0 top-0 h-20"
-            style={{
-              background: 'linear-gradient(to bottom, rgba(10,15,30,0.6) 0%, transparent 100%)'
+              background: 'linear-gradient(to bottom, rgba(10,10,25,0.1) 0%, rgba(10,10,25,0.4) 50%, rgba(10,10,25,0.95) 85%, rgb(10,10,25) 100%)'
             }}
           />
         </>
       ) : (
-        // Fallback gradient when no image
-        <div
-          className="absolute inset-0"
-          style={{
-            background: `linear-gradient(180deg, ${fallbackColor} 0%, rgb(10,10,25) 100%)`
-          }}
-        />
+        <div className="absolute inset-0 bg-gradient-to-b from-primary/20 to-background" />
       )}
     </div>
   )
 }
 
-// Fix #2: Game Icon Component - Always 44x44px, always visible, has fallback
-function GameIcon({
-  logoUrl,
-  coverUrl,
-  gameName,
-  brandColor,
-  isInBacklog,
-}: {
-  logoUrl: string | null
-  coverUrl: string | null
-  gameName: string
-  brandColor: string | null
-  isInBacklog: boolean
-}) {
-  const imageUrl = logoUrl || coverUrl
-  // Blue glow for backlog, brand color or neutral for info hub
-  const glowColor = isInBacklog ? '#3b82f6' : (brandColor || '#6366f1')
-  const bgColor = brandColor || '#1b1f3a'
-
+// Status badge component
+function StatusBadge({ status }: { status: string }) {
+  const config: Record<string, { label: string; color: string }> = {
+    playing: { label: 'Playing', color: 'bg-green-500/20 text-green-400 border-green-500/30' },
+    paused: { label: 'Paused', color: 'bg-amber-500/20 text-amber-400 border-amber-500/30' },
+    backlog: { label: 'Backlog', color: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
+    finished: { label: 'Finished', color: 'bg-purple-500/20 text-purple-400 border-purple-500/30' },
+    dropped: { label: 'Dropped', color: 'bg-zinc-500/20 text-zinc-400 border-zinc-500/30' },
+  }
+  const c = config[status] || config.backlog
   return (
-    <div
-      className="relative flex-shrink-0 rounded-[10px] overflow-hidden ring-2 ring-white/10"
-      style={{
-        width: '44px',
-        height: '44px',
-        backgroundColor: bgColor,
-        boxShadow: `0 0 20px ${glowColor}40, 0 0 40px ${glowColor}20`,
-      }}
-    >
-      {imageUrl ? (
-        <Image
-          src={imageUrl}
-          alt={gameName}
-          fill
-          className={logoUrl ? 'object-contain p-1' : 'object-cover'}
-          sizes="44px"
-          unoptimized
-        />
-      ) : (
-        // Fallback: Show first letter or controller icon
-        <div
-          className="absolute inset-0 flex items-center justify-center"
-          style={{ backgroundColor: bgColor }}
-        >
-          <Gamepad2 className="w-5 h-5 text-white/40" />
-        </div>
-      )}
-    </div>
-  )
-}
-
-// Timeline item for news briefing view
-function TimelineItem({
-  type,
-  title,
-  date,
-  summary,
-}: {
-  type: 'patch' | 'news'
-  title: string
-  date: string
-  summary: string | null
-}) {
-  const Icon = type === 'patch' ? FileText : Newspaper
-  const iconColor = type === 'patch' ? 'text-amber-400' : 'text-emerald-400'
-
-  return (
-    <div className="flex gap-3 py-3 border-b border-border/50 last:border-0">
-      <div className={`mt-0.5 ${iconColor}`}>
-        <Icon className="h-4 w-4" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-start justify-between gap-2">
-          <h4 className="text-sm font-medium truncate">{title}</h4>
-          <span className="text-xs text-muted-foreground whitespace-nowrap">
-            {relativeDaysText(date)}
-          </span>
-        </div>
-        {summary && (
-          <p className="mt-1 text-xs text-muted-foreground line-clamp-2">
-            {summary}
-          </p>
-        )}
-      </div>
-    </div>
+    <span className={`px-2 py-0.5 text-xs font-medium rounded-full border ${c.color}`}>
+      {c.label}
+    </span>
   )
 }
 
@@ -219,15 +133,8 @@ export default async function BacklogDetailPage({
 }) {
   const { gameId } = await params
 
-  // Fetch all data with error handling - don't let one failure crash the page
-  const [game, backlogItem, seasonalImage, activity, isFollowing, videos] = await Promise.all([
-    getGame(gameId),
-    getBacklogItem(gameId).catch(() => null),
-    getSeasonalGameImage(gameId).catch(() => ({ coverUrl: null, logoUrl: null, heroUrl: null, brandColor: null, isSeasonal: false, eventName: null, eventType: null })),
-    getGameActivity(gameId).catch(() => ({ recentPatches: [], recentNews: [] })),
-    isFollowingGame(gameId).catch(() => false),
-    getGameVideos(gameId, undefined, 20).catch(() => []),
-  ])
+  // Fetch game first - if not found, show error
+  const game = await getGame(gameId)
 
   if (!game) {
     return (
@@ -237,7 +144,7 @@ export default async function BacklogDetailPage({
         </div>
         <h1 className="text-2xl font-bold mb-2">Game Not Found</h1>
         <p className="text-muted-foreground max-w-md mb-6">
-          This game may have been removed from our database. You can remove it from your backlog or go back to your library.
+          This game may have been removed or doesn't exist.
         </p>
         <div className="flex gap-3">
           <Link
@@ -259,287 +166,33 @@ export default async function BacklogDetailPage({
     )
   }
 
-  // Simple check: is this game in the user's backlog?
+  // Fetch additional data (these won't crash if they fail)
+  const [backlogItem, recentPatches, isFollowing] = await Promise.all([
+    getBacklogItem(gameId),
+    getRecentPatches(gameId),
+    isFollowingGame(gameId),
+  ])
+
   const isInBacklog = !!backlogItem
+  const bannerUrl = game.hero_url || game.cover_url
 
-  // Fix #3: Use image source priority helpers
-  const bannerUrl = getHeroImage(game, seasonalImage)
-  const logoUrl = getIconImage(game, seasonalImage)
-  const brandColor = seasonalImage.brandColor || game.brand_color
+  // Format release date
+  const formattedReleaseDate = game.release_date
+    ? new Date(game.release_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+    : null
 
-  // Combine patches and news into timeline for info hub view
-  const timeline = [
-    ...activity.recentPatches.map((p) => ({
-      type: 'patch' as const,
-      id: p.id,
-      title: p.title,
-      date: p.published_at,
-      summary: p.summary_tldr,
-    })),
-    ...activity.recentNews.map((n) => ({
-      type: 'news' as const,
-      id: n.id,
-      title: n.title,
-      date: n.published_at,
-      summary: n.summary,
-    })),
-  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-
-  const hasActivity = timeline.length > 0
-
-  // ============================================
-  // INFO HUB VIEW (not in backlog - news briefing style)
-  // ============================================
-  if (!isInBacklog) {
-    // Check if this is a new release (within last 30 days)
-    const isNewRelease = game.release_date && (() => {
-      const releaseDate = new Date(game.release_date)
-      const thirtyDaysAgo = new Date()
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-      const today = new Date()
-      return releaseDate >= thirtyDaysAgo && releaseDate <= today
-    })()
-
-    // Format release date
-    const formattedReleaseDate = game.release_date
-      ? new Date(game.release_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
-      : null
-
-    // Format platforms
-    const platformsDisplay = game.platforms?.length > 0
-      ? game.platforms.join(', ')
-      : null
-
-    return (
-      // Fix #5: overflow-x-hidden prevents swipe hijacking
-      <div className="relative overflow-x-hidden min-h-screen">
-        <GameBanner imageUrl={bannerUrl} gameName={game.name} isInBacklog={false} brandColor={brandColor} />
-
-        {/* Content pushed below hero with padding */}
-        <div className="relative z-10 pt-[200px] sm:pt-[240px] lg:pt-[280px] space-y-6">
-          {/* Back Link */}
-          <div>
-            <BackButton defaultHref="/backlog" defaultLabel="Back" />
-          </div>
-
-          {/* Game Title with Icon and Badges */}
-          <div className="space-y-3">
-            <div className="flex items-start gap-4">
-              <GameIcon
-                logoUrl={logoUrl}
-                coverUrl={game.cover_url}
-                gameName={game.name}
-                brandColor={brandColor}
-                isInBacklog={false}
-              />
-              <div className="min-w-0 flex-1">
-                {/* Badges */}
-                <div className="flex flex-wrap items-center gap-2 mb-1">
-                  {isNewRelease && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                      NEW RELEASE
-                    </span>
-                  )}
-                  {game.is_live_service && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30">
-                      <RefreshCw className="h-3 w-3" />
-                      Live Service
-                    </span>
-                  )}
-                </div>
-                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight truncate">
-                  {game.name}
-                </h1>
-                {game.is_live_service && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Live service with ongoing content
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* At a Glance Card */}
-          <div className="rounded-xl border border-border bg-card p-4 sm:p-6">
-            <h2 className="font-semibold mb-4">At a Glance</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              {game.genre && (
-                <div className="space-y-1">
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <Gamepad2 className="h-3.5 w-3.5" />
-                    Genre
-                  </div>
-                  <p className="text-sm font-medium">{game.genre}</p>
-                </div>
-              )}
-              {platformsDisplay && (
-                <div className="space-y-1">
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <Monitor className="h-3.5 w-3.5" />
-                    Platforms
-                  </div>
-                  <p className="text-sm font-medium">{platformsDisplay}</p>
-                </div>
-              )}
-              <div className="space-y-1">
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <RefreshCw className="h-3.5 w-3.5" />
-                  Type
-                </div>
-                <p className="text-sm font-medium">
-                  {game.is_live_service ? 'Live Service' : 'Standard'}
-                </p>
-              </div>
-              {formattedReleaseDate && (
-                <div className="space-y-1">
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <Calendar className="h-3.5 w-3.5" />
-                    Released
-                  </div>
-                  <p className="text-sm font-medium">{formattedReleaseDate}</p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Sentiment Pulse - Community Mood (Pro) */}
-          <SentimentPulse gameId={gameId} />
-
-          {/* Studio Info Section */}
-          <StudioInfoSection
-            developer={game.developer}
-            publisher={game.publisher}
-            studioType={game.studio_type as 'AAA' | 'AA' | 'indie' | null}
-            genre={game.genre}
-            similarGames={game.similar_games}
-            developerNotableGames={game.developer_notable_games}
-          />
-
-          {/* Steam Stats Card - Player Count */}
-          {game.steam_app_id && (
-            <div className="rounded-xl border border-border bg-card p-4 sm:p-6">
-              <h2 className="font-semibold mb-4">Steam Stats</h2>
-              <SteamStats
-                steamAppId={game.steam_app_id}
-                showPlayerCount={true}
-                layout="stacked"
-              />
-            </div>
-          )}
-
-          {/* Videos Section - Browser only */}
-          <GameVideosSection
-            gameId={gameId}
-            gameName={game.name}
-            videos={videos}
-            className="rounded-xl border border-border bg-card p-4 sm:p-6"
-          />
-
-          {/* AI Summary - What's New */}
-          <Suspense fallback={<WhatsNewSkeleton />}>
-            <WhatsNew gameId={gameId} />
-          </Suspense>
-
-          {/* Activity Timeline */}
-          {hasActivity ? (
-            <div className="rounded-xl border border-border bg-card p-4 sm:p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <Clock className="h-5 w-5 text-muted-foreground" />
-                <h2 className="font-semibold">Recent Activity</h2>
-                <span className="ml-auto text-xs text-muted-foreground">
-                  Last 90 days
-                </span>
-              </div>
-              <div className="divide-y divide-border/50">
-                {timeline.slice(0, 8).map((item) => (
-                  <TimelineItem
-                    key={`${item.type}-${item.id}`}
-                    type={item.type}
-                    title={item.title}
-                    date={item.date}
-                    summary={item.summary}
-                  />
-                ))}
-              </div>
-              {timeline.length > 8 && (
-                <p className="text-xs text-muted-foreground mt-4">
-                  +{timeline.length - 8} more updates
-                </p>
-              )}
-            </div>
-          ) : (
-            <div className="rounded-xl border border-dashed border-border bg-card/50 p-6 text-center">
-              <Clock className="h-8 w-8 text-muted-foreground/50 mx-auto mb-3" />
-              <p className="text-sm text-muted-foreground">
-                No recent patches or news for this game.
-              </p>
-              <p className="text-xs text-muted-foreground/70 mt-1">
-                Updates will appear here when available.
-              </p>
-            </div>
-          )}
-
-          {/* External Links */}
-          <div className="rounded-xl border border-border bg-card p-4 sm:p-6">
-            <h2 className="font-semibold mb-3">Wishlist or Buy</h2>
-            <StoreLinkButtons
-              gameName={game.name}
-              platforms={game.platforms || []}
-              steamAppId={game.steam_app_id}
-            />
-          </div>
-
-          {/* Add to Backlog CTA */}
-          <div className="rounded-xl border border-border bg-card p-4 sm:p-6">
-            <div className="flex items-start gap-4">
-              <div className="p-2 rounded-lg bg-blue-500/10">
-                <Plus className="h-5 w-5 text-blue-400" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold">Track your progress</h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Add to your backlog to track playtime, set goals, and get personalized recommendations.
-                </p>
-                <div className="mt-4">
-                  <AddToBacklogButton gameId={gameId} gameName={game.name} />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Manage Game - For followed but not in backlog */}
-          {isFollowing && (
-            <GameManagement
-              gameId={gameId}
-              gameName={game.name}
-              isInBacklog={false}
-              isFollowing={true}
-            />
-          )}
-        </div>
-      </div>
-    )
-  }
-
-  // ============================================
-  // BACKLOG VIEW (in backlog - Steam library style)
-  // ============================================
   return (
-    // Fix #5: overflow-x-hidden prevents swipe hijacking
     <div className="relative overflow-x-hidden min-h-screen">
-      <GameBanner imageUrl={bannerUrl} gameName={game.name} isInBacklog={true} brandColor={brandColor} />
+      <GameBanner imageUrl={bannerUrl} gameName={game.name} />
 
-      {/* Content pushed below hero with padding */}
-      <div className="relative z-10 pt-[200px] sm:pt-[240px] lg:pt-[280px] space-y-6">
-        {/* Back Link */}
-        <div>
-          <BackButton defaultHref="/backlog" defaultLabel="Back to Backlog" />
-        </div>
+      <div className="relative z-10 pt-[180px] sm:pt-[220px] space-y-6">
+        {/* Back button */}
+        <BackButton defaultHref="/backlog" defaultLabel="Back" />
 
-        {/* Steam Library Style Card - Fixed size, extends to edges on mobile */}
-        <div className="-mx-1 sm:mx-0 rounded-xl border border-border bg-card/95 backdrop-blur-sm p-3 sm:p-4 overflow-hidden">
-          <div className="flex gap-3 sm:gap-4">
-            {/* Cover Image - Left Side - Fixed size */}
+        {/* Game header card */}
+        <div className="rounded-xl border border-border bg-card/95 backdrop-blur-sm p-4 overflow-hidden">
+          <div className="flex gap-4">
+            {/* Cover image */}
             <div className="relative w-20 sm:w-24 flex-shrink-0 aspect-[2/3] rounded-lg overflow-hidden shadow-lg">
               {game.cover_url ? (
                 <Image
@@ -557,38 +210,55 @@ export default async function BacklogDetailPage({
               )}
             </div>
 
-            {/* Right Side - Game Info - Compact */}
-            <div className="flex-1 min-w-0 space-y-2 overflow-hidden">
-              {/* Title */}
-              <h1 className="text-lg sm:text-xl font-bold tracking-tight line-clamp-2">
-                {game.name}
-              </h1>
+            {/* Game info */}
+            <div className="flex-1 min-w-0 space-y-2">
+              <div className="flex items-start justify-between gap-2">
+                <h1 className="text-lg sm:text-xl font-bold tracking-tight line-clamp-2">
+                  {game.name}
+                </h1>
+                {isInBacklog && backlogItem && (
+                  <StatusBadge status={backlogItem.status} />
+                )}
+              </div>
 
-              {/* Steam Stats - Playtime, Last Played, Player Count */}
+              {/* Meta info */}
+              <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                {game.genre && <span>{game.genre}</span>}
+                {formattedReleaseDate && <span>• {formattedReleaseDate}</span>}
+                {game.is_live_service && (
+                  <span className="flex items-center gap-1 text-blue-400">
+                    <RefreshCw className="h-3 w-3" />
+                    Live Service
+                  </span>
+                )}
+              </div>
+
+              {/* Progress bar (if in backlog) */}
+              {isInBacklog && backlogItem && (
+                <div className="flex items-center gap-2 pt-1">
+                  <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-primary transition-all"
+                      style={{ width: `${Math.min(100, Math.max(0, backlogItem.progress))}%` }}
+                    />
+                  </div>
+                  <span className="text-xs font-medium text-muted-foreground w-8 text-right">
+                    {backlogItem.progress}%
+                  </span>
+                </div>
+              )}
+
+              {/* Steam stats */}
               {game.steam_app_id && (
                 <SteamStats
                   steamAppId={game.steam_app_id}
-                  steamStats={backlogItem.steamStats}
                   showPlayerCount={true}
                   layout="stacked"
                 />
               )}
 
-              {/* Progress Bar */}
-              <div className="flex items-center gap-2">
-                <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-primary transition-all"
-                    style={{ width: `${Math.min(100, Math.max(0, backlogItem.progress))}%` }}
-                  />
-                </div>
-                <span className="text-xs font-medium text-muted-foreground w-8 text-right">
-                  {backlogItem.progress}%
-                </span>
-              </div>
-
-              {/* Play Now Button - Desktop browser only */}
-              {(game.steam_app_id || game.xbox_product_id || game.platforms?.some((p: string) => p.toLowerCase().includes('xbox'))) && (
+              {/* Play button */}
+              {(game.steam_app_id || game.xbox_product_id) && (
                 <PlayNowButton
                   gameName={game.name}
                   steamAppId={game.steam_app_id}
@@ -598,90 +268,79 @@ export default async function BacklogDetailPage({
                   variant="primary"
                 />
               )}
-
-              {/* Latest Patch Info */}
-              {backlogItem.latestPatch && (
-                <div className="flex items-center gap-1 text-[11px] text-blue-400/80">
-                  <FileText className="h-3 w-3 flex-shrink-0" />
-                  <span className="font-medium">{relativeDaysText(backlogItem.latestPatch.published_at)}</span>
-                  <span className="text-muted-foreground/50">·</span>
-                  <span className="truncate text-muted-foreground/80">{backlogItem.latestPatch.title}</span>
-                </div>
-              )}
             </div>
           </div>
         </div>
 
-        {/* Sentiment Pulse - Community Mood (Pro) */}
-        <SentimentPulse gameId={gameId} />
-
-        {/* Videos Section - Browser only */}
-        <GameVideosSection
-          gameId={gameId}
-          gameName={game.name}
-          videos={videos}
-          className="rounded-xl border border-border bg-card p-4 sm:p-6"
-        />
-
-        {/* Studio Info Section */}
-        <StudioInfoSection
-          developer={game.developer}
-          publisher={game.publisher}
-          studioType={game.studio_type as 'AAA' | 'AA' | 'indie' | null}
-          genre={game.genre}
-          similarGames={game.similar_games}
-          developerNotableGames={game.developer_notable_games}
-        />
-
-        {/* AI Summary */}
-        <Suspense fallback={<WhatsNewSkeleton />}>
-          <WhatsNew gameId={gameId} />
-        </Suspense>
-
-        {/* Recent Patches */}
-        {backlogItem.recentPatches.length > 0 && (
-          <div className="rounded-xl border border-blue-500/20 bg-card p-4 sm:p-6">
+        {/* Recent patches */}
+        {recentPatches.length > 0 && (
+          <div className="rounded-xl border border-border bg-card p-4">
             <div className="flex items-center gap-2 mb-4">
-              <FileText className="h-5 w-5 text-blue-400" />
+              <FileText className="h-5 w-5 text-amber-400" />
               <h2 className="font-semibold">Recent Patches</h2>
-              <span className="ml-auto text-xs text-muted-foreground">
-                {backlogItem.recentPatches.length} patch{backlogItem.recentPatches.length !== 1 ? 'es' : ''}
+              <span className="text-xs text-muted-foreground ml-auto">
+                {recentPatches.length} patch{recentPatches.length !== 1 ? 'es' : ''}
               </span>
             </div>
-            <div className="space-y-4">
-              {backlogItem.recentPatches.map((patch, index) => (
-                <div
+            <div className="space-y-3">
+              {recentPatches.map((patch) => (
+                <Link
                   key={patch.id}
-                  className={index > 0 ? 'border-t border-border/50 pt-4' : ''}
+                  href={`/patches/${patch.id}`}
+                  className="block p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-medium text-sm">{patch.title}</h3>
+                    <h3 className="font-medium text-sm line-clamp-1">{patch.title}</h3>
                     <span className="text-xs text-muted-foreground whitespace-nowrap">
-                      {formatDate(patch.published_at)}
+                      {relativeDaysText(patch.published_at)}
                     </span>
                   </div>
                   {patch.summary_tldr && (
-                    <p className="mt-1 text-sm text-muted-foreground line-clamp-2">
+                    <p className="mt-1 text-xs text-muted-foreground line-clamp-2">
                       {patch.summary_tldr}
                     </p>
                   )}
-                </div>
+                </Link>
               ))}
             </div>
-            <Link
-              href={`/patches?game=${backlogItem.game_id}`}
-              className="inline-block mt-4 text-xs text-blue-400 hover:text-blue-300 transition-colors"
-            >
-              View all patches for this game
-            </Link>
           </div>
         )}
 
-        {/* Manage Game - Remove from backlog */}
+        {/* Store links */}
+        <div className="rounded-xl border border-border bg-card p-4">
+          <h2 className="font-semibold mb-3">Get the Game</h2>
+          <StoreLinkButtons
+            gameName={game.name}
+            platforms={game.platforms || []}
+            steamAppId={game.steam_app_id}
+          />
+        </div>
+
+        {/* Add to backlog (if not already) */}
+        {!isInBacklog && (
+          <div className="rounded-xl border border-border bg-card p-4">
+            <div className="flex items-start gap-4">
+              <div className="p-2 rounded-lg bg-blue-500/10">
+                <Plus className="h-5 w-5 text-blue-400" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold">Track this game</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Add to your backlog to track progress and get patch alerts.
+                </p>
+                <div className="mt-4">
+                  <AddToBacklogButton gameId={gameId} gameName={game.name} />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Game management (remove, unfollow, etc.) */}
         <GameManagement
           gameId={gameId}
           gameName={game.name}
-          isInBacklog={true}
+          isInBacklog={isInBacklog}
           isFollowing={isFollowing}
         />
       </div>
