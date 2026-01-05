@@ -176,15 +176,18 @@ export default async function NewsDetailPage({
   const highlights = news.summary ? [news.summary.split('.')[0] + '.'] : []
 
   return (
-    <div className="relative overflow-x-hidden min-h-screen page-enter">
+    <div className="relative min-h-screen page-enter">
       {/* Auto-mark notification as read when viewing this news */}
       <AutoMarkRead contentType="news" contentId={id} />
 
-      {/* Full-bleed Hero Image */}
+      {/* Fixed background hero */}
       <HeroBanner imageUrl={heroImage} altText={news.title} fallbackColor={brandColor} />
 
-      {/* Content pushed below hero */}
-      <div className="relative z-0 pt-[140px] sm:pt-[180px] md:pt-[220px] lg:pt-[280px] space-y-6">
+      {/* Spacer for hero */}
+      <div className="h-[220px] sm:h-[260px] md:h-[350px]" />
+
+      {/* Content that scrolls over hero */}
+      <div className="relative z-10 bg-background rounded-t-3xl -mt-8 pt-6 pb-8 min-h-screen space-y-6 px-0">
         {/* Back Button */}
         <Suspense fallback={
           <span className="inline-flex items-center gap-1.5 text-sm text-white/70">

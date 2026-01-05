@@ -136,10 +136,10 @@ function WhatsNewSkeleton() {
   )
 }
 
-// Game banner component
+// Game banner component - fixed background parallax style
 function GameBanner({ imageUrl, gameName, brandColor }: { imageUrl: string | null; gameName: string; brandColor?: string | null }) {
   return (
-    <div className="fixed inset-x-0 top-0 h-[280px] sm:h-[340px] overflow-hidden -z-10">
+    <div className="fixed inset-x-0 top-0 h-[300px] sm:h-[350px] md:h-[450px] -z-10 md:left-64">
       {imageUrl ? (
         <>
           <Image
@@ -151,7 +151,7 @@ function GameBanner({ imageUrl, gameName, brandColor }: { imageUrl: string | nul
             priority
             unoptimized
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/50 to-background" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/30 to-background" />
         </>
       ) : (
         <div
@@ -239,10 +239,15 @@ export default async function BacklogDetailPage({
     : null
 
   return (
-    <div className="relative overflow-x-hidden min-h-screen">
+    <div className="relative min-h-screen">
+      {/* Fixed background hero */}
       <GameBanner imageUrl={bannerUrl} gameName={game.name} brandColor={game.brand_color} />
 
-      <div className="relative z-0 pt-[180px] sm:pt-[220px] space-y-6">
+      {/* Spacer for hero */}
+      <div className="h-[220px] sm:h-[260px] md:h-[350px]" />
+
+      {/* Content that scrolls over hero */}
+      <div className="relative z-10 bg-background rounded-t-3xl -mt-8 pt-6 pb-8 min-h-screen space-y-6 px-0">
         {/* Back button */}
         <BackButton defaultHref="/backlog" defaultLabel="Back" />
 

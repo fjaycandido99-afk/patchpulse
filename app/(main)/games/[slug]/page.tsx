@@ -332,10 +332,15 @@ export default async function GamePage({
     : null
 
   return (
-    <div className="relative overflow-x-hidden min-h-screen">
+    <div className="relative min-h-screen">
+      {/* Fixed background hero */}
       <HeroBanner imageUrl={bannerUrl} altText={game.name} fallbackColor={brandColor || undefined} />
 
-      <div className="relative z-0 pt-[140px] sm:pt-[180px] md:pt-[220px] lg:pt-[280px] space-y-6">
+      {/* Spacer for hero */}
+      <div className="h-[220px] sm:h-[260px] md:h-[350px]" />
+
+      {/* Content that scrolls over hero */}
+      <div className="relative z-10 bg-background rounded-t-3xl -mt-8 pt-6 pb-8 min-h-screen space-y-6 px-0">
         {/* Back Link */}
         <div>
           <BackButton defaultHref="/home" defaultLabel="Back" />

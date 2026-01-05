@@ -131,8 +131,8 @@ export default async function MainLayout({
               </div>
             </header>
 
-            {/* Desktop search in header area */}
-            <header className="hidden md:block sticky top-0 z-40 bg-background/95 backdrop-blur-xl border-b border-white/10">
+            {/* Desktop search in header area - transparent to show hero behind */}
+            <header className="hidden md:block sticky top-0 z-40 bg-transparent backdrop-blur-sm">
               <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-end gap-3">
                   <SearchBar />
