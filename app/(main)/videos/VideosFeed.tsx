@@ -175,17 +175,6 @@ function HeroCarousel({
 
               {/* Content */}
               <div className="absolute bottom-0 left-0 right-0 p-6">
-                {video.game && (
-                  <div className="flex items-center gap-2 mb-2">
-                    {video.game.logo_url && (
-                      <div className="relative w-6 h-6 rounded overflow-hidden bg-white/10">
-                        <Image src={video.game.logo_url} alt="" fill className="object-contain" sizes="24px" unoptimized />
-                      </div>
-                    )}
-                    <span className="text-sm text-white/80 font-medium">{video.game.name}</span>
-                  </div>
-                )}
-
                 <h2 className="font-bold text-white text-2xl leading-tight line-clamp-2 max-w-3xl">
                   {video.title}
                 </h2>
@@ -352,28 +341,15 @@ function MobileVideoCard({
         )}
       </button>
 
-      {/* Info - YouTube style */}
+      {/* Info */}
       <div className="flex gap-3 mt-3">
-        {/* Channel avatar / Game logo */}
-        <button onClick={onPlay} className="flex-shrink-0">
-          {video.game?.logo_url ? (
-            <div className="relative w-9 h-9 rounded-full overflow-hidden bg-zinc-700">
-              <Image src={video.game.logo_url} alt="" fill className="object-cover" sizes="36px" unoptimized />
-            </div>
-          ) : (
-            <div className="w-9 h-9 rounded-full bg-zinc-700 flex items-center justify-center">
-              <Video className="w-4 h-4 text-zinc-500" />
-            </div>
-          )}
-        </button>
-
         {/* Title and meta */}
         <button onClick={onPlay} className="flex-1 min-w-0 text-left">
           <h3 className="font-medium text-sm line-clamp-2 leading-snug">
             {video.title}
           </h3>
           <div className="flex flex-wrap items-center gap-x-1 mt-1 text-xs text-muted-foreground">
-            <span className="truncate max-w-[140px]">{video.channel_name || 'Unknown Channel'}</span>
+            <span className="truncate max-w-[160px]">{video.channel_name || 'Unknown Channel'}</span>
             {video.view_count > 0 && (
               <>
                 <span>•</span>
@@ -387,11 +363,6 @@ function MobileVideoCard({
               </>
             )}
           </div>
-          {video.game && (
-            <p className="text-[10px] text-muted-foreground/70 mt-0.5 truncate">
-              {video.game.name}
-            </p>
-          )}
         </button>
 
         {/* Save button */}
