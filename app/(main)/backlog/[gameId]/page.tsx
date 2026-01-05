@@ -3,6 +3,7 @@ import Image from 'next/image'
 import { Suspense } from 'react'
 import { FileText, Clock, RefreshCw, Calendar, Gamepad2, Monitor, Home, ArrowLeft, Plus } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { formatDate, relativeDaysText } from '@/lib/dates'
 import { AddToBacklogButton } from '@/components/backlog/AddToBacklogButton'
 import { StoreLinkButtons } from '@/components/ui/StoreLinkButtons'
@@ -11,17 +12,23 @@ import { SteamStats } from '@/components/library/SteamStats'
 import { GameManagement } from '@/components/backlog/GameManagement'
 import { BackButton } from '@/components/ui/BackButton'
 
-// Get game data
+// Get game data (using admin client to bypass RLS)
 async function getGame(gameId: string) {
   try {
-    const supabase = await createClient()
-    const { data } = await supabase
+    const supabase = createAdminClient()
+    const { data, error } = await supabase
       .from('games')
       .select('id, name, slug, cover_url, hero_url, logo_url, brand_color, release_date, genre, is_live_service, platforms, steam_app_id, xbox_product_id, developer, publisher')
       .eq('id', gameId)
       .single()
+
+    if (error) {
+      console.error('Error fetching game:', error)
+      return null
+    }
     return data
-  } catch {
+  } catch (e) {
+    console.error('Exception fetching game:', e)
     return null
   }
 }
@@ -45,10 +52,10 @@ async function getBacklogItem(gameId: string) {
   }
 }
 
-// Get recent patches for this game
+// Get recent patches for this game (using admin client to bypass RLS)
 async function getRecentPatches(gameId: string) {
   try {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     const { data } = await supabase
       .from('patch_notes')
       .select('id, title, published_at, summary_tldr, impact_score')
