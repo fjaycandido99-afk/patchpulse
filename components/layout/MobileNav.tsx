@@ -1,6 +1,7 @@
 'use client'
 
-import { Home, Newspaper, Library, User, Brain, Crown, Bookmark, LogIn, Video } from 'lucide-react'
+import { useState } from 'react'
+import { Home, Newspaper, Library, User, Brain, Crown, Bookmark, Video, Menu, X, Gamepad2, CalendarDays, Compass, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
@@ -24,24 +25,134 @@ const navItems: NavItemConfig[] = [
   { icon: Newspaper, label: 'News', href: '/news' },
   { icon: Video, label: 'Videos', href: '/videos' },
   { icon: Library, label: 'Library', href: '/backlog' },
+]
+
+const menuItems: NavItemConfig[] = [
   { icon: User, label: 'Profile', href: '/profile' },
+  { icon: Compass, label: 'For You', href: '/recommendations' },
+  { icon: Brain, label: 'Insights', href: '/insights', isPro: true },
+  { icon: Bookmark, label: 'Saved', href: '/bookmarks', isPro: true },
+  { icon: Gamepad2, label: 'Patches', href: '/patches' },
+  { icon: CalendarDays, label: 'Releases', href: '/releases' },
 ]
 
 export function MobileNav({ badges, isGuest = false }: { badges?: Record<string, NavBadge>; isGuest?: boolean }) {
-  const items = navItems
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const pathname = usePathname()
+
+  // Check if current page is in menu items
+  const isMenuItemActive = menuItems.some(item =>
+    pathname === item.href || pathname.startsWith(item.href + '/')
+  )
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 glass-nav md:hidden safe-area-pb">
-      <div className="flex items-center justify-around">
-        {items.map((item) => (
-          <NavItem
-            key={item.href}
-            {...item}
-            badge={badges?.[item.href] || item.badge}
-          />
-        ))}
+    <>
+      {/* Menu Drawer Overlay */}
+      {isMenuOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm md:hidden"
+          onClick={() => setIsMenuOpen(false)}
+        />
+      )}
+
+      {/* Menu Drawer */}
+      <div
+        className={`fixed bottom-0 left-0 right-0 z-50 md:hidden transition-transform duration-300 ease-out ${
+          isMenuOpen ? 'translate-y-0' : 'translate-y-full'
+        }`}
+      >
+        <div className="bg-background/95 backdrop-blur-xl border-t border-white/10 rounded-t-3xl safe-area-pb">
+          {/* Drag handle */}
+          <div className="flex justify-center pt-3 pb-2">
+            <div className="w-10 h-1 bg-white/20 rounded-full" />
+          </div>
+
+          {/* Menu header */}
+          <div className="flex items-center justify-between px-6 pb-4">
+            <h2 className="text-lg font-semibold">Menu</h2>
+            <button
+              onClick={() => setIsMenuOpen(false)}
+              className="p-2 rounded-full hover:bg-white/10 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Menu items */}
+          <div className="px-4 pb-6 space-y-1">
+            {menuItems.map((item) => {
+              const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setIsMenuOpen(false)}
+                  className={`flex items-center justify-between px-4 py-3.5 rounded-xl transition-all ${
+                    isActive
+                      ? 'bg-primary/20 text-primary'
+                      : 'hover:bg-white/5 text-foreground'
+                  }`}
+                >
+                  <div className="flex items-center gap-4">
+                    <item.icon className="w-5 h-5" />
+                    <span className="font-medium">{item.label}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {item.isPro && (
+                      <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-gradient-to-r from-primary/20 to-violet-500/20 border border-primary/30 text-primary text-[10px] font-medium">
+                        <Crown className="w-2.5 h-2.5" />
+                        Pro
+                      </span>
+                    )}
+                    {badges?.[item.href]?.count && badges[item.href].count! > 0 && (
+                      <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-red-500 text-white">
+                        {badges[item.href].count! > 99 ? '99+' : badges[item.href].count}
+                      </span>
+                    )}
+                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                  </div>
+                </Link>
+              )
+            })}
+          </div>
+        </div>
       </div>
-    </nav>
+
+      {/* Bottom Navigation */}
+      <nav className="fixed bottom-0 left-0 right-0 z-40 glass-nav md:hidden safe-area-pb">
+        <div className="flex items-center justify-around">
+          {navItems.map((item) => (
+            <NavItem
+              key={item.href}
+              {...item}
+              badge={badges?.[item.href] || item.badge}
+            />
+          ))}
+          {/* Menu button */}
+          <button
+            onClick={() => setIsMenuOpen(true)}
+            className={`
+              relative flex flex-col items-center gap-1 px-3 py-3
+              transition-all duration-200 touch-feedback
+              ${isMenuItemActive
+                ? 'text-primary nav-glow'
+                : 'text-muted-foreground hover:text-foreground active:text-foreground'
+              }
+            `}
+          >
+            <div className={`relative transition-transform duration-200 ${isMenuItemActive ? 'scale-110' : ''}`}>
+              <Menu className={`h-6 w-6 transition-all duration-200 ${isMenuItemActive ? 'stroke-[2.5]' : 'stroke-[1.5]'}`} />
+            </div>
+            <span className={`text-[10px] font-semibold tracking-wide uppercase transition-all duration-200 ${isMenuItemActive ? 'opacity-100' : 'opacity-70'}`}>
+              More
+            </span>
+            {isMenuItemActive && (
+              <div className="absolute -top-px left-1/2 -translate-x-1/2 w-8 h-0.5 bg-primary rounded-full" />
+            )}
+          </button>
+        </div>
+      </nav>
+    </>
   )
 }
 
