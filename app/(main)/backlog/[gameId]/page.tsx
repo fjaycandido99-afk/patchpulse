@@ -23,7 +23,7 @@ async function getGame(gameId: string) {
 
     const { data, error } = await supabase
       .from('games')
-      .select('id, name, slug, cover_url, hero_url, brand_color, release_date, genre, is_live_service, platforms, steam_app_id, xbox_product_id, developer, publisher')
+      .select('id, name, slug, cover_url, hero_url, brand_color, release_date, genre, is_live_service, platforms, steam_app_id, developer, publisher')
       .eq('id', gameId)
       .single()
 
@@ -271,12 +271,11 @@ export default async function BacklogDetailPage({
           </div>
 
           {/* Play button */}
-          {(game.steam_app_id || game.xbox_product_id) && (
+          {game.steam_app_id && (
             <div className="mt-4 pt-4 border-t border-border">
               <PlayNowButton
                 gameName={game.name}
                 steamAppId={game.steam_app_id}
-                xboxProductId={game.xbox_product_id}
                 hasXbox={game.platforms?.some((p: string) => p.toLowerCase().includes('xbox'))}
                 size="md"
                 variant="primary"
