@@ -25,13 +25,13 @@ import type { VideoWithGame } from './queries'
 type VideoType = 'trailer' | 'clips' | 'gameplay' | 'esports' | 'review' | 'other'
 
 const TYPE_CONFIG: Record<VideoType | 'all', { label: string; icon: React.ReactNode; color: string }> = {
-  all: { label: 'For You', icon: <Video className="w-4 h-4" />, color: 'bg-primary/20 text-primary' },
-  trailer: { label: 'Trailers', icon: <Film className="w-4 h-4" />, color: 'bg-red-500/20 text-red-400' },
-  clips: { label: 'Clips', icon: <Clapperboard className="w-4 h-4" />, color: 'bg-purple-500/20 text-purple-400' },
-  gameplay: { label: 'Gameplay', icon: <Gamepad2 className="w-4 h-4" />, color: 'bg-blue-500/20 text-blue-400' },
-  esports: { label: 'Esports', icon: <Trophy className="w-4 h-4" />, color: 'bg-amber-500/20 text-amber-400' },
-  review: { label: 'Reviews', icon: <Video className="w-4 h-4" />, color: 'bg-green-500/20 text-green-400' },
-  other: { label: 'Other', icon: <Video className="w-4 h-4" />, color: 'bg-zinc-500/20 text-zinc-400' },
+  all: { label: 'For You', icon: <Video className="w-3 h-3" />, color: 'bg-primary/20 text-primary' },
+  trailer: { label: 'Trailers', icon: <Film className="w-3 h-3" />, color: 'bg-red-500/20 text-red-400' },
+  clips: { label: 'Clips', icon: <Clapperboard className="w-3 h-3" />, color: 'bg-purple-500/20 text-purple-400' },
+  gameplay: { label: 'Gameplay', icon: <Gamepad2 className="w-3 h-3" />, color: 'bg-blue-500/20 text-blue-400' },
+  esports: { label: 'Esports', icon: <Trophy className="w-3 h-3" />, color: 'bg-amber-500/20 text-amber-400' },
+  review: { label: 'Reviews', icon: <Video className="w-3 h-3" />, color: 'bg-green-500/20 text-green-400' },
+  other: { label: 'Other', icon: <Video className="w-3 h-3" />, color: 'bg-zinc-500/20 text-zinc-400' },
 }
 
 function formatDuration(seconds: number): string {
@@ -676,17 +676,18 @@ export function VideosFeed({
         </div>
       )}
 
-      {/* Filter Chips - Sticky on mobile */}
-      <div className="sticky top-0 z-30 -mx-4 px-4 py-3 bg-background/95 backdrop-blur-sm md:relative md:mx-0 md:px-0 md:py-0 md:bg-transparent md:backdrop-blur-none">
-        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+      {/* Filter Chips - Compact & Modern */}
+      <div className="sticky top-0 z-30 -mx-4 px-4 py-2 bg-background/80 backdrop-blur-md border-b border-white/5 md:relative md:mx-0 md:px-0 md:py-0 md:bg-transparent md:backdrop-blur-none md:border-0">
+        <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-hide">
           <button
             onClick={() => updateFilters(null)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-full whitespace-nowrap transition-colors ${
+            className={`flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-lg whitespace-nowrap transition-all ${
               !selectedType
-                ? 'bg-white text-black'
-                : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
+                ? 'bg-primary text-primary-foreground shadow-sm'
+                : 'bg-zinc-800/80 text-zinc-400 hover:bg-zinc-700/80 hover:text-zinc-200'
             }`}
           >
+            <Video className="w-3 h-3" />
             For You
           </button>
 
@@ -698,12 +699,13 @@ export function VideosFeed({
                 <button
                   key={type}
                   onClick={() => updateFilters(type)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-full whitespace-nowrap transition-colors ${
+                  className={`flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-lg whitespace-nowrap transition-all ${
                     selectedType === type
-                      ? 'bg-white text-black'
-                      : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'bg-zinc-800/80 text-zinc-400 hover:bg-zinc-700/80 hover:text-zinc-200'
                   }`}
                 >
+                  {config.icon}
                   {config.label}
                 </button>
               )
