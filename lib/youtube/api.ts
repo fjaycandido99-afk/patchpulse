@@ -353,6 +353,19 @@ const VIRAL_SEARCH_TERMS = [
   'gaming fails shorts',
   'epic gaming moments shorts',
   'streamer rage shorts',
+  'viral gaming moments 2025',
+  'best twitch clips this week',
+  'streamer funny moments',
+  'viral streamer clips gaming',
+  'twitch highlights best moments',
+  'streamer rage quit moments',
+  'funniest gaming streamer clips',
+  'best gaming clips this week',
+  'twitch gaming highlights',
+  'gaming funny fails',
+  'insane video game plays',
+  'streamer gaming rage moments',
+  'gaming world record',
 ]
 
 // Fetch viral/general gaming videos (not tied to specific games)
