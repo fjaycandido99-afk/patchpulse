@@ -278,6 +278,15 @@ export async function fetchGameVideos(
           }
         }
 
+        // Minimum 5k views for quality content
+        if (videoDetails) {
+          const viewCount = parseInt(videoDetails.statistics.viewCount) || 0
+          if (viewCount < 5000) {
+            console.log(`[YouTube] Skipping ${videoId} - only ${viewCount} views (min 5k required)`)
+            continue
+          }
+        }
+
         // Check if already exists
         const { data: existing } = await supabase
           .from('game_videos')
@@ -433,6 +442,12 @@ export async function fetchViralGamingVideos(): Promise<{ success: boolean; adde
           const duration = parseDuration(videoDetails.contentDetails.duration)
           if (duration < 15 || duration > 300) {
             continue // Skip videos outside 15 sec - 5 min range
+          }
+
+          // Minimum 5k views for quality content
+          const viewCount = parseInt(videoDetails.statistics.viewCount) || 0
+          if (viewCount < 5000) {
+            continue // Skip low view count videos
           }
         }
 
