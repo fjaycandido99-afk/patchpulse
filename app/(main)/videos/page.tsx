@@ -1,4 +1,4 @@
-import { Video } from 'lucide-react'
+import { Video, Film, Clapperboard, Gamepad2, Trophy } from 'lucide-react'
 import { getVideos, getTrendingVideos, getVideoTypes, getForYouVideos } from './queries'
 import { VideosFeed } from './VideosFeed'
 import { getUserVideoBookmarks } from '../actions/bookmarks'
@@ -9,6 +9,40 @@ type VideoType = 'trailer' | 'clips' | 'gameplay' | 'esports' | 'review' | 'othe
 
 type SearchParams = {
   type?: string
+}
+
+// Dynamic header config for each section
+const SECTION_CONFIG: Record<string, { title: string; description: string; icon: typeof Video; color: string }> = {
+  forYou: {
+    title: 'For You',
+    description: 'Personalized videos based on games you follow',
+    icon: Video,
+    color: 'bg-primary/20 text-primary',
+  },
+  trailer: {
+    title: 'Trailers',
+    description: 'Latest official game trailers and reveals',
+    icon: Film,
+    color: 'bg-red-500/20 text-red-400',
+  },
+  clips: {
+    title: 'Clips',
+    description: 'Viral gaming moments and streamer highlights',
+    icon: Clapperboard,
+    color: 'bg-purple-500/20 text-purple-400',
+  },
+  gameplay: {
+    title: 'Gameplay',
+    description: 'Top plays, compilations, and gaming montages',
+    icon: Gamepad2,
+    color: 'bg-blue-500/20 text-blue-400',
+  },
+  esports: {
+    title: 'Esports',
+    description: 'Tournament highlights and competitive gaming',
+    icon: Trophy,
+    color: 'bg-amber-500/20 text-amber-400',
+  },
 }
 
 export const metadata = {
@@ -38,20 +72,20 @@ export default async function VideosPage({
     getUserVideoBookmarks(),
   ])
 
+  // Get section config based on selected type
+  const section = SECTION_CONFIG[selectedType || 'forYou']
+  const Icon = section.icon
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-red-500/20">
-            <Video className="w-5 h-5 text-red-400" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Videos</h1>
-            <p className="text-sm text-muted-foreground">
-              Trailers, clips, gameplay, and esports highlights
-            </p>
-          </div>
+    <div className="space-y-4">
+      {/* Dynamic Header */}
+      <div className="flex items-center gap-3">
+        <div className={`p-2 rounded-xl ${section.color.split(' ')[0]}`}>
+          <Icon className={`w-5 h-5 ${section.color.split(' ')[1]}`} />
+        </div>
+        <div>
+          <h1 className="text-xl font-bold tracking-tight">{section.title}</h1>
+          <p className="text-xs text-muted-foreground">{section.description}</p>
         </div>
       </div>
 
