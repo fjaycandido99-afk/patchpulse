@@ -50,7 +50,7 @@ function parseDuration(duration: string): number {
 
 // Search keywords for each video type - all gaming specific
 const TYPE_KEYWORDS: Record<VideoType, string[]> = {
-  trailer: ['official game trailer', 'video game trailer', 'game announcement trailer', 'gameplay reveal trailer', 'game cinematic trailer'],
+  trailer: ['new game trailer 2025', 'latest game trailer', 'official game trailer 2025', 'new gameplay trailer', 'game reveal trailer 2025'],
   clips: ['viral gaming moments', 'streamer funny moments', 'best twitch clips', 'gaming streamer highlights', 'viral game clips', 'streamer rage moments'],
   gameplay: ['gaming top 10', 'best gaming plays', 'game highlights compilation', 'gaming montage', 'video game compilation'],
   esports: ['esports tournament highlights', 'gaming grand finals', 'esports championship', 'pro gaming', 'competitive gaming'],
@@ -71,7 +71,7 @@ const TYPE_DURATION: Record<VideoType, { min: number; max: number; youtubeFilter
 // How far back to search for each video type (days)
 // Shorter = fresher content, since we clean up after 3 days
 const TYPE_RECENCY: Record<VideoType, number> = {
-  trailer: 30,      // 30 days - recent trailers only
+  trailer: 14,      // 14 days - latest trailers only
   clips: 14,        // 14 days - very fresh viral clips
   gameplay: 30,     // 30 days - recent compilations
   esports: 7,       // 7 days - this week's tournaments only
@@ -149,12 +149,15 @@ export async function searchGameVideos(
       publishedAfter.setDate(publishedAfter.getDate() - recencyDays)
     }
 
+    // Order: trailers by date (newest), clips by views (viral), others by relevance
+    const orderBy = videoType === 'trailer' ? 'date' : videoType === 'clips' ? 'viewCount' : 'relevance'
+
     const params = new URLSearchParams({
       part: 'snippet',
       q: searchTerms,
       type: 'video',
       maxResults: maxResults.toString(),
-      order: videoType === 'clips' ? 'viewCount' : 'relevance', // Sort clips by views for viral content
+      order: orderBy,
       publishedAfter: publishedAfter.toISOString(),
       videoCategoryId: '20', // Gaming category
       key: apiKey,
