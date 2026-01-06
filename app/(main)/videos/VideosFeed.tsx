@@ -676,19 +676,19 @@ export function VideosFeed({
         </div>
       )}
 
-      {/* Filter Chips - Compact & Modern */}
-      <div className="sticky top-0 z-30 -mx-4 px-4 py-2 bg-background/80 backdrop-blur-md border-b border-white/5 md:relative md:mx-0 md:px-0 md:py-0 md:bg-transparent md:backdrop-blur-none md:border-0">
-        <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-hide">
+      {/* Filter Chips - Full width on mobile */}
+      <div className="sticky top-0 z-30 -mx-4 px-2 py-2 bg-background/95 backdrop-blur-md border-b border-white/5 md:relative md:mx-0 md:px-0 md:py-0 md:bg-transparent md:backdrop-blur-none md:border-0">
+        <div className="grid grid-cols-5 gap-1 md:flex md:gap-1.5">
           <button
             onClick={() => updateFilters(null)}
-            className={`flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-lg whitespace-nowrap transition-all ${
+            className={`flex items-center justify-center gap-1 py-2 md:py-1.5 md:px-3 text-[11px] md:text-xs font-medium rounded-lg transition-all ${
               !selectedType
                 ? 'bg-primary text-primary-foreground shadow-sm'
-                : 'bg-zinc-800/80 text-zinc-400 hover:bg-zinc-700/80 hover:text-zinc-200'
+                : 'bg-zinc-800 text-zinc-400 active:bg-zinc-700'
             }`}
           >
-            <Video className="w-3 h-3" />
-            For You
+            <Video className="w-3.5 h-3.5 md:w-3 md:h-3" />
+            <span className="hidden md:inline">For You</span>
           </button>
 
           {videoTypes
@@ -699,14 +699,14 @@ export function VideosFeed({
                 <button
                   key={type}
                   onClick={() => updateFilters(type)}
-                  className={`flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-lg whitespace-nowrap transition-all ${
+                  className={`flex items-center justify-center gap-1 py-2 md:py-1.5 md:px-3 text-[11px] md:text-xs font-medium rounded-lg transition-all ${
                     selectedType === type
                       ? 'bg-primary text-primary-foreground shadow-sm'
-                      : 'bg-zinc-800/80 text-zinc-400 hover:bg-zinc-700/80 hover:text-zinc-200'
+                      : 'bg-zinc-800 text-zinc-400 active:bg-zinc-700'
                   }`}
                 >
                   {config.icon}
-                  {config.label}
+                  <span className="hidden md:inline">{config.label}</span>
                 </button>
               )
             })}
