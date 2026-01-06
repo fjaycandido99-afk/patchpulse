@@ -61,7 +61,7 @@ const TYPE_KEYWORDS: Record<VideoType, string[]> = {
 // Duration constraints for each video type (in seconds)
 const TYPE_DURATION: Record<VideoType, { min: number; max: number; youtubeFilter: 'short' | 'medium' | 'long' | 'any' }> = {
   trailer: { min: 60, max: 300, youtubeFilter: 'medium' },       // 1-5 min, proper trailers (no Shorts)
-  clips: { min: 30, max: 300, youtubeFilter: 'short' },          // 30 sec - 5 min (viral clips)
+  clips: { min: 15, max: 300, youtubeFilter: 'any' },            // 15 sec - 5 min (Shorts + longer clips mix)
   gameplay: { min: 300, max: 1200, youtubeFilter: 'medium' },    // 5-20 min (top 10s, compilations)
   esports: { min: 300, max: 1800, youtubeFilter: 'medium' },     // 5-30 min (tournament highlights)
   review: { min: 300, max: 1800, youtubeFilter: 'medium' },      // 5-30 min
@@ -267,6 +267,17 @@ export async function fetchGameVideos(
           }
         }
 
+        // Never allow Shorts format in trailers, gameplay, or esports
+        if (['trailer', 'gameplay', 'esports'].includes(videoType)) {
+          const title = video.snippet.title.toLowerCase()
+          const description = video.snippet.description?.toLowerCase() || ''
+          if (title.includes('#shorts') || title.includes('#short') ||
+              description.includes('#shorts') || description.includes('#short')) {
+            console.log(`[YouTube] Skipping ${videoId} - Shorts format not allowed for ${videoType}`)
+            continue
+          }
+        }
+
         // Check if already exists
         const { data: existing } = await supabase
           .from('game_videos')
@@ -417,11 +428,11 @@ export async function fetchViralGamingVideos(): Promise<{ success: boolean; adde
         const videoId = video.id.videoId
         const videoDetails = details.get(videoId)
 
-        // Filter to 30 sec - 5 min clips
+        // Filter to 15 sec - 5 min clips (Shorts + longer clips mix)
         if (videoDetails) {
           const duration = parseDuration(videoDetails.contentDetails.duration)
-          if (duration < 30 || duration > 300) {
-            continue // Skip videos outside 30 sec - 5 min range
+          if (duration < 15 || duration > 300) {
+            continue // Skip videos outside 15 sec - 5 min range
           }
         }
 
