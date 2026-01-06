@@ -25,13 +25,13 @@ import type { VideoWithGame } from './queries'
 type VideoType = 'trailer' | 'clips' | 'gameplay' | 'esports' | 'review' | 'other'
 
 const TYPE_CONFIG: Record<VideoType | 'all', { label: string; icon: React.ReactNode; color: string }> = {
-  all: { label: 'For You', icon: <Video className="w-3 h-3" />, color: 'bg-primary/20 text-primary' },
-  trailer: { label: 'Trailers', icon: <Film className="w-3 h-3" />, color: 'bg-red-500/20 text-red-400' },
-  clips: { label: 'Clips', icon: <Clapperboard className="w-3 h-3" />, color: 'bg-purple-500/20 text-purple-400' },
-  gameplay: { label: 'Gameplay', icon: <Gamepad2 className="w-3 h-3" />, color: 'bg-blue-500/20 text-blue-400' },
-  esports: { label: 'Esports', icon: <Trophy className="w-3 h-3" />, color: 'bg-amber-500/20 text-amber-400' },
-  review: { label: 'Reviews', icon: <Video className="w-3 h-3" />, color: 'bg-green-500/20 text-green-400' },
-  other: { label: 'Other', icon: <Video className="w-3 h-3" />, color: 'bg-zinc-500/20 text-zinc-400' },
+  all: { label: 'For You', icon: <Video className="w-4 h-4 md:w-3 md:h-3" />, color: 'bg-primary/20 text-primary' },
+  trailer: { label: 'Trailers', icon: <Film className="w-4 h-4 md:w-3 md:h-3" />, color: 'bg-red-500/20 text-red-400' },
+  clips: { label: 'Clips', icon: <Clapperboard className="w-4 h-4 md:w-3 md:h-3" />, color: 'bg-purple-500/20 text-purple-400' },
+  gameplay: { label: 'Gameplay', icon: <Gamepad2 className="w-4 h-4 md:w-3 md:h-3" />, color: 'bg-blue-500/20 text-blue-400' },
+  esports: { label: 'Esports', icon: <Trophy className="w-4 h-4 md:w-3 md:h-3" />, color: 'bg-amber-500/20 text-amber-400' },
+  review: { label: 'Reviews', icon: <Video className="w-4 h-4 md:w-3 md:h-3" />, color: 'bg-green-500/20 text-green-400' },
+  other: { label: 'Other', icon: <Video className="w-4 h-4 md:w-3 md:h-3" />, color: 'bg-zinc-500/20 text-zinc-400' },
 }
 
 function formatDuration(seconds: number): string {
@@ -676,37 +676,40 @@ export function VideosFeed({
         </div>
       )}
 
-      {/* Filter Chips - Full width on mobile */}
+      {/* Filter Chips - Icon only on mobile, show label when active */}
       <div className="sticky top-0 z-30 -mx-4 px-2 py-2 bg-background/95 backdrop-blur-md border-b border-white/5 md:relative md:mx-0 md:px-0 md:py-0 md:bg-transparent md:backdrop-blur-none md:border-0">
-        <div className="grid grid-cols-5 gap-1 md:flex md:gap-1.5">
+        <div className="flex justify-center gap-1.5 md:justify-start md:gap-2">
           <button
             onClick={() => updateFilters(null)}
-            className={`flex items-center justify-center gap-1 py-2 md:py-1.5 md:px-3 text-[11px] md:text-xs font-medium rounded-lg transition-all ${
+            className={`flex items-center justify-center gap-1.5 py-2 px-3 md:py-1.5 md:px-3 text-[11px] md:text-xs font-medium rounded-full transition-all ${
               !selectedType
                 ? 'bg-primary text-primary-foreground shadow-sm'
                 : 'bg-zinc-800 text-zinc-400 active:bg-zinc-700'
             }`}
           >
-            <Video className="w-3.5 h-3.5 md:w-3 md:h-3" />
-            <span className="hidden md:inline">For You</span>
+            <Video className="w-4 h-4 md:w-3 md:h-3" />
+            {/* Show label on mobile only when active, always on desktop */}
+            <span className={!selectedType ? 'inline' : 'hidden md:inline'}>For You</span>
           </button>
 
           {videoTypes
             .filter(({ type }) => ['trailer', 'clips', 'gameplay', 'esports'].includes(type))
             .map(({ type }) => {
               const config = TYPE_CONFIG[type]
+              const isActive = selectedType === type
               return (
                 <button
                   key={type}
                   onClick={() => updateFilters(type)}
-                  className={`flex items-center justify-center gap-1 py-2 md:py-1.5 md:px-3 text-[11px] md:text-xs font-medium rounded-lg transition-all ${
-                    selectedType === type
+                  className={`flex items-center justify-center gap-1.5 py-2 px-3 md:py-1.5 md:px-3 text-[11px] md:text-xs font-medium rounded-full transition-all ${
+                    isActive
                       ? 'bg-primary text-primary-foreground shadow-sm'
                       : 'bg-zinc-800 text-zinc-400 active:bg-zinc-700'
                   }`}
                 >
                   {config.icon}
-                  <span className="hidden md:inline">{config.label}</span>
+                  {/* Show label on mobile only when active, always on desktop */}
+                  <span className={isActive ? 'inline' : 'hidden md:inline'}>{config.label}</span>
                 </button>
               )
             })}
