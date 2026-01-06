@@ -82,23 +82,31 @@ function ImageWithFallback({
   className?: string
 }) {
   const [hasError, setHasError] = useState(false)
+  const [isLoaded, setIsLoaded] = useState(false)
 
   if (hasError) {
     return <ThumbnailFallback title={title} />
   }
 
   return (
-    <Image
-      src={src}
-      alt={alt}
-      fill
-      className={className}
-      sizes={sizes}
-      placeholder={blurHash ? 'blur' : 'empty'}
-      blurDataURL={blurHash || undefined}
-      unoptimized
-      onError={() => setHasError(true)}
-    />
+    <>
+      {/* Show fallback until image loads */}
+      {!isLoaded && (
+        <div className="absolute inset-0 bg-gradient-to-br from-zinc-700 via-zinc-800 to-zinc-900 animate-pulse" />
+      )}
+      <Image
+        src={src}
+        alt={alt}
+        fill
+        className={`${className} ${isLoaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
+        sizes={sizes}
+        placeholder={blurHash ? 'blur' : 'empty'}
+        blurDataURL={blurHash || undefined}
+        unoptimized
+        onLoad={() => setIsLoaded(true)}
+        onError={() => setHasError(true)}
+      />
+    </>
   )
 }
 
