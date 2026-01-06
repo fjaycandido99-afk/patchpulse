@@ -51,7 +51,7 @@ function parseDuration(duration: string): number {
 // Search keywords for each video type - all gaming specific
 const TYPE_KEYWORDS: Record<VideoType, string[]> = {
   trailer: ['new game trailer 2025', 'latest game trailer', 'official game trailer 2025', 'new gameplay trailer', 'game reveal trailer 2025'],
-  clips: ['viral gaming moments', 'streamer funny moments', 'best twitch clips', 'gaming streamer highlights', 'viral game clips', 'streamer rage moments'],
+  clips: ['gaming shorts', 'game clips shorts', 'gaming funny shorts', 'streamer shorts', 'gaming moments shorts', 'viral gaming shorts'],
   gameplay: ['gaming top 10', 'best gaming plays', 'game highlights compilation', 'gaming montage', 'video game compilation'],
   esports: ['esports tournament highlights', 'gaming grand finals', 'esports championship', 'pro gaming', 'competitive gaming'],
   review: ['game review', 'video game review', 'gaming review', 'is it worth buying'],
@@ -344,21 +344,15 @@ export async function getGameVideos(
   return data || []
 }
 
-// Search terms for viral/general gaming content (not game-specific)
+// Search terms for viral/general gaming content (not game-specific) - Shorts format
 const VIRAL_SEARCH_TERMS = [
-  'viral gaming moments 2025',
-  'best twitch clips this week',
-  'streamer funny moments compilation',
-  'viral streamer clips gaming',
-  'twitch highlights best moments',
-  'streamer rage quit moments',
-  'funniest gaming streamer clips',
-  'best gaming clips this week',
-  'twitch gaming highlights',
-  'gaming funny fails compilation',
-  'insane video game plays',
-  'streamer gaming rage moments',
-  'gaming world record',
+  'gaming shorts viral',
+  'funny gaming shorts',
+  'streamer shorts clips',
+  'twitch shorts',
+  'gaming fails shorts',
+  'epic gaming moments shorts',
+  'streamer rage shorts',
 ]
 
 // Fetch viral/general gaming videos (not tied to specific games)
