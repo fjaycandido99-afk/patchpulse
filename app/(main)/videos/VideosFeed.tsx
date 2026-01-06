@@ -243,11 +243,13 @@ function MobileVideoCard({
   onPlay,
   isSaved,
   onSave,
+  bleed = false,
 }: {
   video: VideoWithGame
   onPlay: () => void
   isSaved: boolean
   onSave: (e: React.MouseEvent) => void
+  bleed?: boolean
 }) {
   const [showPreview, setShowPreview] = useState(false)
   const [imgError, setImgError] = useState(false)
@@ -287,13 +289,13 @@ function MobileVideoCard({
 
   return (
     <div className="w-full">
-      {/* Thumbnail - full width */}
+      {/* Thumbnail - edge-to-edge when bleed, rounded otherwise */}
       <button
         onClick={handleClick}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         onTouchCancel={handleTouchEnd}
-        className="relative w-full aspect-video rounded-xl overflow-hidden bg-zinc-800"
+        className={`relative w-full aspect-video overflow-hidden bg-zinc-800 ${bleed ? '' : 'rounded-xl'}`}
       >
         {/* YouTube Preview - shows on press and hold */}
         {showPreview && (
@@ -342,8 +344,8 @@ function MobileVideoCard({
         )}
       </button>
 
-      {/* Info */}
-      <div className="flex gap-3 mt-3">
+      {/* Info - add horizontal padding when bleed */}
+      <div className={`flex gap-3 mt-3 ${bleed ? 'px-4' : ''}`}>
         {/* Title and meta */}
         <button onClick={onPlay} className="flex-1 min-w-0 text-left">
           <h3 className="font-medium text-sm line-clamp-2 leading-snug">
@@ -717,43 +719,52 @@ export function VideosFeed({
       </div>
 
       {/* Mobile: YouTube-style vertical list */}
-      <div className="md:hidden space-y-6">
-        {displayVideos.map((video, index) => (
-          <div
-            key={video.id}
-            className="animate-soft-entry"
-            style={{ animationDelay: `${index * 30}ms` }}
-          >
-            <MobileVideoCard
-              video={video}
-              onPlay={() => setSelectedVideo(video)}
-              isSaved={localSavedIds.has(video.id)}
-              onSave={(e) => handleSave(video, e)}
-            />
-          </div>
-        ))}
-
-        {/* Upgrade CTA for mobile */}
-        {hasMoreVideos && (
-          <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent -top-20 pointer-events-none" />
-            <div className="rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 via-background to-violet-500/10 p-6 text-center">
-              <Crown className="w-10 h-10 mx-auto text-primary mb-3" />
-              <h3 className="text-lg font-bold mb-2">Unlock All Videos</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Upgrade to Pro for unlimited access to trailers, gameplay, and esports highlights
-              </p>
-              <Link
-                href="/pricing"
-                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
-              >
-                <Crown className="w-4 h-4" />
-                Upgrade to Pro
-              </Link>
+      {/* Bleed edge-to-edge for trailer/gameplay/esports sections */}
+      {(() => {
+        const shouldBleed = selectedType && ['trailer', 'gameplay', 'esports'].includes(selectedType)
+        return (
+          <div className="md:hidden">
+            <div className={`space-y-5 ${shouldBleed ? '-mx-4' : ''}`}>
+              {displayVideos.map((video, index) => (
+                <div
+                  key={video.id}
+                  className="animate-soft-entry"
+                  style={{ animationDelay: `${index * 30}ms` }}
+                >
+                  <MobileVideoCard
+                    video={video}
+                    onPlay={() => setSelectedVideo(video)}
+                    isSaved={localSavedIds.has(video.id)}
+                    onSave={(e) => handleSave(video, e)}
+                    bleed={shouldBleed}
+                  />
+                </div>
+              ))}
             </div>
+
+            {/* Upgrade CTA for mobile */}
+            {hasMoreVideos && (
+              <div className="relative mt-6">
+                <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent -top-20 pointer-events-none" />
+                <div className="rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 via-background to-violet-500/10 p-6 text-center">
+                  <Crown className="w-10 h-10 mx-auto text-primary mb-3" />
+                  <h3 className="text-lg font-bold mb-2">Unlock All Videos</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Upgrade to Pro for unlimited access to trailers, gameplay, and esports highlights
+                  </p>
+                  <Link
+                    href="/pricing"
+                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
+                  >
+                    <Crown className="w-4 h-4" />
+                    Upgrade to Pro
+                  </Link>
+                </div>
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        )
+      })()}
 
       {/* Desktop: 2-column grid */}
       <div className="hidden md:grid md:grid-cols-2 gap-6">
