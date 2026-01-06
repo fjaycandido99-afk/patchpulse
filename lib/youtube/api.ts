@@ -61,7 +61,7 @@ const TYPE_KEYWORDS: Record<VideoType, string[]> = {
 // Duration constraints for each video type (in seconds)
 const TYPE_DURATION: Record<VideoType, { min: number; max: number; youtubeFilter: 'short' | 'medium' | 'long' | 'any' }> = {
   trailer: { min: 60, max: 300, youtubeFilter: 'medium' },       // 1-5 min, proper trailers (no Shorts)
-  clips: { min: 15, max: 60, youtubeFilter: 'short' },           // 15-60 sec (YouTube Shorts format)
+  clips: { min: 30, max: 300, youtubeFilter: 'short' },          // 30 sec - 5 min (viral clips)
   gameplay: { min: 300, max: 1200, youtubeFilter: 'medium' },    // 5-20 min (top 10s, compilations)
   esports: { min: 300, max: 1800, youtubeFilter: 'medium' },     // 5-30 min (tournament highlights)
   review: { min: 300, max: 1800, youtubeFilter: 'medium' },      // 5-30 min
@@ -417,11 +417,11 @@ export async function fetchViralGamingVideos(): Promise<{ success: boolean; adde
         const videoId = video.id.videoId
         const videoDetails = details.get(videoId)
 
-        // Filter to YouTube Shorts format (15-60 seconds)
+        // Filter to 30 sec - 5 min clips
         if (videoDetails) {
           const duration = parseDuration(videoDetails.contentDetails.duration)
-          if (duration < 15 || duration > 60) {
-            continue // Skip videos outside 15-60 sec range
+          if (duration < 30 || duration > 300) {
+            continue // Skip videos outside 30 sec - 5 min range
           }
         }
 
