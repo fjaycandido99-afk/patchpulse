@@ -52,6 +52,7 @@ export async function getVideos({
       view_count,
       duration_seconds,
       is_featured,
+      created_at,
       game:games!game_id (
         id,
         name,
@@ -60,7 +61,7 @@ export async function getVideos({
         logo_url
       )
     `)
-    .order('published_at', { ascending: false })
+    .order('created_at', { ascending: false }) // Newly fetched videos first
     .range(offset, offset + limit - 1)
 
   if (videoType) {
@@ -238,7 +239,7 @@ export async function getGamesWithVideos(): Promise<{ id: string; name: string; 
 export async function getRandomVideos(limit = 6): Promise<VideoWithGame[]> {
   const supabase = await createClient()
 
-  // Fetch more than needed to shuffle
+  // Fetch most recent videos, then shuffle
   const { data, error } = await supabase
     .from('game_videos')
     .select(`
@@ -253,6 +254,7 @@ export async function getRandomVideos(limit = 6): Promise<VideoWithGame[]> {
       view_count,
       duration_seconds,
       is_featured,
+      created_at,
       game:games!game_id (
         id,
         name,
@@ -261,7 +263,7 @@ export async function getRandomVideos(limit = 6): Promise<VideoWithGame[]> {
         logo_url
       )
     `)
-    .order('published_at', { ascending: false })
+    .order('created_at', { ascending: false }) // Get newest fetched videos
     .limit(50) // Fetch 50, then shuffle and take 'limit'
 
   if (error || !data) {
@@ -331,6 +333,7 @@ export async function getForYouVideos(limit = 50): Promise<VideoWithGame[]> {
       view_count,
       duration_seconds,
       is_featured,
+      created_at,
       game:games!game_id (
         id,
         name,
@@ -340,7 +343,7 @@ export async function getForYouVideos(limit = 50): Promise<VideoWithGame[]> {
       )
     `)
     .in('game_id', Array.from(gameIds))
-    .order('published_at', { ascending: false })
+    .order('created_at', { ascending: false }) // Newly fetched videos first
     .limit(limit)
 
   if (error) {
