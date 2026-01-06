@@ -5,7 +5,6 @@ import { fetchAllEpicPatches } from '@/lib/fetchers/epic-patches'
 import { fetchAllRiotPatches } from '@/lib/fetchers/riot-patches'
 import { fetchAllRedditPatches } from '@/lib/fetchers/reddit-patches'
 import { fetchAllExternalPatches } from '@/lib/fetchers/patch-sources'
-import { fetchAllGamingNews } from '@/lib/fetchers/gaming-news'
 import { verifyCronAuth } from '@/lib/cron-auth'
 
 export const runtime = 'nodejs'
@@ -19,118 +18,53 @@ type PatchResult = {
 }
 
 export async function GET(req: Request) {
-  // Debug logging - remove after confirming crons work
   console.log('[CRON] fetch-content hit at', new Date().toISOString())
-  console.log('[CRON] x-vercel-cron header:', req.headers.get('x-vercel-cron'))
-  console.log('[CRON] authorization header exists:', !!req.headers.get('authorization'))
 
   if (!verifyCronAuth(req)) {
     console.log('[CRON] fetch-content UNAUTHORIZED')
     return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 })
   }
 
-  console.log('[CRON] fetch-content AUTHORIZED - starting fetch')
+  console.log('[CRON] fetch-content AUTHORIZED - starting parallel fetch')
+
+  // Run ALL fetchers in parallel for speed
+  const [steamResult, battlenetResult, epicResult, riotResult, redditResult, externalResult] = await Promise.allSettled([
+    fetchAllSteamPatches(),
+    fetchAllBattlenetPatches(),
+    fetchAllEpicPatches(),
+    fetchAllRiotPatches(),
+    fetchAllRedditPatches(),
+    fetchAllExternalPatches(),
+  ])
+
+  // Helper to extract result or error
+  const extractResult = (result: PromiseSettledResult<any>, name: string): PatchResult => {
+    if (result.status === 'fulfilled') {
+      return {
+        success: result.value.success,
+        totalAdded: result.value.totalAdded || 0,
+        gamesChecked: result.value.gamesChecked || result.value.sourcesChecked,
+        error: result.value.errors?.join(', ') || null,
+      }
+    } else {
+      console.error(`[CRON] ${name} failed:`, result.reason)
+      return {
+        success: false,
+        totalAdded: 0,
+        error: result.reason?.message || 'Unknown error',
+      }
+    }
+  }
 
   const results = {
     patches: {
-      steam: { success: false, totalAdded: 0, error: null } as PatchResult,
-      battlenet: { success: false, totalAdded: 0, error: null } as PatchResult,
-      epic: { success: false, totalAdded: 0, error: null } as PatchResult,
-      riot: { success: false, totalAdded: 0, error: null } as PatchResult,
-      reddit: { success: false, totalAdded: 0, error: null } as PatchResult,
-      external: { success: false, totalAdded: 0, error: null } as PatchResult,
+      steam: extractResult(steamResult, 'steam'),
+      battlenet: extractResult(battlenetResult, 'battlenet'),
+      epic: extractResult(epicResult, 'epic'),
+      riot: extractResult(riotResult, 'riot'),
+      reddit: extractResult(redditResult, 'reddit'),
+      external: extractResult(externalResult, 'external'),
     },
-    news: { success: false, totalAdded: 0, error: null as string | null },
-  }
-
-  // Fetch Steam patches
-  try {
-    const patchResult = await fetchAllSteamPatches()
-    results.patches.steam = {
-      success: patchResult.success,
-      totalAdded: patchResult.totalAdded || 0,
-      gamesChecked: patchResult.gamesChecked,
-      error: patchResult.errors?.join(', ') || null,
-    }
-  } catch (error) {
-    results.patches.steam.error = error instanceof Error ? error.message : 'Unknown error'
-  }
-
-  // Fetch Battle.net patches
-  try {
-    const patchResult = await fetchAllBattlenetPatches()
-    results.patches.battlenet = {
-      success: patchResult.success,
-      totalAdded: patchResult.totalAdded || 0,
-      gamesChecked: patchResult.gamesChecked,
-      error: patchResult.errors?.join(', ') || null,
-    }
-  } catch (error) {
-    results.patches.battlenet.error = error instanceof Error ? error.message : 'Unknown error'
-  }
-
-  // Fetch Epic Games patches
-  try {
-    const patchResult = await fetchAllEpicPatches()
-    results.patches.epic = {
-      success: patchResult.success,
-      totalAdded: patchResult.totalAdded || 0,
-      gamesChecked: patchResult.gamesChecked,
-      error: patchResult.errors?.join(', ') || null,
-    }
-  } catch (error) {
-    results.patches.epic.error = error instanceof Error ? error.message : 'Unknown error'
-  }
-
-  // Fetch Riot Games patches
-  try {
-    const patchResult = await fetchAllRiotPatches()
-    results.patches.riot = {
-      success: patchResult.success,
-      totalAdded: patchResult.totalAdded || 0,
-      gamesChecked: patchResult.gamesChecked,
-      error: patchResult.errors?.join(', ') || null,
-    }
-  } catch (error) {
-    results.patches.riot.error = error instanceof Error ? error.message : 'Unknown error'
-  }
-
-  // Fetch Reddit patches
-  try {
-    const patchResult = await fetchAllRedditPatches()
-    results.patches.reddit = {
-      success: patchResult.success,
-      totalAdded: patchResult.totalAdded || 0,
-      gamesChecked: patchResult.gamesChecked,
-      error: patchResult.errors?.join(', ') || null,
-    }
-  } catch (error) {
-    results.patches.reddit.error = error instanceof Error ? error.message : 'Unknown error'
-  }
-
-  // Fetch external patches (PC Gamer, Rock Paper Shotgun, etc.)
-  try {
-    const patchResult = await fetchAllExternalPatches()
-    results.patches.external = {
-      success: patchResult.success,
-      totalAdded: patchResult.totalAdded || 0,
-      gamesChecked: patchResult.sourcesChecked,
-      error: patchResult.errors?.join(', ') || null,
-    }
-  } catch (error) {
-    results.patches.external.error = error instanceof Error ? error.message : 'Unknown error'
-  }
-
-  // Fetch gaming news
-  try {
-    const newsResult = await fetchAllGamingNews()
-    results.news = {
-      success: newsResult.success,
-      totalAdded: newsResult.totalAdded || 0,
-      error: newsResult.errors?.join(', ') || null,
-    }
-  } catch (error) {
-    results.news.error = error instanceof Error ? error.message : 'Unknown error'
   }
 
   // Calculate totals
@@ -139,13 +73,14 @@ export async function GET(req: Request) {
     0
   )
 
+  console.log('[CRON] fetch-content complete, added:', totalPatchesAdded)
+
   return NextResponse.json({
     ok: true,
     patches: {
       ...results.patches,
       totalAdded: totalPatchesAdded,
     },
-    news: results.news,
-    totalAdded: totalPatchesAdded + results.news.totalAdded,
+    totalAdded: totalPatchesAdded,
   })
 }
