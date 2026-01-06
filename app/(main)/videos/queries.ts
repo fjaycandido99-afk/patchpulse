@@ -233,3 +233,123 @@ export async function getGamesWithVideos(): Promise<{ id: string; name: string; 
     .sort((a, b) => b.videoCount - a.videoCount)
     .slice(0, 20) // Top 20 games
 }
+
+// Get random videos for home page (shuffled on each request)
+export async function getRandomVideos(limit = 6): Promise<VideoWithGame[]> {
+  const supabase = await createClient()
+
+  // Fetch more than needed to shuffle
+  const { data, error } = await supabase
+    .from('game_videos')
+    .select(`
+      id,
+      youtube_id,
+      title,
+      description,
+      thumbnail_url,
+      channel_name,
+      video_type,
+      published_at,
+      view_count,
+      duration_seconds,
+      is_featured,
+      game:games!game_id (
+        id,
+        name,
+        slug,
+        cover_url,
+        logo_url
+      )
+    `)
+    .order('published_at', { ascending: false })
+    .limit(50) // Fetch 50, then shuffle and take 'limit'
+
+  if (error || !data) {
+    console.error('Failed to fetch random videos:', error)
+    return []
+  }
+
+  // Shuffle array using Fisher-Yates algorithm
+  const shuffled = [...data]
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+  }
+
+  return shuffled.slice(0, limit).map((item) => ({
+    ...item,
+    game: Array.isArray(item.game) ? item.game[0] || null : item.game,
+  })) as VideoWithGame[]
+}
+
+// Get personalized "For You" videos based on user's backlog and followed games
+export async function getForYouVideos(limit = 50): Promise<VideoWithGame[]> {
+  const supabase = await createClient()
+
+  // Get current user
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    // Fallback to trending for non-authenticated users
+    return getTrendingVideos(limit)
+  }
+
+  // Get user's backlog game IDs
+  const { data: backlogItems } = await supabase
+    .from('backlog_items')
+    .select('game_id')
+    .eq('user_id', user.id)
+
+  // Get user's followed game IDs
+  const { data: followedGames } = await supabase
+    .from('user_games')
+    .select('game_id')
+    .eq('user_id', user.id)
+
+  // Combine and deduplicate game IDs
+  const gameIds = new Set<string>()
+  backlogItems?.forEach(item => item.game_id && gameIds.add(item.game_id))
+  followedGames?.forEach(item => item.game_id && gameIds.add(item.game_id))
+
+  if (gameIds.size === 0) {
+    // User has no games, fallback to trending
+    return getTrendingVideos(limit)
+  }
+
+  // Fetch videos for user's games
+  const { data, error } = await supabase
+    .from('game_videos')
+    .select(`
+      id,
+      youtube_id,
+      title,
+      description,
+      thumbnail_url,
+      channel_name,
+      video_type,
+      published_at,
+      view_count,
+      duration_seconds,
+      is_featured,
+      game:games!game_id (
+        id,
+        name,
+        slug,
+        cover_url,
+        logo_url
+      )
+    `)
+    .in('game_id', Array.from(gameIds))
+    .order('published_at', { ascending: false })
+    .limit(limit)
+
+  if (error) {
+    console.error('Failed to fetch For You videos:', error)
+    return getTrendingVideos(limit)
+  }
+
+  return (data || []).map((item) => ({
+    ...item,
+    game: Array.isArray(item.game) ? item.game[0] || null : item.game,
+  })) as VideoWithGame[]
+}

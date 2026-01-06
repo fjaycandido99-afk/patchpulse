@@ -106,7 +106,7 @@ export default async function MainLayout({
             {/* Guest banner - shown at top for guest users */}
             {isGuest && <GuestBanner />}
 
-            {/* Mobile header with search - Apple Music/App Store style, fixed for edge-to-edge */}
+            {/* Mobile header with search */}
             <header className="fixed inset-x-0 top-0 z-40 md:hidden bg-[rgba(9,9,11,0.98)] backdrop-blur-xl border-b border-white/10" style={{ paddingTop: 'env(safe-area-inset-top, 0)' }}>
               <div className="flex items-center justify-between gap-2 px-4 py-3">
                 <div className="flex items-center gap-3">

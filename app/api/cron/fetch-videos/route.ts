@@ -24,15 +24,20 @@ export async function GET(request: Request) {
   try {
     const result = await fetchAllGameVideos()
 
-    console.log(`[CRON] Video fetch complete: ${result.totalAdded} videos added from ${result.gamesChecked} games (${result.viralVideosAdded || 0} viral)`)
+    // Log breakdown by category
+    const breakdown = result.breakdown
+    console.log(`[CRON] Video fetch complete: ${result.totalAdded} videos added`)
+    console.log(`[CRON] Trailers: ${breakdown.trailers.added} (${breakdown.trailers.games.join(', ')})`)
+    console.log(`[CRON] Clips: ${breakdown.clips.added} (${breakdown.clips.games.join(', ')})`)
+    console.log(`[CRON] Gameplay: ${breakdown.gameplay.added} (${breakdown.gameplay.games.join(', ')})`)
+    console.log(`[CRON] Esports: ${breakdown.esports.added} (${breakdown.esports.games.join(', ')})`)
 
     return NextResponse.json({
       ok: true,
       success: true,
-      message: `Fetched videos for ${result.gamesChecked} games + viral content`,
+      message: `Fetched ${result.totalAdded} videos`,
       totalAdded: result.totalAdded,
-      gamesChecked: result.gamesChecked,
-      viralVideosAdded: result.viralVideosAdded,
+      breakdown: result.breakdown,
       errors: result.errors,
     })
   } catch (error) {

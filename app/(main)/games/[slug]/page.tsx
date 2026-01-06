@@ -14,6 +14,7 @@ import { StudioInfoSection } from '@/components/games/StudioInfoSection'
 import { SentimentPulse } from '@/components/ai/SentimentPulse'
 import { BackButton } from '@/components/ui/BackButton'
 import { HeroBanner } from '@/components/ui/HeroBanner'
+import { Card } from '@/components/ui/card'
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
@@ -337,17 +338,15 @@ export default async function GamePage({
       <HeroBanner imageUrl={bannerUrl} altText={game.name} fallbackColor={brandColor || undefined} />
 
       {/* Spacer for hero */}
-      <div className="h-[220px] sm:h-[260px] md:h-[350px]" />
+      <div className="h-[200px] sm:h-[240px] md:h-[350px]" />
 
       {/* Content that scrolls over hero */}
-      <div className="relative z-10 bg-background rounded-t-3xl -mt-8 pt-6 pb-8 min-h-screen space-y-6 px-0">
+      <div className="relative z-10 pt-6 pb-8 min-h-screen space-y-4 px-0">
         {/* Back Link */}
-        <div>
-          <BackButton defaultHref="/home" defaultLabel="Back" />
-        </div>
+        <BackButton defaultHref="/home" defaultLabel="Back" />
 
-        {/* Game Header */}
-        <div className="space-y-4">
+        {/* Game Header - Card */}
+        <Card className="p-4 space-y-4">
           <div className="flex items-start gap-4">
             {/* Cover Image */}
             <div className="relative w-24 h-32 sm:w-28 sm:h-36 rounded-xl overflow-hidden shadow-2xl ring-2 ring-white/10 flex-shrink-0">
@@ -401,7 +400,7 @@ export default async function GamePage({
               )}
             </div>
           </div>
-        </div>
+        </Card>
 
         {/* Primary Actions - Wishlist or Buy */}
         <div className="rounded-xl border-2 border-primary/30 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-4 sm:p-6">

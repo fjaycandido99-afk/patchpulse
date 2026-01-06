@@ -1,5 +1,5 @@
 import { Video } from 'lucide-react'
-import { getVideos, getTrendingVideos, getVideoTypes } from './queries'
+import { getVideos, getTrendingVideos, getVideoTypes, getForYouVideos } from './queries'
 import { VideosFeed } from './VideosFeed'
 import { getUserVideoBookmarks } from '../actions/bookmarks'
 import { getSession } from '@/lib/auth'
@@ -28,8 +28,11 @@ export default async function VideosPage({
   const plan = user ? await getUserPlan(user.id) : 'free'
   const isPro = plan === 'pro'
 
+  // Use personalized "For You" when no filter selected, otherwise use type filter
   const [videos, trendingVideos, videoTypes, savedVideoIds] = await Promise.all([
-    getVideos({ videoType: selectedType || undefined, limit: 50 }),
+    selectedType
+      ? getVideos({ videoType: selectedType, limit: 50 })
+      : getForYouVideos(50), // Personalized feed based on user's library
     getTrendingVideos(10),
     getVideoTypes(),
     getUserVideoBookmarks(),

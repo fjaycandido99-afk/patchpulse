@@ -33,7 +33,13 @@
       "Bash(grep:*)",
       "Bash(ls:*)",
       "Bash(cat:*)",
-      "Bash(npm run)"
+      "Bash(npm run)",
+      "WebFetch(domain:4kwallpapers.com)",
+      "WebFetch(domain:www.creativeuncut.com)",
+      "WebFetch(domain:arcraiders.nexon.com)",
+      "WebFetch(domain:www.artstation.com)",
+      "WebFetch(domain:www.igdb.com)",
+      "Bash(printf '\\\\nYOUTUBE_API_KEY=AIzaSyCy8JQwHNucs2Gc7YcrxMfZpSzS6jAGNxw\\\\n')"
     ]
   }
 }

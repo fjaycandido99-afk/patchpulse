@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { backfillSteamImages, discoverAndUpdateGameImages, discoverAllGameImages, updateAllGamesFromIgdb } from '@/lib/fetchers/steam-images'
+import { verifyCronAuth } from '@/lib/cron-auth'
 
 export const maxDuration = 300 // 5 minutes max
 
@@ -10,23 +11,29 @@ export const maxDuration = 300 // 5 minutes max
  * GET /api/admin/backfill-game-images?refresh=true - Force refresh all game images
  * GET /api/admin/backfill-game-images?gameId=xxx - Update specific game
  * GET /api/admin/backfill-game-images?discover=true - Auto-discover Steam IDs and update ALL games
+ * GET /api/admin/backfill-game-images?refreshAll=true&offset=0&limit=100 - Refresh ALL games with pagination
  * GET /api/admin/backfill-game-images?igdb=true - Force IGDB-only updates (more accurate covers)
  */
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const limit = parseInt(searchParams.get('limit') || '50', 10)
+    const offset = parseInt(searchParams.get('offset') || '0', 10)
     const gameId = searchParams.get('gameId')
     const forceRefresh = searchParams.get('refresh') === 'true'
     const discoverAll = searchParams.get('discover') === 'true'
+    const refreshAll = searchParams.get('refreshAll') === 'true'
     const igdbOnly = searchParams.get('igdb') === 'true'
 
-    const supabase = await createClient()
+    // Allow cron auth OR user auth
+    const hasCronAuth = verifyCronAuth(request)
 
-    // Check if user is authenticated
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized - please log in first' }, { status: 401 })
+    if (!hasCronAuth) {
+      const supabase = await createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        return NextResponse.json({ error: 'Unauthorized - please log in or use cron auth' }, { status: 401 })
+      }
     }
 
     // If IGDB-only mode - use IGDB API for all games (most accurate)
@@ -36,14 +43,15 @@ export async function GET(request: Request) {
     }
 
     // If discover mode - find Steam IDs and update ALL games
-    if (discoverAll) {
-      const result = await discoverAllGameImages(limit)
+    if (discoverAll || refreshAll) {
+      const result = await discoverAllGameImages(limit, offset, refreshAll)
       return NextResponse.json(result)
     }
 
     // If specific game requested
     if (gameId) {
       // Get game name
+      const supabase = await createClient()
       const { data: game } = await supabase
         .from('games')
         .select('name')

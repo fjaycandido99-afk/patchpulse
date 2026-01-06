@@ -227,10 +227,10 @@ export default async function PatchDetailPage({
       <HeroBanner imageUrl={heroImage} altText={patch.title} fallbackColor={brandColor} />
 
       {/* Spacer for hero */}
-      <div className="h-[220px] sm:h-[260px] md:h-[350px]" />
+      <div className="h-[200px] sm:h-[240px] md:h-[350px]" />
 
       {/* Content that scrolls over hero */}
-      <div className="relative z-10 bg-background rounded-t-3xl -mt-8 pt-6 pb-8 min-h-screen space-y-6 px-0">
+      <div className="relative z-10 pt-6 pb-8 min-h-screen space-y-4 px-0">
         {/* Back Button */}
         <Suspense fallback={
           <span className="inline-flex items-center gap-1.5 text-sm text-white/70">
@@ -245,8 +245,8 @@ export default async function PatchDetailPage({
           />
         </Suspense>
 
-        {/* Game info + Title */}
-        <div className="space-y-3">
+        {/* Game info + Title - Card */}
+        <Card className="p-4 space-y-3">
           <div className="flex items-center gap-3 flex-wrap">
             {patch.game.logo_url ? (
               <GameLogo logoUrl={patch.game.logo_url} gameName={patch.game.name} size="md" />
@@ -292,7 +292,7 @@ export default async function PatchDetailPage({
               />
             </div>
           </div>
-        </div>
+        </Card>
 
         {/* Main Content */}
         <div className="space-y-6">

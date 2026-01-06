@@ -1,10 +1,21 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Gamepad2, ExternalLink, Tag, Newspaper, FileText, SlidersHorizontal, X, Check, Sparkles, Video, Play } from 'lucide-react'
+import { Gamepad2, ExternalLink, Tag, Newspaper, FileText, SlidersHorizontal, X, Check, Sparkles, Video, Play, Bookmark } from 'lucide-react'
 import { MediaCard } from '@/components/media/MediaCard'
+import { VideoPlayer } from '@/components/videos'
+import {
+  toggleVideoBookmark,
+  toggleBookmark,
+  toggleDealBookmark,
+  toggleRecommendationBookmark,
+  type VideoMetadata,
+  type DealMetadata,
+  type RecommendationMetadata,
+} from '@/app/(main)/actions/bookmarks'
 import { formatDate } from '@/lib/dates'
 
 type BookmarkedPatch = {
@@ -84,6 +95,142 @@ type FilterType = 'all' | 'deals' | 'patches' | 'news' | 'recommendations' | 'vi
 export function SavedContent({ deals, patches, news, recommendations = [], videos = [] }: SavedContentProps) {
   const [filter, setFilter] = useState<FilterType>('all')
   const [isFilterOpen, setIsFilterOpen] = useState(false)
+  const [selectedVideo, setSelectedVideo] = useState<BookmarkedVideo | null>(null)
+  const [removingIds, setRemovingIds] = useState<Set<string>>(new Set())
+  const [isPending, startTransition] = useTransition()
+  const router = useRouter()
+
+  const handleUnsaveVideo = async (video: BookmarkedVideo, e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (removingIds.has(video.id)) return
+
+    setRemovingIds(prev => new Set(prev).add(video.id))
+
+    const metadata: VideoMetadata = {
+      youtube_id: video.metadata.youtube_id,
+      title: video.metadata.title,
+      thumbnail_url: video.metadata.thumbnail_url,
+      channel_name: video.metadata.channel_name,
+      video_type: video.metadata.video_type,
+      game_name: video.metadata.game_name,
+      savedAt: video.metadata.savedAt,
+    }
+
+    await toggleVideoBookmark(video.entity_id, metadata)
+
+    startTransition(() => {
+      router.refresh()
+    })
+
+    setRemovingIds(prev => {
+      const next = new Set(prev)
+      next.delete(video.id)
+      return next
+    })
+  }
+
+  const handleUnsaveRecommendation = async (item: BookmarkedRecommendation, e: React.MouseEvent) => {
+    e.stopPropagation()
+    e.preventDefault()
+    if (removingIds.has(item.id)) return
+
+    setRemovingIds(prev => new Set(prev).add(item.id))
+
+    const metadata: RecommendationMetadata = {
+      game_id: item.metadata.game_id,
+      game_name: item.metadata.game_name,
+      slug: item.metadata.slug,
+      cover_url: item.metadata.cover_url,
+      reason: item.metadata.reason,
+      why_now: item.metadata.why_now,
+      recommendation_type: item.metadata.recommendation_type,
+      savedAt: item.metadata.savedAt,
+    }
+
+    await toggleRecommendationBookmark(item.metadata.game_id, metadata)
+
+    startTransition(() => {
+      router.refresh()
+    })
+
+    setRemovingIds(prev => {
+      const next = new Set(prev)
+      next.delete(item.id)
+      return next
+    })
+  }
+
+  const handleUnsaveDeal = async (item: BookmarkedDeal, e: React.MouseEvent) => {
+    e.stopPropagation()
+    e.preventDefault()
+    if (removingIds.has(item.id)) return
+
+    setRemovingIds(prev => new Set(prev).add(item.id))
+
+    const metadata: DealMetadata = {
+      title: item.metadata.title,
+      salePrice: item.metadata.salePrice,
+      normalPrice: item.metadata.normalPrice,
+      savings: item.metadata.savings,
+      store: item.metadata.store,
+      thumb: item.metadata.thumb,
+      dealUrl: item.metadata.dealUrl,
+      steamAppId: item.metadata.steamAppId,
+      savedAt: item.metadata.savedAt,
+    }
+
+    await toggleDealBookmark(item.id, metadata)
+
+    startTransition(() => {
+      router.refresh()
+    })
+
+    setRemovingIds(prev => {
+      const next = new Set(prev)
+      next.delete(item.id)
+      return next
+    })
+  }
+
+  const handleUnsavePatch = async (item: BookmarkedPatch, e: React.MouseEvent) => {
+    e.stopPropagation()
+    e.preventDefault()
+    if (removingIds.has(item.id)) return
+
+    setRemovingIds(prev => new Set(prev).add(item.id))
+
+    await toggleBookmark('patch', item.patch.id)
+
+    startTransition(() => {
+      router.refresh()
+    })
+
+    setRemovingIds(prev => {
+      const next = new Set(prev)
+      next.delete(item.id)
+      return next
+    })
+  }
+
+  const handleUnsaveNews = async (item: BookmarkedNews, e: React.MouseEvent) => {
+    e.stopPropagation()
+    e.preventDefault()
+    if (removingIds.has(item.id)) return
+
+    setRemovingIds(prev => new Set(prev).add(item.id))
+
+    await toggleBookmark('news', item.news.id)
+
+    startTransition(() => {
+      router.refresh()
+    })
+
+    setRemovingIds(prev => {
+      const next = new Set(prev)
+      next.delete(item.id)
+      return next
+    })
+  }
 
   const totalCount = deals.length + patches.length + news.length + recommendations.length + videos.length
 
@@ -206,48 +353,60 @@ export function SavedContent({ deals, patches, news, recommendations = [], video
                   discover: { label: 'Discover', color: 'bg-amber-500/20 text-amber-400' },
                 }
                 const typeInfo = typeLabels[item.metadata.recommendation_type]
+                const isRemoving = removingIds.has(item.id)
 
                 return (
-                  <Link
+                  <div
                     key={item.id}
-                    href={`/games/${item.metadata.slug}`}
-                    className="group flex gap-3 p-3 rounded-xl border border-border hover:border-primary/50 bg-card transition-all"
+                    className={`group relative flex gap-3 p-3 rounded-xl border border-border hover:border-primary/50 bg-card transition-all ${isRemoving ? 'opacity-50' : ''}`}
                   >
-                    <div className="relative w-16 h-20 rounded-lg overflow-hidden bg-zinc-800 flex-shrink-0">
-                      {item.metadata.cover_url ? (
-                        <Image
-                          src={item.metadata.cover_url}
-                          alt={item.metadata.game_name}
-                          fill
-                          className="object-cover"
-                          sizes="64px"
-                          unoptimized
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Gamepad2 className="w-6 h-6 text-zinc-600" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${typeInfo.color}`}>
-                          {typeInfo.label}
-                        </span>
+                    {/* Unsave button */}
+                    <button
+                      onClick={(e) => handleUnsaveRecommendation(item, e)}
+                      disabled={isRemoving}
+                      className="absolute top-2 right-2 p-1.5 rounded-full bg-primary/80 text-white z-10 hover:bg-primary transition-colors"
+                      title="Remove from saved"
+                    >
+                      <Bookmark className="w-3.5 h-3.5 fill-current" />
+                    </button>
+
+                    <Link href={`/games/${item.metadata.slug}`} className="flex gap-3 flex-1 min-w-0">
+                      <div className="relative w-16 h-20 rounded-lg overflow-hidden bg-zinc-800 flex-shrink-0">
+                        {item.metadata.cover_url ? (
+                          <Image
+                            src={item.metadata.cover_url}
+                            alt={item.metadata.game_name}
+                            fill
+                            className="object-cover"
+                            sizes="64px"
+                            unoptimized
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Gamepad2 className="w-6 h-6 text-zinc-600" />
+                          </div>
+                        )}
                       </div>
-                      <h3 className="font-medium text-sm line-clamp-1 group-hover:text-primary transition-colors">
-                        {item.metadata.game_name}
-                      </h3>
-                      <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
-                        {item.metadata.reason}
-                      </p>
-                      {item.metadata.why_now && (
-                        <p className="text-xs text-primary mt-1 line-clamp-1">
-                          {item.metadata.why_now}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${typeInfo.color}`}>
+                            {typeInfo.label}
+                          </span>
+                        </div>
+                        <h3 className="font-medium text-sm line-clamp-1 group-hover:text-primary transition-colors">
+                          {item.metadata.game_name}
+                        </h3>
+                        <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
+                          {item.metadata.reason}
                         </p>
-                      )}
-                    </div>
-                  </Link>
+                        {item.metadata.why_now && (
+                          <p className="text-xs text-primary mt-1 line-clamp-1">
+                            {item.metadata.why_now}
+                          </p>
+                        )}
+                      </div>
+                    </Link>
+                  </div>
                 )
               })}
             </div>
@@ -269,15 +428,17 @@ export function SavedContent({ deals, patches, news, recommendations = [], video
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {videos.map((item) => {
                 const thumbnail = item.metadata.thumbnail_url || `https://img.youtube.com/vi/${item.metadata.youtube_id}/hqdefault.jpg`
+                const isRemoving = removingIds.has(item.id)
                 return (
-                  <a
+                  <div
                     key={item.id}
-                    href={`https://www.youtube.com/watch?v=${item.metadata.youtube_id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group relative flex flex-col overflow-hidden rounded-xl border border-border hover:border-primary/50 transition-all bg-card"
+                    className={`group relative flex flex-col overflow-hidden rounded-xl border border-border hover:border-primary/50 transition-all bg-card ${isRemoving ? 'opacity-50' : ''}`}
                   >
-                    <div className="relative aspect-video w-full overflow-hidden bg-zinc-800">
+                    {/* Thumbnail - clickable to play */}
+                    <button
+                      onClick={() => setSelectedVideo(item)}
+                      className="relative aspect-video w-full overflow-hidden bg-zinc-800"
+                    >
                       <Image
                         src={thumbnail}
                         alt={item.metadata.title}
@@ -294,7 +455,18 @@ export function SavedContent({ deals, patches, news, recommendations = [], video
                       </div>
                       {/* Gradient */}
                       <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 to-transparent" />
-                    </div>
+                    </button>
+
+                    {/* Unsave button - top right */}
+                    <button
+                      onClick={(e) => handleUnsaveVideo(item, e)}
+                      disabled={isRemoving}
+                      className="absolute top-2 right-2 p-2 rounded-full bg-primary text-white backdrop-blur-sm z-10 hover:bg-primary/80 transition-colors"
+                      title="Remove from saved"
+                    >
+                      <Bookmark className="w-4 h-4 fill-current" />
+                    </button>
+
                     <div className="p-3">
                       <h3 className="text-sm font-medium line-clamp-2 group-hover:text-primary transition-colors">
                         {item.metadata.title}
@@ -309,7 +481,7 @@ export function SavedContent({ deals, patches, news, recommendations = [], video
                         <span className="capitalize">{item.metadata.video_type}</span>
                       </div>
                     </div>
-                  </a>
+                  </div>
                 )
               })}
             </div>
@@ -332,51 +504,66 @@ export function SavedContent({ deals, patches, news, recommendations = [], video
                 const headerImage = item.metadata.steamAppId
                   ? `https://cdn.akamai.steamstatic.com/steam/apps/${item.metadata.steamAppId}/header.jpg`
                   : item.metadata.thumb
+                const isRemoving = removingIds.has(item.id)
 
                 return (
-                  <a
+                  <div
                     key={item.id}
-                    href={item.metadata.dealUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group relative flex flex-col overflow-hidden rounded-xl border border-border hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 transition-all bg-card"
+                    className={`group relative flex flex-col overflow-hidden rounded-xl border border-border hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 transition-all bg-card ${isRemoving ? 'opacity-50' : ''}`}
                   >
-                    <div className="relative aspect-[460/215] w-full overflow-hidden bg-muted">
-                      {headerImage ? (
-                        <Image
-                          src={headerImage}
-                          alt={item.metadata.title}
-                          fill
-                          className="object-cover transition-transform duration-300 group-hover:scale-105"
-                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                          unoptimized
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center">
-                          <Gamepad2 className="h-12 w-12 text-muted-foreground" />
+                    {/* Unsave button */}
+                    <button
+                      onClick={(e) => handleUnsaveDeal(item, e)}
+                      disabled={isRemoving}
+                      className="absolute top-2 right-2 p-1.5 rounded-full bg-primary/80 text-white z-20 hover:bg-primary transition-colors"
+                      title="Remove from saved"
+                    >
+                      <Bookmark className="w-3.5 h-3.5 fill-current" />
+                    </button>
+
+                    <a
+                      href={item.metadata.dealUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex flex-col flex-1"
+                    >
+                      <div className="relative aspect-[460/215] w-full overflow-hidden bg-muted">
+                        {headerImage ? (
+                          <Image
+                            src={headerImage}
+                            alt={item.metadata.title}
+                            fill
+                            className="object-cover transition-transform duration-300 group-hover:scale-105"
+                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                            unoptimized
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center">
+                            <Gamepad2 className="h-12 w-12 text-muted-foreground" />
+                          </div>
+                        )}
+                        <span className="absolute top-2 left-2 z-10 rounded-lg bg-green-500 px-2 py-1 text-sm font-bold text-white shadow-lg">
+                          -{item.metadata.savings}%
+                        </span>
+                        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
+                        <div className="absolute inset-x-0 bottom-0 p-3">
+                          <h3 className="text-sm font-bold text-white line-clamp-1 drop-shadow-lg">
+                            {item.metadata.title}
+                          </h3>
                         </div>
-                      )}
-                      <span className="absolute top-2 left-2 z-10 rounded-lg bg-green-500 px-2 py-1 text-sm font-bold text-white shadow-lg">
-                        -{item.metadata.savings}%
-                      </span>
-                      <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
-                      <div className="absolute inset-x-0 bottom-0 p-3">
-                        <h3 className="text-sm font-bold text-white line-clamp-1 drop-shadow-lg">
-                          {item.metadata.title}
-                        </h3>
                       </div>
-                    </div>
-                    <div className="flex items-center justify-between gap-2 p-3 bg-card">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground line-through">${item.metadata.normalPrice.toFixed(2)}</span>
-                        <span className="text-lg font-bold text-green-400">${item.metadata.salePrice.toFixed(2)}</span>
+                      <div className="flex items-center justify-between gap-2 p-3 bg-card">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground line-through">${item.metadata.normalPrice.toFixed(2)}</span>
+                          <span className="text-lg font-bold text-green-400">${item.metadata.salePrice.toFixed(2)}</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-muted-foreground">
+                          <span className="text-xs">{item.metadata.store}</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1 text-muted-foreground">
-                        <span className="text-xs">{item.metadata.store}</span>
-                        <ExternalLink className="w-3 h-3" />
-                      </div>
-                    </div>
-                  </a>
+                    </a>
+                  </div>
                 )
               })}
             </div>
@@ -395,17 +582,29 @@ export function SavedContent({ deals, patches, news, recommendations = [], video
               </h2>
             )}
             <div className="space-y-2">
-              {patches.map((item) => (
-                <MediaCard
-                  key={item.id}
-                  href={`/patches/${item.patch.id}`}
-                  title={item.patch.title}
-                  imageUrl={item.patch.game?.cover_url}
-                  variant="horizontal"
-                  game={{ name: item.patch.game?.name || 'Unknown' }}
-                  metaText={formatDate(item.patch.published_at)}
-                />
-              ))}
+              {patches.map((item) => {
+                const isRemoving = removingIds.has(item.id)
+                return (
+                  <div key={item.id} className={`relative group ${isRemoving ? 'opacity-50' : ''}`}>
+                    <button
+                      onClick={(e) => handleUnsavePatch(item, e)}
+                      disabled={isRemoving}
+                      className="absolute top-2 right-2 p-1.5 rounded-full bg-primary/80 text-white z-10 hover:bg-primary transition-colors opacity-0 group-hover:opacity-100"
+                      title="Remove from saved"
+                    >
+                      <Bookmark className="w-3.5 h-3.5 fill-current" />
+                    </button>
+                    <MediaCard
+                      href={`/patches/${item.patch.id}`}
+                      title={item.patch.title}
+                      imageUrl={item.patch.game?.cover_url}
+                      variant="horizontal"
+                      game={{ name: item.patch.game?.name || 'Unknown' }}
+                      metaText={formatDate(item.patch.published_at)}
+                    />
+                  </div>
+                )
+              })}
             </div>
           </section>
         )}
@@ -422,17 +621,29 @@ export function SavedContent({ deals, patches, news, recommendations = [], video
               </h2>
             )}
             <div className="space-y-2">
-              {news.map((item) => (
-                <MediaCard
-                  key={item.id}
-                  href={`/news/${item.news.id}`}
-                  title={item.news.title}
-                  imageUrl={item.news.image_url || item.news.game?.cover_url}
-                  variant="horizontal"
-                  game={{ name: item.news.game?.name || 'General' }}
-                  metaText={formatDate(item.news.published_at)}
-                />
-              ))}
+              {news.map((item) => {
+                const isRemoving = removingIds.has(item.id)
+                return (
+                  <div key={item.id} className={`relative group ${isRemoving ? 'opacity-50' : ''}`}>
+                    <button
+                      onClick={(e) => handleUnsaveNews(item, e)}
+                      disabled={isRemoving}
+                      className="absolute top-2 right-2 p-1.5 rounded-full bg-primary/80 text-white z-10 hover:bg-primary transition-colors opacity-0 group-hover:opacity-100"
+                      title="Remove from saved"
+                    >
+                      <Bookmark className="w-3.5 h-3.5 fill-current" />
+                    </button>
+                    <MediaCard
+                      href={`/news/${item.news.id}`}
+                      title={item.news.title}
+                      imageUrl={item.news.image_url || item.news.game?.cover_url}
+                      variant="horizontal"
+                      game={{ name: item.news.game?.name || 'General' }}
+                      metaText={formatDate(item.news.published_at)}
+                    />
+                  </div>
+                )
+              })}
             </div>
           </section>
         )}
@@ -462,6 +673,16 @@ export function SavedContent({ deals, patches, news, recommendations = [], video
           </div>
         )}
       </div>
+
+      {/* Video Player Modal */}
+      {selectedVideo && (
+        <VideoPlayer
+          youtubeId={selectedVideo.metadata.youtube_id}
+          title={selectedVideo.metadata.title}
+          isOpen={!!selectedVideo}
+          onClose={() => setSelectedVideo(null)}
+        />
+      )}
     </div>
   )
 }

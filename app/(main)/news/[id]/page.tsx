@@ -183,11 +183,11 @@ export default async function NewsDetailPage({
       {/* Fixed background hero */}
       <HeroBanner imageUrl={heroImage} altText={news.title} fallbackColor={brandColor} />
 
-      {/* Spacer for hero */}
-      <div className="h-[220px] sm:h-[260px] md:h-[350px]" />
+      {/* Spacer for hero - accounts for header on mobile */}
+      <div className="h-[200px] sm:h-[240px] md:h-[350px]" />
 
       {/* Content that scrolls over hero */}
-      <div className="relative z-10 bg-background rounded-t-3xl -mt-8 pt-6 pb-8 min-h-screen space-y-6 px-0">
+      <div className="relative z-10 pt-6 pb-8 min-h-screen space-y-4 px-0">
         {/* Back Button */}
         <Suspense fallback={
           <span className="inline-flex items-center gap-1.5 text-sm text-white/70">
@@ -202,9 +202,9 @@ export default async function NewsDetailPage({
           />
         </Suspense>
 
-        {/* Game info + Title */}
-        <div className="space-y-3">
-          <div className="flex items-center gap-3">
+        {/* Game info + Title - Card on mobile */}
+        <Card className="p-4 space-y-3">
+          <div className="flex items-center gap-3 flex-wrap">
             {news.game && (
               <>
                 {news.game.logo_url ? (
@@ -249,7 +249,7 @@ export default async function NewsDetailPage({
               isPro={isPro}
             />
           </div>
-        </div>
+        </Card>
 
         {/* Main Content */}
         <div className="space-y-6">

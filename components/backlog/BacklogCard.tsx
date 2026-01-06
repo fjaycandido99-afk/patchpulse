@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { FileText, Sparkles, Play, Pause, Clock, Check, X } from 'lucide-react'
-import { SteamStats } from '@/components/library/SteamStats'
+import { FileText, Sparkles, Play, Pause, Clock, Check, X, Gamepad2, Calendar } from 'lucide-react'
 
 type LatestPatch = {
   id: string
@@ -20,7 +19,6 @@ type BacklogStatus = 'playing' | 'paused' | 'backlog' | 'finished' | 'dropped'
 type BacklogCardProps = {
   href: string
   title: string
-  progress: number
   nextNote?: string | null
   lastPlayedText?: string | null
   imageUrl?: string | null
@@ -55,23 +53,6 @@ function getInitials(text: string): string {
     .toUpperCase()
 }
 
-function ProgressBar({ value, thick = false, status }: { value: number; thick?: boolean; status?: BacklogStatus }) {
-  const progressColor = status === 'playing'
-    ? 'bg-green-500'
-    : status === 'finished'
-      ? 'bg-purple-500'
-      : 'bg-primary'
-
-  return (
-    <div className={`w-full rounded-full bg-muted ${thick ? 'h-2.5' : 'h-1.5'}`}>
-      <div
-        className={`rounded-full transition-all ${thick ? 'h-2.5' : 'h-1.5'} ${progressColor}`}
-        style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
-      />
-    </div>
-  )
-}
-
 function formatPatchDate(dateStr: string): string {
   const date = new Date(dateStr)
   const now = new Date()
@@ -83,6 +64,31 @@ function formatPatchDate(dateStr: string): string {
   if (diffDays < 7) return `${diffDays}d ago`
   if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`
   return `${Math.floor(diffDays / 30)}mo ago`
+}
+
+function formatPlaytime(minutes: number): string {
+  if (minutes < 60) {
+    return `${minutes}m`
+  }
+  const hours = Math.floor(minutes / 60)
+  const remainingMinutes = minutes % 60
+  if (hours < 100) {
+    return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`
+  }
+  return `${hours}h`
+}
+
+function formatLastPlayed(dateStr: string): string {
+  const date = new Date(dateStr)
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+
+  if (diffDays === 0) return 'Today'
+  if (diffDays === 1) return 'Yesterday'
+  if (diffDays < 7) return `${diffDays}d ago`
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
 function StatusPill({ status }: { status: BacklogStatus }) {
@@ -100,7 +106,6 @@ function StatusPill({ status }: { status: BacklogStatus }) {
 export function BacklogCard({
   href,
   title,
-  progress,
   nextNote,
   lastPlayedText,
   imageUrl,
@@ -164,30 +169,26 @@ export function BacklogCard({
           {status && <StatusPill status={status} />}
         </div>
 
-        {/* Steam Stats - hidden on mobile for fixed height, shown on desktop */}
+        {/* Playtime & Last Played */}
         {hasSteamData && (
-          <div className="mt-1.5 hidden sm:block">
-            <SteamStats
-              steamAppId={steamAppId}
-              steamStats={steamStats}
-              showPlayerCount={true}
-              layout="stacked"
-            />
+          <div className="mt-1.5 flex items-center gap-3 text-xs text-muted-foreground">
+            {steamStats?.playtime_minutes && steamStats.playtime_minutes > 0 && (
+              <div className="flex items-center gap-1">
+                <Gamepad2 className="h-3 w-3" />
+                <span>{formatPlaytime(steamStats.playtime_minutes)}</span>
+              </div>
+            )}
+            {steamStats?.last_played_at && (
+              <div className="flex items-center gap-1">
+                <Calendar className="h-3 w-3" />
+                <span>{formatLastPlayed(steamStats.last_played_at)}</span>
+              </div>
+            )}
           </div>
         )}
 
-        {/* Progress bar + metadata - fixed height footer */}
+        {/* Metadata - fixed height footer */}
         <div className="mt-auto">
-          {/* Progress bar */}
-          <div className="flex items-center gap-2">
-            <div className="flex-1">
-              <ProgressBar value={progress} status={status} />
-            </div>
-            <span className="text-xs font-medium text-muted-foreground w-8 text-right">
-              {progress}%
-            </span>
-          </div>
-
           {/* Fixed height metadata row - always renders to maintain height */}
           <div className="h-5 mt-1 flex items-center">
             {latestPatch ? (
@@ -218,7 +219,6 @@ export function BacklogCard({
 export function BacklogCardCompact({
   href,
   title,
-  progress,
   lastPlayedText,
   status,
   hasAISuggestion,
@@ -258,14 +258,6 @@ export function BacklogCardCompact({
         </div>
       </div>
 
-      <div className="flex items-center gap-2 flex-shrink-0">
-        <div className="w-16 hidden sm:block">
-          <ProgressBar value={progress} status={status} />
-        </div>
-        <span className="text-xs font-medium text-muted-foreground w-8 text-right">
-          {progress}%
-        </span>
-      </div>
     </Link>
   )
 }

@@ -2,7 +2,10 @@
 
 import { createAdminClient } from '@/lib/supabase/admin'
 
-const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY
+// Read API key at runtime (not module load time) so dotenv can configure it first
+function getYouTubeApiKey(): string | undefined {
+  return process.env.YOUTUBE_API_KEY
+}
 const YOUTUBE_API_BASE = 'https://www.googleapis.com/youtube/v3'
 
 type VideoType = 'trailer' | 'clips' | 'gameplay' | 'esports' | 'review' | 'other'
@@ -45,14 +48,35 @@ function parseDuration(duration: string): number {
   return hours * 3600 + minutes * 60 + seconds
 }
 
-// Search keywords for each video type
+// Search keywords for each video type - all gaming specific
 const TYPE_KEYWORDS: Record<VideoType, string[]> = {
-  trailer: ['official trailer', 'trailer', 'cinematic trailer', 'reveal trailer', 'announcement'],
-  clips: ['funny moments', 'best clips', 'highlights', 'streamer', 'twitch clips', 'epic moments', 'fails'],
-  gameplay: ['gameplay', 'walkthrough', 'let\'s play', 'first look', 'hands on'],
-  esports: ['esports', 'tournament', 'championship', 'pro play', 'competitive', 'grand finals'],
-  review: ['review', 'analysis', 'is it worth it', 'honest review'],
+  trailer: ['official game trailer', 'video game trailer', 'game announcement trailer', 'gameplay reveal trailer', 'game cinematic trailer'],
+  clips: ['viral gaming moments', 'streamer funny moments', 'best twitch clips', 'gaming streamer highlights', 'viral game clips', 'streamer rage moments'],
+  gameplay: ['gaming top 10', 'best gaming plays', 'game highlights compilation', 'gaming montage', 'video game compilation'],
+  esports: ['esports tournament highlights', 'gaming grand finals', 'esports championship', 'pro gaming', 'competitive gaming'],
+  review: ['game review', 'video game review', 'gaming review', 'is it worth buying'],
   other: [],
+}
+
+// Duration constraints for each video type (in seconds)
+const TYPE_DURATION: Record<VideoType, { min: number; max: number; youtubeFilter: 'short' | 'medium' | 'long' | 'any' }> = {
+  trailer: { min: 60, max: 300, youtubeFilter: 'medium' },       // 1-5 min, proper trailers (no Shorts)
+  clips: { min: 90, max: 180, youtubeFilter: 'short' },          // 1.5-3 min (viral/streamer moments)
+  gameplay: { min: 300, max: 1200, youtubeFilter: 'medium' },    // 5-20 min (top 10s, compilations)
+  esports: { min: 300, max: 1800, youtubeFilter: 'medium' },     // 5-30 min (tournament highlights)
+  review: { min: 300, max: 1800, youtubeFilter: 'medium' },      // 5-30 min
+  other: { min: 0, max: 3600, youtubeFilter: 'any' },
+}
+
+// How far back to search for each video type (days)
+// Shorter = fresher content, since we clean up after 3 days
+const TYPE_RECENCY: Record<VideoType, number> = {
+  trailer: 30,      // 30 days - recent trailers only
+  clips: 14,        // 14 days - very fresh viral clips
+  gameplay: 30,     // 30 days - recent compilations
+  esports: 7,       // 7 days - this week's tournaments only
+  review: 60,       // 60 days - recent reviews
+  other: 30,
 }
 
 // Official channel IDs for major game publishers (for prioritizing official content)
@@ -95,28 +119,34 @@ export async function searchGameVideos(
   maxResults: number = 5,
   options?: { publishedAfter?: Date }
 ): Promise<YouTubeSearchItem[]> {
-  if (!YOUTUBE_API_KEY) {
+  const apiKey = getYouTubeApiKey()
+  if (!apiKey) {
     console.error('[YouTube] YOUTUBE_API_KEY not configured')
     return []
   }
 
   console.log(`[YouTube] Searching for ${gameName} - ${videoType}`)
 
-  // Build search query
+  // Build search query - rotate through keywords for variety
   const keywords = TYPE_KEYWORDS[videoType]
+  const keywordIndex = Math.floor(Math.random() * keywords.length)
   const searchTerms = keywords.length > 0
-    ? `${gameName} ${keywords[0]}`
+    ? `${gameName} ${keywords[keywordIndex]}`
     : gameName
 
-  // Check if we have official channels for this game
+  // Check if we have official channels for this game (prioritize for trailers)
   const officialChannels = OFFICIAL_CHANNELS[gameSlug]
 
+  // Get duration and recency settings for this type
+  const durationConfig = TYPE_DURATION[videoType]
+  const recencyDays = TYPE_RECENCY[videoType]
+
   try {
-    // Default: 2 years for general content, custom for specific types
+    // Use type-specific recency unless overridden
     let publishedAfter = options?.publishedAfter
     if (!publishedAfter) {
       publishedAfter = new Date()
-      publishedAfter.setFullYear(publishedAfter.getFullYear() - 2)
+      publishedAfter.setDate(publishedAfter.getDate() - recencyDays)
     }
 
     const params = new URLSearchParams({
@@ -124,14 +154,19 @@ export async function searchGameVideos(
       q: searchTerms,
       type: 'video',
       maxResults: maxResults.toString(),
-      order: 'relevance',
-      videoDuration: videoType === 'trailer' ? 'short' : 'medium',
+      order: videoType === 'clips' ? 'viewCount' : 'relevance', // Sort clips by views for viral content
       publishedAfter: publishedAfter.toISOString(),
-      key: YOUTUBE_API_KEY,
+      videoCategoryId: '20', // Gaming category
+      key: apiKey,
     })
 
-    // If we have official channels, prioritize them
-    if (officialChannels && officialChannels.length > 0) {
+    // Apply duration filter
+    if (durationConfig.youtubeFilter !== 'any') {
+      params.set('videoDuration', durationConfig.youtubeFilter)
+    }
+
+    // For trailers, prioritize official channels
+    if (videoType === 'trailer' && officialChannels && officialChannels.length > 0) {
       params.set('channelId', officialChannels[0])
     }
 
@@ -143,7 +178,7 @@ export async function searchGameVideos(
     }
 
     const data = await response.json()
-    console.log(`[YouTube] Found ${data.items?.length || 0} videos for ${gameName}`)
+    console.log(`[YouTube] Found ${data.items?.length || 0} videos for ${gameName} (${videoType})`)
     return data.items || []
   } catch (error) {
     console.error('[YouTube] Failed to search:', error)
@@ -153,7 +188,8 @@ export async function searchGameVideos(
 
 // Get video details (duration, view count)
 export async function getVideoDetails(videoIds: string[]): Promise<Map<string, YouTubeVideoDetails>> {
-  if (!YOUTUBE_API_KEY || videoIds.length === 0) {
+  const apiKey = getYouTubeApiKey()
+  if (!apiKey || videoIds.length === 0) {
     return new Map()
   }
 
@@ -161,7 +197,7 @@ export async function getVideoDetails(videoIds: string[]): Promise<Map<string, Y
     const params = new URLSearchParams({
       part: 'contentDetails,statistics',
       id: videoIds.join(','),
-      key: YOUTUBE_API_KEY,
+      key: apiKey,
     })
 
     const response = await fetch(`${YOUTUBE_API_BASE}/videos?${params}`)
@@ -202,16 +238,8 @@ export async function fetchGameVideos(
     }
 
     try {
-      // Trailers should be from last 2 months to keep them fresh
-      let searchOptions: { publishedAfter?: Date } | undefined
-      if (videoType === 'trailer') {
-        const twoMonthsAgo = new Date()
-        twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2)
-        searchOptions = { publishedAfter: twoMonthsAgo }
-      }
-
-      // Search for videos
-      const searchResults = await searchGameVideos(gameName, gameSlug, videoType, 5, searchOptions)
+      // Search for videos (recency is now handled by TYPE_RECENCY)
+      const searchResults = await searchGameVideos(gameName, gameSlug, videoType, 8) // Fetch more to filter
 
       if (searchResults.length === 0) continue
 
@@ -219,10 +247,22 @@ export async function fetchGameVideos(
       const videoIds = searchResults.map(v => v.id.videoId)
       const details = await getVideoDetails(videoIds)
 
+      // Get duration constraints for this type
+      const durationConfig = TYPE_DURATION[videoType]
+
       // Insert videos
       for (const video of searchResults) {
         const videoId = video.id.videoId
         const videoDetails = details.get(videoId)
+
+        // Filter by actual duration (YouTube's filter is coarse)
+        if (videoDetails) {
+          const duration = parseDuration(videoDetails.contentDetails.duration)
+          if (duration < durationConfig.min || duration > durationConfig.max) {
+            console.log(`[YouTube] Skipping ${videoId} - duration ${duration}s outside ${durationConfig.min}-${durationConfig.max}s`)
+            continue
+          }
+        }
 
         // Check if already exists
         const { data: existing } = await supabase
@@ -303,25 +343,34 @@ export async function getGameVideos(
 
 // Search terms for viral/general gaming content (not game-specific)
 const VIRAL_SEARCH_TERMS = [
-  'gaming funny moments viral',
-  'streamer gaming highlights',
-  'game news this week',
-  'gaming viral clips',
-  'best gaming moments',
+  'viral gaming moments 2025',
+  'best twitch clips this week',
+  'streamer funny moments compilation',
+  'viral streamer clips gaming',
+  'twitch highlights best moments',
+  'streamer rage quit moments',
+  'funniest gaming streamer clips',
+  'best gaming clips this week',
+  'twitch gaming highlights',
+  'gaming funny fails compilation',
+  'insane video game plays',
+  'streamer gaming rage moments',
+  'gaming world record',
 ]
 
 // Fetch viral/general gaming videos (not tied to specific games)
 export async function fetchViralGamingVideos(): Promise<{ success: boolean; addedCount: number }> {
-  if (!YOUTUBE_API_KEY) {
+  const apiKey = getYouTubeApiKey()
+  if (!apiKey) {
     return { success: false, addedCount: 0 }
   }
 
   const supabase = createAdminClient()
   let addedCount = 0
 
-  // Pick 2 random search terms to stay within quota
+  // Pick 3 random search terms for viral content
   const shuffled = [...VIRAL_SEARCH_TERMS].sort(() => Math.random() - 0.5)
-  const selectedTerms = shuffled.slice(0, 2)
+  const selectedTerms = shuffled.slice(0, 3)
 
   for (const searchTerm of selectedTerms) {
     try {
@@ -333,11 +382,12 @@ export async function fetchViralGamingVideos(): Promise<{ success: boolean; adde
         part: 'snippet',
         q: searchTerm,
         type: 'video',
-        maxResults: '5',
+        maxResults: '10', // Fetch more to filter by duration
         order: 'viewCount', // Sort by views for viral content
-        videoDuration: 'medium',
+        videoDuration: 'short', // Short videos for clips
         publishedAfter: oneMonthAgo.toISOString(),
-        key: YOUTUBE_API_KEY,
+        videoCategoryId: '20', // Gaming category
+        key: apiKey,
       })
 
       const response = await fetch(`${YOUTUBE_API_BASE}/search?${params}`)
@@ -356,6 +406,14 @@ export async function fetchViralGamingVideos(): Promise<{ success: boolean; adde
       for (const video of videos as YouTubeSearchItem[]) {
         const videoId = video.id.videoId
         const videoDetails = details.get(videoId)
+
+        // Filter to 1.5-3 minute clips only
+        if (videoDetails) {
+          const duration = parseDuration(videoDetails.contentDetails.duration)
+          if (duration < 90 || duration > 180) {
+            continue // Skip videos outside 1.5-3 min range
+          }
+        }
 
         // Check if already exists
         const { data: existing } = await supabase
@@ -402,17 +460,20 @@ export async function fetchViralGamingVideos(): Promise<{ success: boolean; adde
   return { success: true, addedCount }
 }
 
-// Fetch videos for all popular games (for cron job)
-export async function fetchAllGameVideos() {
+// Quota allocation per category (total ~2,250 units/run, 4 runs/day = ~9,000/day)
+// YouTube API: Search = 100 units, Video details = 1 unit
+const QUOTA_CONFIG = {
+  trailers: { percentage: 35, gamesPerRun: 8 },    // 800 units - official trailers
+  clips: { percentage: 35, gamesPerRun: 5, viralSearches: 3 }, // 800 units - viral clips + game clips
+  gameplay: { percentage: 15, gamesPerRun: 3 },   // 300 units - top 10s, compilations
+  esports: { percentage: 15, gamesPerRun: 3 },    // 300 units - tournament highlights
+}
+
+// Get popular games ranked by user engagement + player counts
+async function getPopularGames(limit: number) {
   const supabase = createAdminClient()
 
-  // Get games that are popular - combining user engagement + Steam player counts
-  // Quota breakdown per run:
-  // - 4 games × ~300 units (3 types avg - esports skipped for most) = 1,200 units
-  // - 2 viral searches × 100 units = 200 units
-  // Total: ~1,400 units per run × 4 runs/day = 5,600 units/day (well under 10k limit)
-
-  // Get all games with Steam App IDs for player count check
+  // Get all games with Steam App IDs
   const { data: steamGames } = await supabase
     .from('games')
     .select('id, name, slug, steam_app_id')
@@ -428,138 +489,135 @@ export async function fetchAllGameVideos() {
     .from('user_games')
     .select('game_id')
 
-  // Build popularity score combining multiple signals
-  const gameScores = new Map<string, { score: number; game: { id: string; name: string; slug: string; steam_app_id: number | null; is_live_service?: boolean } }>()
+  // Build popularity score
+  const gameScores = new Map<string, { score: number; game: { id: string; name: string; slug: string; steam_app_id: number | null } }>()
 
-  // Add Steam games to map
   steamGames?.forEach(game => {
     if (game.steam_app_id) {
       const isLiveService = LIVE_SERVICE_SLUGS.has(game.slug)
       gameScores.set(game.id, {
-        score: 0,
-        game: { id: game.id, name: game.name, slug: game.slug, steam_app_id: game.steam_app_id, is_live_service: isLiveService }
+        score: isLiveService ? 1 : 0, // Slight boost for live service
+        game: { id: game.id, name: game.name, slug: game.slug, steam_app_id: game.steam_app_id }
       })
     }
   })
 
-  // Add user engagement scores (equal weight for backlog and followed)
+  // Add engagement scores
   backlogItems?.forEach(item => {
     if (item.game_id && gameScores.has(item.game_id)) {
-      const entry = gameScores.get(item.game_id)!
-      entry.score += 5 // Backlog = 5 points
+      gameScores.get(item.game_id)!.score += 5
     }
   })
 
   followedGames?.forEach(item => {
     if (item.game_id && gameScores.has(item.game_id)) {
-      const entry = gameScores.get(item.game_id)!
-      entry.score += 5 // Following = 5 points
+      gameScores.get(item.game_id)!.score += 5
     }
   })
 
-  // Fetch Steam player counts for top candidates (limit API calls)
-  const topCandidates = Array.from(gameScores.values())
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 30) // Check top 30 by engagement
-
-  // Fetch player counts in parallel
-  const playerCountPromises = topCandidates
-    .filter(c => c.game.steam_app_id)
-    .map(async (candidate) => {
-      try {
-        const response = await fetch(
-          `https://api.steampowered.com/ISteamUserStats/GetNumberOfCurrentPlayers/v1/?appid=${candidate.game.steam_app_id}`
-        )
-        if (response.ok) {
-          const data = await response.json()
-          if (data.response?.player_count) {
-            // Live service games get reduced weight since they always have high counts
-            // Non-live service games get full weight to surface trending games
-            const playerCount = data.response.player_count
-            if (candidate.game.is_live_service) {
-              // Live service: 1 point per 10,000 players (reduced 10x)
-              candidate.score += Math.floor(playerCount / 10000)
-            } else {
-              // Regular games: 1 point per 1,000 players (full weight)
-              candidate.score += Math.floor(playerCount / 1000)
-            }
-          }
-        }
-      } catch {
-        // Ignore errors, keep existing score
-      }
-    })
-
-  await Promise.all(playerCountPromises)
-
-  // Sort by final score and pick top 4 (reduced from 5 to make room for viral content)
-  const sortedGames = Array.from(gameScores.values())
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 20) // Top 20 most popular
-
-  // Rotate through top games based on hour to cover variety
+  // Sort and rotate for variety
+  const sorted = Array.from(gameScores.values()).sort((a, b) => b.score - a.score).slice(0, 30)
   const hoursOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 3600000)
-  const offset = (hoursOfYear * 4) % Math.max(sortedGames.length, 1)
+  const offset = (hoursOfYear * limit) % Math.max(sorted.length, 1)
 
-  let selectedGames = sortedGames.slice(offset, offset + 4).map(g => g.game)
-
-  // Wrap around if needed
-  if (selectedGames.length < 4 && sortedGames.length > 0) {
-    const remaining = 4 - selectedGames.length
-    selectedGames.push(...sortedGames.slice(0, remaining).map(g => g.game))
+  let selected = sorted.slice(offset, offset + limit).map(g => g.game)
+  if (selected.length < limit && sorted.length > 0) {
+    selected.push(...sorted.slice(0, limit - selected.length).map(g => g.game))
   }
 
-  // Fallback to live service games if no data
-  if (selectedGames.length === 0) {
-    const { data, error } = await supabase
-      .from('games')
-      .select('id, name, slug')
-      .eq('is_live_service', true)
-      .limit(4)
+  return selected
+}
 
-    if (error) {
-      return { success: false, error: error.message, totalAdded: 0 }
-    }
-    // Map to include required properties for type compatibility
-    selectedGames = (data || []).map(g => ({
-      id: g.id,
-      name: g.name,
-      slug: g.slug,
-      steam_app_id: null
-    }))
-  }
-
-  const games = selectedGames
-
-  if (games.length === 0) {
-    return { success: false, error: 'No games found', totalAdded: 0 }
-  }
+// Fetch videos for all popular games (for cron job)
+// Quota split: Trailers 35%, Clips 35%, Gameplay 15%, Esports 15%
+export async function fetchAllGameVideos() {
+  const supabase = createAdminClient()
 
   let totalAdded = 0
+  const results: Record<string, { added: number; games: string[] }> = {
+    trailers: { added: 0, games: [] },
+    clips: { added: 0, games: [] },
+    gameplay: { added: 0, games: [] },
+    esports: { added: 0, games: [] },
+  }
   const errors: string[] = []
 
-  for (const game of games) {
-    const result = await fetchGameVideos(game.id, game.name, game.slug)
+  // 1. TRAILERS (35% quota) - Prioritize upcoming/new releases
+  console.log('[YouTube] Fetching TRAILERS...')
+  const { data: upcomingGames } = await supabase
+    .from('games')
+    .select('id, name, slug')
+    .gte('release_date', new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]) // Last 90 days or upcoming
+    .order('release_date', { ascending: true })
+    .limit(QUOTA_CONFIG.trailers.gamesPerRun)
 
+  for (const game of upcomingGames || []) {
+    const result = await fetchGameVideos(game.id, game.name, game.slug, ['trailer'])
     if (result.success) {
+      results.trailers.added += result.addedCount
+      results.trailers.games.push(game.name)
       totalAdded += result.addedCount
-    } else if (result.error) {
-      errors.push(`${game.name}: ${result.error}`)
     }
-
-    // Delay between games to respect rate limits
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    await new Promise(resolve => setTimeout(resolve, 500))
   }
 
-  // Also fetch viral/general gaming content
+  // 2. CLIPS (35% quota) - Viral content + game-specific clips
+  console.log('[YouTube] Fetching CLIPS...')
+
+  // 2a. Viral gaming clips (no specific game)
   const viralResult = await fetchViralGamingVideos()
+  results.clips.added += viralResult.addedCount
   totalAdded += viralResult.addedCount
+
+  // 2b. Game-specific clips from popular games
+  const clipsGames = await getPopularGames(QUOTA_CONFIG.clips.gamesPerRun)
+  for (const game of clipsGames) {
+    const result = await fetchGameVideos(game.id, game.name, game.slug, ['clips'])
+    if (result.success) {
+      results.clips.added += result.addedCount
+      results.clips.games.push(game.name)
+      totalAdded += result.addedCount
+    }
+    await new Promise(resolve => setTimeout(resolve, 500))
+  }
+
+  // 3. GAMEPLAY (15% quota) - Top 10s, compilations
+  console.log('[YouTube] Fetching GAMEPLAY...')
+  const gameplayGames = await getPopularGames(QUOTA_CONFIG.gameplay.gamesPerRun)
+  for (const game of gameplayGames) {
+    const result = await fetchGameVideos(game.id, game.name, game.slug, ['gameplay'])
+    if (result.success) {
+      results.gameplay.added += result.addedCount
+      results.gameplay.games.push(game.name)
+      totalAdded += result.addedCount
+    }
+    await new Promise(resolve => setTimeout(resolve, 500))
+  }
+
+  // 4. ESPORTS (15% quota) - Tournament highlights for esports games only
+  console.log('[YouTube] Fetching ESPORTS...')
+  const { data: esportsGamesData } = await supabase
+    .from('games')
+    .select('id, name, slug')
+    .in('slug', Array.from(ESPORTS_GAMES))
+    .limit(QUOTA_CONFIG.esports.gamesPerRun)
+
+  for (const game of esportsGamesData || []) {
+    const result = await fetchGameVideos(game.id, game.name, game.slug, ['esports'])
+    if (result.success) {
+      results.esports.added += result.addedCount
+      results.esports.games.push(game.name)
+      totalAdded += result.addedCount
+    }
+    await new Promise(resolve => setTimeout(resolve, 500))
+  }
+
+  console.log('[YouTube] Fetch complete:', results)
 
   return {
     success: true,
     totalAdded,
-    gamesChecked: games.length,
-    viralVideosAdded: viralResult.addedCount,
+    breakdown: results,
     errors: errors.length > 0 ? errors : undefined
   }
 }

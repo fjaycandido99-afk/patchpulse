@@ -136,30 +136,58 @@ function WhatsNewSkeleton() {
   )
 }
 
-// Game banner component - fixed background parallax style
+// Game banner component - fixed 16:9 on mobile, tall parallax on desktop
 function GameBanner({ imageUrl, gameName, brandColor }: { imageUrl: string | null; gameName: string; brandColor?: string | null }) {
   return (
-    <div className="fixed inset-x-0 top-0 h-[300px] sm:h-[350px] md:h-[450px] -z-10 md:left-64">
-      {imageUrl ? (
-        <>
-          <Image
-            src={imageUrl}
-            alt={gameName}
-            fill
-            className="object-cover object-top"
-            sizes="100vw"
-            priority
-            unoptimized
+    <>
+      {/* Mobile: Fixed 16:9 banner - below header */}
+      <div className="md:hidden fixed inset-x-0 top-14 -z-10">
+        <div className="relative w-full aspect-video max-h-[200px] sm:max-h-[240px]">
+          {imageUrl ? (
+            <>
+              <Image
+                src={imageUrl}
+                alt={gameName}
+                fill
+                className="object-cover"
+                sizes="100vw"
+                priority
+                unoptimized
+              />
+              <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/30 to-background" />
+            </>
+          ) : (
+            <div
+              className="absolute inset-0 bg-gradient-to-b from-primary/20 to-background"
+              style={brandColor ? { background: `linear-gradient(to bottom, ${brandColor}33, var(--background))` } : undefined}
+            />
+          )}
+        </div>
+      </div>
+
+      {/* Desktop: Fixed parallax banner */}
+      <div className="hidden md:block fixed inset-x-0 top-0 h-[450px] -z-10 left-64">
+        {imageUrl ? (
+          <>
+            <Image
+              src={imageUrl}
+              alt={gameName}
+              fill
+              className="object-cover object-top"
+              sizes="100vw"
+              priority
+              unoptimized
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/40 to-background" />
+          </>
+        ) : (
+          <div
+            className="absolute inset-0 bg-gradient-to-b from-primary/20 to-background"
+            style={brandColor ? { background: `linear-gradient(to bottom, ${brandColor}33, var(--background))` } : undefined}
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/30 to-background" />
-        </>
-      ) : (
-        <div
-          className="absolute inset-0 bg-gradient-to-b from-primary/20 to-background"
-          style={brandColor ? { background: `linear-gradient(to bottom, ${brandColor}33, var(--background))` } : undefined}
-        />
-      )}
-    </div>
+        )}
+      </div>
+    </>
   )
 }
 
@@ -244,10 +272,10 @@ export default async function BacklogDetailPage({
       <GameBanner imageUrl={bannerUrl} gameName={game.name} brandColor={game.brand_color} />
 
       {/* Spacer for hero */}
-      <div className="h-[220px] sm:h-[260px] md:h-[350px]" />
+      <div className="h-[200px] sm:h-[240px] md:h-[350px]" />
 
       {/* Content that scrolls over hero */}
-      <div className="relative z-10 bg-background rounded-t-3xl -mt-8 pt-6 pb-8 min-h-screen space-y-6 px-0">
+      <div className="relative z-10 pt-6 pb-8 min-h-screen space-y-4 px-0">
         {/* Back button */}
         <BackButton defaultHref="/backlog" defaultLabel="Back" />
 
@@ -294,21 +322,6 @@ export default async function BacklogDetailPage({
                   </span>
                 )}
               </div>
-
-              {/* Progress bar (if in backlog) */}
-              {isInBacklog && backlogItem && (
-                <div className="flex items-center gap-2 pt-1">
-                  <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-primary transition-all"
-                      style={{ width: `${Math.min(100, Math.max(0, backlogItem.progress))}%` }}
-                    />
-                  </div>
-                  <span className="text-xs font-medium text-muted-foreground w-8 text-right">
-                    {backlogItem.progress}%
-                  </span>
-                </div>
-              )}
 
               {/* Steam stats */}
               {game.steam_app_id && (

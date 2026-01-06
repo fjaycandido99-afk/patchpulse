@@ -25,7 +25,7 @@ import type { VideoWithGame } from './queries'
 type VideoType = 'trailer' | 'clips' | 'gameplay' | 'esports' | 'review' | 'other'
 
 const TYPE_CONFIG: Record<VideoType | 'all', { label: string; icon: React.ReactNode; color: string }> = {
-  all: { label: 'All', icon: <Video className="w-4 h-4" />, color: 'bg-zinc-500/20 text-zinc-400' },
+  all: { label: 'For You', icon: <Video className="w-4 h-4" />, color: 'bg-primary/20 text-primary' },
   trailer: { label: 'Trailers', icon: <Film className="w-4 h-4" />, color: 'bg-red-500/20 text-red-400' },
   clips: { label: 'Clips', icon: <Clapperboard className="w-4 h-4" />, color: 'bg-purple-500/20 text-purple-400' },
   gameplay: { label: 'Gameplay', icon: <Gamepad2 className="w-4 h-4" />, color: 'bg-blue-500/20 text-blue-400' },
@@ -433,7 +433,13 @@ function DesktopVideoCard({
       onMouseLeave={handleMouseLeave}
     >
       {/* Thumbnail / Preview */}
-      <button onClick={onPlay} className="relative w-full aspect-video overflow-hidden bg-zinc-800">
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={onPlay}
+        onKeyDown={(e) => e.key === 'Enter' && onPlay()}
+        className="relative w-full aspect-video overflow-hidden bg-zinc-800 cursor-pointer"
+      >
         {/* YouTube Preview - shows after hover delay */}
         {showPreview && (
           <iframe
@@ -460,7 +466,7 @@ function DesktopVideoCard({
 
         {/* Play button - hide when preview is showing */}
         {!showPreview && (
-          <div className="absolute inset-0 flex items-center justify-center">
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className={`rounded-full flex items-center justify-center backdrop-blur-sm border transition-all duration-300 ${
               isHovering
                 ? 'w-16 h-16 bg-red-600 border-red-500/50 shadow-lg shadow-red-600/30'
@@ -494,7 +500,7 @@ function DesktopVideoCard({
         >
           <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-current' : ''}`} />
         </button>
-      </button>
+      </div>
 
       {/* Info section with better styling */}
       <button onClick={onPlay} className="w-full p-4 text-left bg-gradient-to-b from-card to-card/80">
@@ -681,7 +687,7 @@ export function VideosFeed({
                 : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
             }`}
           >
-            All
+            For You
           </button>
 
           {videoTypes

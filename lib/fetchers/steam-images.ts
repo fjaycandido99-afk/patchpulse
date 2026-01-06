@@ -341,8 +341,63 @@ export async function updateAllGamesFromIgdb(limit = 50) {
 
 // Discover and update images for ALL games missing covers
 // This searches Steam for each game to find the app ID
-export async function discoverAllGameImages(limit = 50) {
+export async function discoverAllGameImages(limit = 50, offset = 0, refreshAll = false) {
   const supabase = createAdminClient()
+
+  // If refreshAll is true, get ALL games sorted by name
+  if (refreshAll) {
+    const { data: games } = await supabase
+      .from('games')
+      .select('id, name, steam_app_id, cover_url')
+      .order('name', { ascending: true })
+      .range(offset, offset + limit - 1)
+
+    if (!games || games.length === 0) {
+      return { success: true, message: 'No more games to process', updated: 0, failed: 0, results: [], offset, hasMore: false }
+    }
+
+    let updated = 0
+    let failed = 0
+    const results: Array<{
+      name: string
+      success: boolean
+      error?: string
+      source?: string
+      igdbMatch?: string
+    }> = []
+
+    for (const game of games) {
+      const result = await discoverAndUpdateGameImages(game.id, game.name)
+
+      if (result.success) {
+        updated++
+        const igdbMatch = 'igdbName' in result ? (result as { igdbName?: string }).igdbName : undefined
+        results.push({
+          name: game.name,
+          success: true,
+          source: result.source,
+          igdbMatch
+        })
+      } else {
+        failed++
+        results.push({ name: game.name, success: false, error: result.error })
+      }
+
+      // Delay to avoid rate limiting Steam/IGDB APIs
+      await new Promise(resolve => setTimeout(resolve, 300))
+    }
+
+    return {
+      success: true,
+      gamesChecked: games.length,
+      updated,
+      failed,
+      results,
+      offset,
+      nextOffset: offset + games.length,
+      hasMore: games.length === limit
+    }
+  }
 
   // Get games that need images - prioritize upcoming/new releases
   const today = new Date()
@@ -351,7 +406,6 @@ export async function discoverAllGameImages(limit = 50) {
   const thirtyDaysAgo = new Date(today)
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
 
-  const todayStr = today.toISOString().split('T')[0]
   const oneYearStr = oneYearFromNow.toISOString().split('T')[0]
   const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0]
 
