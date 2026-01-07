@@ -79,13 +79,21 @@ export default async function VideosPage({
   return (
     <div className="space-y-4">
       {/* Dynamic Header */}
-      <div className="flex items-center gap-3">
-        <div className={`p-2 rounded-xl ${section.color.split(' ')[0]}`}>
-          <Icon className={`w-5 h-5 ${section.color.split(' ')[1]}`} />
+      <div>
+        <div className="flex items-center gap-3">
+          <div className={`p-2 rounded-xl ${section.color.split(' ')[0]}`}>
+            <Icon className={`w-5 h-5 ${section.color.split(' ')[1]}`} />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold tracking-tight">{section.title}</h1>
+            <p className="text-xs text-muted-foreground">{section.description}</p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-xl font-bold tracking-tight">{section.title}</h1>
-          <p className="text-xs text-muted-foreground">{section.description}</p>
+        {/* Glow divider */}
+        <div className="relative h-0.5 w-full overflow-visible mt-4">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/80 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/50 to-transparent blur-sm" />
+          <div className="absolute -inset-1 bg-gradient-to-r from-transparent via-primary/30 to-transparent blur-md" />
         </div>
       </div>
 
