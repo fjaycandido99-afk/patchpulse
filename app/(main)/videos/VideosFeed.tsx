@@ -534,14 +534,15 @@ function MobileVideoCard({
 
   return (
     <div>
-      {/* Thumbnail - edge-to-edge when bleed, rounded otherwise */}
-      <button
-        onClick={handleClick}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-        onTouchCancel={handleTouchEnd}
-        className={`relative aspect-video overflow-hidden bg-zinc-900 ${bleed ? 'w-[100vw] ml-[calc(-50vw+50%)]' : 'w-full rounded-xl'}`}
-      >
+      {/* Thumbnail container - edge-to-edge when bleed, rounded otherwise */}
+      <div className={`relative overflow-hidden bg-zinc-900 ${bleed ? 'w-[100vw] ml-[calc(-50vw+50%)]' : 'rounded-xl'}`}>
+        <button
+          onClick={handleClick}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          onTouchCancel={handleTouchEnd}
+          className="relative aspect-video w-full"
+        >
         {/* YouTube Preview - shows on press and hold */}
         {showPreview && (
           <iframe
@@ -587,7 +588,8 @@ function MobileVideoCard({
             Previewing...
           </div>
         )}
-      </button>
+        </button>
+      </div>
 
       {/* Info - add horizontal padding when bleed */}
       <div className={`flex gap-3 mt-3 ${bleed ? 'px-4' : ''}`}>
