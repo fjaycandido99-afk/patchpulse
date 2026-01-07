@@ -102,16 +102,16 @@ const IMPORTANCE_STYLES = {
   minor: { color: 'text-blue-400', bg: 'bg-blue-500/20', border: 'border-blue-500/30', label: 'Minor' },
 }
 
-// Section divider
+// Section divider - bright glow style
 function SectionDivider({ title, icon: Icon }: { title: string; icon?: typeof Trophy }) {
   return (
     <div className="flex items-center gap-3 py-4">
-      <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-      <div className="flex items-center gap-2 text-xs font-semibold text-foreground/80 uppercase tracking-widest">
+      <div className="h-0.5 flex-1 bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
+      <div className="flex items-center gap-2 text-xs font-semibold text-primary/80 uppercase tracking-widest">
         {Icon && <Icon className="w-3.5 h-3.5" />}
         {title}
       </div>
-      <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+      <div className="h-0.5 flex-1 bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
     </div>
   )
 }

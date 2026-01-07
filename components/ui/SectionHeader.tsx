@@ -65,14 +65,16 @@ function GlowDivider() {
   )
 }
 
-// Standalone divider for use between sections
+// Standalone divider for use between sections - bright glow style
 export function SectionDivider() {
   return (
-    <div className="relative h-px w-full overflow-hidden my-8">
-      {/* Base line */}
-      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-      {/* Glow effect */}
-      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/15 to-transparent blur-sm" />
+    <div className="relative h-0.5 w-full overflow-visible my-6">
+      {/* Base line - stronger */}
+      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/80 to-transparent" />
+      {/* Inner glow */}
+      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/50 to-transparent blur-sm" />
+      {/* Outer glow */}
+      <div className="absolute -inset-1 bg-gradient-to-r from-transparent via-primary/30 to-transparent blur-md" />
     </div>
   )
 }

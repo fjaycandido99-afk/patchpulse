@@ -448,9 +448,9 @@ export function InfinitePatchesGrid({
         {/* Section Divider */}
         {majorPatches.length > 0 && otherPatches.length > 0 && (
           <div className="flex items-center gap-3 py-2">
-            <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-            <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">More Updates</span>
-            <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+            <div className="h-0.5 flex-1 bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
+            <span className="text-xs font-medium text-primary/80 uppercase tracking-wider">More Updates</span>
+            <div className="h-0.5 flex-1 bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
           </div>
         )}
 
