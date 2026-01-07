@@ -119,6 +119,72 @@ const IMPORTANCE_STYLES = {
   minor: { color: 'text-blue-400', bg: 'bg-blue-500/20', border: 'border-blue-500/30', label: 'Minor' },
 }
 
+// Mobile News Card - edge-to-edge with larger text
+function MobileNewsCard({ item, getNewsImage }: { item: NewsItem; getNewsImage: (item: NewsItem) => string | null }) {
+  const imageUrl = getNewsImage(item)
+  const displaySummary = item.why_it_matters || item.summary
+
+  return (
+    <Link href={`/news/${item.id}`} className="block group">
+      {/* Edge-to-edge image container */}
+      <div className="relative -mx-4 w-[calc(100%+2rem)] overflow-hidden bg-zinc-900">
+        <div className="relative aspect-[16/10]">
+          {imageUrl ? (
+            <SafeImage
+              src={imageUrl}
+              alt={item.title}
+              fill
+              className="object-cover transition-transform duration-300 group-active:scale-[0.98]"
+              sizes="100vw"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-zinc-700 via-zinc-800 to-zinc-900 flex items-center justify-center">
+              <Newspaper className="w-12 h-12 text-zinc-600" />
+            </div>
+          )}
+          {/* Gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+
+          {/* Badges */}
+          <div className="absolute top-3 left-3 flex gap-1.5">
+            <Badge variant="news">News</Badge>
+            {item.is_rumor && <Badge variant="rumor">Rumor</Badge>}
+          </div>
+        </div>
+      </div>
+
+      {/* Content - with padding */}
+      <div className="pt-3 pb-2">
+        {/* Game name */}
+        {item.game && (
+          <span className="text-xs font-medium text-primary/80 mb-1 block">
+            {item.game.name}
+          </span>
+        )}
+
+        {/* Title - larger on mobile */}
+        <h3 className="text-base font-semibold leading-snug line-clamp-2 text-white group-hover:text-primary transition-colors">
+          {item.title}
+        </h3>
+
+        {/* Summary */}
+        {displaySummary && (
+          <p className="mt-1.5 text-sm text-zinc-400 line-clamp-2 leading-relaxed">
+            {displaySummary}
+          </p>
+        )}
+
+        {/* Meta row */}
+        <div className="mt-2 flex items-center gap-2 text-xs text-zinc-500">
+          {item.source_name && <span>{item.source_name}</span>}
+          {item.source_name && <span>·</span>}
+          <span>{formatDate(item.published_at)}</span>
+        </div>
+      </div>
+    </Link>
+  )
+}
+
 // Top Story Hero Card - with mobile bleed
 function TopStoryCard({ story, isPrimary = false }: { story: TopStory; isPrimary?: boolean }) {
   const heroImage = story.image_url || story.game?.hero_url || story.game?.cover_url
@@ -415,8 +481,22 @@ export function NewsFeed({ news, topStories, includeRumors, sources, selectedSou
         )}
       </div>
 
-      {/* News grid - larger vertical cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4 auto-rows-fr">
+      {/* Mobile: Single column with edge-to-edge cards */}
+      <div className="sm:hidden space-y-6">
+        {filteredNews.map((item, index) => (
+          <div
+            key={item.id}
+            data-keyboard-nav
+            className="animate-soft-entry"
+            style={{ animationDelay: `${index * 30}ms` }}
+          >
+            <MobileNewsCard item={item} getNewsImage={getNewsImage} />
+          </div>
+        ))}
+      </div>
+
+      {/* Tablet+: Grid layout */}
+      <div className="hidden sm:grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 auto-rows-fr">
         {filteredNews.map((item, index) => (
           <div
             key={item.id}
