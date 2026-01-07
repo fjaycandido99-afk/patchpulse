@@ -4,7 +4,8 @@ import { Suspense } from 'react'
 import { ArrowLeft, ExternalLink, Sparkles, Brain, Zap, Users, Trophy, ChevronRight, Star, Flame, Calendar, Clock } from 'lucide-react'
 import { BackButton } from '@/components/ui/BackButton'
 import { HeroBanner } from '@/components/ui/HeroBanner'
-import { getNewsById, getRelatedNews } from '../queries'
+import { getNewsById, getRelatedNews, getRandomNews } from '../queries'
+import { SwipeableNews } from './SwipeableNews'
 import { isBookmarked } from '@/app/(main)/actions/bookmarks'
 import { getBacklogItem } from '@/app/(main)/backlog/queries'
 import { BookmarkButton } from '@/components/ui/BookmarkButton'
@@ -158,12 +159,10 @@ export default async function NewsDetailPage({
     }
   }
 
-  const relatedNews = await getRelatedNews(
-    news.id,
-    news.game?.id || null,
-    news.topics,
-    4
-  )
+  const [relatedNews, randomNews] = await Promise.all([
+    getRelatedNews(news.id, news.game?.id || null, news.topics, 4),
+    getRandomNews(news.id),
+  ])
 
   const brandColor = news.game?.brand_color || '#6366f1'
   // Use article's OG image first, then fall back to game images
@@ -179,6 +178,7 @@ export default async function NewsDetailPage({
   const highlights = news.summary ? [news.summary.split('.')[0] + '.'] : []
 
   return (
+    <SwipeableNews prevId={randomNews.prevId} nextId={randomNews.nextId}>
     <div className="relative min-h-screen page-enter">
       {/* Auto-mark notification as read when viewing this news */}
       <AutoMarkRead contentType="news" contentId={id} />
@@ -412,5 +412,6 @@ export default async function NewsDetailPage({
         </div>
       </div>
     </div>
+    </SwipeableNews>
   )
 }

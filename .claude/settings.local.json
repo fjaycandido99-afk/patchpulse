@@ -41,7 +41,20 @@
       "WebFetch(domain:www.igdb.com)",
       "Bash(printf '\\\\nYOUTUBE_API_KEY=AIzaSyCy8JQwHNucs2Gc7YcrxMfZpSzS6jAGNxw\\\\n')",
       "Bash(npm run dev:*)",
-      "Bash(head:*)"
+      "Bash(head:*)",
+      "Bash(if not exist \"C:\\\\Dev\" mkdir \"C:\\\\Dev\")",
+      "Bash(robocopy:*)",
+      "Bash(xcopy \"C:\\\\Users\\\\fjayc\\\\OneDrive\\\\Documents\\\\Gaming app\" \"C:\\\\Dev\\\\patchpulse\"\" /E /I /H /Y /Q)",
+      "Bash(cmd /c \"robocopy \"\"C:\\\\Users\\\\fjayc\\\\OneDrive\\\\Documents\\\\Gaming app\"\" \"\"C:\\\\Dev\\\\patchpulse\"\" /E /R:1 /W:1 /XF nul /NP\")",
+      "Bash(cmd /c mkdir C:Devpatchpulse)",
+      "Bash(taskkill:*)",
+      "Bash(start explorer.exe)",
+      "Bash(cmd /c \"taskkill /f /im explorer.exe & start explorer.exe\")",
+      "Bash(cmd /c \"taskkill /f /im OneDrive.exe\")",
+      "Bash(cmd /c \"taskkill /f /im explorer.exe & timeout /t 2 & start explorer.exe\")",
+      "Bash(cmd /c \"rd /s /q C:\\\\Dev\\\\patchpulse 2>nul & rd /s /q C:\\\\Dev 2>nul\")",
+      "Bash(cmd /c \"mkdir C:\\\\Dev && move \"\"C:\\\\Users\\\\fjayc\\\\OneDrive\\\\Documents\\\\Gaming app\"\" \"\"C:\\\\Dev\\\\patchpulse\"\"\")",
+      "Bash(cmd /c \"dir C:\\\\Dev\\\\patchpulse\\\\package.json\")"
     ]
   }
 }

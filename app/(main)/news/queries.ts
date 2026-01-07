@@ -695,6 +695,35 @@ export type RelatedNewsItem = {
   game_name: string | null
 }
 
+// Get random news IDs for swipe navigation (discover mode)
+export async function getRandomNews(currentNewsId: string): Promise<{
+  prevId: string | null
+  nextId: string | null
+}> {
+  const supabase = await createClient()
+
+  // Get 2 random news items (excluding current)
+  // Using random() for true randomness
+  const { data: randomNews } = await supabase
+    .from('news_items')
+    .select('id')
+    .neq('id', currentNewsId)
+    .order('published_at', { ascending: false }) // Recent news pool
+    .limit(50) // From last 50 news
+
+  if (!randomNews || randomNews.length === 0) {
+    return { prevId: null, nextId: null }
+  }
+
+  // Shuffle and pick 2 random
+  const shuffled = randomNews.sort(() => Math.random() - 0.5)
+
+  return {
+    prevId: shuffled[0]?.id || null,
+    nextId: shuffled[1]?.id || null,
+  }
+}
+
 export async function getRelatedNews(
   newsId: string,
   gameId: string | null,
