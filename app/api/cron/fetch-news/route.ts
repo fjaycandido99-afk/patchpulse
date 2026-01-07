@@ -6,7 +6,11 @@ export const runtime = 'nodejs'
 export const maxDuration = 120 // 2 minutes for news only
 
 export async function GET(req: Request) {
-  if (!verifyCronAuth(req)) {
+  // Allow manual trigger on Vercel without auth (for admin use)
+  const url = new URL(req.url)
+  const isManualTrigger = url.searchParams.get('manual') === 'true' && process.env.VERCEL === '1'
+
+  if (!isManualTrigger && !verifyCronAuth(req)) {
     return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 })
   }
 
