@@ -272,28 +272,71 @@ export async function fetchNewsFromSource(source: NewsSource) {
   }
 }
 
+// Process a batch of sources in parallel with timeout
+async function processBatch(
+  sources: NewsSource[],
+  errors: string[]
+): Promise<number> {
+  const results = await Promise.allSettled(
+    sources.map(source =>
+      Promise.race([
+        fetchNewsFromSource(source),
+        // Per-source timeout of 15 seconds
+        new Promise<{ success: false; error: string }>((_, reject) =>
+          setTimeout(() => reject(new Error('Timeout')), 15000)
+        )
+      ])
+    )
+  )
+
+  let added = 0
+  results.forEach((result, i) => {
+    if (result.status === 'fulfilled' && result.value.success) {
+      added += result.value.addedCount || 0
+    } else if (result.status === 'rejected') {
+      const errorMsg = result.reason?.message || 'Unknown error'
+      if (errorMsg !== 'Timeout') {
+        errors.push(`${sources[i].name}: ${errorMsg}`)
+      }
+    }
+  })
+
+  return added
+}
+
 // Fetch news from all sources
 export async function fetchAllGamingNews() {
+  const startTime = Date.now()
+  const MAX_RUNTIME = 90000 // 90 seconds max
+  const BATCH_SIZE = 5 // Process 5 sources in parallel
+
   let totalAdded = 0
   const errors: string[] = []
+  let sourcesProcessed = 0
 
-  for (const source of NEWS_SOURCES) {
-    const result = await fetchNewsFromSource(source)
-
-    if (result.success) {
-      totalAdded += result.addedCount || 0
-    } else {
-      errors.push(`${source.name}: ${result.error}`)
+  // Process in batches
+  for (let i = 0; i < NEWS_SOURCES.length; i += BATCH_SIZE) {
+    // Check if we're running out of time
+    if (Date.now() - startTime > MAX_RUNTIME) {
+      console.log(`[News] Stopping early - processed ${sourcesProcessed}/${NEWS_SOURCES.length} sources`)
+      break
     }
 
-    // Small delay between requests
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    const batch = NEWS_SOURCES.slice(i, i + BATCH_SIZE)
+    const batchAdded = await processBatch(batch, errors)
+    totalAdded += batchAdded
+    sourcesProcessed += batch.length
+
+    // Small delay between batches
+    if (i + BATCH_SIZE < NEWS_SOURCES.length) {
+      await new Promise(resolve => setTimeout(resolve, 200))
+    }
   }
 
   return {
     success: true,
     totalAdded,
-    sourcesChecked: NEWS_SOURCES.length,
-    errors: errors.length > 0 ? errors : undefined
+    sourcesChecked: sourcesProcessed,
+    errors: errors.length > 0 ? errors.slice(0, 5) : undefined
   }
 }

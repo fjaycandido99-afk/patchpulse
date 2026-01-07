@@ -564,9 +564,44 @@ async function getPopularGames(limit: number) {
   return selected
 }
 
+// Process a batch of games in parallel for a specific video type
+async function processVideoBatch(
+  games: { id: string; name: string; slug: string }[],
+  videoType: VideoType
+): Promise<{ added: number; gameNames: string[] }> {
+  const results = await Promise.allSettled(
+    games.map(game =>
+      Promise.race([
+        fetchGameVideos(game.id, game.name, game.slug, [videoType]),
+        // Per-game timeout of 20 seconds (YouTube API can be slow)
+        new Promise<{ success: false; addedCount: 0 }>((_, reject) =>
+          setTimeout(() => reject(new Error('Timeout')), 20000)
+        )
+      ])
+    )
+  )
+
+  let added = 0
+  const gameNames: string[] = []
+
+  results.forEach((result, i) => {
+    if (result.status === 'fulfilled' && result.value.success) {
+      added += result.value.addedCount
+      if (result.value.addedCount > 0) {
+        gameNames.push(games[i].name)
+      }
+    }
+  })
+
+  return { added, gameNames }
+}
+
 // Fetch videos for all popular games (for cron job)
 // Quota split: Trailers 35%, Clips 35%, Gameplay 15%, Esports 15%
 export async function fetchAllGameVideos() {
+  const startTime = Date.now()
+  const MAX_RUNTIME = 240000 // 4 minutes max (leaving 1 min buffer for 5 min limit)
+
   const supabase = createAdminClient()
 
   let totalAdded = 0
@@ -583,51 +618,73 @@ export async function fetchAllGameVideos() {
   const { data: upcomingGames } = await supabase
     .from('games')
     .select('id, name, slug')
-    .gte('release_date', new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]) // Last 90 days or upcoming
+    .gte('release_date', new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
     .order('release_date', { ascending: true })
     .limit(QUOTA_CONFIG.trailers.gamesPerRun)
 
-  for (const game of upcomingGames || []) {
-    const result = await fetchGameVideos(game.id, game.name, game.slug, ['trailer'])
-    if (result.success) {
-      results.trailers.added += result.addedCount
-      results.trailers.games.push(game.name)
-      totalAdded += result.addedCount
-    }
-    await new Promise(resolve => setTimeout(resolve, 500))
+  if (upcomingGames && upcomingGames.length > 0) {
+    const trailerResult = await processVideoBatch(upcomingGames, 'trailer')
+    results.trailers.added = trailerResult.added
+    results.trailers.games = trailerResult.gameNames
+    totalAdded += trailerResult.added
+  }
+
+  // Check time
+  if (Date.now() - startTime > MAX_RUNTIME) {
+    console.log('[YouTube] Stopping early - time limit reached after trailers')
+    return { success: true, totalAdded, breakdown: results, errors }
   }
 
   // 2. CLIPS (35% quota) - Viral content + game-specific clips
   console.log('[YouTube] Fetching CLIPS...')
 
-  // 2a. Viral gaming clips (no specific game)
-  const viralResult = await fetchViralGamingVideos()
-  results.clips.added += viralResult.addedCount
-  totalAdded += viralResult.addedCount
+  // 2a. Viral gaming clips (no specific game) - with timeout
+  const viralPromise = Promise.race([
+    fetchViralGamingVideos(),
+    new Promise<{ success: false; addedCount: 0 }>((_, reject) =>
+      setTimeout(() => reject(new Error('Timeout')), 30000)
+    )
+  ])
+
+  try {
+    const viralResult = await viralPromise
+    if (viralResult.success) {
+      results.clips.added += viralResult.addedCount
+      totalAdded += viralResult.addedCount
+    }
+  } catch {
+    console.log('[YouTube] Viral fetch timed out')
+  }
 
   // 2b. Game-specific clips from popular games
   const clipsGames = await getPopularGames(QUOTA_CONFIG.clips.gamesPerRun)
-  for (const game of clipsGames) {
-    const result = await fetchGameVideos(game.id, game.name, game.slug, ['clips'])
-    if (result.success) {
-      results.clips.added += result.addedCount
-      results.clips.games.push(game.name)
-      totalAdded += result.addedCount
-    }
-    await new Promise(resolve => setTimeout(resolve, 500))
+  if (clipsGames.length > 0) {
+    const clipsResult = await processVideoBatch(clipsGames, 'clips')
+    results.clips.added += clipsResult.added
+    results.clips.games = clipsResult.gameNames
+    totalAdded += clipsResult.added
+  }
+
+  // Check time
+  if (Date.now() - startTime > MAX_RUNTIME) {
+    console.log('[YouTube] Stopping early - time limit reached after clips')
+    return { success: true, totalAdded, breakdown: results, errors }
   }
 
   // 3. GAMEPLAY (15% quota) - Top 10s, compilations
   console.log('[YouTube] Fetching GAMEPLAY...')
   const gameplayGames = await getPopularGames(QUOTA_CONFIG.gameplay.gamesPerRun)
-  for (const game of gameplayGames) {
-    const result = await fetchGameVideos(game.id, game.name, game.slug, ['gameplay'])
-    if (result.success) {
-      results.gameplay.added += result.addedCount
-      results.gameplay.games.push(game.name)
-      totalAdded += result.addedCount
-    }
-    await new Promise(resolve => setTimeout(resolve, 500))
+  if (gameplayGames.length > 0) {
+    const gameplayResult = await processVideoBatch(gameplayGames, 'gameplay')
+    results.gameplay.added = gameplayResult.added
+    results.gameplay.games = gameplayResult.gameNames
+    totalAdded += gameplayResult.added
+  }
+
+  // Check time
+  if (Date.now() - startTime > MAX_RUNTIME) {
+    console.log('[YouTube] Stopping early - time limit reached after gameplay')
+    return { success: true, totalAdded, breakdown: results, errors }
   }
 
   // 4. ESPORTS (15% quota) - Tournament highlights for esports games only
@@ -638,14 +695,11 @@ export async function fetchAllGameVideos() {
     .in('slug', Array.from(ESPORTS_GAMES))
     .limit(QUOTA_CONFIG.esports.gamesPerRun)
 
-  for (const game of esportsGamesData || []) {
-    const result = await fetchGameVideos(game.id, game.name, game.slug, ['esports'])
-    if (result.success) {
-      results.esports.added += result.addedCount
-      results.esports.games.push(game.name)
-      totalAdded += result.addedCount
-    }
-    await new Promise(resolve => setTimeout(resolve, 500))
+  if (esportsGamesData && esportsGamesData.length > 0) {
+    const esportsResult = await processVideoBatch(esportsGamesData, 'esports')
+    results.esports.added = esportsResult.added
+    results.esports.games = esportsResult.gameNames
+    totalAdded += esportsResult.added
   }
 
   console.log('[YouTube] Fetch complete:', results)
