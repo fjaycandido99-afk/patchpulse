@@ -13,7 +13,11 @@ export async function GET(req: Request) {
 
   console.log(`[MASTER CRON] ========== Starting at ${timestamp} ==========`)
 
-  if (!verifyCronAuth(req)) {
+  // Allow manual trigger on Vercel without auth (for admin use)
+  const url = new URL(req.url)
+  const isManualTrigger = url.searchParams.get('manual') === 'true' && process.env.VERCEL === '1'
+
+  if (!isManualTrigger && !verifyCronAuth(req)) {
     console.log('[MASTER CRON] Auth failed - returning 401')
     return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 })
   }
