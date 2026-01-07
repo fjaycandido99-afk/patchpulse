@@ -91,34 +91,25 @@ export function SwipeableNews({ children, prevId, nextId }: SwipeableNewsProps) 
         </div>
       )}
 
-      {/* Navigation arrows - always visible on mobile */}
+      {/* Navigation arrows - positioned near hero banner, subtle */}
       {prevId && (
         <button
           onClick={goToPrev}
-          className="fixed left-2 bottom-24 z-40 w-10 h-10 rounded-full bg-black/60 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white/80 hover:text-white hover:bg-black/80 transition-colors sm:hidden"
+          className="fixed left-2 top-[320px] z-40 w-8 h-8 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center text-white/40 hover:text-white/70 hover:bg-black/50 transition-all sm:hidden"
           aria-label="Previous article"
         >
-          <ChevronLeft className="w-5 h-5" />
+          <ChevronLeft className="w-4 h-4" />
         </button>
       )}
       {nextId && (
         <button
           onClick={goToNext}
-          className="fixed right-2 bottom-24 z-40 w-10 h-10 rounded-full bg-black/60 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white/80 hover:text-white hover:bg-black/80 transition-colors sm:hidden"
+          className="fixed right-2 top-[320px] z-40 w-8 h-8 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center text-white/40 hover:text-white/70 hover:bg-black/50 transition-all sm:hidden"
           aria-label="Next article"
         >
-          <ChevronRight className="w-5 h-5" />
+          <ChevronRight className="w-4 h-4" />
         </button>
       )}
-
-      {/* Swipe hint - show on first visit */}
-      <div className="fixed bottom-36 left-1/2 -translate-x-1/2 z-40 sm:hidden pointer-events-none">
-        <div className="px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-sm border border-white/10 text-xs text-white/60 flex items-center gap-2">
-          <ChevronLeft className="w-3 h-3" />
-          <span>Swipe for more</span>
-          <ChevronRight className="w-3 h-3" />
-        </div>
-      </div>
 
       {children}
     </div>
