@@ -214,17 +214,14 @@ export async function fetchNewsFromSource(source: NewsSource) {
 
       if (existingByUrl) continue
 
-      // Also check by similar title (prevent duplicates from different sources)
-      const titleToCheck = item.title?.slice(0, 60) || ''
-      if (titleToCheck.length > 10) {
-        const { data: existingByTitle } = await supabase
-          .from('news_items')
-          .select('id')
-          .ilike('title', `%${titleToCheck}%`)
-          .limit(1)
+      // Check for exact title duplicates only (not partial matches)
+      const { data: existingByTitle } = await supabase
+        .from('news_items')
+        .select('id')
+        .eq('title', item.title || '')
+        .limit(1)
 
-        if (existingByTitle && existingByTitle.length > 0) continue
-      }
+      if (existingByTitle && existingByTitle.length > 0) continue
 
       const rawText = item.contentSnippet || item.content || ''
       if (rawText.length < 50) continue
