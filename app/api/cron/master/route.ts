@@ -54,6 +54,16 @@ export async function GET(req: Request) {
     results.fetchDeals = { error: String(e) }
   }
 
+  // Always run: fetch-news (keeps news fresh)
+  try {
+    const res = await fetch(`${baseUrl}/api/cron/fetch-news`, {
+      headers: internalHeaders,
+    })
+    results.fetchNews = await res.json()
+  } catch (e) {
+    results.fetchNews = { error: String(e) }
+  }
+
   // Run at 0, 6, 12, 18 UTC: discover-games
   if (currentHour % 6 === 0) {
     try {
