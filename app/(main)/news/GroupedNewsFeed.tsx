@@ -531,9 +531,15 @@ export function GroupedNewsFeed({
       {/* 1. TOP STORIES HERO SECTION */}
       {topStories.length > 0 && (
         <section>
-          <div className="flex items-center gap-2 mb-3">
+          <div className="flex items-center gap-2 mb-2">
             <Zap className="w-4 h-4 text-amber-400" />
             <h2 className="font-semibold text-sm uppercase tracking-wide">Top Stories</h2>
+          </div>
+          {/* Glow divider */}
+          <div className="relative h-0.5 w-full overflow-visible mb-4">
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/80 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/50 to-transparent blur-sm" />
+            <div className="absolute -inset-1 bg-gradient-to-r from-transparent via-primary/30 to-transparent blur-md" />
           </div>
 
           {topStories.length === 1 ? (
