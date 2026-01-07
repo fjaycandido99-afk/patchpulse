@@ -535,7 +535,7 @@ function MobileVideoCard({
   return (
     <div>
       {/* Thumbnail container - edge-to-edge when bleed, rounded otherwise */}
-      <div className={`relative overflow-hidden bg-zinc-900 ${bleed ? 'w-[100vw] ml-[calc(-50vw+50%)]' : 'rounded-xl'}`}>
+      <div className={`relative overflow-hidden bg-zinc-900 ${bleed ? '-mx-4 w-[calc(100%+2rem)]' : 'rounded-xl'}`}>
         <button
           onClick={handleClick}
           onTouchStart={handleTouchStart}
