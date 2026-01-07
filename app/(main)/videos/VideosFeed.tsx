@@ -721,7 +721,7 @@ export function VideosFeed({
       {/* Mobile: YouTube-style vertical list */}
       {/* Bleed edge-to-edge for trailer/gameplay/esports sections */}
       {(() => {
-        const shouldBleed = selectedType && ['trailer', 'gameplay', 'esports'].includes(selectedType)
+        const shouldBleed = !!(selectedType && ['trailer', 'gameplay', 'esports'].includes(selectedType))
         return (
           <div className="md:hidden">
             <div className={`space-y-5 ${shouldBleed ? '-mx-4' : ''}`}>
