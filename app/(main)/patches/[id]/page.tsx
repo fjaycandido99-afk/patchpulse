@@ -356,7 +356,7 @@ export default async function PatchDetailPage({
           </>
         )}
 
-        {/* Why It Matters - Summary with bullet points */}
+        {/* Why It Matters - Simple explanation */}
         <Card className="p-5 space-y-4 border-violet-500/30 bg-gradient-to-br from-violet-500/5 to-transparent">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center">
@@ -365,26 +365,47 @@ export default async function PatchDetailPage({
             <h2 className="text-lg font-semibold">Why It Matters</h2>
           </div>
 
-          {/* Bullet point summary from patch notes */}
-          {patch.summary_tldr ? (
-            <ul className="space-y-2">
-              {patch.summary_tldr.split(/[.!?]+/).filter(s => s.trim().length > 10).slice(0, 5).map((point, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-zinc-300">
-                  <ChevronRight className="w-4 h-4 mt-0.5 text-violet-400 flex-shrink-0" />
-                  <span>{point.trim()}</span>
-                </li>
-              ))}
-            </ul>
+          {/* Simple explanation of what the patch means */}
+          {patch.ai_insight ? (
+            <p className="text-zinc-300 leading-relaxed">{patch.ai_insight}</p>
           ) : (
-            <p className="text-zinc-300 leading-relaxed">
-              {patch.ai_insight || (
-                patch.impact_score >= 8
-                  ? "Major update with significant gameplay changes. Expect meta shifts."
-                  : patch.impact_score >= 5
-                    ? "Moderate update with targeted balance changes."
-                    : "Minor update with bug fixes and QoL improvements."
+            <ul className="space-y-2">
+              {/* Impact level */}
+              <li className="flex items-start gap-2 text-sm text-zinc-300">
+                <ChevronRight className="w-4 h-4 mt-0.5 text-violet-400 flex-shrink-0" />
+                <span>
+                  {patch.impact_score >= 8
+                    ? "Big update - expect major changes to how the game plays"
+                    : patch.impact_score >= 5
+                      ? "Medium update - some balance tweaks and new content"
+                      : "Small update - mostly bug fixes and polish"}
+                </span>
+              </li>
+              {/* What changed based on tags/categories */}
+              {keyChanges.length > 0 && (
+                <li className="flex items-start gap-2 text-sm text-zinc-300">
+                  <ChevronRight className="w-4 h-4 mt-0.5 text-violet-400 flex-shrink-0" />
+                  <span>
+                    {keyChanges.some(c => c.category?.toLowerCase().includes('balance') || c.category?.toLowerCase().includes('nerf') || c.category?.toLowerCase().includes('buff'))
+                      ? "Character and weapon balance changes - your favorites might feel different"
+                      : keyChanges.some(c => c.category?.toLowerCase().includes('bug') || c.category?.toLowerCase().includes('fix'))
+                        ? "Bug fixes - things should work smoother now"
+                        : keyChanges.some(c => c.category?.toLowerCase().includes('new') || c.category?.toLowerCase().includes('content'))
+                          ? "New content added - check out what's new"
+                          : "Various gameplay adjustments and improvements"}
+                  </span>
+                </li>
               )}
-            </p>
+              {/* Simple advice */}
+              <li className="flex items-start gap-2 text-sm text-zinc-300">
+                <ChevronRight className="w-4 h-4 mt-0.5 text-violet-400 flex-shrink-0" />
+                <span>
+                  {patch.impact_score >= 7
+                    ? "Worth jumping in to see the changes yourself"
+                    : "Good to know, but no rush to check it out"}
+                </span>
+              </li>
+            </ul>
           )}
         </Card>
 
