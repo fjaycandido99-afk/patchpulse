@@ -67,13 +67,16 @@ function ImpactMeter({ label, icon: Icon, value, color }: {
   )
 }
 
-// Section divider component
+// Section divider component - matches home page glow style
 function SectionDivider() {
   return (
-    <div className="relative py-2">
-      <div className="absolute inset-0 flex items-center">
-        <div className="w-full h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-      </div>
+    <div className="relative h-0.5 w-full overflow-visible my-4">
+      {/* Base line - stronger */}
+      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/80 to-transparent" />
+      {/* Inner glow */}
+      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/50 to-transparent blur-sm" />
+      {/* Outer glow */}
+      <div className="absolute -inset-1 bg-gradient-to-r from-transparent via-primary/30 to-transparent blur-md" />
     </div>
   )
 }
