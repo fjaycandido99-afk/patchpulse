@@ -31,9 +31,9 @@ type DesktopSidebarProps = {
 
 export function DesktopSidebar({ counts, notificationStats, patchesStats, isGuest = false }: DesktopSidebarProps) {
   return (
-    <aside className="hidden md:fixed md:inset-y-0 md:flex md:w-64 md:flex-col">
-      <div className="flex flex-col gap-y-5 border-r border-border bg-background px-6 py-8">
-        <div className="flex items-center">
+    <aside className="hidden md:fixed md:inset-y-0 md:left-0 md:flex md:w-64 md:flex-col">
+      <div className="flex min-h-full flex-col gap-y-5 border-r border-border bg-background pr-4 py-8">
+        <div className="flex items-center pl-3">
           <Link href="/home" className="flex h-10 items-center gap-2 hover:opacity-80 transition-opacity">
             <Sparkles className="h-5 w-5 text-primary" />
             <h1 className="text-xl font-bold tracking-tight">PatchPulse</h1>
@@ -140,7 +140,7 @@ function NavItem({ icon: Icon, label, href, badge, badgeLabel, isLive, isPro }: 
   return (
     <Link
       href={href}
-      className={`group relative flex items-center justify-between gap-x-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
+      className={`group relative flex items-center justify-between gap-x-3 rounded-r-lg pl-3 pr-3 py-2.5 text-sm font-medium transition-all duration-200 ${
         isActive
           ? 'bg-accent text-foreground shadow-sm'
           : 'text-muted-foreground hover:bg-accent/70 hover:text-foreground'

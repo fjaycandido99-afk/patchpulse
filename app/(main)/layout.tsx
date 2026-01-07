@@ -146,7 +146,7 @@ export default async function MainLayout({
               </div>
             </header>
 
-            <div className="mx-auto h-full max-w-7xl px-4 pt-20 pb-6 md:pt-6 sm:px-6 lg:px-8 w-full overflow-hidden">
+            <div className="h-full px-4 pt-20 pb-6 md:pt-6 md:px-8 lg:px-12 w-full">
               {children}
             </div>
           </main>

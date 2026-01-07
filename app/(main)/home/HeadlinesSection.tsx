@@ -288,140 +288,130 @@ function RotatingHeadline({
   )
 }
 
-// Rotating news grid with random fade animation
-function RotatingNewsGrid({
+// Rotating 3-card news grid with random swap animation
+function NewsCardsGrid({
   news,
   seasonalImages,
-  gamePlatforms,
 }: {
   news: NewsItem[]
   seasonalImages: Map<string, SeasonalImage>
   gamePlatforms: Map<string, Platform[]>
 }) {
-  const visibleCount = 6
-  // Track which news items are shown in each of the 6 positions
-  const [slots, setSlots] = useState(() =>
-    news.slice(0, visibleCount).map((_, i) => i)
-  )
-  // Track which slot is currently transitioning
+  // Track which 3 news items are currently visible
+  const [visibleIndices, setVisibleIndices] = useState<number[]>([0, 1, 2])
+  // Track which slot is currently fading (for animation)
   const [fadingSlot, setFadingSlot] = useState<number | null>(null)
 
-  // Auto-rotate one random slot at a time
+  // Auto-rotate: swap one random card every 5 seconds
   useEffect(() => {
-    if (news.length <= visibleCount) return
+    if (news.length <= 3) return // No rotation needed if we have 3 or fewer items
 
     const interval = setInterval(() => {
-      // Pick a random slot to change
-      const slotToChange = Math.floor(Math.random() * visibleCount)
+      // Pick a random slot to swap (0, 1, or 2)
+      const slotToSwap = Math.floor(Math.random() * 3)
 
       // Start fade out
-      setFadingSlot(slotToChange)
+      setFadingSlot(slotToSwap)
 
-      // After fade out, update the news and fade in
+      // After fade out, swap the item and fade in
       setTimeout(() => {
-        setSlots(prev => {
-          const newSlots = [...prev]
-          // Pick a random news item that's not currently showing
-          const currentNews = new Set(newSlots)
-          let newNewsIndex = Math.floor(Math.random() * news.length)
-          // Try to find a news item not currently visible
-          let attempts = 0
-          while (currentNews.has(newNewsIndex) && attempts < 10) {
-            newNewsIndex = Math.floor(Math.random() * news.length)
-            attempts++
-          }
-          newSlots[slotToChange] = newNewsIndex
-          return newSlots
-        })
+        setVisibleIndices(prev => {
+          const usedIndices = new Set(prev)
+          // Find unused indices
+          const availableIndices = news
+            .map((_, i) => i)
+            .filter(i => !usedIndices.has(i))
 
-        // Keep fading state for fade-in animation
-        setTimeout(() => {
-          setFadingSlot(null)
-        }, 400)
-      }, 400)
-    }, 7000)
+          if (availableIndices.length === 0) {
+            // All items shown, reset to beginning but with different order
+            return [0, 1, 2].map(i => (prev[i] + 3) % news.length)
+          }
+
+          // Pick random available index
+          const newIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)]
+          const newIndices = [...prev]
+          newIndices[slotToSwap] = newIndex
+          return newIndices
+        })
+        setFadingSlot(null)
+      }, 300) // Match the fade-out duration
+    }, 5000)
 
     return () => clearInterval(interval)
   }, [news.length])
 
-  return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 auto-rows-fr">
-      {slots.map((newsIndex, slotIndex) => {
-        const newsItem = news[newsIndex]
-        if (!newsItem) return null
-        const isFading = fadingSlot === slotIndex
+  // Get the actual news items to display
+  const displayNews = visibleIndices.map(i => news[i]).filter(Boolean)
 
-        return (
+  return (
+    <div className="grid grid-cols-1 gap-3">
+      {displayNews.map((newsItem, slotIndex) => (
+        <Link
+          key={`${newsItem.id}-${slotIndex}`}
+          href={`/news/${newsItem.id}`}
+          className={`group block transition-opacity duration-300 ${
+            fadingSlot === slotIndex ? 'opacity-0' : 'opacity-100'
+          }`}
+          style={{ animationDelay: `${slotIndex * 80}ms` }}
+        >
+          {/* Thumbnail - 16:9, bleed on mobile only */}
           <div
-            key={`slot-${slotIndex}`}
-            className="h-full"
-            style={{
-              opacity: isFading ? 0 : 1,
-              transform: isFading ? 'scale(0.95)' : 'scale(1)',
-              transition: 'opacity 400ms ease-in-out, transform 400ms ease-in-out',
-            }}
+            className="relative aspect-video overflow-hidden bg-zinc-900 w-[100vw] ml-[calc(-50vw+50%)] md:w-auto md:ml-0 md:rounded-xl"
           >
-            <MediaCard
-              href={`/news/${newsItem.id}`}
-              title={newsItem.title}
-              summary={newsItem.summary}
-              whyItMatters={newsItem.why_it_matters}
-              imageUrl={getNewsImage(newsItem, seasonalImages)}
-              variant="vertical-large"
-              game={
-                newsItem.game_id
-                  ? {
-                      name: newsItem.games?.name || 'General',
-                      logoUrl: getSeasonalLogoUrl(newsItem.game_id, newsItem.games?.logo_url, seasonalImages),
-                      platforms: getPlatformsForGame(newsItem.game_id, gamePlatforms),
-                    }
-                  : undefined
-              }
-              badges={
-                <>
-                  <Badge variant="news">News</Badge>
-                  {newsItem.is_rumor && <Badge variant="rumor">Rumor</Badge>}
-                </>
-              }
-              metaText={
-                <MetaRow
-                  items={[
-                    newsItem.games?.name || 'General',
-                    formatDate(newsItem.published_at),
-                  ]}
-                  size="xs"
-                />
-              }
-            />
+            {getNewsImage(newsItem, seasonalImages) ? (
+              <SafeImage
+                src={getNewsImage(newsItem, seasonalImages)!}
+                alt={newsItem.title}
+                fill
+                className="object-cover transition-transform group-hover:scale-105"
+                sizes="100vw"
+              />
+            ) : (
+              <div className="absolute inset-0 bg-gradient-to-br from-zinc-700 via-zinc-800 to-zinc-900 flex items-center justify-center">
+                <Newspaper className="w-10 h-10 text-zinc-600" />
+              </div>
+            )}
+
+            {/* News badge - top left */}
+            <span className="absolute top-2 left-2 flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-500/80">
+              <Newspaper className="w-3 h-3 text-white" />
+              <span className="text-[10px] font-medium text-white">News</span>
+            </span>
+
           </div>
-        )
-      })}
+
+          {/* Info below with padding */}
+          <div className="mt-2 px-1">
+            <h3 className="text-sm font-medium line-clamp-2 leading-snug text-white">
+              {newsItem.title}
+            </h3>
+            <p className="text-xs text-muted-foreground mt-1">
+              {newsItem.games?.name || 'Gaming'} · {relativeDaysText(newsItem.published_at)}
+            </p>
+          </div>
+        </Link>
+      ))}
     </div>
   )
 }
 
 export function HeadlinesSection({ userNews, latestNews, seasonalImages, gamePlatforms }: HeadlinesSectionProps) {
-  // Show section if we have any news (user news for hero OR latest headlines for grid)
-  if (userNews.length === 0 && latestNews.length === 0) return null
+  // Combine user news and latest news, prioritizing user news
+  const allNews = [...userNews, ...latestNews.filter(n => !userNews.find(u => u.id === n.id))]
+
+  if (allNews.length === 0) return null
 
   return (
-    <section className="relative py-8 bg-gradient-to-b from-zinc-900/50 to-transparent border-t border-b border-white/5 w-full max-w-full overflow-hidden">
-      <div className="space-y-4">
-        <SectionHeader title="Latest Headlines" href="/news" glowLine />
+    <section className="relative">
+      <div className="space-y-3">
+        <SectionHeader title="Latest News" href="/news" />
 
-        {/* Hero carousel - shows news from user's followed/backlog games */}
-        {userNews.length > 0 && (
-          <RotatingHeadline news={userNews} seasonalImages={seasonalImages} />
-        )}
-
-        {/* Latest Headlines grid - shows ALL news */}
-        {latestNews.length > 0 && (
-          <RotatingNewsGrid
-            news={latestNews}
-            seasonalImages={seasonalImages}
-            gamePlatforms={gamePlatforms}
-          />
-        )}
+        {/* 3-card grid - same size as video cards */}
+        <NewsCardsGrid
+          news={allNews}
+          seasonalImages={seasonalImages}
+          gamePlatforms={gamePlatforms}
+        />
       </div>
     </section>
   )

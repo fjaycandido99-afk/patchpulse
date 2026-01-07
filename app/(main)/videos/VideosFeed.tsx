@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import {
@@ -12,12 +12,14 @@ import {
   Clapperboard,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
+  ChevronDown,
   ExternalLink,
   Bookmark,
   Crown,
+  X,
 } from 'lucide-react'
 import Link from 'next/link'
-import { VideoPlayer } from '@/components/videos'
 import { toggleVideoBookmark, type VideoMetadata } from '../actions/bookmarks'
 import { useToastUI } from '@/components/ui/toast'
 import type { VideoWithGame } from './queries'
@@ -77,6 +79,249 @@ function getYouTubeThumbnail(youtubeId: string, quality: 'max' | 'sd' | 'hq' = '
     hq: 'hqdefault',       // 480x360
   }
   return `https://img.youtube.com/vi/${youtubeId}/${qualityMap[quality]}.jpg`
+}
+
+// Fullscreen vertical scroll video player (TikTok/Shorts style)
+function VerticalVideoPlayer({
+  videos,
+  initialIndex,
+  onClose,
+}: {
+  videos: VideoWithGame[]
+  initialIndex: number
+  onClose: () => void
+}) {
+  const [currentIndex, setCurrentIndex] = useState(initialIndex)
+  const [embedFailed, setEmbedFailed] = useState<Set<number>>(new Set())
+  const containerRef = useRef<HTMLDivElement>(null)
+  const touchStartY = useRef<number | null>(null)
+
+  const currentVideo = videos[currentIndex]
+  const typeConfig = TYPE_CONFIG[currentVideo.video_type as VideoType] || TYPE_CONFIG.other
+
+  const goToNext = useCallback(() => {
+    if (currentIndex < videos.length - 1) {
+      setCurrentIndex(prev => prev + 1)
+    }
+  }, [currentIndex, videos.length])
+
+  const goToPrev = useCallback(() => {
+    if (currentIndex > 0) {
+      setCurrentIndex(prev => prev - 1)
+    }
+  }, [currentIndex])
+
+  // Handle keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+      if (e.key === 'ArrowDown' || e.key === 'j') goToNext()
+      if (e.key === 'ArrowUp' || e.key === 'k') goToPrev()
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+      document.body.style.overflow = ''
+    }
+  }, [onClose, goToNext, goToPrev])
+
+  // Handle touch swipe
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY
+  }
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartY.current === null) return
+
+    const touchEndY = e.changedTouches[0].clientY
+    const diff = touchStartY.current - touchEndY
+    const minSwipeDistance = 50
+
+    if (Math.abs(diff) > minSwipeDistance) {
+      if (diff > 0) {
+        goToNext() // Swiped up -> next video
+      } else {
+        goToPrev() // Swiped down -> previous video
+      }
+    }
+
+    touchStartY.current = null
+  }
+
+  // Handle wheel scroll
+  const handleWheel = useCallback((e: WheelEvent) => {
+    e.preventDefault()
+    if (e.deltaY > 50) {
+      goToNext()
+    } else if (e.deltaY < -50) {
+      goToPrev()
+    }
+  }, [goToNext, goToPrev])
+
+  useEffect(() => {
+    const container = containerRef.current
+    if (container) {
+      container.addEventListener('wheel', handleWheel, { passive: false })
+      return () => container.removeEventListener('wheel', handleWheel)
+    }
+  }, [handleWheel])
+
+  const youtubeUrl = `https://www.youtube.com/watch?v=${currentVideo.youtube_id}`
+  const hasEmbedFailed = embedFailed.has(currentIndex)
+
+  return (
+    <div
+      ref={containerRef}
+      className="fixed inset-0 z-50 bg-black flex flex-col"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
+      {/* Header */}
+      <div className="absolute top-0 left-0 right-0 z-20 p-4 bg-gradient-to-b from-black/80 to-transparent" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)' }}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className={`px-2 py-1 rounded text-xs font-medium ${typeConfig.color}`}>
+              {typeConfig.label}
+            </span>
+            <span className="text-xs text-white/60">
+              {currentIndex + 1} / {videos.length}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <a
+              href={youtubeUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+            >
+              <ExternalLink className="w-5 h-5 text-white" />
+            </a>
+            <button
+              onClick={onClose}
+              className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+            >
+              <X className="w-5 h-5 text-white" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Video Player */}
+      <div className="flex-1 flex items-center justify-center">
+        <div className="relative w-full max-w-4xl aspect-video mx-4">
+          {hasEmbedFailed ? (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-900 rounded-xl">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-600 flex items-center justify-center">
+                <Play className="w-8 h-8 text-white fill-white ml-1" />
+              </div>
+              <p className="text-white/60 mb-4 text-center px-4">This video can't be embedded</p>
+              <a
+                href={youtubeUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-6 py-3 bg-red-600 hover:bg-red-500 text-white font-medium rounded-full transition-colors"
+              >
+                Watch on YouTube
+              </a>
+            </div>
+          ) : (
+            <iframe
+              key={currentVideo.youtube_id}
+              src={`https://www.youtube.com/embed/${currentVideo.youtube_id}?autoplay=1&rel=0&modestbranding=1`}
+              title={currentVideo.title}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              className="absolute inset-0 w-full h-full rounded-xl"
+              onError={() => setEmbedFailed(prev => new Set(prev).add(currentIndex))}
+            />
+          )}
+
+          {/* Fallback button */}
+          {!hasEmbedFailed && (
+            <button
+              onClick={() => setEmbedFailed(prev => new Set(prev).add(currentIndex))}
+              className="absolute bottom-4 right-4 px-3 py-1.5 text-xs bg-black/60 hover:bg-black/80 text-white/70 rounded-lg transition-colors"
+            >
+              Video not loading?
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Footer with title and info */}
+      <div className="absolute bottom-0 left-0 right-0 z-20 p-4 bg-gradient-to-t from-black/80 to-transparent" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)' }}>
+        <div className="max-w-4xl mx-auto">
+          <h3 className="text-white font-medium text-lg line-clamp-2 mb-1">
+            {currentVideo.title}
+          </h3>
+          <div className="flex items-center gap-2 text-white/60 text-sm">
+            <span>{currentVideo.channel_name || currentVideo.game?.name || 'Gaming'}</span>
+            {currentVideo.view_count > 0 && (
+              <>
+                <span>•</span>
+                <span>{formatViewCount(currentVideo.view_count)}</span>
+              </>
+            )}
+            {currentVideo.published_at && (
+              <>
+                <span>•</span>
+                <span>{getRelativeTime(currentVideo.published_at)}</span>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation arrows - desktop */}
+      <div className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 flex-col gap-2 z-20">
+        <button
+          onClick={goToPrev}
+          disabled={currentIndex === 0}
+          className={`p-3 rounded-full bg-white/10 hover:bg-white/20 transition-colors ${
+            currentIndex === 0 ? 'opacity-30 cursor-not-allowed' : ''
+          }`}
+        >
+          <ChevronUp className="w-6 h-6 text-white" />
+        </button>
+        <button
+          onClick={goToNext}
+          disabled={currentIndex === videos.length - 1}
+          className={`p-3 rounded-full bg-white/10 hover:bg-white/20 transition-colors ${
+            currentIndex === videos.length - 1 ? 'opacity-30 cursor-not-allowed' : ''
+          }`}
+        >
+          <ChevronDown className="w-6 h-6 text-white" />
+        </button>
+      </div>
+
+      {/* Swipe hint - mobile */}
+      <div className="md:hidden absolute left-1/2 -translate-x-1/2 bottom-28 text-white/40 text-xs flex items-center gap-1">
+        <ChevronUp className="w-4 h-4" />
+        <span>Swipe for more</span>
+        <ChevronDown className="w-4 h-4" />
+      </div>
+
+      {/* Video dots indicator - only show if reasonable number */}
+      {videos.length <= 20 && (
+        <div className="absolute left-4 top-1/2 -translate-y-1/2 flex flex-col gap-1 z-20 max-h-[60vh] overflow-y-auto scrollbar-hide">
+          {videos.map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => setCurrentIndex(idx)}
+              className={`w-1.5 rounded-full transition-all ${
+                idx === currentIndex
+                  ? 'bg-white h-4'
+                  : 'bg-white/30 hover:bg-white/50 h-1.5'
+              }`}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  )
 }
 
 // Hero Carousel for Desktop
@@ -295,7 +540,8 @@ function MobileVideoCard({
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         onTouchCancel={handleTouchEnd}
-        className={`relative w-full aspect-video overflow-hidden bg-zinc-800 ${bleed ? '' : 'rounded-xl'}`}
+        className={`relative aspect-video overflow-hidden bg-zinc-800 ${bleed ? '' : 'w-full rounded-xl'}`}
+        style={bleed ? { width: '100vw', marginLeft: 'calc(-50vw + 50%)', marginRight: 'calc(-50vw + 50%)' } : undefined}
       >
         {/* YouTube Preview - shows on press and hold */}
         {showPreview && (
@@ -552,7 +798,7 @@ export function VideosFeed({
   isPro = false,
 }: VideosFeedProps) {
   const [isBrowser, setIsBrowser] = useState(false)
-  const [selectedVideo, setSelectedVideo] = useState<VideoWithGame | null>(null)
+  const [selectedVideoIndex, setSelectedVideoIndex] = useState<number | null>(null)
   const [localSavedIds, setLocalSavedIds] = useState<Set<string>>(new Set(savedVideoIds))
   const [savingIds, setSavingIds] = useState<Set<string>>(new Set())
   const router = useRouter()
@@ -674,7 +920,16 @@ export function VideosFeed({
       {/* Hero Carousel - Desktop only */}
       {showHero && (
         <div className="hidden md:block">
-          <HeroCarousel videos={heroVideos} onPlay={setSelectedVideo} />
+          <HeroCarousel videos={heroVideos} onPlay={(video) => {
+            // Find the index in displayVideos
+            const idx = displayVideos.findIndex(v => v.id === video.id)
+            if (idx !== -1) {
+              setSelectedVideoIndex(idx)
+            } else {
+              // Video not in displayVideos, add it temporarily by using hero index
+              setSelectedVideoIndex(0)
+            }
+          }} />
         </div>
       )}
 
@@ -721,9 +976,9 @@ export function VideosFeed({
       {/* Mobile: YouTube-style vertical list */}
       {/* Bleed edge-to-edge for trailer/gameplay/esports sections */}
       {(() => {
-        const shouldBleed = !!(selectedType && ['trailer', 'gameplay', 'esports'].includes(selectedType))
+        const shouldBleed = !selectedType || ['trailer', 'gameplay', 'esports'].includes(selectedType)
         return (
-          <div className={`md:hidden ${shouldBleed ? '-mx-4 sm:-mx-6 lg:-mx-8' : ''}`}>
+          <div className="md:hidden">
             <div className="space-y-5">
               {displayVideos.map((video, index) => (
                 <div
@@ -733,7 +988,7 @@ export function VideosFeed({
                 >
                   <MobileVideoCard
                     video={video}
-                    onPlay={() => setSelectedVideo(video)}
+                    onPlay={() => setSelectedVideoIndex(index)}
                     isSaved={localSavedIds.has(video.id)}
                     onSave={(e) => handleSave(video, e)}
                     bleed={shouldBleed}
@@ -767,7 +1022,7 @@ export function VideosFeed({
       })()}
 
       {/* Desktop: 2-column grid */}
-      <div className="hidden md:grid md:grid-cols-2 gap-6">
+      <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         {displayVideos.map((video, index) => (
           <div
             key={video.id}
@@ -776,7 +1031,7 @@ export function VideosFeed({
           >
             <DesktopVideoCard
               video={video}
-              onPlay={() => setSelectedVideo(video)}
+              onPlay={() => setSelectedVideoIndex(index)}
               isSaved={localSavedIds.has(video.id)}
               onSave={(e) => handleSave(video, e)}
             />
@@ -805,13 +1060,12 @@ export function VideosFeed({
         </div>
       )}
 
-      {/* Video Player Modal */}
-      {selectedVideo && (
-        <VideoPlayer
-          youtubeId={selectedVideo.youtube_id}
-          title={selectedVideo.title}
-          isOpen={!!selectedVideo}
-          onClose={() => setSelectedVideo(null)}
+      {/* Vertical Video Player (TikTok/Shorts style) */}
+      {selectedVideoIndex !== null && (
+        <VerticalVideoPlayer
+          videos={displayVideos}
+          initialIndex={selectedVideoIndex}
+          onClose={() => setSelectedVideoIndex(null)}
         />
       )}
     </div>

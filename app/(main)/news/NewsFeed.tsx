@@ -119,7 +119,7 @@ const IMPORTANCE_STYLES = {
   minor: { color: 'text-blue-400', bg: 'bg-blue-500/20', border: 'border-blue-500/30', label: 'Minor' },
 }
 
-// Top Story Hero Card
+// Top Story Hero Card - with mobile bleed
 function TopStoryCard({ story, isPrimary = false }: { story: TopStory; isPrimary?: boolean }) {
   const heroImage = story.image_url || story.game?.hero_url || story.game?.cover_url
   const brandColor = story.game?.brand_color || '#6366f1'
@@ -129,67 +129,72 @@ function TopStoryCard({ story, isPrimary = false }: { story: TopStory; isPrimary
   return (
     <Link
       href={`/news/${story.id}`}
-      className="group relative overflow-hidden rounded-2xl border border-white/10 bg-black/40 block h-full"
+      className="group block"
     >
-      <div className={`relative h-full ${isPrimary ? 'aspect-[16/9] sm:aspect-[21/9]' : 'aspect-[4/3]'}`}>
-        {heroImage ? (
-          <SafeImage
-            src={heroImage}
-            alt={story.title}
-            fill
-            className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-            sizes={isPrimary ? '100vw' : '50vw'}
-            priority={isPrimary}
-          />
-        ) : (
-          <div
-            className="absolute inset-0"
-            style={{
-              background: `linear-gradient(135deg, ${brandColor}60 0%, ${brandColor}20 50%, #09090b 100%)`
-            }}
-          />
-        )}
+      {/* Thumbnail with bleed on mobile only */}
+      <div
+        className="relative overflow-hidden bg-zinc-900 w-[100vw] ml-[calc(-50vw+50%)] md:w-auto md:ml-0 md:rounded-xl"
+      >
+        <div className={`relative ${isPrimary ? 'aspect-[16/9]' : 'aspect-video'}`}>
+          {heroImage ? (
+            <SafeImage
+              src={heroImage}
+              alt={story.title}
+              fill
+              className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+              sizes="100vw"
+              priority={isPrimary}
+            />
+          ) : (
+            <div
+              className="absolute inset-0"
+              style={{
+                background: `linear-gradient(135deg, ${brandColor}60 0%, ${brandColor}20 50%, #09090b 100%)`
+              }}
+            />
+          )}
 
-        {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
+          {/* Gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
 
-        {/* Content */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5">
-          {/* Game + Meta */}
-          <div className="flex items-center gap-2 mb-2">
-            {story.game?.logo_url && (
-              <div className="relative w-5 h-5 rounded overflow-hidden bg-white/10">
-                <Image src={story.game.logo_url} alt="" fill className="object-contain" sizes="20px" />
-              </div>
-            )}
-            <span className="text-xs text-white/80">{story.game?.name || 'Gaming'}</span>
-            <span className="text-white/40">·</span>
-            <span className="text-xs text-white/60">{relativeDaysText(story.published_at)}</span>
-          </div>
+          {/* Importance badge - top right */}
+          <span className={`absolute top-2 right-2 px-2 py-0.5 rounded-full text-[10px] font-semibold border backdrop-blur-sm ${importanceStyle.bg} ${importanceStyle.color} ${importanceStyle.border}`}>
+            {importanceStyle.label}
+          </span>
 
-          {/* Title */}
-          <h3 className={`font-bold text-white leading-tight line-clamp-2 group-hover:text-primary transition-colors ${isPrimary ? 'text-lg sm:text-xl' : 'text-base'}`}>
-            {story.title}
-          </h3>
-
-          {/* Summary on primary */}
-          {isPrimary && story.summary && (
-            <p className="text-sm text-white/70 mt-2 line-clamp-2 hidden sm:block">
-              {story.summary}
-            </p>
+          {/* Source badge - top left */}
+          {story.source_name && (
+            <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full text-[10px] font-medium bg-black/50 text-white/80 backdrop-blur-sm">
+              {story.source_name}
+            </span>
           )}
         </div>
+      </div>
 
-        {/* Importance badge */}
-        <span className={`absolute top-3 right-3 px-2 py-0.5 rounded-full text-[10px] font-semibold border backdrop-blur-sm ${importanceStyle.bg} ${importanceStyle.color} ${importanceStyle.border}`}>
-          {importanceStyle.label}
-        </span>
+      {/* Content below image */}
+      <div className="mt-2 px-1">
+        {/* Game + Meta */}
+        <div className="flex items-center gap-2 mb-1">
+          {story.game?.logo_url && (
+            <div className="relative w-4 h-4 rounded overflow-hidden bg-white/10">
+              <Image src={story.game.logo_url} alt="" fill className="object-contain" sizes="16px" />
+            </div>
+          )}
+          <span className="text-xs text-white/80">{story.game?.name || 'Gaming'}</span>
+          <span className="text-white/40">·</span>
+          <span className="text-xs text-white/60">{relativeDaysText(story.published_at)}</span>
+        </div>
 
-        {/* Source badge */}
-        {story.source_name && (
-          <span className="absolute top-3 left-3 px-2 py-0.5 rounded-full text-[10px] font-medium bg-black/50 text-white/80 backdrop-blur-sm">
-            {story.source_name}
-          </span>
+        {/* Title */}
+        <h3 className={`font-medium text-white leading-snug line-clamp-2 group-hover:text-primary transition-colors ${isPrimary ? 'text-sm sm:text-base' : 'text-sm'}`}>
+          {story.title}
+        </h3>
+
+        {/* Summary */}
+        {story.summary && (
+          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+            {story.summary}
+          </p>
         )}
       </div>
     </Link>
@@ -264,22 +269,18 @@ export function NewsFeed({ news, topStories, includeRumors, sources, selectedSou
             <h2 className="font-semibold text-sm uppercase tracking-wide">Top Stories</h2>
           </div>
 
-          {topStories.length === 1 ? (
-            <div className="animate-soft-entry">
-              <TopStoryCard story={topStories[0]} isPrimary />
-            </div>
-          ) : (
-            <div className="grid gap-4 sm:grid-cols-2 auto-rows-fr">
-              <div className="animate-soft-entry h-full">
-                <TopStoryCard story={topStories[0]} />
+          {/* Stack vertically on mobile for bleed, grid on desktop */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {topStories.map((story, index) => (
+              <div
+                key={story.id}
+                className="animate-soft-entry"
+                style={{ animationDelay: `${index * 50}ms` }}
+              >
+                <TopStoryCard story={story} isPrimary={topStories.length === 1} />
               </div>
-              {topStories[1] && (
-                <div className="animate-soft-entry h-full" style={{ animationDelay: '50ms' }}>
-                  <TopStoryCard story={topStories[1]} />
-                </div>
-              )}
-            </div>
-          )}
+            ))}
+          </div>
         </section>
       )}
 
@@ -415,7 +416,7 @@ export function NewsFeed({ news, topStories, includeRumors, sources, selectedSou
       </div>
 
       {/* News grid - larger vertical cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 auto-rows-fr">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4 auto-rows-fr">
         {filteredNews.map((item, index) => (
           <div
             key={item.id}

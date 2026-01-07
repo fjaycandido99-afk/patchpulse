@@ -21,12 +21,12 @@ export function GameCarousel({
   const { openSpotlight } = useSpotlight()
   const isUpcoming = type === 'upcoming'
 
-  // Track which games are shown in each of the 4 positions
-  const [slots, setSlots] = useState([0, 1, 2, 3])
+  // Track which games are shown in each position (4 mobile, 6 desktop)
+  const [slots, setSlots] = useState([0, 1, 2, 3, 4, 5])
   // Track which slot is currently transitioning
   const [fadingSlot, setFadingSlot] = useState<number | null>(null)
 
-  const visibleCount = 4
+  const visibleCount = 6
 
   // Auto-rotate one random slot at a time
   useEffect(() => {
@@ -34,7 +34,7 @@ export function GameCarousel({
 
     const interval = setInterval(() => {
       // Pick a random slot to change
-      const slotToChange = Math.floor(Math.random() * 4)
+      const slotToChange = Math.floor(Math.random() * visibleCount)
 
       // Start fade out
       setFadingSlot(slotToChange)
@@ -100,16 +100,19 @@ export function GameCarousel({
     : 'bg-emerald-500/80 text-white'
 
   return (
-    <div className="grid grid-cols-4 gap-2">
+    <div className="grid grid-cols-4 md:grid-cols-6 gap-2 md:gap-4">
       {slots.map((gameIndex, slotIndex) => {
         const game = games[gameIndex % games.length]
         const isFading = fadingSlot === slotIndex
+
+        // Hide slots 4 and 5 on mobile (only show on md+)
+        const isDesktopOnly = slotIndex >= 4
 
         return (
           <button
             key={`slot-${slotIndex}`}
             onClick={() => handleClick(game)}
-            className="active:scale-[0.97] text-left"
+            className={`active:scale-[0.97] text-left ${isDesktopOnly ? 'hidden md:block' : ''}`}
             style={{
               opacity: isFading ? 0 : 1,
               transform: isFading ? 'scale(0.95)' : 'scale(1)',

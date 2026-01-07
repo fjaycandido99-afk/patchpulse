@@ -7,6 +7,7 @@ type SectionHeaderProps = {
   actionLabel?: string
   badge?: string | number
   glowLine?: boolean
+  divider?: boolean
 }
 
 export function SectionHeader({
@@ -14,10 +15,11 @@ export function SectionHeader({
   href,
   actionLabel = 'View all',
   badge,
-  glowLine = false,
+  glowLine = true,
+  divider = true,
 }: SectionHeaderProps) {
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-2">
           <h2 className="text-lg font-bold tracking-tight text-white">
@@ -39,18 +41,26 @@ export function SectionHeader({
           </Link>
         )}
       </div>
-      {glowLine && <GlowDivider />}
+      {divider && (glowLine ? <GlowDivider /> : <SimpleDivider />)}
     </div>
+  )
+}
+
+function SimpleDivider() {
+  return (
+    <div className="h-px w-full bg-white/10" />
   )
 }
 
 function GlowDivider() {
   return (
-    <div className="relative h-px w-full overflow-hidden">
-      {/* Base line */}
-      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
-      {/* Glow effect */}
-      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/20 to-transparent blur-sm" />
+    <div className="relative h-0.5 w-full overflow-visible">
+      {/* Base line - stronger */}
+      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/80 to-transparent" />
+      {/* Inner glow */}
+      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/50 to-transparent blur-sm" />
+      {/* Outer glow */}
+      <div className="absolute -inset-1 bg-gradient-to-r from-transparent via-primary/30 to-transparent blur-md" />
     </div>
   )
 }
