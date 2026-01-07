@@ -3,6 +3,9 @@ import { createClient } from '@supabase/supabase-js'
 import webpush from 'web-push'
 import { verifyCronAuth } from '@/lib/cron-auth'
 
+export const runtime = 'nodejs'
+export const maxDuration = 30 // 30 seconds max for push notifications
+
 // Lazy initialization to avoid build-time errors
 let vapidConfigured = false
 

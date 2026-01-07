@@ -92,33 +92,37 @@ export async function GET(req: Request) {
 
     const allDeals: Map<string, CheapSharkDeal> = new Map()
 
-    for (const url of urls) {
-      try {
-        const response = await fetch(url, {
-          headers: {
-            'User-Agent': 'PatchPulse/1.0 (https://patchpulse.app)',
-          },
+    // Fetch all URLs in parallel with timeout
+    const fetchResults = await Promise.allSettled(
+      urls.map(url =>
+        Promise.race([
+          fetch(url, {
+            headers: { 'User-Agent': 'PatchPulse/1.0 (https://patchpulse.app)' },
+          }).then(async res => {
+            if (!res.ok) return []
+            return res.json() as Promise<CheapSharkDeal[]>
+          }),
+          // 10 second timeout per request
+          new Promise<CheapSharkDeal[]>((_, reject) =>
+            setTimeout(() => reject(new Error('Timeout')), 10000)
+          )
+        ])
+      )
+    )
+
+    // Process results
+    fetchResults.forEach((result, i) => {
+      if (result.status === 'fulfilled') {
+        const deals = result.value
+        deals.forEach(deal => {
+          const existing = allDeals.get(deal.gameID)
+          if (!existing || parseFloat(deal.savings) > parseFloat(existing.savings)) {
+            allDeals.set(deal.gameID, deal)
+          }
         })
-
-        if (response.ok) {
-          const deals: CheapSharkDeal[] = await response.json()
-          deals.forEach(deal => {
-            // Use gameID as unique key to avoid duplicates
-            // Keep the deal with highest savings if duplicate
-            const existing = allDeals.get(deal.gameID)
-            if (!existing || parseFloat(deal.savings) > parseFloat(existing.savings)) {
-              allDeals.set(deal.gameID, deal)
-            }
-          })
-          console.log(`[CRON] Fetched ${deals.length} deals from: ${url.split('?')[1]?.slice(0, 30)}...`)
-        }
-
-        // Small delay between requests to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 200))
-      } catch (e) {
-        console.log(`[CRON] Failed to fetch from URL:`, e)
+        console.log(`[CRON] Fetched ${deals.length} deals from source ${i + 1}`)
       }
-    }
+    })
 
     const cheapSharkDeals = Array.from(allDeals.values())
     console.log(`[CRON] Total unique deals: ${cheapSharkDeals.length}`)

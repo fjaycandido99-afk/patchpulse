@@ -4,6 +4,7 @@ import { queueAIJob } from '@/lib/ai/jobs'
 import { verifyCronAuth } from '@/lib/cron-auth'
 
 export const runtime = 'nodejs'
+export const maxDuration = 60 // 1 minute max for seasonal scan
 
 export async function GET(req: Request) {
   if (!verifyCronAuth(req)) {

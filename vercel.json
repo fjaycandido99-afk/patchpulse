@@ -6,27 +6,27 @@
     },
     {
       "path": "/api/cron/process-ai-jobs",
-      "schedule": "*/5 * * * *"
+      "schedule": "1,6,11,16,21,26,31,36,41,46,51,56 * * * *"
     },
     {
       "path": "/api/cron/fetch-content",
-      "schedule": "*/15 * * * *"
+      "schedule": "0,15,30,45 * * * *"
     },
     {
       "path": "/api/cron/fetch-news",
-      "schedule": "*/10 * * * *"
+      "schedule": "5,15,25,35,45,55 * * * *"
     },
     {
       "path": "/api/admin/backfill-game-images?discover=true&limit=30",
-      "schedule": "*/30 * * * *"
+      "schedule": "10,40 * * * *"
     },
     {
       "path": "/api/cron/fetch-deals",
-      "schedule": "*/15 * * * *"
+      "schedule": "7,22,37,52 * * * *"
     },
     {
       "path": "/api/cron/backfill-news-images",
-      "schedule": "*/5 * * * *"
+      "schedule": "3,8,13,18,23,28,33,38,43,48,53,58 * * * *"
     },
     {
       "path": "/api/cron/discover-games",

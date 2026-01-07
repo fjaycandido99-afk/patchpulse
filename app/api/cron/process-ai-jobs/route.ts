@@ -3,6 +3,7 @@ import { processAIJobsBatch } from '@/app/(admin)/admin/ai/worker'
 import { verifyCronAuth } from '@/lib/cron-auth'
 
 export const runtime = 'nodejs'
+export const maxDuration = 60 // 1 minute max for AI jobs batch
 
 export async function GET(req: Request) {
   if (!verifyCronAuth(req)) {
