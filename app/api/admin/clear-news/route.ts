@@ -18,26 +18,46 @@ export async function POST(req: Request) {
   try {
     const supabase = createAdminClient()
 
-    // Delete all news items older than 1 hour (keeps very recent ones)
-    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
+    // Check if we should clear all (for re-fetch) or just old ones
+    const clearAll = url.searchParams.get('all') === 'true'
 
-    const { error, count } = await supabase
+    // Delete news items older than 3 days (or all if clearAll), excluding bookmarked ones
+    const cutoffDate = clearAll
+      ? new Date().toISOString() // All items
+      : new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString() // 3 days ago
+
+    // First get IDs of bookmarked news
+    const { data: bookmarkedNews } = await supabase
+      .from('bookmarks')
+      .select('news_id')
+      .not('news_id', 'is', null)
+
+    const bookmarkedIds = bookmarkedNews?.map(b => b.news_id).filter(Boolean) || []
+
+    // Delete old news that aren't bookmarked
+    let query = supabase
       .from('news_items')
       .delete()
-      .lt('created_at', oneHourAgo)
-      .select('id', { count: 'exact' })
+      .lt('created_at', cutoffDate)
+
+    if (bookmarkedIds.length > 0) {
+      query = query.not('id', 'in', `(${bookmarkedIds.join(',')})`)
+    }
+
+    const { error, count } = await query.select('id', { count: 'exact' })
 
     if (error) {
       console.error('Error clearing news:', error)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    console.log(`[ADMIN] Cleared ${count} old news items`)
+    console.log(`[ADMIN] Cleared ${count} old news items (kept ${bookmarkedIds.length} bookmarked)`)
 
     return NextResponse.json({
       ok: true,
       cleared: count,
-      message: `Cleared ${count} news items. New fetch will add fresh content.`
+      keptBookmarked: bookmarkedIds.length,
+      message: `Cleared ${count} news items older than 3 days. Kept ${bookmarkedIds.length} bookmarked items.`
     })
   } catch (error) {
     console.error('Error in clear-news:', error)
