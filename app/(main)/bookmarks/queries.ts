@@ -206,14 +206,56 @@ export async function getBookmarkedDeals(): Promise<BookmarkedDeal[]> {
     return []
   }
 
+  // Get current deal prices from the deals table
+  const dealIds = bookmarks.filter(b => b.metadata).map(b => b.entity_id)
+
+  let currentDeals: Map<string, { sale_price: number; discount_percent: number }> = new Map()
+
+  if (dealIds.length > 0) {
+    const { data: activeDeals } = await supabase
+      .from('deals')
+      .select('id, sale_price, discount_percent')
+      .in('id', dealIds)
+
+    if (activeDeals) {
+      currentDeals = new Map(activeDeals.map(d => [d.id, { sale_price: d.sale_price, discount_percent: d.discount_percent }]))
+    }
+  }
+
   return bookmarks
     .filter(b => b.metadata)
-    .map(b => ({
-      id: b.id,
-      entity_id: b.entity_id,
-      created_at: b.created_at,
-      metadata: b.metadata as DealMetadata,
-    }))
+    .map(b => {
+      const savedMetadata = b.metadata as DealMetadata
+      const currentDeal = currentDeals.get(b.entity_id)
+
+      // If deal is still active, use current price; otherwise mark as ended
+      if (currentDeal) {
+        return {
+          id: b.id,
+          entity_id: b.entity_id,
+          created_at: b.created_at,
+          metadata: {
+            ...savedMetadata,
+            salePrice: currentDeal.sale_price,
+            savings: currentDeal.discount_percent,
+            saleEnded: false,
+          },
+        }
+      } else {
+        // Sale ended - show original price
+        return {
+          id: b.id,
+          entity_id: b.entity_id,
+          created_at: b.created_at,
+          metadata: {
+            ...savedMetadata,
+            salePrice: savedMetadata.normalPrice, // Revert to normal price
+            savings: 0,
+            saleEnded: true,
+          },
+        }
+      }
+    })
 }
 
 export type BookmarkedRecommendation = {

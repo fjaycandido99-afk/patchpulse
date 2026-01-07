@@ -41,6 +41,7 @@ export type DealMetadata = {
   dealUrl: string
   steamAppId: string | null
   savedAt: string
+  saleEnded?: boolean
 }
 
 export async function toggleBookmark(

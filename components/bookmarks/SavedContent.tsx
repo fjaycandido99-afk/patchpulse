@@ -51,6 +51,7 @@ type BookmarkedDeal = {
     dealUrl: string
     steamAppId: string | null
     savedAt: string
+    saleEnded?: boolean
   }
 }
 
@@ -505,11 +506,12 @@ export function SavedContent({ deals, patches, news, recommendations = [], video
                   ? `https://cdn.akamai.steamstatic.com/steam/apps/${item.metadata.steamAppId}/header.jpg`
                   : item.metadata.thumb
                 const isRemoving = removingIds.has(item.id)
+                const saleEnded = item.metadata.saleEnded
 
                 return (
                   <div
                     key={item.id}
-                    className={`group relative flex flex-col overflow-hidden rounded-xl border border-border hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 transition-all bg-card ${isRemoving ? 'opacity-50' : ''}`}
+                    className={`group relative flex flex-col overflow-hidden rounded-xl border border-border hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 transition-all bg-card ${isRemoving ? 'opacity-50' : ''} ${saleEnded ? 'opacity-75' : ''}`}
                   >
                     {/* Unsave button */}
                     <button
@@ -533,7 +535,7 @@ export function SavedContent({ deals, patches, news, recommendations = [], video
                             src={headerImage}
                             alt={item.metadata.title}
                             fill
-                            className="object-cover transition-transform duration-300 group-hover:scale-105"
+                            className={`object-cover transition-transform duration-300 group-hover:scale-105 ${saleEnded ? 'grayscale' : ''}`}
                             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                             unoptimized
                           />
@@ -542,9 +544,15 @@ export function SavedContent({ deals, patches, news, recommendations = [], video
                             <Gamepad2 className="h-12 w-12 text-muted-foreground" />
                           </div>
                         )}
-                        <span className="absolute top-2 left-2 z-10 rounded-lg bg-green-500 px-2 py-1 text-sm font-bold text-white shadow-lg">
-                          -{item.metadata.savings}%
-                        </span>
+                        {saleEnded ? (
+                          <span className="absolute top-2 left-2 z-10 rounded-lg bg-zinc-600 px-2 py-1 text-sm font-bold text-white shadow-lg">
+                            Sale Ended
+                          </span>
+                        ) : (
+                          <span className="absolute top-2 left-2 z-10 rounded-lg bg-green-500 px-2 py-1 text-sm font-bold text-white shadow-lg">
+                            -{item.metadata.savings}%
+                          </span>
+                        )}
                         <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
                         <div className="absolute inset-x-0 bottom-0 p-3">
                           <h3 className="text-sm font-bold text-white line-clamp-1 drop-shadow-lg">
@@ -554,8 +562,14 @@ export function SavedContent({ deals, patches, news, recommendations = [], video
                       </div>
                       <div className="flex items-center justify-between gap-2 p-3 bg-card">
                         <div className="flex items-center gap-2">
-                          <span className="text-xs text-muted-foreground line-through">${item.metadata.normalPrice.toFixed(2)}</span>
-                          <span className="text-lg font-bold text-green-400">${item.metadata.salePrice.toFixed(2)}</span>
+                          {saleEnded ? (
+                            <span className="text-lg font-bold text-foreground">${item.metadata.normalPrice.toFixed(2)}</span>
+                          ) : (
+                            <>
+                              <span className="text-xs text-muted-foreground line-through">${item.metadata.normalPrice.toFixed(2)}</span>
+                              <span className="text-lg font-bold text-green-400">${item.metadata.salePrice.toFixed(2)}</span>
+                            </>
+                          )}
                         </div>
                         <div className="flex items-center gap-1 text-muted-foreground">
                           <span className="text-xs">{item.metadata.store}</span>
