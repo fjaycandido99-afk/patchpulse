@@ -723,8 +723,8 @@ export function VideosFeed({
       {(() => {
         const shouldBleed = !!(selectedType && ['trailer', 'gameplay', 'esports'].includes(selectedType))
         return (
-          <div className="md:hidden">
-            <div className={`space-y-5 ${shouldBleed ? '-mx-4' : ''}`}>
+          <div className={`md:hidden ${shouldBleed ? '-mx-4 sm:-mx-6 lg:-mx-8' : ''}`}>
+            <div className="space-y-5">
               {displayVideos.map((video, index) => (
                 <div
                   key={video.id}
