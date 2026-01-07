@@ -268,6 +268,11 @@ export function PlayRecommendations() {
         {initialLoading ? 'Loading...' : result ? 'Get New Recommendations' : 'Get Recommendations'}
       </button>
 
+      <p className="text-xs text-muted-foreground text-center mt-2">
+        <Clock className="w-3 h-3 inline mr-1" />
+        Recommendations refresh daily. Save ones you like to keep them!
+      </p>
+
       {error && (
         <div className="mt-4 px-3 py-2 rounded-lg bg-red-500/10 text-red-400 text-sm">
           {error}
