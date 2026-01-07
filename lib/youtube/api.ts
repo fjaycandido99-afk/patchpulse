@@ -50,7 +50,7 @@ function parseDuration(duration: string): number {
 
 // Search keywords for each video type - all gaming specific
 const TYPE_KEYWORDS: Record<VideoType, string[]> = {
-  trailer: ['new game trailer 2025', 'latest game trailer', 'official game trailer 2025', 'new gameplay trailer', 'game reveal trailer 2025'],
+  trailer: ['official trailer', 'reveal trailer', 'announcement trailer', 'launch trailer', 'gameplay trailer'],
   clips: ['gaming shorts', 'game clips shorts', 'gaming funny shorts', 'streamer shorts', 'gaming moments shorts', 'viral gaming shorts'],
   gameplay: ['gaming top 10', 'best gaming plays', 'game highlights compilation', 'gaming montage', 'video game compilation'],
   esports: ['esports tournament highlights', 'gaming grand finals', 'esports championship', 'pro gaming', 'competitive gaming'],
@@ -95,6 +95,18 @@ const OFFICIAL_CHANNELS: Record<string, string[]> = {
   'rocket-league': ['UCYzPXprvl5Y-Sf0g4vX-m6g'], // Rocket League Esports
   'rainbow-six-siege': ['UCWKHac5bjhsUtSnMDFCT-7A'], // Rainbow Six Esports
 }
+
+// Major gaming media channels that post official trailers
+const TRAILER_CHANNELS = [
+  'UCKy1dAqELo0zrOtPkf0eTMw', // IGN
+  'UCbu2SsF-Or3Rsn3NxqODImw', // GameSpot
+  'UC0fDG3byEcMtbOqPMymDNbw', // GameTrailers
+  'UC-2Y8dQb0S6DtpxNgAKoJKA', // PlayStation
+  'UCXGgrKt94gR6lmN4aN3mYTg', // Xbox
+  'UCVg9nCmmfIyP4QcGOnZZ9Qg', // Nintendo of America
+  'UCJx5KP-pCvnhk6Owrg-M5uA', // PC Gamer
+  'UCi8e0iOVk1fEOogdfu4YgfA', // GameInformer
+]
 
 // Games that have significant esports scenes - only fetch esports content for these
 const ESPORTS_GAMES = new Set([
@@ -168,10 +180,8 @@ export async function searchGameVideos(
       params.set('videoDuration', durationConfig.youtubeFilter)
     }
 
-    // For trailers, prioritize official channels
-    if (videoType === 'trailer' && officialChannels && officialChannels.length > 0) {
-      params.set('channelId', officialChannels[0])
-    }
+    // Note: We no longer restrict to official channels - let YouTube find the best results
+    // Official channels are still listed for reference but we search broadly
 
     const response = await fetch(`${YOUTUBE_API_BASE}/search?${params}`)
 
@@ -278,11 +288,12 @@ export async function fetchGameVideos(
           }
         }
 
-        // Minimum 5k views for quality content
+        // Minimum view threshold - lower for trailers (new releases), higher for clips
         if (videoDetails) {
           const viewCount = parseInt(videoDetails.statistics.viewCount) || 0
-          if (viewCount < 5000) {
-            console.log(`[YouTube] Skipping ${videoId} - only ${viewCount} views (min 5k required)`)
+          const minViews = videoType === 'trailer' ? 1000 : 5000
+          if (viewCount < minViews) {
+            console.log(`[YouTube] Skipping ${videoId} - only ${viewCount} views (min ${minViews} required)`)
             continue
           }
         }
@@ -496,6 +507,134 @@ export async function fetchViralGamingVideos(): Promise<{ success: boolean; adde
   return { success: true, addedCount }
 }
 
+// Fetch official trailers from major gaming media channels (IGN, GameSpot, PlayStation, etc.)
+export async function fetchOfficialTrailers(): Promise<{ success: boolean; addedCount: number }> {
+  const apiKey = getYouTubeApiKey()
+  if (!apiKey) {
+    return { success: false, addedCount: 0 }
+  }
+
+  const supabase = createAdminClient()
+  let addedCount = 0
+
+  // Pick 2 random channels to search this run (to spread quota)
+  const shuffled = [...TRAILER_CHANNELS].sort(() => Math.random() - 0.5)
+  const selectedChannels = shuffled.slice(0, 2)
+
+  for (const channelId of selectedChannels) {
+    try {
+      // Search for recent trailers on this channel
+      const twoWeeksAgo = new Date()
+      twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14)
+
+      const params = new URLSearchParams({
+        part: 'snippet',
+        channelId: channelId,
+        q: 'trailer',
+        type: 'video',
+        maxResults: '10',
+        order: 'date',
+        publishedAfter: twoWeeksAgo.toISOString(),
+        videoCategoryId: '20', // Gaming category
+        videoDuration: 'medium', // 4-20 min
+        key: apiKey,
+      })
+
+      const response = await fetch(`${YOUTUBE_API_BASE}/search?${params}`)
+      if (!response.ok) continue
+
+      const data = await response.json()
+      const videos = data.items || []
+
+      if (videos.length === 0) continue
+
+      // Get video details
+      const videoIds = videos.map((v: YouTubeSearchItem) => v.id.videoId)
+      const details = await getVideoDetails(videoIds)
+
+      // Try to match videos to games in our database
+      for (const video of videos as YouTubeSearchItem[]) {
+        const videoId = video.id.videoId
+        const videoDetails = details.get(videoId)
+        const title = video.snippet.title
+
+        // Filter trailers by duration (1-5 min)
+        if (videoDetails) {
+          const duration = parseDuration(videoDetails.contentDetails.duration)
+          if (duration < 60 || duration > 300) continue
+
+          // Minimum 1k views for trailers
+          const viewCount = parseInt(videoDetails.statistics.viewCount) || 0
+          if (viewCount < 1000) continue
+        }
+
+        // Skip if not actually a trailer
+        const lowerTitle = title.toLowerCase()
+        if (!lowerTitle.includes('trailer') && !lowerTitle.includes('reveal') && !lowerTitle.includes('announce')) {
+          continue
+        }
+
+        // Check if already exists
+        const { data: existing } = await supabase
+          .from('game_videos')
+          .select('id')
+          .eq('youtube_id', videoId)
+          .single()
+
+        if (existing) continue
+
+        // Try to find a matching game in our database
+        const { data: matchingGames } = await supabase
+          .from('games')
+          .select('id, name')
+          .limit(50)
+
+        let gameId: string | null = null
+        if (matchingGames) {
+          for (const game of matchingGames) {
+            if (lowerTitle.includes(game.name.toLowerCase())) {
+              gameId = game.id
+              break
+            }
+          }
+        }
+
+        const thumbnail = video.snippet.thumbnails.high?.url ||
+                          video.snippet.thumbnails.medium?.url ||
+                          video.snippet.thumbnails.default?.url
+
+        const { error } = await supabase
+          .from('game_videos')
+          .insert({
+            game_id: gameId, // May be null if no match
+            youtube_id: videoId,
+            title: video.snippet.title,
+            description: video.snippet.description?.slice(0, 500),
+            thumbnail_url: thumbnail,
+            channel_name: video.snippet.channelTitle,
+            channel_id: video.snippet.channelId,
+            video_type: 'trailer',
+            published_at: video.snippet.publishedAt,
+            view_count: videoDetails ? parseInt(videoDetails.statistics.viewCount) : 0,
+            duration_seconds: videoDetails ? parseDuration(videoDetails.contentDetails.duration) : 0,
+          })
+
+        if (!error) {
+          addedCount++
+          console.log(`[YouTube] Added official trailer: ${title}`)
+        }
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 200))
+    } catch (error) {
+      console.error(`[YouTube] Failed to fetch from channel ${channelId}:`, error)
+    }
+  }
+
+  console.log(`[YouTube] Added ${addedCount} official trailers from gaming channels`)
+  return { success: true, addedCount }
+}
+
 // Quota allocation per category (total ~2,250 units/run, 4 runs/day = ~9,000/day)
 // YouTube API: Search = 100 units, Video details = 1 unit
 const QUOTA_CONFIG = {
@@ -613,20 +752,50 @@ export async function fetchAllGameVideos() {
   }
   const errors: string[] = []
 
-  // 1. TRAILERS (35% quota) - Prioritize upcoming/new releases
+  // 1. TRAILERS (35% quota) - Mix of upcoming releases + popular followed games
   console.log('[YouTube] Fetching TRAILERS...')
+
+  // Get upcoming/recent releases (last 90 days to next 180 days)
   const { data: upcomingGames } = await supabase
     .from('games')
     .select('id, name, slug')
     .gte('release_date', new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
+    .lte('release_date', new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
     .order('release_date', { ascending: true })
-    .limit(QUOTA_CONFIG.trailers.gamesPerRun)
+    .limit(4)
 
-  if (upcomingGames && upcomingGames.length > 0) {
-    const trailerResult = await processVideoBatch(upcomingGames, 'trailer')
+  // Also get popular games that users follow (for DLC/update trailers)
+  const popularGamesForTrailers = await getPopularGames(4)
+
+  // Combine and dedupe
+  const trailerGames = [...(upcomingGames || [])]
+  const existingIds = new Set(trailerGames.map(g => g.id))
+  for (const game of popularGamesForTrailers) {
+    if (!existingIds.has(game.id)) {
+      trailerGames.push(game)
+      if (trailerGames.length >= QUOTA_CONFIG.trailers.gamesPerRun) break
+    }
+  }
+
+  // 1a. Fetch trailers for specific games
+  if (trailerGames.length > 0) {
+    console.log(`[YouTube] Searching trailers for: ${trailerGames.map(g => g.name).join(', ')}`)
+    const trailerResult = await processVideoBatch(trailerGames, 'trailer')
     results.trailers.added = trailerResult.added
     results.trailers.games = trailerResult.gameNames
     totalAdded += trailerResult.added
+  }
+
+  // 1b. Also fetch official trailers from major gaming channels (IGN, GameSpot, etc.)
+  console.log('[YouTube] Fetching official trailers from gaming channels...')
+  try {
+    const officialResult = await fetchOfficialTrailers()
+    if (officialResult.success) {
+      results.trailers.added += officialResult.addedCount
+      totalAdded += officialResult.addedCount
+    }
+  } catch (error) {
+    console.error('[YouTube] Failed to fetch official trailers:', error)
   }
 
   // Check time
