@@ -13,6 +13,13 @@ export const metadata: Metadata = {
   publisher: 'PatchPulse',
   manifest: '/manifest.json',
   metadataBase: new URL('https://patchpulse.app'),
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/icon.png', type: 'image/png', sizes: '512x512' },
+    ],
+    apple: '/apple-icon.png',
+  },
   alternates: {
     canonical: '/',
   },
