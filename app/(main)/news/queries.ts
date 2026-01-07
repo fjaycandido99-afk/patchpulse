@@ -271,7 +271,7 @@ export async function getNewsGroupedByGame(params: {
   limit?: number
 } = {}): Promise<GroupedNewsResult> {
   const supabase = await createClient()
-  const { includeRumors = true, limit = 50 } = params
+  const { includeRumors = true, limit = 100 } = params
 
   const {
     data: { user },
@@ -451,7 +451,7 @@ export async function getFlatNewsList(params: {
   } | null
 }[]> {
   const supabase = await createClient()
-  const { includeRumors = true, source, limit = 50 } = params
+  const { includeRumors = true, source, limit = 100 } = params
 
   let query = supabase
     .from('news_items')
