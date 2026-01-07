@@ -3,7 +3,16 @@ import { createAdminClient } from '@/lib/supabase/admin'
 
 export const runtime = 'nodejs'
 
+// Support both GET and POST
+export async function GET(req: Request) {
+  return handleClearNews(req)
+}
+
 export async function POST(req: Request) {
+  return handleClearNews(req)
+}
+
+async function handleClearNews(req: Request) {
   // Simple auth check - require secret
   const url = new URL(req.url)
   const secret = url.searchParams.get('secret')
