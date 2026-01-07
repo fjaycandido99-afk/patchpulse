@@ -1,6 +1,9 @@
 import { getFlatNewsList, getTopStories, getNewsSources } from './queries'
 import { NewsFeed } from './NewsFeed'
 
+// Force dynamic rendering to always show latest news
+export const dynamic = 'force-dynamic'
+
 type SearchParams = {
   rumors?: string
   source?: string

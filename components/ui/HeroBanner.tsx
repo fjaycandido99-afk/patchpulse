@@ -15,9 +15,9 @@ export function HeroBanner({ imageUrl, altText, fallbackColor = '#1a1a2e' }: Her
 
   return (
     <>
-      {/* Mobile: Fixed 16:9 banner - below header */}
+      {/* Mobile: Fixed banner - below header */}
       <div className="md:hidden fixed inset-x-0 top-14 -z-10">
-        <div className="relative w-full aspect-video max-h-[200px] sm:max-h-[240px]">
+        <div className="relative w-full h-[280px] sm:h-[320px]">
           {imageUrl && !imageError ? (
             <>
               <Image
@@ -30,7 +30,7 @@ export function HeroBanner({ imageUrl, altText, fallbackColor = '#1a1a2e' }: Her
                 unoptimized
                 onError={() => setImageError(true)}
               />
-              <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/30 to-background" />
+              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/20 to-background" />
             </>
           ) : (
             <div
@@ -44,7 +44,7 @@ export function HeroBanner({ imageUrl, altText, fallbackColor = '#1a1a2e' }: Her
       </div>
 
       {/* Desktop: Fixed parallax banner */}
-      <div className="hidden md:block fixed inset-x-0 top-0 h-[450px] -z-10 left-64">
+      <div className="hidden md:block fixed inset-x-0 top-0 h-[500px] -z-10 left-64">
         {imageUrl && !imageError ? (
           <>
             <Image
@@ -57,7 +57,7 @@ export function HeroBanner({ imageUrl, altText, fallbackColor = '#1a1a2e' }: Her
               unoptimized
               onError={() => setImageError(true)}
             />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/40 to-background" />
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/20 to-background" />
           </>
         ) : (
           <div

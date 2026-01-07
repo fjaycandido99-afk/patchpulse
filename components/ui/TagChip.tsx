@@ -14,14 +14,14 @@ export function TagChip({
   const isClickable = !!onClick
 
   const baseStyles =
-    'inline-flex items-center whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-medium border border-white/10 transition-colors'
+    'inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-medium border backdrop-blur-sm transition-all duration-200'
 
   const stateStyles = active
-    ? 'bg-white/15 text-zinc-100'
-    : 'bg-white/5 text-zinc-300'
+    ? 'bg-primary/20 text-primary border-primary/40 shadow-sm shadow-primary/10'
+    : 'bg-white/5 text-zinc-400 border-white/10 hover:text-zinc-200'
 
   const interactiveStyles = isClickable
-    ? 'cursor-pointer hover:bg-white/10 hover:text-zinc-100'
+    ? 'cursor-pointer hover:bg-white/10 hover:border-white/20 hover:scale-105 active:scale-95'
     : ''
 
   if (isClickable) {

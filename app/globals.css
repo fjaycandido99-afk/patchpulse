@@ -48,7 +48,11 @@
 
 @layer components {
   .input {
-    @apply w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-white placeholder:text-zinc-500 focus:border-white/20 focus:outline-none focus:ring-1 focus:ring-white/20 transition-colors;
+    @apply w-full rounded-xl border border-white/10 bg-zinc-900/80 backdrop-blur-sm px-4 py-2.5 text-white placeholder:text-zinc-500 focus:border-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-200;
+  }
+
+  .input-lg {
+    @apply w-full rounded-xl border border-white/10 bg-zinc-900/80 backdrop-blur-sm px-4 py-3 text-lg text-white placeholder:text-zinc-500 focus:border-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-200;
   }
 
   .btn-primary {
@@ -297,8 +301,13 @@
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: 50;
+    z-index: 60;
     padding-top: env(safe-area-inset-top, 0);
+    pointer-events: none;
+  }
+
+  .search-overlay > * {
+    pointer-events: auto;
   }
 
   /* Command palette overlay */

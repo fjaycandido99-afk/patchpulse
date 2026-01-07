@@ -72,7 +72,7 @@ function getCasualScore(score: number): number {
   return Math.min(100, Math.round(score * 7))
 }
 
-// Visual meter component
+// Visual meter component - exact copy from news page
 function ImpactMeter({ label, icon: Icon, value, color }: {
   label: string
   icon: typeof Trophy
@@ -115,28 +115,21 @@ function SectionDivider() {
   )
 }
 
-// What Changed icon card
+// What Changed icon card - matches news TopicCard style exactly
 function ChangeCard({ category, change }: { category?: string; change: string }) {
   const { icon: Icon, color, bg } = getCategoryIcon(category)
 
   return (
-    <div className="flex items-start gap-3 p-4 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors">
-      <div className={`w-10 h-10 rounded-lg ${bg} flex items-center justify-center flex-shrink-0`}>
-        <Icon className={`w-5 h-5 ${color}`} />
+    <div className="flex items-center gap-2 px-3 py-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors">
+      <div className={`w-8 h-8 rounded-lg ${bg} flex items-center justify-center flex-shrink-0`}>
+        <Icon className={`w-4 h-4 ${color}`} />
       </div>
-      <div className="flex-1 min-w-0">
-        {category && (
-          <span className={`text-xs font-semibold uppercase tracking-wide ${color}`}>
-            {category}
-          </span>
-        )}
-        <p className="text-sm text-zinc-200 mt-0.5 leading-relaxed">{change}</p>
-      </div>
+      <span className="text-sm font-medium text-zinc-200">{category || change}</span>
     </div>
   )
 }
 
-// Since You Last Played card
+// Since You Last Played card - matches news page exactly
 function SinceLastPlayedCard({
   gameName,
   logoUrl,
@@ -230,7 +223,7 @@ export default async function PatchDetailPage({
       <HeroBanner imageUrl={heroImage} altText={patch.title} fallbackColor={brandColor} />
 
       {/* Spacer for hero */}
-      <div className="h-[200px] sm:h-[240px] md:h-[350px]" />
+      <div className="h-[280px] sm:h-[320px] md:h-[400px]" />
 
       {/* Content that scrolls over hero */}
       <div className="relative z-10 pt-6 pb-8 min-h-screen space-y-4 px-0">
@@ -301,14 +294,9 @@ export default async function PatchDetailPage({
         <div className="space-y-6">
         {/* 2. QUICK IMPACT - Visual Meters */}
         <Card className="p-5 space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Zap className={`w-5 h-5 ${getImpactColor(patch.impact_score)}`} />
-              <h3 className="font-semibold">Quick Impact</h3>
-            </div>
-            <div className={`text-2xl font-bold ${getImpactColor(patch.impact_score)}`}>
-              {patch.impact_score}/10
-            </div>
+          <div className="flex items-center gap-2">
+            <Zap className="w-5 h-5 text-blue-400" />
+            <h3 className="font-semibold">Quick Impact</h3>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
@@ -340,7 +328,7 @@ export default async function PatchDetailPage({
                 <h2 className="text-lg font-semibold">What Changed</h2>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="flex flex-wrap gap-2">
                 {keyChanges.slice(0, 4).map((item, index) => (
                   <ChangeCard key={index} category={item.category} change={item.change} />
                 ))}

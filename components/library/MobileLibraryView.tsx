@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { Gamepad2, Plus, Search, X, Eye, FileText, Clock } from 'lucide-react'
+import { Gamepad2, Plus, Search, X, Eye, FileText, Clock, Users } from 'lucide-react'
 import { MobileLibraryHeader } from './MobileLibraryHeader'
 import { SegmentedControl } from './SegmentedControl'
 import { FloatingActionButton } from './FloatingActionButton'
 import { MobileGameCard } from './MobileGameCard'
+import { useSteamPlayerCounts } from './SteamStats'
 import Image from 'next/image'
 import Link from 'next/link'
 import { searchGamesForBacklog, followAndAddToBacklog } from '@/app/(main)/backlog/actions'
@@ -117,6 +118,14 @@ export function MobileLibraryView({
     ...board.dropped,
   ]
 
+  // Collect all Steam app IDs for player count fetching
+  const allSteamAppIds = [
+    ...allBacklogItems.map(item => item.game.steam_app_id).filter((id): id is number => !!id),
+    ...followedGamesWithActivity.map(g => g.steam_app_id).filter((id): id is number => !!id),
+  ]
+  const uniqueSteamAppIds = [...new Set(allSteamAppIds)]
+  const { counts: playerCounts } = useSteamPlayerCounts(uniqueSteamAppIds)
+
   // Filter games based on search
   const filteredItems = searchQuery
     ? allBacklogItems.filter(item =>
@@ -170,6 +179,8 @@ export function MobileLibraryView({
                   hasNewPatch={!!item.latestPatch}
                   patchCount={item.recentPatches.length}
                   lastPlayedText={item.last_played_at ? `Last played recently` : null}
+                  steamStats={item.steamStats}
+                  playerCount={item.game.steam_app_id ? playerCounts[item.game.steam_app_id.toString()] : null}
                 />
               ))}
             </div>
@@ -177,7 +188,7 @@ export function MobileLibraryView({
         </div>
       ) : (
         <div className="px-4">
-          <MobileWatchlistGrid games={followedGamesWithActivity.filter(g => !g.inBacklog)} />
+          <MobileWatchlistGrid games={followedGamesWithActivity.filter(g => !g.inBacklog)} playerCounts={playerCounts} />
         </div>
       )}
 
@@ -310,7 +321,7 @@ function AddGameModal({
 }
 
 // Mobile Watchlist Grid with Activity
-function MobileWatchlistGrid({ games }: { games: FollowedGameWithActivity[] }) {
+function MobileWatchlistGrid({ games, playerCounts }: { games: FollowedGameWithActivity[]; playerCounts: Record<string, string> }) {
   if (games.length === 0) {
     return (
       <div className="text-center py-4">
@@ -338,7 +349,7 @@ function MobileWatchlistGrid({ games }: { games: FollowedGameWithActivity[] }) {
           </div>
           <div className="grid grid-cols-3 gap-2">
             {withActivity.map(game => (
-              <MobileWatchlistCard key={game.id} game={game} />
+              <MobileWatchlistCard key={game.id} game={game} playerCount={game.steam_app_id ? playerCounts[game.steam_app_id.toString()] : undefined} />
             ))}
           </div>
         </>
@@ -355,7 +366,7 @@ function MobileWatchlistGrid({ games }: { games: FollowedGameWithActivity[] }) {
           )}
           <div className="grid grid-cols-3 gap-2">
             {quiet.map(game => (
-              <MobileWatchlistCard key={game.id} game={game} />
+              <MobileWatchlistCard key={game.id} game={game} playerCount={game.steam_app_id ? playerCounts[game.steam_app_id.toString()] : undefined} />
             ))}
           </div>
         </>
@@ -365,7 +376,7 @@ function MobileWatchlistGrid({ games }: { games: FollowedGameWithActivity[] }) {
 }
 
 // Individual watchlist card - compact grid style
-function MobileWatchlistCard({ game }: { game: FollowedGameWithActivity }) {
+function MobileWatchlistCard({ game, playerCount }: { game: FollowedGameWithActivity; playerCount?: string }) {
   const hasActivity = game.latestPatch !== null
 
   return (
@@ -385,8 +396,15 @@ function MobileWatchlistCard({ game }: { game: FollowedGameWithActivity }) {
         {hasActivity && (
           <div className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-emerald-400" />
         )}
+        {/* Player count badge - bottom right */}
+        {playerCount && (
+          <div className="absolute bottom-1.5 right-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-black/60 backdrop-blur-sm">
+            <Users className="h-2.5 w-2.5 text-emerald-400" />
+            <span className="text-[9px] text-emerald-400 font-medium">{playerCount}</span>
+          </div>
+        )}
       </div>
-      <p className="mt-1 text-xs font-medium truncate text-center">{game.name}</p>
+      <p className="mt-1 text-xs font-medium line-clamp-2 text-center h-8">{game.name}</p>
     </Link>
   )
 }

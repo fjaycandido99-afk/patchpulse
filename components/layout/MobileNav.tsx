@@ -83,7 +83,10 @@ export function MobileNav({ badges, isGuest = false }: { badges?: Record<string,
                 <Link
                   key={item.href}
                   href={item.href}
-                  onClick={() => setIsMenuOpen(false)}
+                  onClick={() => {
+                    setIsMenuOpen(false)
+                    window.dispatchEvent(new CustomEvent('closeSearch'))
+                  }}
                   className={`flex items-center justify-between px-4 py-3.5 rounded-xl transition-all ${
                     isActive
                       ? 'bg-primary/20 text-primary'
@@ -128,7 +131,10 @@ export function MobileNav({ badges, isGuest = false }: { badges?: Record<string,
           ))}
           {/* Menu button */}
           <button
-            onClick={() => setIsMenuOpen(true)}
+            onClick={() => {
+              setIsMenuOpen(true)
+              window.dispatchEvent(new CustomEvent('closeSearch'))
+            }}
             className={`
               relative flex flex-col items-center gap-1 px-3 py-3
               transition-all duration-200 touch-feedback
@@ -158,9 +164,15 @@ function NavItem({ icon: Icon, label, href, badge, isPro }: NavItemConfig) {
   const pathname = usePathname()
   const isActive = pathname === href || pathname.startsWith(href + '/')
 
+  const handleClick = () => {
+    // Dispatch event to close search overlay if open
+    window.dispatchEvent(new CustomEvent('closeSearch'))
+  }
+
   return (
     <Link
       href={href}
+      onClick={handleClick}
       className={`
         relative flex flex-col items-center gap-1 px-3 py-3
         transition-all duration-200 touch-feedback

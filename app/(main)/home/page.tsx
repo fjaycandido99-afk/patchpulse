@@ -11,16 +11,15 @@ import { getStalePlayingGames, getReturnSuggestions } from '../backlog/queries'
 import type { SeasonalImage } from '@/lib/images/seasonal'
 import { StaleGamesPrompt } from '@/components/backlog/StaleGamesPrompt'
 import { ReturnSuggestions } from '@/components/backlog/ReturnSuggestions'
-import { Badge, ImpactBadge } from '@/components/ui/badge'
+import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
-import { MetaRow } from '@/components/ui/MetaRow'
 import { SectionHeader } from '@/components/ui/SectionHeader'
-import { relativeDaysText, formatDate } from '@/lib/dates'
+import { formatDate } from '@/lib/dates'
 import { InstallHint } from '@/components/ui/InstallHint'
-import { MediaCard } from '@/components/media/MediaCard'
 import { HeadlinesSection } from './HeadlinesSection'
 import { HomeGameStrip } from './HomeGameStrip'
 import { HomeVideosSection } from './HomeVideosSection'
+import { CyclingPatches } from '@/components/home/CyclingPatches'
 
 // Force dynamic rendering so videos shuffle on each refresh
 export const dynamic = 'force-dynamic'
@@ -40,7 +39,7 @@ export default async function HomePage() {
     getHomeFeed(),
     isGuest ? [] : getStalePlayingGames(14),
     isGuest ? [] : getReturnSuggestions(),
-    isGuest ? { items: [], total: 0 } : getPatchesList({ page: 1, followedOnly: true }),
+    isGuest ? { items: [], total: 0 } : getPatchesList({ page: 1, followedOnly: true, pageSize: 18 }),
     getRandomVideos(3), // Random videos for home page
   ])
 
@@ -91,47 +90,11 @@ export default async function HomePage() {
         {/* Random Videos - Fresh on every refresh */}
         <HomeVideosSection videos={randomVideos} />
 
-        {/* Your Patches - Same grid layout as headlines */}
+        {/* Your Patches - Cycling through all patches */}
         {patchesResult.items.length > 0 && (
           <section className="space-y-4">
             <SectionHeader title="Your Patches" href="/patches" glowLine />
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4 auto-rows-fr">
-              {patchesResult.items.slice(0, 6).map((patch, index) => (
-                <div
-                  key={patch.id}
-                  className="animate-soft-entry h-full"
-                  style={{ animationDelay: `${index * 50}ms` }}
-                >
-                  <MediaCard
-                    href={`/patches/${patch.id}?from=home`}
-                    title={patch.title}
-                    summary={patch.summary_tldr}
-                    imageUrl={patch.game.hero_url || patch.game.cover_url}
-                    variant="vertical"
-                    game={{
-                      name: patch.game.name,
-                      logoUrl: patch.game.logo_url,
-                      platforms: patch.game.platforms,
-                    }}
-                    badges={
-                      <>
-                        <Badge variant="patch">Patch</Badge>
-                        <ImpactBadge score={patch.impact_score} size="sm" />
-                      </>
-                    }
-                    metaText={
-                      <MetaRow
-                        items={[
-                          patch.game.name,
-                          relativeDaysText(patch.published_at),
-                        ]}
-                        size="xs"
-                      />
-                    }
-                  />
-                </div>
-              ))}
-            </div>
+            <CyclingPatches patches={patchesResult.items} visibleCount={6} cycleInterval={4000} />
           </section>
         )}
 

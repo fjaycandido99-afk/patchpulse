@@ -151,7 +151,7 @@ export function MediaCard({
     return (
       <Link
         href={href}
-        className="group flex gap-2.5 sm:gap-4 overflow-hidden rounded-xl sm:rounded-2xl border border-white/10 bg-white/5 p-2 sm:p-3 transition-all duration-300 hover:bg-white/[0.07] hover:border-white/20 active:scale-[0.98]"
+        className="group flex gap-2.5 sm:gap-4 overflow-hidden rounded-xl sm:rounded-2xl border border-white/10 bg-gradient-to-r from-zinc-900/80 to-zinc-800/50 backdrop-blur-sm p-2 sm:p-3 transition-all duration-300 hover:bg-zinc-800/60 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 active:scale-[0.98]"
       >
         <div className="relative w-16 h-16 sm:w-28 sm:aspect-[16/9] sm:h-auto flex-shrink-0 overflow-hidden rounded-lg sm:rounded-xl">
           {imageUrl ? (
@@ -187,7 +187,7 @@ export function MediaCard({
   return (
     <Link
       href={href}
-      className="group flex flex-col h-full overflow-hidden rounded-2xl border border-white/10 bg-white/5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/40 hover:border-white/20 hover:bg-white/[0.07] touch-feedback gradient-border"
+      className="group relative flex flex-col h-full overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-zinc-900/90 via-zinc-800/50 to-zinc-900/90 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl hover:shadow-primary/10 hover:border-primary/30 active:scale-[0.98]"
     >
       <div className={`relative ${aspectClass} w-full overflow-hidden flex-shrink-0`}>
         {imageUrl ? (
@@ -226,7 +226,7 @@ export function MediaCard({
           </div>
         )}
 
-        <h3 className="text-sm sm:text-base font-semibold leading-snug line-clamp-2 text-white group-hover:text-white/95">
+        <h3 className="text-sm sm:text-base font-semibold leading-snug line-clamp-2 text-white group-hover:text-primary transition-colors">
           {title}
         </h3>
 

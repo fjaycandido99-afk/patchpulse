@@ -144,9 +144,63 @@ export function SteamStats({
       {showPlayerCount && playerCount && (
         <span className="flex items-center gap-1 text-emerald-400">
           <Users className="h-3 w-3" />
-          {playerCount}
+          {playerCount} playing
         </span>
       )}
+    </div>
+  )
+}
+
+// Badge-style player count for game detail page
+export function SteamStatsBadge({ steamAppId }: { steamAppId: number }) {
+  const [playerCount, setPlayerCount] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+
+  useEffect(() => {
+    // Check cache first
+    const cached = playerCountCache.get(steamAppId)
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      setPlayerCount(cached.count)
+      return
+    }
+
+    const fetchPlayerCount = async () => {
+      setIsLoading(true)
+      try {
+        const response = await fetch(`/api/steam/player-counts?appIds=${steamAppId}`)
+        if (response.ok) {
+          const data = await response.json()
+          const count = data[steamAppId.toString()]?.formatted
+          if (count) {
+            playerCountCache.set(steamAppId, { count, timestamp: Date.now() })
+            setPlayerCount(count)
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch player count:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchPlayerCount()
+  }, [steamAppId])
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-400/50 text-xs">
+        <Users className="h-3 w-3 animate-pulse" />
+        <span>Loading...</span>
+      </div>
+    )
+  }
+
+  if (!playerCount) return null
+
+  return (
+    <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs">
+      <Users className="h-3 w-3" />
+      <span>{playerCount} playing</span>
     </div>
   )
 }

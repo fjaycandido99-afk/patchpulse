@@ -2,9 +2,14 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { Gamepad2, Play, Pause, Check, X, Clock } from 'lucide-react'
+import { Gamepad2, Play, Pause, Check, X, Clock, Users } from 'lucide-react'
 
 type BacklogStatus = 'playing' | 'paused' | 'backlog' | 'finished' | 'dropped'
+
+type SteamStatsData = {
+  playtime_minutes: number | null
+  last_played_at: string | null
+}
 
 type MobileGameCardProps = {
   id: string
@@ -16,6 +21,8 @@ type MobileGameCardProps = {
   hasNewPatch?: boolean
   patchCount?: number
   lastPlayedText?: string | null
+  steamStats?: SteamStatsData | null
+  playerCount?: string | null
 }
 
 const STATUS_ICON: Record<BacklogStatus, { icon: typeof Play; color: string }> = {
@@ -33,6 +40,8 @@ export function MobileGameCard({
   progress = 0,
   status,
   hasNewPatch,
+  steamStats,
+  playerCount,
 }: MobileGameCardProps) {
   const statusConfig = status ? STATUS_ICON[status] : null
   const StatusIcon = statusConfig?.icon
@@ -61,8 +70,16 @@ export function MobileGameCard({
           <div className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-primary" />
         )}
 
+        {/* Player count badge - bottom right */}
+        {playerCount && (
+          <div className="absolute bottom-1.5 right-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-black/60 backdrop-blur-sm">
+            <Users className="h-2.5 w-2.5 text-emerald-400" />
+            <span className="text-[9px] text-emerald-400 font-medium">{playerCount}</span>
+          </div>
+        )}
+
         {/* Progress bar - bottom */}
-        {progress > 0 && (
+        {progress > 0 && !playerCount && (
           <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/40">
             <div
               className="h-full bg-primary"
@@ -72,7 +89,7 @@ export function MobileGameCard({
         )}
       </div>
 
-      {/* Title - 2 lines max for consistency */}
+      {/* Title */}
       <p className="mt-1 text-xs font-medium line-clamp-2 text-center leading-tight h-8">{title}</p>
     </Link>
   )

@@ -81,7 +81,7 @@ export function GameCard({
     return (
       <Link
         href={`/games/${slug}`}
-        className="group flex items-center gap-3 rounded-lg border border-border bg-card p-2 transition-colors hover:border-primary/50 hover:bg-card/80"
+        className="group flex items-center gap-3 rounded-xl border border-white/10 bg-zinc-900/80 backdrop-blur-sm p-2.5 transition-all duration-200 hover:border-primary/40 hover:bg-zinc-800/80 hover:shadow-md hover:shadow-primary/5 active:scale-[0.98]"
       >
         <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-md bg-muted">
           {cover_url ? (
@@ -115,7 +115,7 @@ export function GameCard({
   return (
     <Link
       href={`/games/${slug}`}
-      className="group relative flex flex-col overflow-hidden rounded-xl border border-border bg-card transition-all hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5"
+      className="group relative flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-zinc-900/90 via-zinc-800/50 to-zinc-900/90 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1.5 hover:border-primary/30 hover:shadow-2xl hover:shadow-primary/10 active:scale-[0.98]"
     >
       {/* Cover Image */}
       <div className="relative aspect-[3/4] w-full overflow-hidden bg-muted">
@@ -135,11 +135,11 @@ export function GameCard({
         )}
         {getCountdownBadge()}
         {/* Gradient overlay */}
-        <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/60 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
       </div>
 
       {/* Content */}
-      <div className="flex flex-1 flex-col gap-1 p-3">
+      <div className="flex flex-1 flex-col gap-1.5 p-3 sm:p-4">
         <h3 className="line-clamp-2 text-sm font-semibold text-foreground group-hover:text-primary">
           {name}
         </h3>

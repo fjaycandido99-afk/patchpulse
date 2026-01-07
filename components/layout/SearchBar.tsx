@@ -45,18 +45,36 @@ export function SearchBar({ placeholder = 'Search games, patches, news...', clas
     }
   }, [])
 
+  // Close search function
+  const closeSearch = useCallback(() => {
+    setIsOpen(false)
+    setQuery('')
+    setSuggestions([])
+  }, [])
+
   // Keyboard shortcut: Escape to close (Cmd+K now handled by CommandPalette on desktop)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
-        setIsOpen(false)
-        setQuery('')
+        closeSearch()
       }
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [isOpen])
+  }, [isOpen, closeSearch])
+
+  // Listen for custom close event (from nav clicks etc.)
+  useEffect(() => {
+    const handleCloseSearch = () => {
+      if (isOpen) {
+        closeSearch()
+      }
+    }
+
+    window.addEventListener('closeSearch', handleCloseSearch)
+    return () => window.removeEventListener('closeSearch', handleCloseSearch)
+  }, [isOpen, closeSearch])
 
   // Lock body scroll when open
   useEffect(() => {
@@ -143,12 +161,6 @@ export function SearchBar({ placeholder = 'Search games, patches, news...', clas
     }
   }
 
-  const closeSearch = () => {
-    setIsOpen(false)
-    setQuery('')
-    setSuggestions([])
-  }
-
   const handleSuggestionClick = (suggestion: Suggestion) => {
     saveRecentSearch(suggestion.name)
     setIsOpen(false)
@@ -181,9 +193,9 @@ export function SearchBar({ placeholder = 'Search games, patches, news...', clas
       {/* Search overlay - single fixed container */}
       {isOpen && (
         <div className="search-overlay">
-          {/* Backdrop for closing */}
+          {/* Backdrop for closing - leaves space for mobile nav */}
           <div
-            className="absolute inset-0 bg-black/60"
+            className="absolute inset-0 bottom-16 md:bottom-0 bg-black/60"
             onClick={closeSearch}
           />
 
@@ -240,8 +252,16 @@ export function SearchBar({ placeholder = 'Search games, patches, news...', clas
               })}
             </div>
 
-            {/* Results panel */}
-            <div className="search-results">
+            {/* Results panel - click on empty space to close */}
+            <div
+              className="search-results"
+              onClick={(e) => {
+                // Close if clicking directly on the container (not on a child element)
+                if (e.target === e.currentTarget) {
+                  closeSearch()
+                }
+              }}
+            >
               {query.length === 0 ? (
                 <>
                   {/* Recent searches */}
@@ -356,6 +376,14 @@ export function SearchBar({ placeholder = 'Search games, patches, news...', clas
                   </button>
                 </div>
               )}
+
+              {/* Tap to close area */}
+              <button
+                onClick={closeSearch}
+                className="w-full pt-8 pb-4 text-center text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+              >
+                Tap to close
+              </button>
             </div>
           </div>
         </div>

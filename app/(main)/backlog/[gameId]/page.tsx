@@ -8,12 +8,14 @@ import { relativeDaysText } from '@/lib/dates'
 import { AddToBacklogButton } from '@/components/backlog/AddToBacklogButton'
 import { StoreLinkButtons } from '@/components/ui/StoreLinkButtons'
 import { PlayNowButton } from '@/components/ui/PlayNowButton'
-import { SteamStats } from '@/components/library/SteamStats'
+import { SteamStats, SteamStatsBadge } from '@/components/library/SteamStats'
 import { GameManagement } from '@/components/backlog/GameManagement'
 import { BackButton } from '@/components/ui/BackButton'
 import { StudioInfoSection } from '@/components/games/StudioInfoSection'
 import { SentimentPulse } from '@/components/ai/SentimentPulse'
 import { WhatsNew } from '@/components/backlog/WhatsNew'
+import { GlobalAchievements } from '@/components/games/GlobalAchievements'
+import { getBacklogItem as getBacklogItemWithStats } from '../queries'
 
 // Force dynamic rendering - no caching
 export const dynamic = 'force-dynamic'
@@ -103,6 +105,48 @@ async function isFollowingGame(gameId: string) {
   } catch {
     return false
   }
+}
+
+// Get user's Steam stats for this game
+async function getUserSteamStats(gameId: string, steamAppId: number | null) {
+  if (!steamAppId) return null
+
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return null
+
+    const { data } = await supabase
+      .from('user_library_games')
+      .select('playtime_minutes, last_played_at')
+      .eq('user_id', user.id)
+      .eq('provider', 'steam')
+      .eq('provider_game_id', steamAppId.toString())
+      .single()
+
+    return data
+  } catch {
+    return null
+  }
+}
+
+// Format playtime like BacklogCard
+function formatPlaytime(minutes: number): string {
+  if (minutes < 60) {
+    return `${minutes}m`
+  }
+  const hours = Math.floor(minutes / 60)
+  const remainingMinutes = minutes % 60
+  if (hours < 100) {
+    return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`
+  }
+  return `${hours}h`
+}
+
+// Format last played date like BacklogCard
+function formatLastPlayed(dateStr: string): string {
+  const date = new Date(dateStr)
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
 // Impact score colors
@@ -246,12 +290,17 @@ export default async function BacklogDetailPage({
   }
 
   // Fetch additional data in parallel
-  const [backlogItem, recentPatches, recentNews, isFollowing] = await Promise.all([
+  const [backlogItem, backlogItemWithStats, recentPatches, recentNews, isFollowing, directSteamStats] = await Promise.all([
     getBacklogItem(gameId),
+    getBacklogItemWithStats(gameId),
     getRecentPatches(gameId),
     getRecentNews(gameId),
     isFollowingGame(gameId),
+    getUserSteamStats(gameId, game.steam_app_id),
   ])
+
+  // Get steamStats - prefer from backlog item, fallback to direct query
+  const userSteamStats = backlogItemWithStats?.steamStats ?? directSteamStats
 
   const isInBacklog = !!backlogItem
   const bannerUrl = game.hero_url || game.cover_url
@@ -323,14 +372,24 @@ export default async function BacklogDetailPage({
                 )}
               </div>
 
-              {/* Steam stats */}
-              {game.steam_app_id && (
-                <div className="pt-1">
-                  <SteamStats
-                    steamAppId={game.steam_app_id}
-                    showPlayerCount={true}
-                    layout="inline"
-                  />
+              {/* Steam stats - Hours played, Last played, Player count */}
+              {(userSteamStats || game.steam_app_id) && (
+                <div className="pt-2 flex flex-wrap items-center gap-2">
+                  {userSteamStats?.playtime_minutes && userSteamStats.playtime_minutes > 0 && (
+                    <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-blue-500/10 text-blue-400 text-xs">
+                      <Gamepad2 className="h-3 w-3" />
+                      <span>{formatPlaytime(userSteamStats.playtime_minutes)} played</span>
+                    </div>
+                  )}
+                  {userSteamStats?.last_played_at && (
+                    <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-amber-500/10 text-amber-400 text-xs">
+                      <Calendar className="h-3 w-3" />
+                      <span>Last {formatLastPlayed(userSteamStats.last_played_at)}</span>
+                    </div>
+                  )}
+                  {game.steam_app_id && (
+                    <SteamStatsBadge steamAppId={game.steam_app_id} />
+                  )}
                 </div>
               )}
             </div>
@@ -395,6 +454,11 @@ export default async function BacklogDetailPage({
 
         {/* Sentiment Pulse - Community Mood */}
         <SentimentPulse gameId={gameId} />
+
+        {/* Global Achievements */}
+        {game.steam_app_id && (
+          <GlobalAchievements steamAppId={game.steam_app_id} />
+        )}
 
         {/* Studio Info Section */}
         <StudioInfoSection

@@ -54,7 +54,9 @@ type PatchesListParams = {
   tag?: string
   importance?: 'major' | 'medium' | 'minor'
   page?: number
+  pageSize?: number
   followedOnly?: boolean
+  orderBy?: 'published_at' | 'created_at'
 }
 
 type PatchesListResult = {
@@ -297,8 +299,8 @@ export async function getPatchesList(
 ): Promise<PatchesListResult> {
   const supabase = await createClient()
 
-  const { gameId, tag, importance, page = 1, followedOnly = false } = params
-  const offset = (page - 1) * PAGE_SIZE
+  const { gameId, tag, importance, page = 1, pageSize = PAGE_SIZE, followedOnly = false, orderBy = 'created_at' } = params
+  const offset = (page - 1) * pageSize
 
   // Get followed game IDs if filtering by followed games
   let followedGameIds: string[] = []
@@ -320,6 +322,7 @@ export async function getPatchesList(
       id,
       title,
       published_at,
+      created_at,
       summary_tldr,
       tags,
       impact_score,
@@ -348,7 +351,7 @@ export async function getPatchesList(
     return {
       items: [],
       page,
-      pageSize: PAGE_SIZE,
+      pageSize,
       hasMore: false,
       total: 0,
     }
@@ -369,8 +372,8 @@ export async function getPatchesList(
   }
 
   query = query
-    .order('published_at', { ascending: false })
-    .range(offset, offset + PAGE_SIZE)
+    .order(orderBy, { ascending: false })
+    .range(offset, offset + pageSize - 1)
 
   const { data, count, error } = await query
 
@@ -379,7 +382,7 @@ export async function getPatchesList(
     return {
       items: [],
       page,
-      pageSize: PAGE_SIZE,
+      pageSize,
       hasMore: false,
       total: 0,
     }
@@ -429,7 +432,7 @@ export async function getPatchesList(
   return {
     items,
     page,
-    pageSize: PAGE_SIZE,
+    pageSize,
     hasMore,
     total: totalCount,
   }

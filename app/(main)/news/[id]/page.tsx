@@ -187,7 +187,7 @@ export default async function NewsDetailPage({
       <HeroBanner imageUrl={heroImage} altText={news.title} fallbackColor={brandColor} />
 
       {/* Spacer for hero - accounts for header on mobile */}
-      <div className="h-[200px] sm:h-[240px] md:h-[350px]" />
+      <div className="h-[280px] sm:h-[320px] md:h-[400px]" />
 
       {/* Content that scrolls over hero */}
       <div className="relative z-10 pt-6 pb-8 min-h-screen space-y-4 px-0">

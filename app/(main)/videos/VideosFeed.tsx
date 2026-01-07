@@ -540,8 +540,11 @@ function MobileVideoCard({
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         onTouchCancel={handleTouchEnd}
-        className={`relative aspect-video overflow-hidden bg-zinc-800 ${bleed ? '' : 'w-full rounded-xl'}`}
-        style={bleed ? { width: '100vw', marginLeft: 'calc(-50vw + 50%)', marginRight: 'calc(-50vw + 50%)' } : undefined}
+        className={`relative aspect-video overflow-hidden bg-zinc-900 ${
+          bleed
+            ? 'w-[100vw] ml-[calc(-50vw+50%)]'
+            : 'w-full rounded-xl'
+        }`}
       >
         {/* YouTube Preview - shows on press and hold */}
         {showPreview && (

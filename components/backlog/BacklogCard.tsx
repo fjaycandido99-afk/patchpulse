@@ -96,7 +96,7 @@ function StatusPill({ status }: { status: BacklogStatus }) {
   const Icon = config.icon
 
   return (
-    <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${config.bg} ${config.color}`}>
+    <div className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border backdrop-blur-sm transition-all duration-200 ${config.bg} ${config.color}`}>
       <Icon className="h-3 w-3" />
       <span>{config.label}</span>
     </div>
@@ -131,7 +131,7 @@ export function BacklogCard({
   return (
     <Link
       href={href}
-      className={`group flex gap-3 sm:gap-4 rounded-xl border border-border p-3 sm:p-4 transition-all h-[140px] sm:h-auto ${cardGradient} ${statusBorderColor} active:bg-muted/50 active:scale-[0.99]`}
+      className={`group flex gap-3 sm:gap-4 rounded-2xl border border-white/10 p-3 sm:p-4 transition-all duration-300 h-[140px] sm:h-auto backdrop-blur-sm ${cardGradient} ${statusBorderColor} hover:shadow-lg hover:shadow-primary/5 active:scale-[0.98]`}
     >
       {/* Cover image - locked 3:4 ratio for consistency */}
       <div className="relative w-[88px] sm:w-24 flex-shrink-0 overflow-hidden rounded-lg shadow-lg aspect-[3/4]">
@@ -236,7 +236,7 @@ export function BacklogCardCompact({
   return (
     <Link
       href={href}
-      className={`group flex items-center justify-between gap-3 rounded-xl border border-border px-3 py-3 transition-all ${cardGradient} ${statusBorderColor} active:bg-muted/50`}
+      className={`group flex items-center justify-between gap-3 rounded-xl border border-white/10 px-3 py-3 transition-all duration-200 backdrop-blur-sm ${cardGradient} ${statusBorderColor} hover:shadow-md hover:shadow-primary/5 active:scale-[0.98]`}
     >
       <div className="flex items-center gap-2 flex-1 overflow-hidden min-w-0">
         {/* Status pill */}
