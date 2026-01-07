@@ -24,9 +24,9 @@ export async function GET(req: Request) {
 
   console.log('[MASTER CRON] Auth successful')
 
-  const baseUrl = process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  // Use production URL for internal calls, not deployment-specific URL
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL
+    || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
 
   console.log(`[MASTER CRON] Base URL: ${baseUrl}`)
 
