@@ -542,7 +542,7 @@ function MobileVideoCard({
         onTouchCancel={handleTouchEnd}
         className={`relative aspect-video overflow-hidden bg-zinc-900 ${
           bleed
-            ? 'w-[100vw] ml-[calc(-50vw+50%)]'
+            ? 'w-[calc(100%+32px)] -ml-4'
             : 'w-full rounded-xl'
         }`}
       >
