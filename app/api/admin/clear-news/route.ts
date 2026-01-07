@@ -43,17 +43,29 @@ async function handleClearNews(req: Request) {
 
     const bookmarkedIds = bookmarkedNews?.map(b => b.news_id).filter(Boolean) || []
 
+    // First count how many we'll delete
+    let countQuery = supabase
+      .from('news_items')
+      .select('id', { count: 'exact', head: true })
+      .lt('created_at', cutoffDate)
+
+    if (bookmarkedIds.length > 0) {
+      countQuery = countQuery.not('id', 'in', `(${bookmarkedIds.join(',')})`)
+    }
+
+    const { count } = await countQuery
+
     // Delete old news that aren't bookmarked
-    let query = supabase
+    let deleteQuery = supabase
       .from('news_items')
       .delete()
       .lt('created_at', cutoffDate)
 
     if (bookmarkedIds.length > 0) {
-      query = query.not('id', 'in', `(${bookmarkedIds.join(',')})`)
+      deleteQuery = deleteQuery.not('id', 'in', `(${bookmarkedIds.join(',')})`)
     }
 
-    const { error, count } = await query.select('id', { count: 'exact' })
+    const { error } = await deleteQuery
 
     if (error) {
       console.error('Error clearing news:', error)
