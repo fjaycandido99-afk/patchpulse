@@ -517,9 +517,9 @@ export async function fetchOfficialTrailers(): Promise<{ success: boolean; added
   const supabase = createAdminClient()
   let addedCount = 0
 
-  // Pick 2 random channels to search this run (to spread quota)
+  // Pick 3 random channels to search this run (to spread quota)
   const shuffled = [...TRAILER_CHANNELS].sort(() => Math.random() - 0.5)
-  const selectedChannels = shuffled.slice(0, 2)
+  const selectedChannels = shuffled.slice(0, 3)
 
   for (const channelId of selectedChannels) {
     try {
@@ -530,13 +530,13 @@ export async function fetchOfficialTrailers(): Promise<{ success: boolean; added
       const params = new URLSearchParams({
         part: 'snippet',
         channelId: channelId,
-        q: 'trailer',
+        q: 'official trailer',
         type: 'video',
-        maxResults: '10',
+        maxResults: '15',
         order: 'date',
         publishedAfter: twoWeeksAgo.toISOString(),
         videoCategoryId: '20', // Gaming category
-        videoDuration: 'medium', // 4-20 min
+        // Don't filter by duration - trailers can be 1-5 min
         key: apiKey,
       })
 
@@ -558,10 +558,10 @@ export async function fetchOfficialTrailers(): Promise<{ success: boolean; added
         const videoDetails = details.get(videoId)
         const title = video.snippet.title
 
-        // Filter trailers by duration (1-5 min)
+        // Filter trailers by duration (30 sec - 6 min)
         if (videoDetails) {
           const duration = parseDuration(videoDetails.contentDetails.duration)
-          if (duration < 60 || duration > 300) continue
+          if (duration < 30 || duration > 360) continue
 
           // Minimum 1k views for trailers
           const viewCount = parseInt(videoDetails.statistics.viewCount) || 0
