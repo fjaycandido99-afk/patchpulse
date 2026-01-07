@@ -14,7 +14,7 @@
     },
     {
       "path": "/api/cron/fetch-news",
-      "schedule": "5,15,25,35,45,55 * * * *"
+      "schedule": "5,35 * * * *"
     },
     {
       "path": "/api/admin/backfill-game-images?discover=true&limit=30",
