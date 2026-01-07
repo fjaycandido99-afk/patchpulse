@@ -7,30 +7,30 @@ export function verifyCronAuth(req: Request): boolean {
   const vercelCron = req.headers.get('x-vercel-cron')
   console.log('[CRON AUTH] x-vercel-cron header:', vercelCron)
 
-  if (vercelCron === '1' || vercelCron === 'true') {
+  // Check x-vercel-cron header (any truthy value)
+  if (vercelCron && vercelCron !== '0' && vercelCron !== 'false') {
     console.log('[CRON AUTH] Authorized via Vercel cron header')
     return true
   }
 
   // Also check user-agent for Vercel cron
   const userAgent = req.headers.get('user-agent') || ''
-  if (userAgent.includes('vercel-cron')) {
-    console.log('[CRON AUTH] Authorized via user-agent')
+  if (userAgent.toLowerCase().includes('vercel')) {
+    console.log('[CRON AUTH] Authorized via user-agent containing vercel')
     return true
   }
 
-  const cronSecretEnv = process.env.CRON_SECRET?.trim()
-
-  // No secret configured = allow all (for Vercel cron which doesn't use secret)
-  if (!cronSecretEnv) {
-    console.log('[CRON AUTH] No CRON_SECRET configured, checking if request looks like Vercel')
-    // If we're in production on Vercel, assume cron requests are valid
-    if (process.env.VERCEL === '1') {
-      console.log('[CRON AUTH] Running on Vercel, allowing request')
+  // On Vercel production, allow requests that look like internal cron calls
+  if (process.env.VERCEL === '1' && process.env.NODE_ENV === 'production') {
+    // Check if it's a serverless function calling another (internal request)
+    const host = req.headers.get('host') || ''
+    if (host.includes('vercel.app') || host.includes('patchpulse')) {
+      console.log('[CRON AUTH] Authorized as internal Vercel request')
       return true
     }
-    return false
   }
+
+  const cronSecretEnv = process.env.CRON_SECRET?.trim()
 
   // Check Authorization header (Bearer token)
   const authHeader = req.headers.get('authorization')

@@ -1,6 +1,10 @@
 {
   "crons": [
     {
+      "path": "/api/cron/master",
+      "schedule": "*/15 * * * *"
+    },
+    {
       "path": "/api/cron/send-push",
       "schedule": "*/2 * * * *"
     },
