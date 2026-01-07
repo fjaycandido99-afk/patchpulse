@@ -73,23 +73,31 @@ export default async function BookmarksPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Saved</h1>
-          <p className="mt-1 text-muted-foreground">
-            Your bookmarked patches, news, and deals
-          </p>
-        </div>
-        {!isPro && (
-          <div className="text-right">
-            <p className="text-sm font-medium">
-              {totalSaved} / {FREE_SAVED_LIMIT} saved
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {isAtLimit ? 'Limit reached' : `${remainingSlots} slots left`}
+      <div>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Saved</h1>
+            <p className="mt-1 text-muted-foreground">
+              Your bookmarked patches, news, and deals
             </p>
           </div>
-        )}
+          {!isPro && (
+            <div className="text-right">
+              <p className="text-sm font-medium">
+                {totalSaved} / {FREE_SAVED_LIMIT} saved
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {isAtLimit ? 'Limit reached' : `${remainingSlots} slots left`}
+              </p>
+            </div>
+          )}
+        </div>
+        {/* Glow divider */}
+        <div className="relative h-0.5 w-full overflow-visible mt-4">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/80 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/50 to-transparent blur-sm" />
+          <div className="absolute -inset-1 bg-gradient-to-r from-transparent via-primary/30 to-transparent blur-md" />
+        </div>
       </div>
 
       {/* Upgrade banner for free users at/near limit */}

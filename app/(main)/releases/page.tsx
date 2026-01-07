@@ -94,6 +94,12 @@ export default async function ReleasesPage({
         <p className="mt-1 text-muted-foreground">
           Recently released games worth knowing about.
         </p>
+        {/* Glow divider */}
+        <div className="relative h-0.5 w-full overflow-visible mt-4">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/80 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/50 to-transparent blur-sm" />
+          <div className="absolute -inset-1 bg-gradient-to-r from-transparent via-primary/30 to-transparent blur-md" />
+        </div>
       </header>
 
       {/* Featured New Releases */}
