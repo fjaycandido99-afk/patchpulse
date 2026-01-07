@@ -148,8 +148,45 @@ export async function fetchSteamPatches(steamAppId: number, gameId: string, game
   }
 }
 
+// Process a batch of games in parallel
+async function processBatch(
+  games: { id: string; name: string; steam_app_id: number }[],
+  errors: string[]
+): Promise<number> {
+  const results = await Promise.allSettled(
+    games.map(game =>
+      Promise.race([
+        fetchSteamPatches(game.steam_app_id, game.id, game.name),
+        // Per-game timeout of 8 seconds
+        new Promise<{ success: false; error: string }>((_, reject) =>
+          setTimeout(() => reject(new Error('Timeout')), 8000)
+        )
+      ])
+    )
+  )
+
+  let added = 0
+  results.forEach((result, i) => {
+    if (result.status === 'fulfilled' && result.value.success) {
+      added += result.value.addedCount || 0
+    } else if (result.status === 'rejected') {
+      // Only log non-404 errors (404 means game doesn't have a feed)
+      const errorMsg = result.reason?.message || 'Unknown error'
+      if (!errorMsg.includes('404')) {
+        errors.push(`${games[i].name}: ${errorMsg}`)
+      }
+    }
+  })
+
+  return added
+}
+
 // Fetch patches for all games with Steam App IDs
 export async function fetchAllSteamPatches() {
+  const startTime = Date.now()
+  const MAX_RUNTIME = 60000 // 60 seconds max for this fetcher
+  const BATCH_SIZE = 10 // Process 10 games in parallel
+
   const supabase = createAdminClient()
 
   // Get ALL games with Steam App IDs (no limit)
@@ -165,26 +202,31 @@ export async function fetchAllSteamPatches() {
 
   let totalAdded = 0
   const errors: string[] = []
+  let gamesProcessed = 0
 
-  for (const game of games) {
-    if (!game.steam_app_id) continue
-
-    const result = await fetchSteamPatches(game.steam_app_id, game.id, game.name)
-
-    if (result.success) {
-      totalAdded += result.addedCount || 0
-    } else {
-      errors.push(`${game.name}: ${result.error}`)
+  // Process in batches
+  for (let i = 0; i < games.length; i += BATCH_SIZE) {
+    // Check if we're running out of time
+    if (Date.now() - startTime > MAX_RUNTIME) {
+      console.log(`[Steam] Stopping early - processed ${gamesProcessed}/${games.length} games in ${MAX_RUNTIME}ms`)
+      break
     }
 
-    // Small delay between requests to avoid rate limiting
-    await new Promise(resolve => setTimeout(resolve, 500))
+    const batch = games.slice(i, i + BATCH_SIZE).filter(g => g.steam_app_id) as { id: string; name: string; steam_app_id: number }[]
+    const batchAdded = await processBatch(batch, errors)
+    totalAdded += batchAdded
+    gamesProcessed += batch.length
+
+    // Small delay between batches to be nice to Steam
+    if (i + BATCH_SIZE < games.length) {
+      await new Promise(resolve => setTimeout(resolve, 200))
+    }
   }
 
   return {
     success: true,
     totalAdded,
-    gamesChecked: games.length,
-    errors: errors.length > 0 ? errors : undefined
+    gamesChecked: gamesProcessed,
+    errors: errors.length > 0 ? errors.slice(0, 10) : undefined // Limit errors returned
   }
 }

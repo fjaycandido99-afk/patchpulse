@@ -135,8 +135,45 @@ export async function fetchEpicPatches(gameSlug: string, gameId: string, gameNam
   }
 }
 
+// Process a batch of games in parallel with timeout
+async function processBatch(
+  games: { id: string; name: string; slug: string }[],
+  errors: string[]
+): Promise<number> {
+  const results = await Promise.allSettled(
+    games.map(game =>
+      Promise.race([
+        fetchEpicPatches(game.slug, game.id, game.name),
+        // Per-game timeout of 8 seconds
+        new Promise<{ success: false; error: string; addedCount: 0 }>((_, reject) =>
+          setTimeout(() => reject(new Error('Timeout')), 8000)
+        )
+      ])
+    )
+  )
+
+  let added = 0
+  results.forEach((result, i) => {
+    if (result.status === 'fulfilled' && result.value.success) {
+      added += result.value.addedCount || 0
+    } else if (result.status === 'rejected') {
+      const errorMsg = result.reason?.message || 'Unknown error'
+      // Epic often blocks requests with 403, don't log these
+      if (!errorMsg.includes('404') && !errorMsg.includes('403') && errorMsg !== 'Timeout') {
+        errors.push(`${games[i].name}: ${errorMsg}`)
+      }
+    }
+  })
+
+  return added
+}
+
 // Fetch patches for all Epic games in our database
 export async function fetchAllEpicPatches() {
+  const startTime = Date.now()
+  const MAX_RUNTIME = 30000 // 30 seconds max for this fetcher
+  const BATCH_SIZE = 5 // Process 5 games in parallel
+
   const supabase = createAdminClient()
 
   // Get games that match Epic titles
@@ -153,23 +190,31 @@ export async function fetchAllEpicPatches() {
 
   let totalAdded = 0
   const errors: string[] = []
+  let gamesProcessed = 0
 
-  for (const game of games) {
-    const result = await fetchEpicPatches(game.slug, game.id, game.name)
-
-    if (result.success) {
-      totalAdded += result.addedCount || 0
-    } else if (result.error && result.error !== 'No Epic Games feed for this game') {
-      errors.push(`${game.name}: ${result.error}`)
+  // Process in batches
+  for (let i = 0; i < games.length; i += BATCH_SIZE) {
+    // Check if we're running out of time
+    if (Date.now() - startTime > MAX_RUNTIME) {
+      console.log(`[Epic] Stopping early - processed ${gamesProcessed}/${games.length} games`)
+      break
     }
 
-    await new Promise(resolve => setTimeout(resolve, 500))
+    const batch = games.slice(i, i + BATCH_SIZE)
+    const batchAdded = await processBatch(batch, errors)
+    totalAdded += batchAdded
+    gamesProcessed += batch.length
+
+    // Small delay between batches
+    if (i + BATCH_SIZE < games.length) {
+      await new Promise(resolve => setTimeout(resolve, 200))
+    }
   }
 
   return {
     success: true,
     totalAdded,
-    gamesChecked: games.length,
-    errors: errors.length > 0 ? errors : undefined,
+    gamesChecked: gamesProcessed,
+    errors: errors.length > 0 ? errors.slice(0, 5) : undefined,
   }
 }

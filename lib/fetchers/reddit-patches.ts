@@ -209,8 +209,45 @@ export async function fetchRedditPatches(gameSlug: string, gameId: string, gameN
   return fetchSubredditPatches(config.subreddit, gameId, gameName, config.flairFilter)
 }
 
+// Process a batch of games in parallel with timeout
+async function processBatch(
+  games: { id: string; name: string; slug: string }[],
+  errors: string[]
+): Promise<number> {
+  const results = await Promise.allSettled(
+    games.map(game =>
+      Promise.race([
+        fetchRedditPatches(game.slug, game.id, game.name),
+        // Per-game timeout of 8 seconds
+        new Promise<{ success: false; error: string; addedCount: 0 }>((_, reject) =>
+          setTimeout(() => reject(new Error('Timeout')), 8000)
+        )
+      ])
+    )
+  )
+
+  let added = 0
+  results.forEach((result, i) => {
+    if (result.status === 'fulfilled' && result.value.success) {
+      added += result.value.addedCount || 0
+    } else if (result.status === 'rejected') {
+      const errorMsg = result.reason?.message || 'Unknown error'
+      // Skip common Reddit errors
+      if (!errorMsg.includes('404') && !errorMsg.includes('429') && errorMsg !== 'Timeout') {
+        errors.push(`${games[i].name}: ${errorMsg}`)
+      }
+    }
+  })
+
+  return added
+}
+
 // Fetch patches from all configured game subreddits
 export async function fetchAllRedditPatches() {
+  const startTime = Date.now()
+  const MAX_RUNTIME = 60000 // 60 seconds max for Reddit (has many games)
+  const BATCH_SIZE = 3 // Small batches to respect Reddit rate limits
+
   const supabase = createAdminClient()
 
   // Get games that match our configured subreddits
@@ -227,24 +264,32 @@ export async function fetchAllRedditPatches() {
 
   let totalAdded = 0
   const errors: string[] = []
+  let gamesProcessed = 0
 
-  for (const game of games) {
-    const result = await fetchRedditPatches(game.slug, game.id, game.name)
-
-    if (result.success) {
-      totalAdded += result.addedCount || 0
-    } else if (result.error && result.error !== 'No Reddit subreddit configured for this game') {
-      errors.push(`${game.name}: ${result.error}`)
+  // Process in small batches with delays to respect Reddit rate limits
+  for (let i = 0; i < games.length; i += BATCH_SIZE) {
+    // Check if we're running out of time
+    if (Date.now() - startTime > MAX_RUNTIME) {
+      console.log(`[Reddit] Stopping early - processed ${gamesProcessed}/${games.length} games`)
+      break
     }
 
-    // Reddit rate limit: 60 requests per minute, so add delay
-    await new Promise(resolve => setTimeout(resolve, 1500))
+    const batch = games.slice(i, i + BATCH_SIZE)
+    const batchAdded = await processBatch(batch, errors)
+    totalAdded += batchAdded
+    gamesProcessed += batch.length
+
+    // Reddit rate limit: ~60 requests per minute
+    // With batch size of 3, we need ~1 second between batches
+    if (i + BATCH_SIZE < games.length) {
+      await new Promise(resolve => setTimeout(resolve, 1000))
+    }
   }
 
   return {
     success: true,
     totalAdded,
-    gamesChecked: games.length,
-    errors: errors.length > 0 ? errors : undefined,
+    gamesChecked: gamesProcessed,
+    errors: errors.length > 0 ? errors.slice(0, 5) : undefined,
   }
 }
