@@ -278,7 +278,7 @@ export default async function NewsDetailPage({
 
         <SectionDivider />
 
-        {/* Summary Section */}
+        {/* Summary Section - Bullet Points */}
         {news.summary && (
           <>
             <Card className="p-5 space-y-3">
@@ -286,9 +286,16 @@ export default async function NewsDetailPage({
                 <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
                   <span className="text-lg">📋</span>
                 </div>
-                <h2 className="text-lg font-semibold">Summary</h2>
+                <h2 className="text-lg font-semibold">Key Points</h2>
               </div>
-              <p className="text-zinc-300 leading-relaxed">{news.summary}</p>
+              <ul className="space-y-2">
+                {news.summary.split(/[.!?]+/).filter(s => s.trim().length > 10).slice(0, 4).map((point, i) => (
+                  <li key={i} className="flex items-start gap-2 text-sm text-zinc-300">
+                    <ChevronRight className="w-4 h-4 mt-0.5 text-blue-400 flex-shrink-0" />
+                    <span>{point.trim()}</span>
+                  </li>
+                ))}
+              </ul>
             </Card>
             <SectionDivider />
           </>
@@ -330,27 +337,6 @@ export default async function NewsDetailPage({
             <SectionDivider />
           </>
         )}
-
-        {/* Insight Block */}
-        <Card className="p-5 space-y-3 border-violet-500/30 bg-gradient-to-br from-violet-500/5 to-transparent">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-violet-400" />
-            </div>
-            <h2 className="text-lg font-semibold">Insight</h2>
-          </div>
-          <p className="text-zinc-300 leading-relaxed">
-            {news.is_rumor
-              ? "This is currently unconfirmed. We recommend waiting for official announcements before making gameplay decisions based on this information."
-              : news.topics.some(t => t.toLowerCase().includes('season'))
-                ? "New seasons often bring significant meta shifts. Consider reviewing your strategies and loadouts once the update goes live."
-                : news.topics.some(t => t.toLowerCase().includes('update'))
-                  ? "Updates like this typically require adapting your playstyle. Keep an eye on community feedback in the first few days."
-                  : "Stay informed about how this news affects your favorite game. Follow related updates for the full picture."}
-          </p>
-        </Card>
-
-        <SectionDivider />
 
         {/* 5. SINCE YOU LAST PLAYED - Personalized */}
         {backlogItem && news.game && highlights.length > 0 && (
