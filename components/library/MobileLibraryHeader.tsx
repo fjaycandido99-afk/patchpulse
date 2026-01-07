@@ -74,6 +74,12 @@ export function MobileLibraryHeader({ title, subtitle, onSearchChange }: MobileL
             <Search className="h-5 w-5" />
           </button>
         </div>
+        {/* Glow divider */}
+        <div className="relative h-0.5 w-full overflow-visible mt-4">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/80 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/50 to-transparent blur-sm" />
+          <div className="absolute -inset-1 bg-gradient-to-r from-transparent via-primary/30 to-transparent blur-md" />
+        </div>
       </div>
     </div>
   )
