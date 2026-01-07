@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { signUpWithEmail } from '../actions'
 import Link from 'next/link'
-import { Mail, Check, ArrowRight, Gamepad2, Zap, Bell, User, Eye, EyeOff } from 'lucide-react'
+import { ArrowRight, Gamepad2, Zap, Bell, User, Eye, EyeOff } from 'lucide-react'
 import { enableGuestMode } from '@/lib/guest'
 
 export default function SignupPage() {
@@ -14,8 +14,6 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
-  const [emailSent, setEmailSent] = useState(false)
-  const [sentToEmail, setSentToEmail] = useState('')
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -27,92 +25,13 @@ export default function SignupPage() {
     if (result?.error) {
       setError(result.error)
       setLoading(false)
-    } else if (result?.emailConfirmationRequired) {
-      setSentToEmail(result.email || email)
-      setEmailSent(true)
-      setLoading(false)
     }
+    // Successful signup will redirect to /onboarding via the server action
   }
 
   const handleContinueAsGuest = () => {
     enableGuestMode()
     router.push('/home')
-  }
-
-  // Email confirmation sent screen
-  if (emailSent) {
-    return (
-      <div className="flex min-h-screen items-center justify-center px-4">
-        <div className="w-full max-w-md text-center space-y-6">
-          {/* Animated mail icon */}
-          <div className="relative mx-auto w-20 h-20">
-            <div className="absolute inset-0 bg-primary/20 rounded-full animate-ping opacity-50" />
-            <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-primary/20 to-cyan-500/20 flex items-center justify-center border border-white/10">
-              <Mail className="w-10 h-10 text-primary" />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <h1 className="text-2xl font-bold tracking-tight">Check your email</h1>
-            <p className="text-muted-foreground">
-              We sent a verification link to
-            </p>
-            <p className="font-medium text-foreground">{sentToEmail}</p>
-          </div>
-
-          {/* Next steps */}
-          <div className="bg-card/50 border border-border rounded-xl p-4 text-left space-y-3">
-            <p className="text-sm font-medium text-muted-foreground">Next steps:</p>
-            <div className="space-y-2">
-              <div className="flex items-start gap-3">
-                <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <span className="text-xs font-bold text-primary">1</span>
-                </div>
-                <p className="text-sm">Open the email and click the verification link</p>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <span className="text-xs font-bold text-primary">2</span>
-                </div>
-                <p className="text-sm">Choose your favorite games to follow</p>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <span className="text-xs font-bold text-primary">3</span>
-                </div>
-                <p className="text-sm">Get notified about patches and updates</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="pt-2 space-y-3">
-            <p className="text-xs text-muted-foreground">
-              Didn&apos;t receive the email? Check your spam folder or
-            </p>
-            <button
-              onClick={() => {
-                setEmailSent(false)
-                setEmail('')
-                setPassword('')
-              }}
-              className="text-sm font-medium text-primary hover:underline"
-            >
-              try a different email
-            </button>
-          </div>
-
-          <div className="pt-4">
-            <Link
-              href="/login"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Already verified?{' '}
-              <span className="font-medium text-primary">Sign in</span>
-            </Link>
-          </div>
-        </div>
-      </div>
-    )
   }
 
   return (
@@ -179,13 +98,6 @@ export default function SignupPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="mt-8 space-y-6">
-            {/* Email confirmation notice */}
-            <div className="rounded-lg bg-blue-500/10 border border-blue-500/20 p-3">
-              <p className="text-sm text-blue-400">
-                <strong>Note:</strong> You'll need to confirm your email address before you can sign in. Check your inbox after signing up.
-              </p>
-            </div>
-
             {error && (
               <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
                 {error}
