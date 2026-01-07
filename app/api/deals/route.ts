@@ -14,6 +14,8 @@ type DbDeal = {
   expires_at: string | null
   steam_app_id: string | null
   store: string | null
+  metacritic_score: number | null
+  deal_rating: number | null
 }
 
 export async function GET(request: Request) {
@@ -21,6 +23,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const limit = parseInt(searchParams.get('limit') || '100')
     const minDiscount = parseInt(searchParams.get('minDiscount') || '20')
+    const category = searchParams.get('category') || 'all' // all, bestseller, indie, aaa, free
 
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -61,10 +64,27 @@ export async function GET(request: Request) {
     }
 
     // Fetch deals from database (populated by cron job)
-    const { data: dbDeals, error } = await supabase
+    let query = supabase
       .from('deals')
       .select('*')
       .gte('discount_percent', minDiscount)
+
+    // Apply category filters
+    if (category === 'free') {
+      query = query.eq('sale_price', 0)
+    } else if (category === 'bestseller') {
+      // Best sellers: high metacritic or deal rating
+      query = query.or('metacritic_score.gte.75,deal_rating.gte.8')
+    } else if (category === 'indie') {
+      // Indie games: normal price under $30
+      query = query.lt('normal_price', 30)
+    } else if (category === 'aaa') {
+      // AAA games: normal price $40 or more
+      query = query.gte('normal_price', 40)
+    }
+
+    // Order by: free first, then by discount
+    const { data: dbDeals, error } = await query
       .order('discount_percent', { ascending: false })
       .limit(limit)
 

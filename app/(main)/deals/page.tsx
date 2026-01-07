@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Tag, Loader2, Percent, Info, RefreshCw, Clock, Crown } from 'lucide-react'
+import { Tag, Loader2, Percent, Info, RefreshCw, Clock, Crown, Sparkles, Gamepad2, Trophy, Gift } from 'lucide-react'
 import Link from 'next/link'
 import { DealCard } from '@/components/deals/DealCard'
 
@@ -28,27 +28,40 @@ type DealsResult = {
   isPro: boolean
 }
 
+type Category = 'all' | 'bestseller' | 'indie' | 'aaa' | 'free'
+
+const CATEGORIES: { id: Category; label: string; icon: React.ReactNode }[] = [
+  { id: 'all', label: 'All Deals', icon: <Percent className="w-4 h-4" /> },
+  { id: 'free', label: 'Free', icon: <Gift className="w-4 h-4" /> },
+  { id: 'bestseller', label: 'Best Sellers', icon: <Trophy className="w-4 h-4" /> },
+  { id: 'aaa', label: 'AAA', icon: <Sparkles className="w-4 h-4" /> },
+  { id: 'indie', label: 'Indie', icon: <Gamepad2 className="w-4 h-4" /> },
+]
+
 const FREE_DEALS_LIMIT = 20
 
 export default function DealsPage() {
   const [deals, setDeals] = useState<DealsResult | null>(null)
   const [loading, setLoading] = useState(true)
   const [minDiscount, setMinDiscount] = useState(40)
+  const [category, setCategory] = useState<Category>('all')
 
   useEffect(() => {
     fetchDeals()
-  }, [minDiscount])
+  }, [minDiscount, category])
 
   // Auto-refresh every 5 minutes
   useEffect(() => {
     const interval = setInterval(() => fetchDeals(true), 5 * 60 * 1000)
     return () => clearInterval(interval)
-  }, [minDiscount])
+  }, [minDiscount, category])
+
+  const [filterOpen, setFilterOpen] = useState(false)
 
   const fetchDeals = async (silent = false) => {
     if (!silent) setLoading(true)
     try {
-      const response = await fetch(`/api/deals?limit=500&minDiscount=${minDiscount}`)
+      const response = await fetch(`/api/deals?limit=500&minDiscount=${minDiscount}&category=${category}`)
       const data = await response.json()
 
       if (response.ok) {
@@ -60,6 +73,8 @@ export default function DealsPage() {
       if (!silent) setLoading(false)
     }
   }
+
+  const currentCategory = CATEGORIES.find(c => c.id === category) || CATEGORIES[0]
 
   const isPro = deals?.isPro ?? false
   const allUserDeals = deals?.deals.filter(d => d.isUserGame) || []
@@ -87,14 +102,58 @@ export default function DealsPage() {
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-3">
+        {/* Category Filter Dropdown */}
+        <div className="relative">
+          <button
+            onClick={() => setFilterOpen(!filterOpen)}
+            className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
+              category !== 'all'
+                ? 'bg-primary/20 text-primary border border-primary/30'
+                : 'bg-white/5 text-foreground hover:bg-white/10 border border-white/10'
+            }`}
+          >
+            {currentCategory.icon}
+            {currentCategory.label}
+            <svg className={`w-4 h-4 transition-transform ${filterOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          {filterOpen && (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setFilterOpen(false)} />
+              <div className="absolute top-full left-0 mt-2 w-48 rounded-xl border border-white/10 bg-[#0b1220] shadow-xl z-50 overflow-hidden">
+                {CATEGORIES.map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => {
+                      setCategory(cat.id)
+                      setFilterOpen(false)
+                    }}
+                    className={`flex items-center gap-3 w-full px-4 py-3 text-sm transition-colors ${
+                      category === cat.id
+                        ? 'bg-primary/20 text-primary'
+                        : 'hover:bg-white/5 text-foreground'
+                    }`}
+                  >
+                    {cat.icon}
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Discount Filter */}
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Min discount:</span>
+          <span className="text-sm text-muted-foreground hidden sm:inline">Min:</span>
           <div className="flex gap-1 p-1 rounded-lg bg-muted">
             {[20, 40, 60, 80].map((discount) => (
               <button
                 key={discount}
                 onClick={() => setMinDiscount(discount)}
-                className={`px-3 py-1 rounded-md text-sm transition-colors ${
+                className={`px-2 sm:px-3 py-1 rounded-md text-sm transition-colors ${
                   minDiscount === discount
                     ? 'bg-background text-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
@@ -105,13 +164,14 @@ export default function DealsPage() {
             ))}
           </div>
         </div>
+
         <button
           onClick={() => fetchDeals()}
           disabled={loading}
           className="ml-auto flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-50"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          Refresh
+          <span className="hidden sm:inline">Refresh</span>
         </button>
       </div>
 
