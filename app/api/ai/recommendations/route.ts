@@ -30,13 +30,41 @@ export async function GET(request: Request) {
 
     // If not refreshing, ONLY return cached recommendations (never generate new ones)
     if (!refresh) {
+      const now = new Date()
+      const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString()
+
+      // Get saved recommendation game_ids to preserve
+      const { data: savedRecs } = await supabase
+        .from('bookmarks')
+        .select('entity_id')
+        .eq('user_id', user.id)
+        .eq('entity_type', 'recommendation')
+
+      const savedGameIds = new Set(savedRecs?.map(r => r.entity_id) || [])
+
+      // Get expired/stale recommendations for this user
+      const { data: staleRecs } = await supabase
+        .from('play_recommendations')
+        .select('id, game_id')
+        .eq('user_id', user.id)
+        .or(`expires_at.is.null,expires_at.lt.${now.toISOString()},created_at.lt.${twentyFourHoursAgo}`)
+
+      // Delete only non-saved stale recommendations
+      const idsToDelete = staleRecs?.filter(r => !savedGameIds.has(r.game_id)).map(r => r.id) || []
+      if (idsToDelete.length > 0) {
+        await supabase
+          .from('play_recommendations')
+          .delete()
+          .in('id', idsToDelete)
+      }
+
       // Query recommendations with game data embedded in context (more reliable than join)
       const { data: cached } = await supabase
         .from('play_recommendations')
         .select('*')
         .eq('user_id', user.id)
         .eq('is_dismissed', false)
-        .gte('expires_at', new Date().toISOString())
+        .gte('created_at', twentyFourHoursAgo)
         .order('match_score', { ascending: false })
         .limit(10)
 
