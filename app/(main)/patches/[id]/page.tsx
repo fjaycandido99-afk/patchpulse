@@ -329,25 +329,6 @@ export default async function PatchDetailPage({
 
         <SectionDivider />
 
-        {/* TL;DR Section */}
-        {patch.summary_tldr && (
-          <>
-            <Card className="p-5 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                    <span className="text-lg">⚡</span>
-                  </div>
-                  <h2 className="text-lg font-semibold">Summary</h2>
-                </div>
-                <CopyButton text={patch.summary_tldr} label="Copy" size="sm" variant="button" />
-              </div>
-              <p className="text-zinc-300 leading-relaxed">{patch.summary_tldr}</p>
-            </Card>
-            <SectionDivider />
-          </>
-        )}
-
         {/* 3. WHAT CHANGED - Icon Cards */}
         {keyChanges.length > 0 && (
           <>
@@ -375,23 +356,36 @@ export default async function PatchDetailPage({
           </>
         )}
 
-        {/* Insight Block - Why It Matters */}
-        <Card className="p-5 space-y-3 border-violet-500/30 bg-gradient-to-br from-violet-500/5 to-transparent">
+        {/* Why It Matters - Summary with bullet points */}
+        <Card className="p-5 space-y-4 border-violet-500/30 bg-gradient-to-br from-violet-500/5 to-transparent">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center">
               <Sparkles className="w-4 h-4 text-violet-400" />
             </div>
             <h2 className="text-lg font-semibold">Why It Matters</h2>
           </div>
-          <p className="text-zinc-300 leading-relaxed">
-            {patch.ai_insight || (
-              patch.impact_score >= 8
-                ? "This is a major update that will significantly affect gameplay. Expect shifts in the meta and consider adjusting your strategies. The first few days after release often see aggressive experimentation."
-                : patch.impact_score >= 5
-                  ? "A moderate update with targeted changes. While not game-changing, these adjustments may affect specific playstyles or characters. Keep an eye on community discussions."
-                  : "A minor update focused on quality-of-life improvements and bug fixes. Your current strategies should remain largely unaffected."
-            )}
-          </p>
+
+          {/* Bullet point summary from patch notes */}
+          {patch.summary_tldr ? (
+            <ul className="space-y-2">
+              {patch.summary_tldr.split(/[.!?]+/).filter(s => s.trim().length > 10).slice(0, 5).map((point, i) => (
+                <li key={i} className="flex items-start gap-2 text-sm text-zinc-300">
+                  <ChevronRight className="w-4 h-4 mt-0.5 text-violet-400 flex-shrink-0" />
+                  <span>{point.trim()}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-zinc-300 leading-relaxed">
+              {patch.ai_insight || (
+                patch.impact_score >= 8
+                  ? "Major update with significant gameplay changes. Expect meta shifts."
+                  : patch.impact_score >= 5
+                    ? "Moderate update with targeted balance changes."
+                    : "Minor update with bug fixes and QoL improvements."
+              )}
+            </p>
+          )}
         </Card>
 
         <SectionDivider />
