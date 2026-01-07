@@ -409,19 +409,14 @@ export default async function PatchDetailPage({
           )}
         </Card>
 
-        <SectionDivider />
-
         {/* 5. SINCE YOU LAST PLAYED - Personalized */}
         {backlogItem && sinceLastPlayedChanges.length > 0 && (
-          <>
-            <SinceLastPlayedCard
-              gameName={patch.game.name}
-              logoUrl={patch.game.logo_url}
-              lastPlayed={backlogItem.last_played_at}
-              changes={sinceLastPlayedChanges}
-            />
-            <SectionDivider />
-          </>
+          <SinceLastPlayedCard
+            gameName={patch.game.name}
+            logoUrl={patch.game.logo_url}
+            lastPlayed={backlogItem.last_played_at}
+            changes={sinceLastPlayedChanges}
+          />
         )}
 
         {/* Tags as Clickable Chips */}
