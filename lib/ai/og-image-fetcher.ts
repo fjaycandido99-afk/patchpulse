@@ -23,14 +23,17 @@ export async function fetchOGImage(url: string): Promise<OGImageResult> {
   try {
     // Fetch the page with a timeout
     const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 15000) // 15 second timeout
 
     const response = await fetch(url, {
       signal: controller.signal,
       headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; PatchPulseBot/1.0; +https://patchpulse.app)',
-        'Accept': 'text/html,application/xhtml+xml',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Cache-Control': 'no-cache',
       },
+      redirect: 'follow',
     })
 
     clearTimeout(timeoutId)
@@ -43,7 +46,15 @@ export async function fetchOGImage(url: string): Promise<OGImageResult> {
     const html = await response.text()
 
     // Extract OG meta tags using regex (faster than DOM parsing)
-    const ogImage = extractMetaContent(html, 'og:image') || extractMetaContent(html, 'twitter:image')
+    // Try multiple fallbacks for images
+    const ogImage =
+      extractMetaContent(html, 'og:image') ||
+      extractMetaContent(html, 'og:image:url') ||
+      extractMetaContent(html, 'og:image:secure_url') ||
+      extractMetaContent(html, 'twitter:image') ||
+      extractMetaContent(html, 'twitter:image:src') ||
+      extractFirstImage(html, url)
+
     const ogTitle = extractMetaContent(html, 'og:title')
     const ogDescription = extractMetaContent(html, 'og:description')
     const ogSiteName = extractMetaContent(html, 'og:site_name')
@@ -100,6 +111,68 @@ function extractMetaContent(html: string, property: string): string | null {
     if (match && match[1]) {
       // Decode HTML entities
       return decodeHTMLEntities(match[1].trim())
+    }
+  }
+
+  return null
+}
+
+/**
+ * Extract first significant image from HTML as fallback
+ */
+function extractFirstImage(html: string, baseUrl: string): string | null {
+  // Look for img tags with src attributes
+  const imgPattern = /<img[^>]*src=["']([^"']+)["'][^>]*>/gi
+  const matches = html.matchAll(imgPattern)
+
+  for (const match of matches) {
+    const src = match[1]
+    if (!src) continue
+
+    // Skip tiny images, icons, tracking pixels, and data URIs
+    if (
+      src.includes('data:') ||
+      src.includes('pixel') ||
+      src.includes('tracking') ||
+      src.includes('spacer') ||
+      src.includes('blank') ||
+      src.includes('1x1') ||
+      src.includes('.gif') ||
+      src.includes('icon') ||
+      src.includes('logo') ||
+      src.includes('avatar') ||
+      src.includes('favicon')
+    ) {
+      continue
+    }
+
+    // Check for size hints in the tag - skip small images
+    const fullTag = match[0]
+    const widthMatch = fullTag.match(/width=["']?(\d+)/)
+    const heightMatch = fullTag.match(/height=["']?(\d+)/)
+
+    if (widthMatch && parseInt(widthMatch[1]) < 200) continue
+    if (heightMatch && parseInt(heightMatch[1]) < 150) continue
+
+    // Normalize the URL
+    let imageUrl = src
+    if (imageUrl.startsWith('//')) {
+      imageUrl = 'https:' + imageUrl
+    } else if (imageUrl.startsWith('/')) {
+      try {
+        const urlObj = new URL(baseUrl)
+        imageUrl = `${urlObj.origin}${imageUrl}`
+      } catch {
+        continue
+      }
+    }
+
+    // Validate it's a proper URL
+    try {
+      new URL(imageUrl)
+      return imageUrl
+    } catch {
+      continue
     }
   }
 

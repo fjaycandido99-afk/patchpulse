@@ -8,67 +8,9 @@
 import { createClient } from '@supabase/supabase-js'
 import * as dotenv from 'dotenv'
 import * as path from 'path'
+import { fetchOGImage } from '../lib/ai/og-image-fetcher'
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') })
-
-// Fetch OG image from a URL
-async function fetchOGImage(url: string): Promise<string | null> {
-  try {
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 10000)
-
-    const response = await fetch(url, {
-      signal: controller.signal,
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml',
-      },
-    })
-
-    clearTimeout(timeoutId)
-
-    if (!response.ok) return null
-
-    const html = await response.text()
-
-    // Extract OG image
-    const patterns = [
-      /<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i,
-      /<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:image["']/i,
-      /<meta[^>]*name=["']twitter:image["'][^>]*content=["']([^"']+)["']/i,
-      /<meta[^>]*content=["']([^"']+)["'][^>]*name=["']twitter:image["']/i,
-    ]
-
-    for (const pattern of patterns) {
-      const match = html.match(pattern)
-      if (match && match[1]) {
-        let imageUrl = match[1]
-          .replace(/&amp;/g, '&')
-          .replace(/&quot;/g, '"')
-
-        // Handle relative URLs
-        if (imageUrl.startsWith('//')) {
-          imageUrl = 'https:' + imageUrl
-        } else if (imageUrl.startsWith('/')) {
-          const urlObj = new URL(url)
-          imageUrl = `${urlObj.origin}${imageUrl}`
-        }
-
-        // Validate URL
-        try {
-          new URL(imageUrl)
-          return imageUrl
-        } catch {
-          continue
-        }
-      }
-    }
-
-    return null
-  } catch (error) {
-    return null
-  }
-}
 
 async function main() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -108,7 +50,8 @@ async function main() {
   for (const item of newsItems || []) {
     process.stdout.write(`Fetching: ${item.title.substring(0, 45)}... `)
 
-    const imageUrl = await fetchOGImage(item.source_url)
+    const result = await fetchOGImage(item.source_url)
+    const imageUrl = result.imageUrl
 
     if (imageUrl) {
       const { error: updateError } = await supabase
