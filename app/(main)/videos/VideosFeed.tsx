@@ -533,7 +533,7 @@ function MobileVideoCard({
   }
 
   return (
-    <div className="w-full">
+    <div>
       {/* Thumbnail - edge-to-edge when bleed, rounded otherwise */}
       <button
         onClick={handleClick}
