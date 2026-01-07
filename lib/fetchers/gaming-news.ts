@@ -303,6 +303,9 @@ async function processBatch(
 
 // Fetch news from all sources
 export async function fetchAllGamingNews() {
+  console.log('[NEWS] Starting fetchAllGamingNews at', new Date().toISOString())
+  console.log('[NEWS] Sources to fetch:', NEWS_SOURCES.map(s => s.name).join(', '))
+
   const startTime = Date.now()
   const MAX_RUNTIME = 90000 // 90 seconds max
   const BATCH_SIZE = 5 // Process 5 sources in parallel
@@ -328,6 +331,11 @@ export async function fetchAllGamingNews() {
     if (i + BATCH_SIZE < NEWS_SOURCES.length) {
       await new Promise(resolve => setTimeout(resolve, 200))
     }
+  }
+
+  console.log(`[NEWS] Completed: ${totalAdded} added from ${sourcesProcessed} sources in ${Date.now() - startTime}ms`)
+  if (errors.length > 0) {
+    console.log('[NEWS] Errors:', errors.slice(0, 5).join('; '))
   }
 
   return {
