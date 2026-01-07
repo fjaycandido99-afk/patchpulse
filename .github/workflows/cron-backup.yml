@@ -15,7 +15,7 @@ on:
   workflow_dispatch: # Allow manual trigger
 
 env:
-  BASE_URL: https://patchpulse.vercel.app
+  BASE_URL: https://patchpulse.app
 
 jobs:
   frequent-crons:
@@ -23,19 +23,19 @@ jobs:
     if: github.event.schedule == '*/15 * * * *' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger fetch-content
+      - name: Trigger master cron (handles all main tasks)
         run: |
           curl -sf -X GET \
             -H "x-vercel-cron: 1" \
-            "${{ env.BASE_URL }}/api/cron/fetch-content" \
-            --max-time 300 || echo "fetch-content failed or timed out"
+            "${{ env.BASE_URL }}/api/cron/master" \
+            --max-time 300 || echo "master cron failed or timed out"
 
-      - name: Trigger process-ai-jobs
+      - name: Trigger fetch-news (backup)
         run: |
           curl -sf -X GET \
             -H "x-vercel-cron: 1" \
-            "${{ env.BASE_URL }}/api/cron/process-ai-jobs" \
-            --max-time 120 || echo "process-ai-jobs failed or timed out"
+            "${{ env.BASE_URL }}/api/cron/fetch-news" \
+            --max-time 120 || echo "fetch-news failed or timed out"
 
       - name: Trigger backfill-news-images
         run: |
