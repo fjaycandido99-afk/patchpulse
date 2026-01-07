@@ -199,10 +199,16 @@ function escapeRegex(str: string): string {
 // Fetch news from a single source
 export async function fetchNewsFromSource(source: NewsSource) {
   try {
+    console.log(`[NEWS] Fetching from ${source.name}: ${source.feedUrl}`)
     const feed = await parser.parseURL(source.feedUrl)
     const supabase = createAdminClient()
 
     let addedCount = 0
+    let skippedUrl = 0
+    let skippedTitle = 0
+    let skippedShort = 0
+
+    console.log(`[NEWS] ${source.name}: Found ${feed.items?.length || 0} items in feed`)
 
     for (const item of (feed.items as FeedItem[]).slice(0, 10)) { // Limit to 10 most recent
       // Check if we already have this news item (by source_url)
@@ -212,7 +218,10 @@ export async function fetchNewsFromSource(source: NewsSource) {
         .eq('source_url', item.link)
         .single()
 
-      if (existingByUrl) continue
+      if (existingByUrl) {
+        skippedUrl++
+        continue
+      }
 
       // Check for exact title duplicates only (not partial matches)
       const { data: existingByTitle } = await supabase
@@ -221,10 +230,16 @@ export async function fetchNewsFromSource(source: NewsSource) {
         .eq('title', item.title || '')
         .limit(1)
 
-      if (existingByTitle && existingByTitle.length > 0) continue
+      if (existingByTitle && existingByTitle.length > 0) {
+        skippedTitle++
+        continue
+      }
 
       const rawText = item.contentSnippet || item.content || ''
-      if (rawText.length < 50) continue
+      if (rawText.length < 50) {
+        skippedShort++
+        continue
+      }
 
       // Try to match to a game
       const gameId = await matchGameToNews(item.title || '', rawText)
@@ -262,9 +277,10 @@ export async function fetchNewsFromSource(source: NewsSource) {
       }
     }
 
+    console.log(`[NEWS] ${source.name}: Added ${addedCount}, Skipped: ${skippedUrl} (url), ${skippedTitle} (title), ${skippedShort} (short)`)
     return { success: true, addedCount }
   } catch (error) {
-    console.error(`Failed to fetch news from ${source.name}:`, error)
+    console.error(`[NEWS] Failed to fetch from ${source.name}:`, error)
     return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
   }
 }
