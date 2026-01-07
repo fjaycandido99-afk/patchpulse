@@ -10,11 +10,13 @@ export const maxDuration = 300 // 5 minutes
 export async function GET(request: Request) {
   // Debug logging
   console.log('[CRON] fetch-videos hit at', new Date().toISOString())
-  console.log('[CRON] x-vercel-cron header:', request.headers.get('x-vercel-cron'))
-  console.log('[CRON] authorization header exists:', !!request.headers.get('authorization'))
+
+  // Allow manual trigger on Vercel without auth (for admin use)
+  const url = new URL(request.url)
+  const isManualTrigger = url.searchParams.get('manual') === 'true' && process.env.VERCEL === '1'
 
   // Verify cron authentication
-  if (!verifyCronAuth(request)) {
+  if (!isManualTrigger && !verifyCronAuth(request)) {
     console.log('[CRON] fetch-videos UNAUTHORIZED')
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
