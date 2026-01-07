@@ -30,10 +30,10 @@ async function handleClearNews(req: Request) {
     // Check if we should clear all (for re-fetch) or just old ones
     const clearAll = url.searchParams.get('all') === 'true'
 
-    // Delete news items older than 3 days (or all if clearAll), excluding bookmarked ones
+    // Delete news items older than 7 days (or all if clearAll), excluding bookmarked ones
     const cutoffDate = clearAll
       ? new Date().toISOString() // All items
-      : new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString() // 3 days ago
+      : new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString() // 7 days ago
 
     // First get IDs of bookmarked news
     const { data: bookmarkedNews } = await supabase
@@ -78,7 +78,7 @@ async function handleClearNews(req: Request) {
       ok: true,
       cleared: count,
       keptBookmarked: bookmarkedIds.length,
-      message: `Cleared ${count} news items older than 3 days. Kept ${bookmarkedIds.length} bookmarked items.`
+      message: `Cleared ${count} news items older than 7 days. Kept ${bookmarkedIds.length} bookmarked items.`
     })
   } catch (error) {
     console.error('Error in clear-news:', error)

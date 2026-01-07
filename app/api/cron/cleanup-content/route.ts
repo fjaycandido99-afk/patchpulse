@@ -12,15 +12,15 @@ export async function GET(req: Request) {
 
   const supabase = createAdminClient()
 
-  // 3-day retention for videos and news (keeps content fresh)
-  const threeDaysAgo = new Date()
-  threeDaysAgo.setDate(threeDaysAgo.getDate() - 3)
-  const shortRetentionCutoff = threeDaysAgo.toISOString()
-
-  // 7-day retention for patches (more valuable content)
+  // 7-day retention for news and patches
   const sevenDaysAgo = new Date()
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
-  const patchCutoffDate = sevenDaysAgo.toISOString()
+  const contentCutoffDate = sevenDaysAgo.toISOString()
+
+  // 3-day retention for videos only (keeps feed fresh, saves storage)
+  const threeDaysAgo = new Date()
+  threeDaysAgo.setDate(threeDaysAgo.getDate() - 3)
+  const videoCutoffDate = threeDaysAgo.toISOString()
 
   const results = {
     patches: { deleted: 0, kept: 0, followedGamesKept: 0 },
@@ -59,13 +59,13 @@ export async function GET(req: Request) {
     const { count: patchCount } = await supabase
       .from('patch_notes')
       .select('*', { count: 'exact', head: true })
-      .lt('created_at', patchCutoffDate)
+      .lt('created_at', contentCutoffDate)
 
     // Delete old patches not in bookmarks AND not for followed/backlog games
     let patchQuery = supabase
       .from('patch_notes')
       .delete()
-      .lt('created_at', patchCutoffDate)
+      .lt('created_at', contentCutoffDate)
 
     if (bookmarkedPatchIds.length > 0) {
       patchQuery = patchQuery.not('id', 'in', `(${bookmarkedPatchIds.join(',')})`)
@@ -89,17 +89,17 @@ export async function GET(req: Request) {
 
     const bookmarkedNewsIds = (bookmarkedNews?.map(b => b.news_id).filter(Boolean) || []) as string[]
 
-    // Count news to delete - 3 day retention (keeps feed fresh)
+    // Count news to delete - 7 day retention
     const { count: newsCount } = await supabase
       .from('news_items')
       .select('*', { count: 'exact', head: true })
-      .lt('created_at', shortRetentionCutoff)
+      .lt('created_at', contentCutoffDate)
 
     // Delete old news not in bookmarks AND not for followed/backlog games
     let newsQuery = supabase
       .from('news_items')
       .delete()
-      .lt('created_at', shortRetentionCutoff)
+      .lt('created_at', contentCutoffDate)
 
     if (bookmarkedNewsIds.length > 0) {
       newsQuery = newsQuery.not('id', 'in', `(${bookmarkedNewsIds.join(',')})`)
@@ -124,18 +124,18 @@ export async function GET(req: Request) {
 
     const bookmarkedVideoIds = (bookmarkedVideos?.map(b => b.entity_id).filter(Boolean) || []) as string[]
 
-    // Count videos to delete
+    // Count videos to delete - 3 day retention (saves storage)
     const { count: videoCount } = await supabase
       .from('game_videos')
       .select('*', { count: 'exact', head: true })
-      .lt('created_at', shortRetentionCutoff)
+      .lt('created_at', videoCutoffDate)
       .eq('is_featured', false) // Never delete featured videos
 
     // Delete old videos not bookmarked AND not for followed/backlog games AND not featured
     let videoQuery = supabase
       .from('game_videos')
       .delete()
-      .lt('created_at', shortRetentionCutoff)
+      .lt('created_at', videoCutoffDate)
       .eq('is_featured', false)
 
     if (bookmarkedVideoIds.length > 0) {
@@ -156,7 +156,7 @@ export async function GET(req: Request) {
     await supabase
       .from('notifications')
       .delete()
-      .lt('created_at', patchCutoffDate)
+      .lt('created_at', contentCutoffDate)
       .eq('is_read', true)
 
     // Clean up expired recommendations (24-hour expiration)
@@ -216,7 +216,7 @@ export async function GET(req: Request) {
 
   return NextResponse.json({
     ok: true,
-    retentionDays: { news: 3, videos: 3, patches: 7 },
+    retentionDays: { news: 7, videos: 3, patches: 7 },
     ...results,
   })
 }
