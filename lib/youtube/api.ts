@@ -558,10 +558,11 @@ export async function fetchOfficialTrailers(): Promise<{ success: boolean; added
         const videoDetails = details.get(videoId)
         const title = video.snippet.title
 
-        // Filter trailers by duration (30 sec - 6 min)
+        // Filter trailers by duration (60 sec - 6 min) - no Shorts allowed
         if (videoDetails) {
           const duration = parseDuration(videoDetails.contentDetails.duration)
-          if (duration < 30 || duration > 360) continue
+          // Skip Shorts (under 60 seconds)
+          if (duration < 60 || duration > 360) continue
 
           // Minimum 1k views for trailers
           const viewCount = parseInt(videoDetails.statistics.viewCount) || 0
@@ -570,6 +571,14 @@ export async function fetchOfficialTrailers(): Promise<{ success: boolean; added
 
         // Skip if not actually a trailer
         const lowerTitle = title.toLowerCase()
+        const lowerDesc = (video.snippet.description || '').toLowerCase()
+
+        // Skip Shorts format videos
+        if (lowerTitle.includes('#shorts') || lowerTitle.includes('#short') ||
+            lowerDesc.includes('#shorts') || lowerDesc.includes('#short')) {
+          console.log(`[YouTube] Skipping ${videoId} - Shorts not allowed in trailers`)
+          continue
+        }
         if (!lowerTitle.includes('trailer') && !lowerTitle.includes('reveal') && !lowerTitle.includes('announce')) {
           continue
         }
