@@ -1,5 +1,7 @@
 import { cookies } from 'next/headers'
 import { Metadata } from 'next'
+import Link from 'next/link'
+import { Settings } from 'lucide-react'
 import { isGuestModeFromCookies } from '@/lib/guest'
 import { createClient } from '@/lib/supabase/server'
 import { getNotifications, getNotificationStats, getTodaysNews } from '@/lib/notifications'
@@ -48,10 +50,21 @@ export default async function NotificationsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Notifications</h1>
-        <p className="mt-2 text-muted-foreground">
-          Stay updated on patches, news, and releases from your followed games.
-        </p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Notifications</h1>
+            <p className="mt-2 text-muted-foreground">
+              Stay updated on patches, news, and releases from your followed games.
+            </p>
+          </div>
+          <Link
+            href="/notifications/settings"
+            className="flex-shrink-0 p-2.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-zinc-800 transition-colors"
+            title="Notification Settings"
+          >
+            <Settings className="w-5 h-5" />
+          </Link>
+        </div>
         {/* Glow divider */}
         <div className="relative h-0.5 w-full overflow-visible mt-4">
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/80 to-transparent" />

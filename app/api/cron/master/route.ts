@@ -101,6 +101,21 @@ export async function GET(req: Request) {
     console.error('[MASTER CRON] fetch-news FAILED:', e)
   }
 
+  // Always run: process-notifications (smart notification queue processing)
+  console.log('[MASTER CRON] Running process-notifications...')
+  taskStart = Date.now()
+  try {
+    const res = await fetch(`${baseUrl}/api/cron/process-notifications`, {
+      headers: internalHeaders,
+    })
+    results.processNotifications = await res.json()
+    timings.processNotifications = Date.now() - taskStart
+    console.log(`[MASTER CRON] process-notifications completed in ${timings.processNotifications}ms:`, JSON.stringify(results.processNotifications).slice(0, 200))
+  } catch (e) {
+    results.processNotifications = { error: String(e) }
+    console.error('[MASTER CRON] process-notifications FAILED:', e)
+  }
+
   // Run at 0, 6, 12, 18 UTC: discover-games
   if (currentHour % 6 === 0) {
     console.log('[MASTER CRON] Running discover-games (6-hour task)...')

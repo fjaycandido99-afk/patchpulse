@@ -195,6 +195,39 @@ export async function getUserNotificationPrefs(userId: string): Promise<UserNoti
 }
 
 /**
+ * Update user notification preferences
+ */
+export async function updateUserNotificationPrefs(
+  userId: string,
+  updates: Partial<UserNotificationPrefs>
+): Promise<void> {
+  const supabase = createAdminClient()
+
+  // Handle game_overrides separately (merge with existing)
+  if (updates.game_overrides) {
+    const { data: existing } = await supabase
+      .from('smart_notification_prefs')
+      .select('game_overrides')
+      .eq('user_id', userId)
+      .single()
+
+    const merged = {
+      ...((existing?.game_overrides as Record<string, { notify_all?: boolean; muted?: boolean }>) || {}),
+      ...updates.game_overrides,
+    }
+    updates.game_overrides = merged
+  }
+
+  await supabase
+    .from('smart_notification_prefs')
+    .upsert({
+      user_id: userId,
+      ...updates,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'user_id' })
+}
+
+/**
  * Update user preferences based on interaction
  */
 export async function learnFromInteraction(

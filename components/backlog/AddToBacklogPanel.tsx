@@ -153,11 +153,15 @@ export function AddToBacklogPanel({ games }: AddToBacklogPanelProps) {
 
     startTransition(async () => {
       try {
-        if (isFromSearch) {
-          await followAndAddToBacklog(gameId)
-        } else {
-          await addToBacklogWithStatus(gameId, status)
+        const result = isFromSearch
+          ? await followAndAddToBacklog(gameId)
+          : await addToBacklogWithStatus(gameId, status)
+
+        if (result && 'limitReached' in result && result.limitReached) {
+          toast.error(`Library limit reached (${result.currentCount}/${result.maxCount}). Upgrade for unlimited.`)
+          return
         }
+
         setAddedIds((prev) => new Map(prev).set(gameId, status))
         const statusLabel = STATUS_CONFIG[status].label
         toast.success(`${gameName} added to ${statusLabel}`)

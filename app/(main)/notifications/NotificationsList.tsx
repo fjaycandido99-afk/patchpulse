@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Bell, FileText, Newspaper, Sparkles, CheckCheck, ChevronRight, Calendar, Gamepad2, Tag, SlidersHorizontal, X, Check, Rocket, Bookmark } from 'lucide-react'
+import { Bell, FileText, Newspaper, Sparkles, CheckCheck, ChevronRight, Calendar, Gamepad2, Tag, SlidersHorizontal, X, Check, Rocket, Bookmark, Zap } from 'lucide-react'
 import { type Notification, type NotificationStats, type TodaysNewsItem } from '@/lib/notifications'
 
 type FilterType = 'all' | 'unread' | 'patches' | 'news' | 'deals'
@@ -383,21 +383,33 @@ export function NotificationsList({ initialNotifications, initialStats, todaysNe
                       ? { href: notificationLink, target: '_blank', rel: 'noopener noreferrer' }
                       : { href: notificationLink }
 
+                    const isHighPriority = notification.priority >= 4
+
                     return (
                     <LinkComponent
                       key={notification.id}
                       {...linkProps}
                       onClick={() => !notification.is_read && handleMarkRead(notification.id)}
-                      className={`flex gap-3 p-3 rounded-xl transition-colors ${
-                        !notification.is_read
-                          ? 'bg-primary/5 hover:bg-primary/10'
-                          : 'hover:bg-white/5'
+                      className={`flex gap-3 p-3 rounded-xl transition-colors relative ${
+                        isHighPriority
+                          ? 'bg-amber-500/10 hover:bg-amber-500/15 border-l-2 border-amber-500'
+                          : !notification.is_read
+                            ? 'bg-primary/5 hover:bg-primary/10'
+                            : 'hover:bg-white/5'
                       }`}
                     >
+                      {/* High Priority Badge */}
+                      {isHighPriority && (
+                        <div className="absolute top-2 right-2 flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400">
+                          <Zap className="w-3 h-3" />
+                          <span className="text-[10px] font-semibold uppercase tracking-wide">Priority</span>
+                        </div>
+                      )}
+
                       {/* Square Thumbnail */}
                       <div className="flex-shrink-0 relative">
                         {notification.game?.cover_url ? (
-                          <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-zinc-800">
+                          <div className={`relative w-12 h-12 rounded-lg overflow-hidden bg-zinc-800 ${isHighPriority ? 'ring-2 ring-amber-500/50' : ''}`}>
                             <Image
                               src={notification.game.cover_url}
                               alt={notification.game.name}
@@ -407,7 +419,7 @@ export function NotificationsList({ initialNotifications, initialStats, todaysNe
                             />
                           </div>
                         ) : (
-                          <div className="w-12 h-12 rounded-lg bg-zinc-800 flex items-center justify-center">
+                          <div className={`w-12 h-12 rounded-lg bg-zinc-800 flex items-center justify-center ${isHighPriority ? 'ring-2 ring-amber-500/50' : ''}`}>
                             <Gamepad2 className="w-5 h-5 text-muted-foreground" />
                           </div>
                         )}
@@ -422,16 +434,15 @@ export function NotificationsList({ initialNotifications, initialStats, todaysNe
                         <div className="flex items-start justify-between gap-2">
                           <p className={`text-sm leading-snug line-clamp-2 ${
                             !notification.is_read ? 'font-medium' : 'text-muted-foreground'
-                          }`}>
+                          } ${isHighPriority ? 'pr-16' : ''}`}>
                             {notification.title}
                           </p>
-                          {!notification.is_read && (
+                          {!notification.is_read && !isHighPriority && (
                             <span className="flex-shrink-0 w-2 h-2 rounded-full bg-primary mt-1.5" />
                           )}
                         </div>
                         <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
                           {notification.game?.name || 'PatchPulse'} • {getRelativeTime(notification.created_at)}
-                          {notification.priority >= 4 && ' • Important'}
                         </p>
                       </div>
                     </LinkComponent>

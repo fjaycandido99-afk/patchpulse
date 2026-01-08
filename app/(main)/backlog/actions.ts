@@ -235,6 +235,18 @@ export async function updateBacklogItem(input: UpdateBacklogInput) {
       throw new Error('Failed to update backlog item')
     }
   } else {
+    // Check limit before creating new backlog item
+    const limitCheck = await canAddToBacklog(user.id)
+    if (!limitCheck.allowed) {
+      return {
+        success: false,
+        limitReached: true,
+        currentCount: limitCheck.currentCount,
+        maxCount: limitCheck.maxCount,
+        plan: limitCheck.plan,
+      }
+    }
+
     const { error } = await supabase.from('backlog_items').insert({
       user_id: user.id,
       game_id: gameId,
@@ -452,6 +464,18 @@ export async function markPlayedToday(gameId: string) {
       throw new Error('Failed to update last played date')
     }
   } else {
+    // Check limit before creating new backlog item
+    const limitCheck = await canAddToBacklog(user.id)
+    if (!limitCheck.allowed) {
+      return {
+        success: false,
+        limitReached: true,
+        currentCount: limitCheck.currentCount,
+        maxCount: limitCheck.maxCount,
+        plan: limitCheck.plan,
+      }
+    }
+
     const { error } = await supabase.from('backlog_items').insert({
       user_id: user.id,
       game_id: gameId,
