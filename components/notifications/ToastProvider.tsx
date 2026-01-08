@@ -46,6 +46,9 @@ export function ToastProvider({ children, userId }: Props) {
   const [toasts, setToasts] = useState<ToastNotification[]>([])
   const [isSubscribed, setIsSubscribed] = useState(false)
 
+  // Debug: Log on every render
+  console.log('[Toast] Provider rendered, userId:', userId)
+
   const showToast = useCallback((notification: ToastNotification) => {
     setToasts(prev => {
       // Prevent duplicates
