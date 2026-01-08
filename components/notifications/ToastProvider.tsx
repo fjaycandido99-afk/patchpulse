@@ -70,12 +70,8 @@ export function ToastProvider({ children, userId }: Props) {
   // Subscribe to real-time notifications
   useEffect(() => {
     // Skip for guest users or if already subscribed
-    if (!userId || userId === 'guest' || isSubscribed) {
-      console.log('[Toast] Skipping subscription:', { userId, isSubscribed })
-      return
-    }
+    if (!userId || userId === 'guest' || isSubscribed) return
 
-    console.log('[Toast] Setting up Realtime subscription for user:', userId)
     const supabase = createClient()
 
     // Subscribe to new notifications (filter client-side for reliability)
@@ -89,14 +85,10 @@ export function ToastProvider({ children, userId }: Props) {
           table: 'notifications',
         },
         async (payload) => {
-          console.log('[Toast] Received notification:', payload.new)
           const notification = payload.new as ToastNotification
 
           // Filter client-side for this user
-          if (notification.user_id !== userId) {
-            console.log('[Toast] Ignoring notification for different user')
-            return
-          }
+          if (notification.user_id !== userId) return
 
           // Fetch game data if game_id exists
           if (notification.game_id) {
@@ -111,25 +103,18 @@ export function ToastProvider({ children, userId }: Props) {
 
           // Show toast only for high priority notifications (>= 4)
           if (notification.priority >= 4) {
-            console.log('[Toast] Showing high-priority toast:', notification.title)
             showToast(notification)
             playNotificationSound()
-          } else {
-            console.log('[Toast] Skipping low-priority notification:', notification.priority)
           }
         }
       )
-      .subscribe((status, err) => {
-        console.log('[Toast] Subscription status:', status, err || '')
+      .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
           setIsSubscribed(true)
-        } else if (status === 'CHANNEL_ERROR') {
-          console.error('[Toast] Channel error - Realtime may not be enabled for notifications table')
         }
       })
 
     return () => {
-      console.log('[Toast] Cleaning up subscription')
       supabase.removeChannel(channel)
       setIsSubscribed(false)
     }
