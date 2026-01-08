@@ -6,6 +6,7 @@ import { LiveToast } from './LiveToast'
 
 type ToastNotification = {
   id: string
+  user_id: string
   type: 'new_patch' | 'new_news' | 'game_release' | 'ai_digest' | 'system'
   title: string
   body: string | null
@@ -80,7 +81,7 @@ export function ToastProvider({ children, userId }: Props) {
     console.log('[Toast] Setting up Realtime subscription for user:', userId)
     const supabase = createClient()
 
-    // Subscribe to new notifications for this user
+    // Subscribe to new notifications (filter client-side for reliability)
     const channel = supabase
       .channel(`live-notifications-${userId}`)
       .on(
@@ -89,11 +90,16 @@ export function ToastProvider({ children, userId }: Props) {
           event: 'INSERT',
           schema: 'public',
           table: 'notifications',
-          filter: `user_id=eq.${userId}`,
         },
         async (payload) => {
           console.log('[Toast] Received notification:', payload.new)
           const notification = payload.new as ToastNotification
+
+          // Filter client-side for this user
+          if (notification.user_id !== userId) {
+            console.log('[Toast] Ignoring notification for different user')
+            return
+          }
 
           // Fetch game data if game_id exists
           if (notification.game_id) {
