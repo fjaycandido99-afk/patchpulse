@@ -97,14 +97,10 @@ export function ToastProvider({ children, userId }: Props) {
             notification.game = game
           }
 
-          // Show toast for priority 3+ notifications
-          if (notification.priority >= 3) {
+          // Show toast only for high priority notifications (>= 4)
+          if (notification.priority >= 4) {
             showToast(notification)
-
-            // Play notification sound for high priority
-            if (notification.priority >= 4) {
-              playNotificationSound()
-            }
+            playNotificationSound()
           }
         }
       )
