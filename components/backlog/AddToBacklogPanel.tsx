@@ -4,6 +4,7 @@ import { useState, useTransition, useEffect } from 'react'
 import Image from 'next/image'
 import { Plus, Star, Play, Pause, Check, Search, Gamepad2 } from 'lucide-react'
 import { addToBacklog, searchGamesForBacklog, followAndAddToBacklog, addToBacklogWithStatus } from '@/app/(main)/backlog/actions'
+import { useToastUI } from '@/components/ui/toast'
 
 type BacklogStatus = 'playing' | 'paused' | 'backlog' | 'finished' | 'dropped'
 
@@ -107,10 +108,10 @@ export function AddToBacklogPanel({ games }: AddToBacklogPanelProps) {
   const [isSearching, setIsSearching] = useState(false)
   const [pendingId, setPendingId] = useState<string | null>(null)
   const [pendingAction, setPendingAction] = useState<string | null>(null)
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [isPending, startTransition] = useTransition()
   const [addedIds, setAddedIds] = useState<Map<string, BacklogStatus>>(new Map())
   const [isFocused, setIsFocused] = useState(false)
+  const { toast } = useToastUI()
 
   // Debounced search for all games mode
   useEffect(() => {
@@ -139,7 +140,6 @@ export function AddToBacklogPanel({ games }: AddToBacklogPanelProps) {
     setSearchMode(mode)
     setSearch('')
     setSearchResults([])
-    setMessage(null)
   }
 
   // Filter followed games locally
@@ -148,7 +148,6 @@ export function AddToBacklogPanel({ games }: AddToBacklogPanelProps) {
   )
 
   async function handleAddWithStatus(gameId: string, gameName: string, status: BacklogStatus, isFromSearch = false) {
-    setMessage(null)
     setPendingId(gameId)
     setPendingAction(status)
 
@@ -161,13 +160,12 @@ export function AddToBacklogPanel({ games }: AddToBacklogPanelProps) {
         }
         setAddedIds((prev) => new Map(prev).set(gameId, status))
         const statusLabel = STATUS_CONFIG[status].label
-        setMessage({ type: 'success', text: `${gameName} → ${statusLabel}` })
+        toast.success(`${gameName} added to ${statusLabel}`)
         if (isFromSearch) {
           setSearchResults((prev) => prev.filter((g) => g.id !== gameId))
         }
-        setTimeout(() => setMessage(null), 2000)
       } catch {
-        setMessage({ type: 'error', text: 'Failed to add' })
+        toast.error('Failed to add game')
       } finally {
         setPendingId(null)
         setPendingAction(null)
@@ -245,19 +243,6 @@ export function AddToBacklogPanel({ games }: AddToBacklogPanelProps) {
             className="w-full rounded-lg border border-border bg-background pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50"
           />
         </div>
-
-        {message && (
-          <div
-            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm ${
-              message.type === 'success'
-                ? 'bg-green-500/10 text-green-400 border border-green-500/20'
-                : 'bg-red-500/10 text-red-400 border border-red-500/20'
-            }`}
-          >
-            <Check className="h-4 w-4" />
-            {message.text}
-          </div>
-        )}
 
         {/* Results */}
         {showResults && (
