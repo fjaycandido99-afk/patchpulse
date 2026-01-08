@@ -351,8 +351,19 @@ export async function getForYouVideos(limit = 50): Promise<VideoWithGame[]> {
     return getTrendingVideos(limit)
   }
 
-  return (data || []).map((item) => ({
+  const personalizedVideos = (data || []).map((item) => ({
     ...item,
     game: Array.isArray(item.game) ? item.game[0] || null : item.game,
   })) as VideoWithGame[]
+
+  // If user has few/no personalized videos, supplement with trending
+  if (personalizedVideos.length < 10) {
+    const trending = await getTrendingVideos(limit - personalizedVideos.length)
+    // Merge, avoiding duplicates
+    const seenIds = new Set(personalizedVideos.map(v => v.id))
+    const additionalVideos = trending.filter(v => !seenIds.has(v.id))
+    return [...personalizedVideos, ...additionalVideos].slice(0, limit)
+  }
+
+  return personalizedVideos
 }

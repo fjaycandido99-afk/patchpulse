@@ -2,7 +2,8 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Check, Loader2 } from 'lucide-react'
+import { Plus, Check, Loader2, Crown } from 'lucide-react'
+import Link from 'next/link'
 import { addToBacklog } from '@/app/(main)/backlog/actions'
 
 type AddToBacklogButtonProps = {
@@ -10,19 +11,27 @@ type AddToBacklogButtonProps = {
   gameName: string
 }
 
+type LimitError = {
+  limitReached: true
+  currentCount: number
+  maxCount: number
+}
+
 export function AddToBacklogButton({ gameId, gameName }: AddToBacklogButtonProps) {
   const [isPending, startTransition] = useTransition()
   const [isAdded, setIsAdded] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [limitError, setLimitError] = useState<LimitError | null>(null)
   const router = useRouter()
 
   function handleClick() {
     setError(null)
+    setLimitError(null)
     startTransition(async () => {
       try {
         const result = await addToBacklog(gameId)
         if (result && 'limitReached' in result && result.limitReached) {
-          setError(`Backlog limit reached (${result.currentCount}/${result.maxCount})`)
+          setLimitError(result as LimitError)
           return
         }
         setIsAdded(true)
@@ -41,6 +50,25 @@ export function AddToBacklogButton({ gameId, gameName }: AddToBacklogButtonProps
       <div className="flex items-center gap-2 text-green-400">
         <Check className="h-4 w-4" />
         <span className="text-sm font-medium">Added to backlog!</span>
+      </div>
+    )
+  }
+
+  if (limitError) {
+    return (
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 text-amber-400">
+          <span className="text-sm font-medium">
+            Backlog full ({limitError.currentCount}/{limitError.maxCount})
+          </span>
+        </div>
+        <Link
+          href="/pricing"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors"
+        >
+          <Crown className="h-4 w-4" />
+          Upgrade for unlimited
+        </Link>
       </div>
     )
   }

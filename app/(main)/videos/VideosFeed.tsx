@@ -324,7 +324,7 @@ function VerticalVideoPlayer({
   )
 }
 
-// Hero Carousel for Desktop
+// Hero Carousel for Desktop (currently disabled for For You page)
 function HeroCarousel({
   videos,
   onPlay,
@@ -368,7 +368,6 @@ function HeroCarousel({
         }}
       >
         {videos.map((video) => {
-          // Always use YouTube's best quality for hero - maxresdefault with sddefault fallback
           const hasFailed = failedImages.has(video.youtube_id)
           const thumbnail = hasFailed
             ? getYouTubeThumbnail(video.youtube_id, 'sd')
@@ -390,41 +389,29 @@ function HeroCarousel({
                 priority
                 unoptimized
                 onError={() => {
-                  // Fallback to SD quality if maxres fails
                   if (!hasFailed) {
                     setFailedImages(prev => new Set([...prev, video.youtube_id]))
                   }
                 }}
               />
-
-              {/* Gradient overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-black/10" />
-
-              {/* Play button - always visible */}
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="w-20 h-20 rounded-full bg-red-600/90 flex items-center justify-center shadow-2xl backdrop-blur-sm border-2 border-white/20 group-hover:scale-110 transition-transform">
                   <Play className="w-9 h-9 text-white fill-white ml-1" />
                 </div>
               </div>
-
-              {/* Type badge */}
               <span className={`absolute top-4 left-4 px-3 py-1 text-sm font-medium rounded-full ${typeConfig.color} backdrop-blur-sm`}>
                 {typeConfig.label}
               </span>
-
-              {/* Duration */}
               {video.duration_seconds > 0 && (
                 <span className="absolute top-4 right-4 px-2 py-1 text-sm font-medium rounded bg-black/70 text-white backdrop-blur-sm">
                   {formatDuration(video.duration_seconds)}
                 </span>
               )}
-
-              {/* Content */}
               <div className="absolute bottom-0 left-0 right-0 p-6">
                 <h2 className="font-bold text-white text-2xl leading-tight line-clamp-2 max-w-3xl">
                   {video.title}
                 </h2>
-
                 <div className="flex items-center gap-3 mt-3 text-sm text-white/60">
                   {video.channel_name && <span>{video.channel_name}</span>}
                   {video.view_count > 0 && (
@@ -445,8 +432,6 @@ function HeroCarousel({
           )
         })}
       </div>
-
-      {/* Navigation arrows */}
       {videos.length > 1 && (
         <>
           <button
@@ -463,8 +448,6 @@ function HeroCarousel({
           </button>
         </>
       )}
-
-      {/* Dots indicator */}
       {videos.length > 1 && (
         <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
           {videos.map((_, index) => (
@@ -899,14 +882,7 @@ export function VideosFeed({
     router.push(`/videos${params.toString() ? `?${params.toString()}` : ''}`)
   }
 
-  // Get top videos by view count for hero carousel
-  const heroVideos = [...trendingVideos]
-    .sort((a, b) => b.view_count - a.view_count)
-    .slice(0, 6)
-
-  const showHero = !selectedType && heroVideos.length > 0
-
-  if (videos.length === 0 && trendingVideos.length === 0) {
+  if (videos.length === 0) {
     return (
       <div className="rounded-xl border border-border bg-card p-8 text-center">
         <Video className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
@@ -918,22 +894,6 @@ export function VideosFeed({
 
   return (
     <div className="space-y-6">
-      {/* Hero Carousel - Desktop only */}
-      {showHero && (
-        <div className="hidden md:block">
-          <HeroCarousel videos={heroVideos} onPlay={(video) => {
-            // Find the index in displayVideos
-            const idx = displayVideos.findIndex(v => v.id === video.id)
-            if (idx !== -1) {
-              setSelectedVideoIndex(idx)
-            } else {
-              // Video not in displayVideos, add it temporarily by using hero index
-              setSelectedVideoIndex(0)
-            }
-          }} />
-        </div>
-      )}
-
       {/* Filter Chips - Icon only on mobile, show label when active */}
       <div className="sticky top-0 z-30 -mx-4 px-2 py-2 bg-background/95 backdrop-blur-md border-b border-white/5 md:relative md:mx-0 md:px-0 md:py-0 md:bg-transparent md:backdrop-blur-none md:border-0">
         <div className="flex justify-center gap-1.5 md:justify-start md:gap-2">

@@ -5,7 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 export const PLAN_LIMITS = {
   free: {
     backlog: 5,
-    followed: 10,
+    followed: 5,
     hasNotifications: false,
     hasAISummaries: false,
     hasFullReleases: false,
