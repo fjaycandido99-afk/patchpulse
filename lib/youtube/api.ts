@@ -37,7 +37,8 @@ type YouTubeVideoDetails = {
 }
 
 // Parse ISO 8601 duration to seconds
-function parseDuration(duration: string): number {
+function parseDuration(duration: string | undefined | null): number {
+  if (!duration) return 0
   const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/)
   if (!match) return 0
 
