@@ -28,6 +28,22 @@ export default function LandingPage() {
             Log In
           </Link>
         </div>
+
+        {/* App Store Download */}
+        <div className="mt-8">
+          <a
+            href="https://apps.apple.com/app/patchpulse"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block transition-opacity hover:opacity-80"
+          >
+            <img
+              src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg"
+              alt="Download on the App Store"
+              className="h-12"
+            />
+          </a>
+        </div>
       </div>
     </div>
   )
