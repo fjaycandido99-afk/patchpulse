@@ -20,6 +20,7 @@
     "@capacitor/push-notifications": "^8.0.0",
     "@ducanh2912/next-pwa": "^10.2.9",
     "@revenuecat/purchases-capacitor": "^11.3.2",
+    "@sentry/nextjs": "^10.32.1",
     "@simplewebauthn/browser": "^13.2.2",
     "@simplewebauthn/server": "^13.2.2",
     "@supabase/ssr": "^0.5.2",

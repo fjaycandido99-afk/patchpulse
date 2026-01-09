@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import * as Sentry from '@sentry/nextjs'
 
 export default function AdminError({
   error,
@@ -10,36 +11,37 @@ export default function AdminError({
   reset: () => void
 }) {
   useEffect(() => {
-    console.error('Admin error:', error)
+    Sentry.captureException(error)
+    console.error('Admin section error:', error)
   }, [error])
 
   return (
-    <div className="flex min-h-[50vh] flex-col items-center justify-center px-4 text-center">
+    <div className="flex min-h-[60vh] flex-col items-center justify-center px-4 text-center">
       <div className="space-y-6">
         <div className="space-y-2">
-          <h1 className="text-2xl font-bold tracking-tight text-white">Admin Error</h1>
-          <p className="text-zinc-400 max-w-md">
-            Something went wrong in the admin panel. This could be a configuration issue.
+          <h1 className="text-4xl font-bold tracking-tight">Admin Error</h1>
+          <p className="text-muted-foreground max-w-md">
+            An unexpected error occurred. Our team has been notified.
           </p>
         </div>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
           <button
             onClick={reset}
-            className="btn-primary px-6"
+            className="rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
             Try again
           </button>
           <a
             href="/admin"
-            className="rounded-lg border border-white/10 bg-white/5 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-white/10"
+            className="rounded-lg border border-border px-6 py-2.5 text-sm font-medium transition-colors hover:bg-accent"
           >
-            Admin dashboard
+            Go to Admin Home
           </a>
         </div>
 
         {error.digest && (
-          <p className="text-xs text-zinc-600">
+          <p className="text-xs text-muted-foreground/50">
             Error ID: {error.digest}
           </p>
         )}

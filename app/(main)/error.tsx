@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import * as Sentry from '@sentry/nextjs'
 
 export default function MainError({
   error,
@@ -10,16 +11,17 @@ export default function MainError({
   reset: () => void
 }) {
   useEffect(() => {
+    Sentry.captureException(error)
     console.error('Main section error:', error)
   }, [error])
 
   return (
-    <div className="flex min-h-[50vh] flex-col items-center justify-center px-4 text-center">
+    <div className="flex min-h-[60vh] flex-col items-center justify-center px-4 text-center">
       <div className="space-y-6">
         <div className="space-y-2">
-          <h1 className="text-2xl font-bold tracking-tight">Something went wrong</h1>
+          <h1 className="text-4xl font-bold tracking-tight">Something went wrong</h1>
           <p className="text-muted-foreground max-w-md">
-            We couldn&apos;t load this page. Please try again.
+            An unexpected error occurred. Our team has been notified.
           </p>
         </div>
 
