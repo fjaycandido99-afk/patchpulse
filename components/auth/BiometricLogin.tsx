@@ -9,7 +9,8 @@ import {
   getStoredEmail,
   authenticateWithBiometric,
   clearStoredCredential,
-} from '@/lib/webauthn'
+  getBiometricType,
+} from '@/lib/biometric'
 
 type BiometricLoginProps = {
   onUsePassword: () => void
@@ -20,6 +21,7 @@ export function BiometricLogin({ onUsePassword }: BiometricLoginProps) {
   const [isAvailable, setIsAvailable] = useState(false)
   const [hasCredential, setHasCredential] = useState(false)
   const [email, setEmail] = useState<string | null>(null)
+  const [biometricType, setBiometricType] = useState('Face ID')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const hasAutoTriggered = useRef(false)
@@ -38,7 +40,7 @@ export function BiometricLogin({ onUsePassword }: BiometricLoginProps) {
       setIsLoading(false)
 
       // If credential is invalid, clear it
-      if (result.error?.includes('not found')) {
+      if (result.error?.includes('not found') || result.error?.includes('expired')) {
         clearStoredCredential()
         setHasCredential(false)
       }
@@ -50,10 +52,12 @@ export function BiometricLogin({ onUsePassword }: BiometricLoginProps) {
       const available = await checkBiometricAvailable()
       const stored = hasStoredCredential()
       const storedEmail = getStoredEmail()
+      const type = await getBiometricType()
 
       setIsAvailable(available)
       setHasCredential(stored)
       setEmail(storedEmail)
+      setBiometricType(type)
 
       // Auto-trigger Face ID on mount (once only)
       if (available && stored && !hasAutoTriggered.current) {
@@ -105,7 +109,7 @@ export function BiometricLogin({ onUsePassword }: BiometricLoginProps) {
         ) : (
           <>
             <Fingerprint className="w-6 h-6" />
-            Use Face ID
+            Use {biometricType}
           </>
         )}
       </button>

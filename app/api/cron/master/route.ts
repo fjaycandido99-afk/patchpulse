@@ -148,6 +148,21 @@ export async function GET(req: Request) {
       results.backfillImages = { error: String(e) }
       console.error('[MASTER CRON] backfill-images FAILED:', e)
     }
+
+    // Run fetch-videos at same 6-hour intervals
+    console.log('[MASTER CRON] Running fetch-videos (6-hour task)...')
+    taskStart = Date.now()
+    try {
+      const res = await fetch(`${baseUrl}/api/cron/fetch-videos`, {
+        headers: internalHeaders,
+      })
+      results.fetchVideos = await res.json()
+      timings.fetchVideos = Date.now() - taskStart
+      console.log(`[MASTER CRON] fetch-videos completed in ${timings.fetchVideos}ms:`, JSON.stringify(results.fetchVideos).slice(0, 200))
+    } catch (e) {
+      results.fetchVideos = { error: String(e) }
+      console.error('[MASTER CRON] fetch-videos FAILED:', e)
+    }
   }
 
   // Run at 4 UTC: cleanup-content

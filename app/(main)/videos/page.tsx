@@ -62,11 +62,14 @@ export default async function VideosPage({
   const plan = user ? await getUserPlan(user.id) : 'free'
   const isPro = plan === 'pro'
 
+  // Pro users get access to all videos (up to 500)
+  const videoLimit = isPro ? 500 : 50
+
   // Use personalized "For You" when no filter selected, otherwise use type filter
   const [videos, trendingVideos, videoTypes, savedVideoIds] = await Promise.all([
     selectedType
-      ? getVideos({ videoType: selectedType, limit: 50 })
-      : getForYouVideos(50), // Personalized feed based on user's library
+      ? getVideos({ videoType: selectedType, limit: videoLimit })
+      : getForYouVideos(videoLimit), // Personalized feed based on user's library
     getTrendingVideos(10),
     getVideoTypes(),
     getUserVideoBookmarks(),

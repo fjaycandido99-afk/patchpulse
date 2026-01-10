@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Home, Newspaper, Library, Brain, Crown, Bookmark, Video, Menu, X, Gamepad2, CalendarDays, ChevronRight, Tag, CalendarClock } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useScrollDirection } from '@/hooks/useScrollDirection'
 
 type NavBadge = {
   count?: number
@@ -39,6 +40,7 @@ const menuItems: NavItemConfig[] = [
 export function MobileNav({ badges, isGuest = false }: { badges?: Record<string, NavBadge>; isGuest?: boolean }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const pathname = usePathname()
+  const { showBottomNav } = useScrollDirection()
 
   // Check if current page is in menu items
   const isMenuItemActive = menuItems.some(item =>
@@ -119,8 +121,10 @@ export function MobileNav({ badges, isGuest = false }: { badges?: Record<string,
         </div>
       )}
 
-      {/* Bottom Navigation - Always fixed at bottom */}
-      <nav className="fixed bottom-0 inset-x-0 z-50 glass-nav md:hidden safe-area-pb">
+      {/* Bottom Navigation - Hides on scroll down */}
+      <nav className={`fixed bottom-0 inset-x-0 z-50 glass-nav md:hidden safe-area-pb transition-transform duration-300 ${
+        showBottomNav || isMenuOpen ? 'translate-y-0' : 'translate-y-full'
+      }`}>
         <div className="flex items-center justify-around">
           {navItems.map((item) => (
             <NavItem

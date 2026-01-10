@@ -25,6 +25,16 @@ export type VideoWithGame = {
   } | null
 }
 
+// Fisher-Yates shuffle for random video order on each refresh
+function shuffleArray<T>(array: T[]): T[] {
+  const shuffled = [...array]
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+  }
+  return shuffled
+}
+
 export async function getVideos({
   videoType,
   gameId,
@@ -79,11 +89,12 @@ export async function getVideos({
     return []
   }
 
-  // Transform the data to match our type (Supabase returns game as array for joins)
-  return (data || []).map((item) => ({
+  // Transform the data to match our type, then shuffle for variety
+  const videos = (data || []).map((item) => ({
     ...item,
     game: Array.isArray(item.game) ? item.game[0] || null : item.game,
   })) as VideoWithGame[]
+  return shuffleArray(videos)
 }
 
 export async function getFeaturedVideos(limit = 6): Promise<VideoWithGame[]> {
@@ -120,10 +131,11 @@ export async function getFeaturedVideos(limit = 6): Promise<VideoWithGame[]> {
     return []
   }
 
-  return (data || []).map((item) => ({
+  const videos = (data || []).map((item) => ({
     ...item,
     game: Array.isArray(item.game) ? item.game[0] || null : item.game,
   })) as VideoWithGame[]
+  return shuffleArray(videos)
 }
 
 export async function getTrendingVideos(limit = 10): Promise<VideoWithGame[]> {
@@ -164,10 +176,11 @@ export async function getTrendingVideos(limit = 10): Promise<VideoWithGame[]> {
     return []
   }
 
-  return (data || []).map((item) => ({
+  const videos = (data || []).map((item) => ({
     ...item,
     game: Array.isArray(item.game) ? item.game[0] || null : item.game,
   })) as VideoWithGame[]
+  return shuffleArray(videos)
 }
 
 export async function getVideoTypes(): Promise<{ type: VideoType; count: number }[]> {
@@ -351,10 +364,16 @@ export async function getForYouVideos(limit = 50): Promise<VideoWithGame[]> {
     return getTrendingVideos(limit)
   }
 
-  const personalizedVideos = (data || []).map((item) => ({
+  let personalizedVideos = (data || []).map((item) => ({
     ...item,
     game: Array.isArray(item.game) ? item.game[0] || null : item.game,
   })) as VideoWithGame[]
+
+  // Shuffle for variety on each refresh (Fisher-Yates algorithm)
+  for (let i = personalizedVideos.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [personalizedVideos[i], personalizedVideos[j]] = [personalizedVideos[j], personalizedVideos[i]]
+  }
 
   // If user has few/no personalized videos, supplement with trending
   if (personalizedVideos.length < 10) {

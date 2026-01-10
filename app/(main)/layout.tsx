@@ -1,6 +1,5 @@
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
-import Link from 'next/link'
 import { getSession } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
 import { isGuestModeFromCookies } from '@/lib/guest'
@@ -9,8 +8,6 @@ import { DesktopSidebar } from '@/components/layout/DesktopSidebar'
 import { SearchBar } from '@/components/layout/SearchBar'
 import { ProfileAvatar } from '@/components/layout/ProfileAvatar'
 import { GuestBanner } from '@/components/auth/GuestBanner'
-import { NotificationBell } from '@/components/notifications/NotificationBell'
-import { LatestPatchesBell } from '@/components/patches/LatestPatchesBell'
 import { ToastProvider } from '@/components/notifications/ToastProvider'
 import { ToastUIProvider } from '@/components/ui/toast'
 import { SpotlightProvider } from '@/components/games'
@@ -21,6 +18,8 @@ import { getNotificationStats } from '@/lib/notifications'
 import { getLatestPatchesStats } from '@/lib/patches-stats'
 import { ScrollToTop } from '@/components/ui/ScrollToTop'
 import { KeyboardShortcuts, KeyboardHint } from '@/components/keyboard'
+import { PushNotificationInit } from '@/components/notifications/PushNotificationInit'
+import { MobileHeader } from '@/components/layout/MobileHeader'
 
 export default async function MainLayout({
   children,
@@ -106,30 +105,13 @@ export default async function MainLayout({
             {/* Guest banner - shown at top for guest users */}
             {isGuest && <GuestBanner />}
 
-            {/* Mobile header with search */}
-            <header className="fixed inset-x-0 top-0 z-40 md:hidden bg-[rgba(9,9,11,0.98)] backdrop-blur-xl border-b border-white/10" style={{ paddingTop: 'env(safe-area-inset-top, 0)' }}>
-              <div className="flex items-center justify-between gap-2 px-4 py-3">
-                <div className="flex items-center gap-3">
-                  <Link href="/home" className="text-lg font-bold tracking-tight flex-shrink-0 hover:opacity-80 transition-opacity">
-                    PatchPulse
-                  </Link>
-                  {!isGuest && (
-                    <div className="flex items-center gap-1 ml-1">
-                      <NotificationBell initialStats={notificationStats} size="sm" />
-                    </div>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  <SearchBar className="w-auto" />
-                  <ProfileAvatar
-                    avatarUrl={userProfile.avatarUrl}
-                    displayName={userProfile.displayName}
-                    isGuest={isGuest}
-                    size="sm"
-                  />
-                </div>
-              </div>
-            </header>
+            {/* Mobile header with search - hides on scroll */}
+            <MobileHeader
+              isGuest={isGuest}
+              notificationStats={notificationStats}
+              avatarUrl={userProfile.avatarUrl}
+              displayName={userProfile.displayName}
+            />
 
             {/* Desktop search in header area - transparent to show hero behind */}
             <header className="hidden md:block sticky top-0 z-40 bg-transparent backdrop-blur-sm">
@@ -146,7 +128,7 @@ export default async function MainLayout({
               </div>
             </header>
 
-            <div className="h-full px-4 pt-20 pb-6 md:pt-6 md:px-8 lg:px-12 w-full">
+            <div className="h-full px-4 pt-20 pb-6 md:pt-6 md:px-8 lg:px-12 w-full overflow-x-hidden">
               {children}
             </div>
           </main>
@@ -155,6 +137,7 @@ export default async function MainLayout({
             <ScrollToTop />
             <KeyboardShortcuts />
             <KeyboardHint />
+            <PushNotificationInit />
           </div>
         </DealSpotlightProvider>
         </SpotlightProvider>

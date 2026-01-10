@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Fingerprint, X, Loader2, Check } from 'lucide-react'
-import { checkBiometricAvailable, registerBiometric } from '@/lib/webauthn'
+import { checkBiometricAvailable, registerBiometric, getBiometricType } from '@/lib/biometric'
 
 type BiometricPromptProps = {
   onComplete: () => void
@@ -11,12 +11,21 @@ type BiometricPromptProps = {
 
 export function BiometricPrompt({ onComplete, onSkip }: BiometricPromptProps) {
   const [isAvailable, setIsAvailable] = useState(false)
+  const [biometricType, setBiometricType] = useState('Face ID')
   const [isLoading, setIsLoading] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    checkBiometricAvailable().then(setIsAvailable)
+    const init = async () => {
+      const available = await checkBiometricAvailable()
+      setIsAvailable(available)
+      if (available) {
+        const type = await getBiometricType()
+        setBiometricType(type)
+      }
+    }
+    init()
   }, [])
 
   const handleEnable = async () => {
@@ -31,7 +40,7 @@ export function BiometricPrompt({ onComplete, onSkip }: BiometricPromptProps) {
         onComplete()
       }, 1500)
     } else {
-      setError(result.error || 'Failed to enable Face ID')
+      setError(result.error || `Failed to enable ${biometricType}`)
       setIsLoading(false)
     }
   }
@@ -68,12 +77,12 @@ export function BiometricPrompt({ onComplete, onSkip }: BiometricPromptProps) {
         {/* Content */}
         <div className="text-center mb-6">
           <h2 className="text-xl font-bold text-white mb-2">
-            {isSuccess ? 'Face ID Enabled!' : 'Enable Face ID?'}
+            {isSuccess ? `${biometricType} Enabled!` : `Enable ${biometricType}?`}
           </h2>
           <p className="text-zinc-400 text-sm">
             {isSuccess
-              ? 'You can now use Face ID to quickly log in.'
-              : 'Use Face ID for faster, more secure logins on this device.'}
+              ? `You can now use ${biometricType} to quickly log in.`
+              : `Use ${biometricType} for faster, more secure logins on this device.`}
           </p>
         </div>
 
@@ -100,7 +109,7 @@ export function BiometricPrompt({ onComplete, onSkip }: BiometricPromptProps) {
               ) : (
                 <>
                   <Fingerprint className="w-5 h-5" />
-                  Enable Face ID
+                  Enable {biometricType}
                 </>
               )}
             </button>

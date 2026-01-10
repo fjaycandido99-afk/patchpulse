@@ -1,125 +1,206 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Bell, BellOff, Loader2 } from 'lucide-react'
+import { Bell, BellOff, Loader2, Smartphone, Globe } from 'lucide-react'
 
-type Props = {
-  className?: string
+// Check if running in native app
+function isNativePlatform(): boolean {
+  if (typeof window === 'undefined') return false
+  return !!(window as Window & { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.()
 }
 
-export function PushNotificationToggle({ className = '' }: Props) {
-  const [isSupported, setIsSupported] = useState(true)
-  const [permission, setPermission] = useState<NotificationPermission>('default')
-  const [isEnabled, setIsEnabled] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+type PushStatus = 'loading' | 'enabled' | 'disabled' | 'denied' | 'unsupported'
+
+export function PushNotificationToggle() {
+  const [status, setStatus] = useState<PushStatus>('loading')
+  const [isToggling, setIsToggling] = useState(false)
+  const [isNative, setIsNative] = useState(false)
 
   useEffect(() => {
-    // Check if notifications are supported
-    if (!('Notification' in window)) {
-      setIsSupported(false)
-      return
+    const checkStatus = async () => {
+      const native = isNativePlatform()
+      setIsNative(native)
+
+      if (native) {
+        // Check native push status
+        try {
+          const { isNativePushEnabled } = await import('@/lib/capacitor/push-notifications')
+          const enabled = await isNativePushEnabled()
+          setStatus(enabled ? 'enabled' : 'disabled')
+        } catch {
+          setStatus('unsupported')
+        }
+      } else {
+        // Check web push status
+        if (!('Notification' in window) || !('serviceWorker' in navigator)) {
+          setStatus('unsupported')
+          return
+        }
+
+        if (Notification.permission === 'denied') {
+          setStatus('denied')
+          return
+        }
+
+        // Check if we have an active subscription
+        try {
+          const registration = await navigator.serviceWorker.ready
+          const subscription = await registration.pushManager.getSubscription()
+          setStatus(subscription ? 'enabled' : 'disabled')
+        } catch {
+          setStatus('disabled')
+        }
+      }
     }
 
-    setPermission(Notification.permission)
-    setIsEnabled(Notification.permission === 'granted')
+    checkStatus()
   }, [])
 
   const handleToggle = async () => {
-    if (isLoading) return
+    if (isToggling || status === 'denied' || status === 'unsupported') return
 
-    setIsLoading(true)
-    setError(null)
+    setIsToggling(true)
 
     try {
-      if (isEnabled) {
-        // Can't revoke permission, just disable locally
-        setIsEnabled(false)
-        // Could save preference to backend here
+      if (isNative) {
+        // Toggle native push
+        if (status === 'enabled') {
+          const { unregisterNativePush } = await import('@/lib/capacitor/push-notifications')
+          await unregisterNativePush()
+          setStatus('disabled')
+        } else {
+          const { registerNativePush } = await import('@/lib/capacitor/push-notifications')
+          const result = await registerNativePush()
+          if (result.success) {
+            setStatus('enabled')
+          } else if (result.error?.includes('denied')) {
+            setStatus('denied')
+          }
+        }
       } else {
-        // Request permission
-        const result = await Notification.requestPermission()
-        setPermission(result)
+        // Toggle web push
+        if (status === 'enabled') {
+          const { unregisterPushNotifications } = await import('@/lib/push-notifications')
+          await unregisterPushNotifications()
+          setStatus('disabled')
+        } else {
+          // Request permission first
+          const permission = await Notification.requestPermission()
+          if (permission === 'denied') {
+            setStatus('denied')
+            return
+          }
 
-        if (result === 'granted') {
-          setIsEnabled(true)
-          // Show test notification
-          new Notification('PatchPulse', {
-            body: 'Push notifications enabled!',
-            icon: '/logo.png',
-          })
-        } else if (result === 'denied') {
-          setError('Permission denied. Enable in browser/device settings.')
+          const { registerPushNotifications } = await import('@/lib/push-notifications')
+          const subscription = await registerPushNotifications()
+          setStatus(subscription ? 'enabled' : 'disabled')
         }
       }
-    } catch (err) {
-      console.error('Error toggling notifications:', err)
-      setError('Failed to enable notifications')
+    } catch (error) {
+      console.error('Failed to toggle push notifications:', error)
     } finally {
-      setIsLoading(false)
+      setIsToggling(false)
     }
   }
 
-  if (!isSupported) {
-    return null
-  }
-
-  if (permission === 'denied') {
+  if (status === 'loading') {
     return (
-      <div className={`flex items-center gap-3 p-4 rounded-xl bg-zinc-800/50 ${className}`}>
-        <div className="w-10 h-10 rounded-full bg-zinc-700 flex items-center justify-center">
-          <BellOff className="w-5 h-5 text-zinc-400" />
-        </div>
-        <div className="flex-1">
-          <p className="text-sm font-medium text-zinc-300">Notifications Blocked</p>
-          <p className="text-xs text-zinc-500">
-            Enable in your browser or device settings
-          </p>
+      <div className="rounded-xl border border-white/10 bg-card p-4">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-primary/10">
+            <Loader2 className="w-5 h-5 text-primary animate-spin" />
+          </div>
+          <div>
+            <p className="font-medium">Push Notifications</p>
+            <p className="text-sm text-muted-foreground">Checking status...</p>
+          </div>
         </div>
       </div>
     )
   }
 
-  return (
-    <div className={`space-y-2 ${className}`}>
-      <div className="flex items-center justify-between gap-4 p-4 rounded-xl bg-zinc-800/50">
+  if (status === 'unsupported') {
+    return (
+      <div className="rounded-xl border border-white/10 bg-card p-4">
         <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-            isEnabled ? 'bg-primary/20' : 'bg-zinc-700'
-          }`}>
-            <Bell className={`w-5 h-5 ${isEnabled ? 'text-primary' : 'text-zinc-400'}`} />
+          <div className="p-2 rounded-lg bg-zinc-500/10">
+            <BellOff className="w-5 h-5 text-zinc-500" />
           </div>
           <div>
-            <p className="text-sm font-medium">Push Notifications</p>
-            <p className="text-xs text-muted-foreground">
-              {isEnabled ? 'You will receive notifications' : 'Get notified about patches and news'}
+            <p className="font-medium">Push Notifications</p>
+            <p className="text-sm text-muted-foreground">
+              Not supported on this device
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (status === 'denied') {
+    return (
+      <div className="rounded-xl border border-white/10 bg-card p-4">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-red-500/10">
+            <BellOff className="w-5 h-5 text-red-500" />
+          </div>
+          <div className="flex-1">
+            <p className="font-medium">Push Notifications</p>
+            <p className="text-sm text-muted-foreground">
+              Permission denied. Enable in {isNative ? 'Settings > PatchPulse > Notifications' : 'browser settings'}.
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const enabledClass = status === 'enabled' ? 'bg-primary/10' : 'bg-zinc-500/10'
+  const toggleBgClass = status === 'enabled' ? 'bg-primary' : 'bg-zinc-700'
+  const togglePosClass = status === 'enabled' ? 'translate-x-5' : 'translate-x-0'
+  const notifTypeText = isNative ? 'native' : 'browser'
+
+  return (
+    <div className="rounded-xl border border-white/10 bg-card p-4">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className={`p-2 rounded-lg ${enabledClass}`}>
+            {status === 'enabled' ? (
+              <Bell className="w-5 h-5 text-primary" />
+            ) : (
+              <BellOff className="w-5 h-5 text-zinc-500" />
+            )}
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <p className="font-medium">Push Notifications</p>
+              {isNative ? (
+                <Smartphone className="w-3.5 h-3.5 text-muted-foreground" />
+              ) : (
+                <Globe className="w-3.5 h-3.5 text-muted-foreground" />
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {status === 'enabled'
+                ? `Receiving ${notifTypeText} notifications`
+                : 'Get notified about patches and updates'}
             </p>
           </div>
         </div>
 
         <button
           onClick={handleToggle}
-          disabled={isLoading}
-          className={`relative flex-shrink-0 w-12 h-7 rounded-full transition-colors ${
-            isEnabled ? 'bg-primary' : 'bg-zinc-600'
-          }`}
-          aria-label={isEnabled ? 'Disable notifications' : 'Enable notifications'}
+          disabled={isToggling}
+          className={`relative h-7 w-12 rounded-full transition-colors ${toggleBgClass} ${isToggling ? 'opacity-50' : ''}`}
         >
           <span
-            className={`absolute left-1 top-1 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-200 ${
-              isEnabled ? 'translate-x-5' : 'translate-x-0'
-            }`}
-          >
-            {isLoading && (
-              <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
-            )}
-          </span>
+            className={`absolute top-1 left-1 h-5 w-5 rounded-full bg-white transition-transform ${togglePosClass}`}
+          />
+          {isToggling && (
+            <Loader2 className="absolute inset-0 m-auto w-4 h-4 animate-spin text-white" />
+          )}
         </button>
       </div>
-
-      {error && (
-        <p className="text-xs text-red-400 px-4">{error}</p>
-      )}
     </div>
   )
 }

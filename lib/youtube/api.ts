@@ -72,10 +72,10 @@ const TYPE_DURATION: Record<VideoType, { min: number; max: number; youtubeFilter
 // How far back to search for each video type (days)
 // Shorter = fresher content, since we clean up after 3 days
 const TYPE_RECENCY: Record<VideoType, number> = {
-  trailer: 14,      // 14 days - latest trailers only
-  clips: 14,        // 14 days - very fresh viral clips
-  gameplay: 30,     // 30 days - recent compilations
-  esports: 7,       // 7 days - this week's tournaments only
+  trailer: 45,      // 45 days - catch more announcement/reveal trailers
+  clips: 14,        // 14 days - keep viral clips fresh
+  gameplay: 365,    // 12 months - evergreen compilations, top 10s
+  esports: 30,      // 30 days - full tournament coverage
   review: 60,       // 60 days - recent reviews
   other: 30,
 }

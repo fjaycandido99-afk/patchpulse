@@ -9,14 +9,14 @@
 	"ios": {
 		"contentInset": "automatic",
 		"preferredContentMode": "mobile",
-		"scheme": "patchpulse",
-		"useCocoaPods": true
+		"scheme": "patchpulse"
 	},
 	"plugins": {
 		"PurchasesPlugin": {}
 	},
 	"packageClassList": [
 		"PushNotificationsPlugin",
+		"NativeBiometricPlugin",
 		"PurchasesPlugin"
 	]
 }

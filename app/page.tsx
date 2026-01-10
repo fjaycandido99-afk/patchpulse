@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { AppStoreBadge } from '@/components/AppStoreBadge'
 
 export default function LandingPage() {
   return (
@@ -29,21 +30,8 @@ export default function LandingPage() {
           </Link>
         </div>
 
-        {/* App Store Download */}
-        <div className="mt-8">
-          <a
-            href="https://apps.apple.com/app/id6757092034"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-block transition-opacity hover:opacity-80"
-          >
-            <img
-              src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg"
-              alt="Download on the App Store"
-              className="h-12"
-            />
-          </a>
-        </div>
+        {/* App Store Download - hidden in native app */}
+        <AppStoreBadge />
       </div>
     </div>
   )

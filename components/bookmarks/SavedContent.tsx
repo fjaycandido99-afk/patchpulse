@@ -41,6 +41,7 @@ type BookmarkedNews = {
 
 type BookmarkedDeal = {
   id: string
+  entity_id: string
   metadata: {
     title: string
     salePrice: number
@@ -180,7 +181,7 @@ export function SavedContent({ deals, patches, news, recommendations = [], video
       savedAt: item.metadata.savedAt,
     }
 
-    await toggleDealBookmark(item.id, metadata)
+    await toggleDealBookmark(item.entity_id, metadata)
 
     startTransition(() => {
       router.refresh()

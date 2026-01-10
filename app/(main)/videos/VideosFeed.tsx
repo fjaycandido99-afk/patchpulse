@@ -747,8 +747,7 @@ export function VideosFeed({
   savedVideoIds,
   isPro = false,
 }: VideosFeedProps) {
-  const [isBrowser, setIsBrowser] = useState(false)
-  const [selectedVideoIndex, setSelectedVideoIndex] = useState<number | null>(null)
+    const [selectedVideoIndex, setSelectedVideoIndex] = useState<number | null>(null)
   const [localSavedIds, setLocalSavedIds] = useState<Set<string>>(new Set(savedVideoIds))
   const [savingIds, setSavingIds] = useState<Set<string>>(new Set())
   const router = useRouter()
@@ -816,33 +815,7 @@ export function VideosFeed({
     router.refresh()
   }
 
-  useEffect(() => {
-    const isNative =
-      typeof window !== 'undefined' &&
-      (window as Window & { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.()
-    setIsBrowser(!isNative)
-  }, [])
-
-  // Don't render on native apps
-  if (!isBrowser) {
-    return (
-      <div className="rounded-xl border border-border bg-card p-8 text-center">
-        <Video className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
-        <p className="text-muted-foreground">Videos are available on the web version</p>
-        <a
-          href="https://patchpulse.app/videos"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 mt-3 text-sm text-primary hover:underline"
-        >
-          Open in browser
-          <ExternalLink className="w-3.5 h-3.5" />
-        </a>
-      </div>
-    )
-  }
-
-  const updateFilters = (type: VideoType | null) => {
+    const updateFilters = (type: VideoType | null) => {
     const params = new URLSearchParams()
     if (type) params.set('type', type)
     router.push(`/videos${params.toString() ? `?${params.toString()}` : ''}`)

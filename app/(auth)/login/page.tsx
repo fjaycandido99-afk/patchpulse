@@ -6,11 +6,14 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { BiometricLogin } from '@/components/auth/BiometricLogin'
 import { BiometricPrompt } from '@/components/auth/BiometricPrompt'
-import { hasStoredCredential, checkBiometricAvailable } from '@/lib/webauthn'
-import { Gamepad2, ArrowRight, Zap, TrendingUp, Shield, User, Eye, EyeOff } from 'lucide-react'
+import { hasStoredCredential, checkBiometricAvailable } from '@/lib/biometric'
+import { Gamepad2, ArrowRight, Zap, TrendingUp, Bell, Sparkles, User, Eye, EyeOff, ChevronRight } from 'lucide-react'
 import { enableGuestMode, disableGuestMode } from '@/lib/guest'
 
+const HAS_VISITED_KEY = 'patchpulse-has-visited'
+
 type LoginMode = 'biometric' | 'password'
+type PageMode = 'landing' | 'login'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -19,24 +22,42 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
-  const [mode, setMode] = useState<LoginMode>('password')
+  const [loginMode, setLoginMode] = useState<LoginMode>('password')
+  const [pageMode, setPageMode] = useState<PageMode | null>(null)
   const [showBiometricPrompt, setShowBiometricPrompt] = useState(false)
-  const [checkingBiometric, setCheckingBiometric] = useState(true)
+  const [checkingState, setCheckingState] = useState(true)
 
-  // Check for stored biometric credential on mount
+  // Check visitor status and biometric on mount
   useEffect(() => {
-    const checkBiometric = async () => {
+    const checkState = async () => {
+      // Check if returning user
+      const hasVisited = localStorage.getItem(HAS_VISITED_KEY) === 'true'
+
+      // Check biometric availability
       const available = await checkBiometricAvailable()
       const hasCredential = hasStoredCredential()
 
-      if (available && hasCredential) {
-        setMode('biometric')
+      if (hasVisited || hasCredential) {
+        // Returning user - go to login
+        setPageMode('login')
+        if (available && hasCredential) {
+          setLoginMode('biometric')
+        }
+      } else {
+        // First time visitor - show landing
+        setPageMode('landing')
       }
-      setCheckingBiometric(false)
+
+      setCheckingState(false)
     }
 
-    checkBiometric()
+    checkState()
   }, [])
+
+  // Mark as visited when they proceed to login
+  const markAsVisited = () => {
+    localStorage.setItem(HAS_VISITED_KEY, 'true')
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -49,18 +70,17 @@ export default function LoginPage() {
       setError(result.error)
       setLoading(false)
     } else {
-      // Login successful - clear guest mode cookie if it exists
+      // Login successful
       disableGuestMode()
+      markAsVisited()
 
       // Check if we should prompt for biometric setup
       const available = await checkBiometricAvailable()
       const hasCredential = hasStoredCredential()
 
       if (available && !hasCredential) {
-        // Show prompt to enable Face ID
         setShowBiometricPrompt(true)
       } else {
-        // Go directly to home
         router.push('/home')
         router.refresh()
       }
@@ -80,16 +100,22 @@ export default function LoginPage() {
   }
 
   const handleUsePassword = () => {
-    setMode('password')
+    setLoginMode('password')
+  }
+
+  const handleGetStarted = () => {
+    markAsVisited()
+    setPageMode('login')
   }
 
   const handleContinueAsGuest = () => {
+    markAsVisited()
     enableGuestMode()
     router.push('/home')
   }
 
-  // Show loading while checking biometric availability
-  if (checkingBiometric) {
+  // Show loading while checking state
+  if (checkingState || pageMode === null) {
     return (
       <div className="flex min-h-screen items-center justify-center px-4">
         <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
@@ -107,171 +133,211 @@ export default function LoginPage() {
     )
   }
 
-  return (
-    <div className="flex min-h-screen">
-      {/* Left side - Features showcase (hidden on mobile) */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary/5 via-background to-violet-500/5 items-center justify-center p-12">
-        <div className="max-w-md space-y-8">
-          <div className="space-y-4">
-            <h2 className="text-3xl font-bold tracking-tight">
-              Welcome back, gamer
-            </h2>
-            <p className="text-muted-foreground text-lg">
-              Your games have been busy. Let&apos;s see what&apos;s new.
+  // First-time visitor: Landing page
+  if (pageMode === 'landing') {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center px-4 py-12">
+        <div className="w-full max-w-lg space-y-8 text-center">
+          {/* Logo */}
+          <div className="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-violet-600 flex items-center justify-center shadow-lg shadow-primary/20">
+            <Gamepad2 className="w-8 h-8 text-white" />
+          </div>
+
+          {/* Hero */}
+          <div className="space-y-3">
+            <h1 className="text-4xl font-bold tracking-tight">
+              Your Gaming
+              <br />
+              <span className="bg-gradient-to-r from-primary to-violet-500 bg-clip-text text-transparent">
+                Command Center
+              </span>
+            </h1>
+            <p className="text-lg text-muted-foreground max-w-md mx-auto">
+              Track patch notes, manage your backlog, and never miss an update for your favorite games.
             </p>
           </div>
 
-          {/* Stats/Features */}
-          <div className="space-y-4">
-            <div className="flex items-start gap-4 p-4 rounded-xl bg-card/50 border border-border/50">
-              <div className="w-10 h-10 rounded-lg bg-cyan-500/10 flex items-center justify-center flex-shrink-0">
+          {/* Features */}
+          <div className="grid grid-cols-2 gap-3 text-left">
+            <div className="p-4 rounded-xl bg-card border border-border/50">
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
+                <Bell className="w-5 h-5 text-primary" />
+              </div>
+              <h3 className="font-semibold text-sm">Instant Alerts</h3>
+              <p className="text-xs text-muted-foreground mt-1">Get notified when your games update</p>
+            </div>
+
+            <div className="p-4 rounded-xl bg-card border border-border/50">
+              <div className="w-10 h-10 rounded-lg bg-cyan-500/10 flex items-center justify-center mb-3">
                 <TrendingUp className="w-5 h-5 text-cyan-400" />
               </div>
-              <div>
-                <h3 className="font-semibold">Stay Ahead</h3>
-                <p className="text-sm text-muted-foreground">Know about balance changes before your next match</p>
-              </div>
+              <h3 className="font-semibold text-sm">Stay Ahead</h3>
+              <p className="text-xs text-muted-foreground mt-1">Know balance changes before matches</p>
             </div>
 
-            <div className="flex items-start gap-4 p-4 rounded-xl bg-card/50 border border-border/50">
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <Zap className="w-5 h-5 text-primary" />
+            <div className="p-4 rounded-xl bg-card border border-border/50">
+              <div className="w-10 h-10 rounded-lg bg-violet-500/10 flex items-center justify-center mb-3">
+                <Sparkles className="w-5 h-5 text-violet-400" />
               </div>
-              <div>
-                <h3 className="font-semibold">Quick Catch-up</h3>
-                <p className="text-sm text-muted-foreground">AI summaries of what changed and why it matters</p>
-              </div>
+              <h3 className="font-semibold text-sm">AI Summaries</h3>
+              <p className="text-xs text-muted-foreground mt-1">TL;DR of what changed and why</p>
             </div>
 
-            <div className="flex items-start gap-4 p-4 rounded-xl bg-card/50 border border-border/50">
-              <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
-                <Shield className="w-5 h-5 text-emerald-400" />
+            <div className="p-4 rounded-xl bg-card border border-border/50">
+              <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center mb-3">
+                <Zap className="w-5 h-5 text-emerald-400" />
               </div>
-              <div>
-                <h3 className="font-semibold">Your Library</h3>
-                <p className="text-sm text-muted-foreground">All your followed games in one place</p>
-              </div>
+              <h3 className="font-semibold text-sm">Smart Backlog</h3>
+              <p className="text-xs text-muted-foreground mt-1">Organize what to play next</p>
             </div>
           </div>
+
+          {/* CTA Buttons */}
+          <div className="space-y-3 pt-4">
+            <button
+              onClick={handleGetStarted}
+              className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3.5 text-base font-semibold text-primary-foreground transition-all hover:bg-primary/90 active:scale-[0.98] shadow-lg shadow-primary/20"
+            >
+              Get Started
+              <ArrowRight className="w-5 h-5" />
+            </button>
+
+            <button
+              onClick={handleContinueAsGuest}
+              className="w-full flex items-center justify-center gap-2 rounded-xl border border-border bg-background px-6 py-3 text-sm font-medium text-muted-foreground transition-all hover:bg-accent hover:text-accent-foreground active:scale-[0.98]"
+            >
+              <User className="w-4 h-4" />
+              Continue as Guest
+            </button>
+          </div>
+
+          <p className="text-xs text-muted-foreground">
+            Already have an account?{' '}
+            <button
+              onClick={handleGetStarted}
+              className="text-primary hover:underline font-medium"
+            >
+              Sign in
+            </button>
+          </p>
         </div>
       </div>
+    )
+  }
 
-      {/* Right side - Login form */}
-      <div className="flex-1 flex items-center justify-center px-4">
-        <div className="w-full max-w-md space-y-8">
-          {mode === 'biometric' ? (
-            <BiometricLogin onUsePassword={handleUsePassword} />
-          ) : (
-            <>
-              <div className="text-center">
-                {/* Logo/Brand */}
-                <div className="mx-auto w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
-                  <Gamepad2 className="w-6 h-6 text-primary" />
+  // Returning user: Login page
+  return (
+    <div className="flex min-h-screen items-center justify-center px-4 py-12">
+      <div className="w-full max-w-md space-y-8">
+        {loginMode === 'biometric' ? (
+          <BiometricLogin onUsePassword={handleUsePassword} />
+        ) : (
+          <>
+            <div className="text-center">
+              {/* Logo/Brand */}
+              <div className="mx-auto w-14 h-14 rounded-xl bg-gradient-to-br from-primary to-violet-600 flex items-center justify-center mb-4 shadow-lg shadow-primary/20">
+                <Gamepad2 className="w-7 h-7 text-white" />
+              </div>
+              <h1 className="text-3xl font-bold tracking-tight">Welcome back</h1>
+              <p className="mt-2 text-muted-foreground">
+                Sign in to continue to PatchPulse
+              </p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+              {error && (
+                <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+                  {error}
                 </div>
-                <h1 className="text-3xl font-bold tracking-tight">Welcome back</h1>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Sign in to your PatchPulse account
-                </p>
+              )}
+
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium mb-1.5">
+                    Email
+                  </label>
+                  <input
+                    id="email"
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="block w-full rounded-xl border border-input bg-background px-4 py-3 text-sm transition-colors placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                    placeholder="you@example.com"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="password" className="block text-sm font-medium mb-1.5">
+                    Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="password"
+                      type={showPassword ? 'text' : 'password'}
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="block w-full rounded-xl border border-input bg-background px-4 py-3 pr-10 text-sm transition-colors placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                      placeholder="••••••••"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
               </div>
 
-              <form onSubmit={handleSubmit} className="mt-8 space-y-6">
-                {error && (
-                  <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
-                    {error}
-                  </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-all hover:bg-primary/90 disabled:opacity-50 active:scale-[0.98]"
+              >
+                {loading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Signing in...
+                  </>
+                ) : (
+                  <>
+                    Sign in
+                    <ChevronRight className="w-4 h-4" />
+                  </>
                 )}
+              </button>
 
-                <div className="space-y-4">
-                  <div>
-                    <label htmlFor="email" className="block text-sm font-medium">
-                      Email
-                    </label>
-                    <input
-                      id="email"
-                      type="email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="mt-1 block w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm transition-colors placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                      placeholder="you@example.com"
-                    />
-                  </div>
+              <p className="text-center text-sm text-muted-foreground">
+                Don&apos;t have an account?{' '}
+                <Link href="/signup" className="font-medium text-primary hover:underline">
+                  Sign up
+                </Link>
+              </p>
 
-                  <div>
-                    <label htmlFor="password" className="block text-sm font-medium">
-                      Password
-                    </label>
-                    <div className="relative mt-1">
-                      <input
-                        id="password"
-                        type={showPassword ? 'text' : 'password'}
-                        required
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="block w-full rounded-lg border border-input bg-background px-3 py-2.5 pr-10 text-sm transition-colors placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                        placeholder="••••••••"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                        aria-label={showPassword ? 'Hide password' : 'Show password'}
-                      >
-                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
-                    </div>
-                  </div>
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-border" />
                 </div>
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-all hover:bg-primary/90 disabled:opacity-50 active:scale-[0.98]"
-                >
-                  {loading ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Signing in...
-                    </>
-                  ) : (
-                    <>
-                      Sign in
-                      <ArrowRight className="w-4 h-4" />
-                    </>
-                  )}
-                </button>
-
-                <p className="text-center text-sm text-muted-foreground">
-                  Don&apos;t have an account?{' '}
-                  <Link href="/signup" className="font-medium text-primary hover:underline">
-                    Sign up
-                  </Link>
-                </p>
-
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t border-border" />
-                  </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-background px-2 text-muted-foreground">Or</span>
-                  </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">Or</span>
                 </div>
+              </div>
 
-                <button
-                  type="button"
-                  onClick={handleContinueAsGuest}
-                  className="w-full flex items-center justify-center gap-2 rounded-lg border border-border bg-background px-4 py-2.5 text-sm font-medium text-muted-foreground transition-all hover:bg-accent hover:text-accent-foreground active:scale-[0.98]"
-                >
-                  <User className="w-4 h-4" />
-                  Continue as Guest
-                </button>
-                <p className="text-center text-xs text-muted-foreground">
-                  Browse games and patches without an account
-                </p>
-              </form>
-            </>
-          )}
-        </div>
+              <button
+                type="button"
+                onClick={handleContinueAsGuest}
+                className="w-full flex items-center justify-center gap-2 rounded-xl border border-border bg-background px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:bg-accent hover:text-accent-foreground active:scale-[0.98]"
+              >
+                <User className="w-4 h-4" />
+                Continue as Guest
+              </button>
+            </form>
+          </>
+        )}
       </div>
     </div>
   )

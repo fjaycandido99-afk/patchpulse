@@ -55,10 +55,6 @@
     {
       "path": "/api/cron/notify-releases",
       "schedule": "0 6 * * *"
-    },
-    {
-      "path": "/api/cron/fetch-videos",
-      "schedule": "0 */6 * * *"
     }
   ]
 }
