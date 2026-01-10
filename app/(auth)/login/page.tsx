@@ -30,16 +30,31 @@ export default function LoginPage() {
   // Check visitor status and biometric on mount
   useEffect(() => {
     const checkState = async () => {
-      // Check if returning user
+      // Check if returning user - multiple signals
       const hasVisited = localStorage.getItem(HAS_VISITED_KEY) === 'true'
+
+      // Also check for any Supabase session data (indicates previous login)
+      const hasSessionData = Object.keys(localStorage).some(key =>
+        key.includes('supabase') || key.includes('sb-')
+      )
+
+      // Check for biometric email (indicates previous setup)
+      const hasBiometricEmail = localStorage.getItem('patchpulse-biometric-email') !== null
 
       // Check biometric availability
       const available = await checkBiometricAvailable()
       const hasCredential = hasStoredCredential()
 
-      if (hasVisited || hasCredential) {
+      // Any of these signals indicate a returning user
+      const isReturningUser = hasVisited || hasCredential || hasSessionData || hasBiometricEmail
+
+      if (isReturningUser) {
         // Returning user - go to login
         setPageMode('login')
+        // Also ensure the flag is set for next time
+        if (!hasVisited) {
+          localStorage.setItem(HAS_VISITED_KEY, 'true')
+        }
         if (available && hasCredential) {
           setLoginMode('biometric')
         }
