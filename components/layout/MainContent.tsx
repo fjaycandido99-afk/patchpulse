@@ -16,7 +16,7 @@ export function MainContent({ children }: { children: React.ReactNode }) {
 
   // Only apply dynamic padding on mobile
   const mobilePadding = showHeader
-    ? '5rem' // pt-20 when header visible
+    ? 'calc(5rem + env(safe-area-inset-top, 0px))' // header + safe area when visible
     : 'max(env(safe-area-inset-top, 0px), 0.5rem)' // safe area when hidden
 
   return (
