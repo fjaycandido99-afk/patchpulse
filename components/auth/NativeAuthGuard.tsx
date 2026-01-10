@@ -10,6 +10,12 @@ function isNativePlatform(): boolean {
   return !!(window as Window & { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.()
 }
 
+// Check if on iOS device (for fallback auth handling)
+function isIOSDevice(): boolean {
+  if (typeof window === 'undefined') return false
+  return /iPhone|iPad|iPod/.test(navigator.userAgent)
+}
+
 export function NativeAuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const [isChecking, setIsChecking] = useState(true)
@@ -17,8 +23,11 @@ export function NativeAuthGuard({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const checkAuth = async () => {
-      // Only run on native platform
-      if (!isNativePlatform()) {
+      const isNative = isNativePlatform()
+      const isIOS = isIOSDevice()
+
+      // For desktop web, pass through immediately (server handles auth)
+      if (!isNative && !isIOS) {
         setIsAuthed(true)
         setIsChecking(false)
         return
@@ -70,7 +79,8 @@ export function NativeAuthGuard({ children }: { children: React.ReactNode }) {
     checkAuth()
   }, [router])
 
-  if (isChecking && isNativePlatform()) {
+  // Show loading for native/iOS while checking auth
+  if (isChecking && (isNativePlatform() || isIOSDevice())) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
@@ -78,7 +88,8 @@ export function NativeAuthGuard({ children }: { children: React.ReactNode }) {
     )
   }
 
-  if (!isAuthed && isNativePlatform()) {
+  // Don't render until auth check complete for native/iOS
+  if (!isAuthed && (isNativePlatform() || isIOSDevice())) {
     return null
   }
 

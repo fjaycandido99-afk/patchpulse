@@ -15,7 +15,6 @@ export async function middleware(request: NextRequest) {
   const userAgent = request.headers.get('user-agent') || ''
 
   // iOS WKWebView: has Mobile and AppleWebKit but NOT "Safari/" (regular Safari has "Safari/xxx")
-  // Also check for app-specific markers
   const isIOSWebView = userAgent.includes('Mobile') &&
                        userAgent.includes('AppleWebKit') &&
                        !userAgent.includes('Safari/')
@@ -26,7 +25,11 @@ export async function middleware(request: NextRequest) {
   // Check for existing native app cookie (set on first successful login)
   const hasNativeAppCookie = request.cookies.get('patchpulse-native-app')?.value === 'true'
 
-  const isNativeApp = isIOSWebView || isAndroidWebView || hasNativeAppCookie
+  // Also treat ANY iPhone/iPad request as potential native app
+  // This is a fallback since WKWebView detection can be unreliable
+  const isIOSDevice = userAgent.includes('iPhone') || userAgent.includes('iPad')
+
+  const isNativeApp = isIOSWebView || isAndroidWebView || hasNativeAppCookie || isIOSDevice
 
   // Create response to potentially modify
   let response = NextResponse.next({
