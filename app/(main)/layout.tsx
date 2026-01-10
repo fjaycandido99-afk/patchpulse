@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { cookies } from 'next/headers'
+import { cookies, headers } from 'next/headers'
 import { getSession } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
 import { isGuestModeFromCookies } from '@/lib/guest'
@@ -21,6 +21,7 @@ import { MainContent } from '@/components/layout/MainContent'
 import { KeyboardShortcuts, KeyboardHint } from '@/components/keyboard'
 import { PushNotificationInit } from '@/components/notifications/PushNotificationInit'
 import { MobileHeader } from '@/components/layout/MobileHeader'
+import { NativeAuthGuard } from '@/components/auth/NativeAuthGuard'
 
 export default async function MainLayout({
   children,
@@ -29,14 +30,19 @@ export default async function MainLayout({
 }) {
   const { user } = await getSession()
   const cookieStore = await cookies()
+  const headersList = await headers()
   const hasGuestCookie = isGuestModeFromCookies(cookieStore)
+
+  // Check if this is a native app (middleware sets this header)
+  const isNativeApp = headersList.get('x-native-app') === 'true'
 
   // User is only a guest if they have the guest cookie AND are not logged in
   // Logged-in users are never guests, even if they have a leftover guest cookie
   const isGuest = !user && hasGuestCookie
 
-  // If not logged in and not a guest, redirect to login
-  if (!user && !isGuest) {
+  // If not logged in and not a guest, redirect to login (unless native app)
+  // Native apps will handle auth client-side via NativeAuthGuard
+  if (!user && !isGuest && !isNativeApp) {
     redirect('/login')
   }
 
@@ -94,56 +100,58 @@ export default async function MainLayout({
   const userId = user?.id || 'guest'
 
   return (
-    <GuestProvider initialIsGuest={isGuest}>
-      <ToastProvider userId={userId}>
-        <ToastUIProvider>
-        <SpotlightProvider>
-        <DealSpotlightProvider>
-          <div className="flex min-h-screen">
-            <DesktopSidebar counts={sidebarCounts} notificationStats={notificationStats} patchesStats={patchesStats} isGuest={isGuest} />
+    <NativeAuthGuard>
+      <GuestProvider initialIsGuest={isGuest}>
+        <ToastProvider userId={userId}>
+          <ToastUIProvider>
+          <SpotlightProvider>
+          <DealSpotlightProvider>
+            <div className="flex min-h-screen">
+              <DesktopSidebar counts={sidebarCounts} notificationStats={notificationStats} patchesStats={patchesStats} isGuest={isGuest} />
 
-          <main className="flex-1 pb-24 md:ml-64 md:pb-0">
-            {/* Guest banner - shown at top for guest users */}
-            {isGuest && <GuestBanner />}
+            <main className="flex-1 pb-24 md:ml-64 md:pb-0">
+              {/* Guest banner - shown at top for guest users */}
+              {isGuest && <GuestBanner />}
 
-            {/* Mobile header with search - hides on scroll */}
-            <MobileHeader
-              isGuest={isGuest}
-              notificationStats={notificationStats}
-              avatarUrl={userProfile.avatarUrl}
-              displayName={userProfile.displayName}
-            />
+              {/* Mobile header with search - hides on scroll */}
+              <MobileHeader
+                isGuest={isGuest}
+                notificationStats={notificationStats}
+                avatarUrl={userProfile.avatarUrl}
+                displayName={userProfile.displayName}
+              />
 
-            {/* Desktop search in header area - transparent to show hero behind */}
-            <header className="hidden md:block sticky top-0 z-40 bg-transparent backdrop-blur-sm">
-              <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
-                <div className="flex items-center justify-end gap-3">
-                  <SearchBar />
-                  <ProfileAvatar
-                    avatarUrl={userProfile.avatarUrl}
-                    displayName={userProfile.displayName}
-                    isGuest={isGuest}
-                    size="md"
-                  />
+              {/* Desktop search in header area - transparent to show hero behind */}
+              <header className="hidden md:block sticky top-0 z-40 bg-transparent backdrop-blur-sm">
+                <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
+                  <div className="flex items-center justify-end gap-3">
+                    <SearchBar />
+                    <ProfileAvatar
+                      avatarUrl={userProfile.avatarUrl}
+                      displayName={userProfile.displayName}
+                      isGuest={isGuest}
+                      size="md"
+                    />
+                  </div>
                 </div>
-              </div>
-            </header>
+              </header>
 
-            <MainContent>
-              {children}
-            </MainContent>
-          </main>
+              <MainContent>
+                {children}
+              </MainContent>
+            </main>
 
-            <MobileNav badges={navBadges} isGuest={isGuest} />
-            <ScrollToTop />
-            <KeyboardShortcuts />
-            <KeyboardHint />
-            <PushNotificationInit />
-          </div>
-        </DealSpotlightProvider>
-        </SpotlightProvider>
-        </ToastUIProvider>
-      </ToastProvider>
-    </GuestProvider>
+              <MobileNav badges={navBadges} isGuest={isGuest} />
+              <ScrollToTop />
+              <KeyboardShortcuts />
+              <KeyboardHint />
+              <PushNotificationInit />
+            </div>
+          </DealSpotlightProvider>
+          </SpotlightProvider>
+          </ToastUIProvider>
+        </ToastProvider>
+      </GuestProvider>
+    </NativeAuthGuard>
   )
 }
