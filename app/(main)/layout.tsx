@@ -17,6 +17,7 @@ import { getSidebarCounts } from '@/lib/sidebar-data'
 import { getNotificationStats } from '@/lib/notifications'
 import { getLatestPatchesStats } from '@/lib/patches-stats'
 import { ScrollToTop } from '@/components/ui/ScrollToTop'
+import { MainContent } from '@/components/layout/MainContent'
 import { KeyboardShortcuts, KeyboardHint } from '@/components/keyboard'
 import { PushNotificationInit } from '@/components/notifications/PushNotificationInit'
 import { MobileHeader } from '@/components/layout/MobileHeader'
@@ -128,9 +129,9 @@ export default async function MainLayout({
               </div>
             </header>
 
-            <div className="h-full px-4 pt-20 pb-6 md:pt-6 md:px-8 lg:px-12 w-full overflow-x-hidden">
+            <MainContent>
               {children}
-            </div>
+            </MainContent>
           </main>
 
             <MobileNav badges={navBadges} isGuest={isGuest} />
