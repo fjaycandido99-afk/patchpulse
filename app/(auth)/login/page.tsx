@@ -6,7 +6,8 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { BiometricLogin } from '@/components/auth/BiometricLogin'
 import { BiometricPrompt } from '@/components/auth/BiometricPrompt'
-import { hasStoredCredential, checkBiometricAvailable } from '@/lib/biometric'
+import { hasStoredCredential, checkBiometricAvailable, authenticateWithBiometric } from '@/lib/biometric'
+import { createClient } from '@/lib/supabase/client'
 import { Gamepad2, ArrowRight, Zap, TrendingUp, Bell, Sparkles, User, Eye, EyeOff, ChevronRight } from 'lucide-react'
 import { enableGuestMode, disableGuestMode } from '@/lib/guest'
 
@@ -27,9 +28,21 @@ export default function LoginPage() {
   const [showBiometricPrompt, setShowBiometricPrompt] = useState(false)
   const [checkingState, setCheckingState] = useState(true)
 
-  // Check visitor status and biometric on mount
+  // Check session and auto-login on mount
   useEffect(() => {
     const checkState = async () => {
+      const supabase = createClient()
+
+      // First, check if there's already a valid session
+      const { data: { session } } = await supabase.auth.getSession()
+
+      if (session?.user) {
+        // Already logged in - go straight to home (like Instagram)
+        router.push('/home')
+        router.refresh()
+        return
+      }
+
       // Check if returning user - multiple signals
       const hasVisited = localStorage.getItem(HAS_VISITED_KEY) === 'true'
 
@@ -49,14 +62,24 @@ export default function LoginPage() {
       const isReturningUser = hasVisited || hasCredential || hasSessionData || hasBiometricEmail
 
       if (isReturningUser) {
-        // Returning user - go to login
+        // Returning user - check if we can auto-login with biometric
+        if (available && hasCredential) {
+          // Try auto Face ID login
+          const result = await authenticateWithBiometric()
+          if (result.success) {
+            // Auto-login successful - go to home
+            localStorage.setItem(HAS_VISITED_KEY, 'true')
+            router.push('/home')
+            router.refresh()
+            return
+          }
+          // Face ID failed/cancelled - show biometric login page
+          setLoginMode('biometric')
+        }
+
         setPageMode('login')
-        // Also ensure the flag is set for next time
         if (!hasVisited) {
           localStorage.setItem(HAS_VISITED_KEY, 'true')
-        }
-        if (available && hasCredential) {
-          setLoginMode('biometric')
         }
       } else {
         // First time visitor - show landing
@@ -67,7 +90,7 @@ export default function LoginPage() {
     }
 
     checkState()
-  }, [])
+  }, [router])
 
   // Mark as visited when they proceed to login
   const markAsVisited = () => {
