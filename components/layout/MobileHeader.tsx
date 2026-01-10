@@ -23,9 +23,12 @@ export function MobileHeader({
 
   return (
     <header
-      className={`fixed inset-x-0 top-0 z-40 md:hidden transition-transform duration-300 ${
-        showHeader ? 'translate-y-0' : '-translate-y-full'
-      }`}
+      className="fixed inset-x-0 top-0 z-40 md:hidden transition-transform duration-300"
+      style={{
+        transform: showHeader
+          ? 'translateY(0)'
+          : 'translateY(calc(-100% - env(safe-area-inset-top, 0px)))',
+      }}
     >
       {/* Background that extends into safe area */}
       <div
