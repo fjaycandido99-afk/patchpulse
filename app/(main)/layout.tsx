@@ -22,6 +22,7 @@ import { KeyboardShortcuts, KeyboardHint } from '@/components/keyboard'
 import { PushNotificationInit } from '@/components/notifications/PushNotificationInit'
 import { MobileHeader } from '@/components/layout/MobileHeader'
 import { NativeAuthGuard } from '@/components/auth/NativeAuthGuard'
+import { OfflineIndicator } from '@/components/ui/OfflineIndicator'
 
 export default async function MainLayout({
   children,
@@ -146,6 +147,7 @@ export default async function MainLayout({
               <KeyboardShortcuts />
               <KeyboardHint />
               <PushNotificationInit />
+              <OfflineIndicator />
             </div>
           </DealSpotlightProvider>
           </SpotlightProvider>
