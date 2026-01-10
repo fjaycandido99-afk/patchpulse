@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { cookies, headers } from 'next/headers'
+import { cookies } from 'next/headers'
 import { getSession } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
 import { isGuestModeFromCookies } from '@/lib/guest'
@@ -31,11 +31,10 @@ export default async function MainLayout({
 }) {
   const { user } = await getSession()
   const cookieStore = await cookies()
-  const headersList = await headers()
   const hasGuestCookie = isGuestModeFromCookies(cookieStore)
 
-  // Check if this is a native app (middleware sets this header)
-  const isNativeApp = headersList.get('x-native-app') === 'true'
+  // Check if this is a native app (middleware sets this cookie)
+  const isNativeApp = cookieStore.get('patchpulse-native-app')?.value === 'true'
 
   // User is only a guest if they have the guest cookie AND are not logged in
   // Logged-in users are never guests, even if they have a leftover guest cookie

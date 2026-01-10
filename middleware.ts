@@ -11,10 +11,22 @@ const authRoutes = ['/login', '/signup']
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Check if this is a native iOS/Android app request
+  // Check if this is a mobile app request (iOS WKWebView or Android WebView)
   const userAgent = request.headers.get('user-agent') || ''
-  const isNativeApp = userAgent.includes('Capacitor') ||
-                      (userAgent.includes('Mobile') && userAgent.includes('AppleWebKit') && !userAgent.includes('Safari/'))
+
+  // iOS WKWebView: has Mobile and AppleWebKit but NOT "Safari/" (regular Safari has "Safari/xxx")
+  // Also check for app-specific markers
+  const isIOSWebView = userAgent.includes('Mobile') &&
+                       userAgent.includes('AppleWebKit') &&
+                       !userAgent.includes('Safari/')
+
+  // Android WebView: has "wv" in the user agent
+  const isAndroidWebView = userAgent.includes('wv') && userAgent.includes('Android')
+
+  // Check for existing native app cookie (set on first successful login)
+  const hasNativeAppCookie = request.cookies.get('patchpulse-native-app')?.value === 'true'
+
+  const isNativeApp = isIOSWebView || isAndroidWebView || hasNativeAppCookie
 
   // Create response to potentially modify
   let response = NextResponse.next({
@@ -22,6 +34,16 @@ export async function middleware(request: NextRequest) {
       headers: request.headers,
     },
   })
+
+  // If detected as native app, set a persistent cookie for future requests
+  if ((isIOSWebView || isAndroidWebView) && !hasNativeAppCookie) {
+    response.cookies.set('patchpulse-native-app', 'true', {
+      httpOnly: false,
+      secure: true,
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 365, // 1 year
+    })
+  }
 
   // Create Supabase client
   const supabase = createServerClient(
@@ -55,12 +77,15 @@ export async function middleware(request: NextRequest) {
     pathname === route || pathname.startsWith(route + '/')
   )
 
-  // For native apps without a session, don't redirect from protected routes
-  // Let client-side handle session restoration from localStorage
+  // For native apps without a session, don't redirect - let client handle auth
   if (isNativeApp && !user && isProtectedRoute) {
-    // Set a header to indicate this is a native app request
-    // The client can check this and handle auth
-    response.headers.set('x-native-app', 'true')
+    // Set cookie to tell layout this is a native app
+    response.cookies.set('patchpulse-native-app', 'true', {
+      httpOnly: false,
+      secure: true,
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 365,
+    })
     return response
   }
 
