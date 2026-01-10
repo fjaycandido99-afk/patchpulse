@@ -120,11 +120,11 @@ function VerticalVideoPlayer({
     }
 
     document.addEventListener('keydown', handleKeyDown)
-    document.body.style.overflow = 'hidden'
+    document.body.style.overflow = 'hidden'; document.body.style.overscrollBehavior = 'none'; document.documentElement.style.overflow = 'hidden'
 
     return () => {
       document.removeEventListener('keydown', handleKeyDown)
-      document.body.style.overflow = ''
+      document.body.style.overflow = ''; document.body.style.overscrollBehavior = ''; document.documentElement.style.overflow = ''
     }
   }, [onClose, goToNext, goToPrev])
 
@@ -165,7 +165,9 @@ function VerticalVideoPlayer({
     const container = containerRef.current
     if (container) {
       container.addEventListener('wheel', handleWheel, { passive: false })
-      return () => container.removeEventListener('wheel', handleWheel)
+      const preventTouchScroll = (e: TouchEvent) => e.preventDefault()
+      container.addEventListener('touchmove', preventTouchScroll, { passive: false })
+      return () => { container.removeEventListener('wheel', handleWheel); container.removeEventListener('touchmove', preventTouchScroll) }
     }
   }, [handleWheel])
 
@@ -175,7 +177,7 @@ function VerticalVideoPlayer({
   return (
     <div
       ref={containerRef}
-      className="fixed inset-0 z-50 bg-black flex flex-col"
+      className="fixed inset-0 z-50 bg-black flex flex-col" style={{ touchAction: "none" }}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
