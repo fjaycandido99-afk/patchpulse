@@ -43,6 +43,28 @@ export default function LoginPage() {
         return
       }
 
+      // On native, also check if we have stored session that needs refreshing
+      const storedSession = localStorage.getItem('patchpulse-auth')
+      if (storedSession) {
+        try {
+          const parsed = JSON.parse(storedSession)
+          if (parsed?.refresh_token) {
+            // Try to restore session with refresh token
+            const { data, error } = await supabase.auth.refreshSession({
+              refresh_token: parsed.refresh_token,
+            })
+            if (data?.session && !error) {
+              // Session restored - go to home
+              router.push('/home')
+              router.refresh()
+              return
+            }
+          }
+        } catch {
+          // Invalid stored session, continue to login
+        }
+      }
+
       // Check if returning user - multiple signals
       const hasVisited = localStorage.getItem(HAS_VISITED_KEY) === 'true'
 

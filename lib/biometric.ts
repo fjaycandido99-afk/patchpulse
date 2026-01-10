@@ -115,21 +115,28 @@ export async function authenticateWithBiometric(): Promise<{
         return { success: false, error: 'Authentication cancelled or failed' }
       }
 
-      // Use the refresh token to establish a session
+      // Use the refresh token to establish a new session
       const supabase = createClient()
-      const { error } = await supabase.auth.setSession({
-        access_token: '', // Will be refreshed
+      const { data, error } = await supabase.auth.refreshSession({
         refresh_token: credentials.refreshToken,
       })
 
-      if (error) {
+      if (error || !data.session) {
         // Token may be expired, clear biometric
-        if (error.message?.includes('invalid') || error.message?.includes('expired')) {
+        if (error?.message?.includes('invalid') || error?.message?.includes('expired')) {
           await nativeBiometric.disableBiometricLogin()
           localStorage.removeItem('patchpulse-biometric-email')
           return { success: false, error: 'Session expired. Please log in with password.' }
         }
-        return { success: false, error: error.message }
+        return { success: false, error: error?.message || 'Failed to restore session' }
+      }
+
+      // Update stored refresh token with the new one
+      if (data.session.refresh_token && credentials.refreshToken !== data.session.refresh_token) {
+        const email = localStorage.getItem('patchpulse-biometric-email')
+        if (email) {
+          await nativeBiometric.updateStoredRefreshToken(email, data.session.refresh_token)
+        }
       }
 
       return { success: true }
