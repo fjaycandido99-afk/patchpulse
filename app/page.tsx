@@ -32,7 +32,7 @@ export default function LandingPage() {
         {/* App Store Download */}
         <div className="mt-8">
           <a
-            href="https://apps.apple.com/app/patchpulse"
+            href="https://apps.apple.com/app/id6757092034"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-block transition-opacity hover:opacity-80"
