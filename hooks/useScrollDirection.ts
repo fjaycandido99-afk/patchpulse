@@ -1,76 +1,58 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 
 type ScrollDirection = 'up' | 'down' | null
 
-export function useScrollDirection(threshold = 5) {
+export function useScrollDirection(threshold = 10) {
   const [scrollDirection, setScrollDirection] = useState<ScrollDirection>(null)
   const [isAtTop, setIsAtTop] = useState(true)
-  const lastScrollY = useRef(0)
-  const lastDirection = useRef<ScrollDirection>(null)
 
   useEffect(() => {
+    let lastScrollY = window.scrollY
     let ticking = false
 
     const updateScrollDirection = () => {
       const scrollY = window.scrollY
+      const diff = scrollY - lastScrollY
 
-      // Always show when at top
+      // Update isAtTop
+      setIsAtTop(scrollY < 10)
+
+      // If at top, reset direction
       if (scrollY < 10) {
-        setIsAtTop(true)
-        if (lastDirection.current !== null) {
-          setScrollDirection(null)
-          lastDirection.current = null
-        }
-        lastScrollY.current = scrollY
+        setScrollDirection(null)
+        lastScrollY = scrollY
         ticking = false
         return
       }
 
-      setIsAtTop(false)
-
-      const diff = scrollY - lastScrollY.current
-
-      // Only update direction if we've scrolled more than threshold
+      // Only update if scrolled more than threshold
       if (diff > threshold) {
         // Scrolling down
-        if (lastDirection.current !== 'down') {
-          setScrollDirection('down')
-          lastDirection.current = 'down'
-        }
-        lastScrollY.current = scrollY
+        setScrollDirection('down')
+        lastScrollY = scrollY
       } else if (diff < -threshold) {
         // Scrolling up
-        if (lastDirection.current !== 'up') {
-          setScrollDirection('up')
-          lastDirection.current = 'up'
-        }
-        lastScrollY.current = scrollY
+        setScrollDirection('up')
+        lastScrollY = scrollY
       }
 
       ticking = false
     }
 
-    const handleScroll = () => {
+    const onScroll = () => {
       if (!ticking) {
         window.requestAnimationFrame(updateScrollDirection)
         ticking = true
       }
     }
 
-    // Set initial values
-    lastScrollY.current = window.scrollY
-    setIsAtTop(window.scrollY < 10)
-
-    window.addEventListener('scroll', handleScroll, { passive: true })
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll)
-    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
   }, [threshold])
 
-  // Header/nav should be visible when scrolling up, at top, or direction is null
+  // Header/nav visible when scrolling up, at top, or direction is null
   const showBars = scrollDirection !== 'down' || isAtTop
 
   return {
