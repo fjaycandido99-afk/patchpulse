@@ -12,6 +12,10 @@ export function InstallHint() {
   useEffect(() => {
     if (typeof window === 'undefined') return
 
+    // Don't show in native Capacitor app
+    const isNative = !!(window as Window & { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.()
+    if (isNative) return
+
     const isDismissed = localStorage.getItem(STORAGE_KEY) === 'true'
     if (isDismissed) return
 
