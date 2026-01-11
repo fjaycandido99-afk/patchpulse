@@ -160,7 +160,7 @@ export function PullToRefresh({
       <div
         style={{
           transform: `translateY(${pullDistance}px)`,
-          transition: isPulling ? 'none' : 'transform 0.3s ease-out',
+          transition: isPullingRef.current ? 'none' : 'transform 0.3s ease-out',
         }}
       >
         {children}
