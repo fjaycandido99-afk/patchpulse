@@ -31,19 +31,27 @@ export default function LoginPage() {
   // Check for auto-login or first-time visitor
   useEffect(() => {
     const checkAutoLogin = async () => {
-      // Check for stored session - auto-login
+      const supabase = createClient()
+
+      // First check if there's an existing session (from cookies on web)
+      const { data: { session: existingSession } } = await supabase.auth.getSession()
+      if (existingSession) {
+        // Already logged in - go straight to home
+        router.replace('/home')
+        return
+      }
+
+      // Check for stored session in localStorage (for native apps)
       const storedSession = localStorage.getItem('patchpulse-auth')
       if (storedSession) {
         try {
           const parsed = JSON.parse(storedSession)
           if (parsed?.refresh_token) {
-            const supabase = createClient()
             const { data, error } = await supabase.auth.refreshSession({
               refresh_token: parsed.refresh_token,
             })
             if (data?.session && !error) {
               // Auto-login success - go straight to home
-              // Don't set checkingState to false - keep showing loader until navigation
               router.replace('/home')
               return
             }
