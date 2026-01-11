@@ -17,10 +17,8 @@ export async function GET(req: Request) {
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
   const contentCutoffDate = sevenDaysAgo.toISOString()
 
-  // 3-day retention for videos only (keeps feed fresh, saves storage)
-  const threeDaysAgo = new Date()
-  threeDaysAgo.setDate(threeDaysAgo.getDate() - 3)
-  const videoCutoffDate = threeDaysAgo.toISOString()
+  // 7-day retention for videos (same as news/patches)
+  const videoCutoffDate = contentCutoffDate
 
   const results = {
     patches: { deleted: 0, kept: 0, followedGamesKept: 0 },
