@@ -51,21 +51,30 @@ export default function LoginPage() {
     if (result?.error) {
       setError(result.error)
       setLoading(false)
+      return
+    }
+
+    // Login successful
+    disableGuestMode()
+    markAsVisited()
+
+    // Save session to localStorage for native app persistence
+    if (result?.session) {
+      localStorage.setItem('patchpulse-auth', JSON.stringify({
+        refresh_token: result.session.refresh_token,
+      }))
+    }
+
+    // Check if we should prompt for biometric setup
+    const available = await checkBiometricAvailable()
+    const hasCredential = hasStoredCredential()
+
+    if (available && !hasCredential) {
+      setShowBiometricPrompt(true)
+      setLoading(false)
     } else {
-      // Login successful
-      disableGuestMode()
-      markAsVisited()
-
-      // Check if we should prompt for biometric setup
-      const available = await checkBiometricAvailable()
-      const hasCredential = hasStoredCredential()
-
-      if (available && !hasCredential) {
-        setShowBiometricPrompt(true)
-      } else {
-        router.push('/home')
-        router.refresh()
-      }
+      router.push('/home')
+      router.refresh()
     }
   }
 
