@@ -231,7 +231,7 @@ function VerticalVideoPlayer({
               </div>
             </div>
           ) : (
-            <iframe key={currentVideo.youtube_id} src={`https://www.youtube.com/embed/${currentVideo.youtube_id}?autoplay=1&rel=0&modestbranding=1&playsinline=1`} title={currentVideo.title} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen className="absolute inset-0 w-full h-full rounded-2xl shadow-2xl" onLoad={() => setIsLoading(false)} onError={() => setEmbedFailed(prev => new Set(prev).add(currentIndex))} />
+            <iframe key={currentVideo.youtube_id} src={`https://www.youtube.com/embed/${currentVideo.youtube_id}?autoplay=1&rel=0&modestbranding=1&playsinline=1`} title={currentVideo.title} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen className="w-full h-full rounded-2xl shadow-2xl" style={{ WebkitTransform: 'translateZ(0)', transform: 'translateZ(0)', position: 'relative', zIndex: 1 }} onLoad={() => setIsLoading(false)} onError={() => setEmbedFailed(prev => new Set(prev).add(currentIndex))} />
           )}
           {!hasEmbedFailed && !isLoading && <button onClick={() => setEmbedFailed(prev => new Set(prev).add(currentIndex))} className="absolute bottom-4 right-4 px-4 py-2 text-xs bg-black/60 hover:bg-black/80 text-white/80 rounded-full backdrop-blur-sm">Video not loading?</button>}
         </div>
@@ -496,7 +496,8 @@ function MobileVideoCard({
         {showPreview && (
           <iframe
             src={`https://www.youtube.com/embed/${video.youtube_id}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&showinfo=0&start=5&playsinline=1`}
-            className="absolute inset-0 w-full h-full z-10"
+            className="w-full h-full z-10"
+            style={{ WebkitTransform: 'translateZ(0)', transform: 'translateZ(0)', position: 'absolute', inset: 0 }}
             allow="autoplay; encrypted-media"
             allowFullScreen
           />
@@ -641,8 +642,9 @@ function DesktopVideoCard({
         {/* YouTube Preview - shows after hover delay */}
         {showPreview && (
           <iframe
-            src={`https://www.youtube.com/embed/${video.youtube_id}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&showinfo=0&start=5`}
-            className="absolute inset-0 w-full h-full z-10"
+            src={`https://www.youtube.com/embed/${video.youtube_id}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&showinfo=0&start=5&playsinline=1`}
+            className="w-full h-full z-10"
+            style={{ WebkitTransform: 'translateZ(0)', transform: 'translateZ(0)', position: 'absolute', inset: 0 }}
             allow="autoplay; encrypted-media"
             allowFullScreen
           />
