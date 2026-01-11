@@ -870,7 +870,7 @@ export function VideosFeed({
   return (
     <div className="space-y-6">
       {/* Filter Chips - Icon only on mobile, show label when active */}
-      <div className="sticky top-0 z-30 -mx-4 px-2 py-2 bg-background/95 backdrop-blur-md border-b border-white/5 md:relative md:mx-0 md:px-0 md:py-0 md:bg-transparent md:backdrop-blur-none md:border-0">
+      <div className="sticky z-30 -mx-4 px-2 py-2 bg-background/95 backdrop-blur-md border-b border-white/5 md:relative md:top-0 md:mx-0 md:px-0 md:py-0 md:bg-transparent md:backdrop-blur-none md:border-0" style={{ top: 'calc(env(safe-area-inset-top, 0px) + 4rem)' }}>
         <div className="flex justify-center gap-1.5 md:justify-start md:gap-2">
           <button
             onClick={() => updateFilters(null)}
