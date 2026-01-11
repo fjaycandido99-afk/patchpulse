@@ -213,8 +213,9 @@ function VerticalVideoPlayer({
       {/* Video with transitions */}
       <div className={`flex-1 flex items-center justify-center transition-all duration-300 ${isTransitioning ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
         <div className="relative w-full max-w-4xl aspect-video mx-4">
+          {/* Loading overlay - only show briefly, positioned behind iframe */}
           {isLoading && !hasEmbedFailed && (
-            <div className="absolute inset-0 rounded-2xl overflow-hidden z-10">
+            <div className="absolute inset-0 rounded-2xl overflow-hidden">
               <img src={thumbnailUrl} alt="" className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                 <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center animate-pulse"><Play className="w-8 h-8 text-white fill-white ml-1" /></div>
@@ -231,7 +232,7 @@ function VerticalVideoPlayer({
               </div>
             </div>
           ) : (
-            <iframe key={currentVideo.youtube_id} src={`https://www.youtube.com/embed/${currentVideo.youtube_id}?autoplay=1&rel=0&modestbranding=1`} title={currentVideo.title} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen className="absolute inset-0 w-full h-full rounded-2xl shadow-2xl" onLoad={() => setIsLoading(false)} onError={() => setEmbedFailed(prev => new Set(prev).add(currentIndex))} />
+            <iframe key={currentVideo.youtube_id} src={`https://www.youtube.com/embed/${currentVideo.youtube_id}?autoplay=1&rel=0&modestbranding=1`} title={currentVideo.title} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen className="absolute inset-0 w-full h-full rounded-2xl shadow-2xl z-10" onLoad={() => setIsLoading(false)} onError={() => setEmbedFailed(prev => new Set(prev).add(currentIndex))} />
           )}
           {!hasEmbedFailed && !isLoading && <button onClick={() => setEmbedFailed(prev => new Set(prev).add(currentIndex))} className="absolute bottom-4 right-4 px-4 py-2 text-xs bg-black/60 hover:bg-black/80 text-white/80 rounded-full backdrop-blur-sm">Video not loading?</button>}
         </div>
