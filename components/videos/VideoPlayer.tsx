@@ -111,12 +111,12 @@ export function VideoPlayer({ youtubeId, title, isOpen, onClose }: VideoPlayerPr
               title={title}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               allowFullScreen
-              className="w-full h-full rounded-xl"
+              className="absolute inset-0 w-full h-full rounded-xl"
               style={{
-                WebkitTransform: 'translateZ(0)',
-                transform: 'translateZ(0)',
-                position: 'relative',
-                zIndex: 1
+                WebkitTransform: 'translate3d(0,0,0)',
+                transform: 'translate3d(0,0,0)',
+                WebkitBackfaceVisibility: 'hidden',
+                backfaceVisibility: 'hidden',
               }}
               onError={() => setEmbedFailed(true)}
             />
