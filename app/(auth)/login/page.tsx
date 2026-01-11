@@ -43,16 +43,25 @@ export default function LoginPage() {
             })
             if (data?.session && !error) {
               // Auto-login success - go straight to home
-              router.push('/home')
+              // Don't set checkingState to false - keep showing loader until navigation
+              router.replace('/home')
               return
             }
           }
         } catch {
-          // Invalid session, continue to login
+          // Invalid session, clear it
+          localStorage.removeItem('patchpulse-auth')
         }
       }
 
-      // Check if first-time visitor
+      // Check for guest mode
+      const isGuest = localStorage.getItem('patchpulse-guest') === 'true'
+      if (isGuest) {
+        router.replace('/home')
+        return
+      }
+
+      // Only show landing for first-time visitors with no session
       const hasVisited = localStorage.getItem(HAS_VISITED_KEY) === 'true'
       if (!hasVisited) {
         setPageMode('landing')
