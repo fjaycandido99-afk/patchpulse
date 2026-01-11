@@ -36,30 +36,14 @@
     overscroll-behavior: none;
   }
 
-  /* Custom scrollbar - dark theme */
+  /* Hide scrollbar on desktop - users can scroll with mouse wheel */
   @media (min-width: 768px) {
     ::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
+      display: none;
     }
 
-    ::-webkit-scrollbar-track {
-      background: transparent;
-    }
-
-    ::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 4px;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-      background: rgba(255, 255, 255, 0.2);
-    }
-
-    /* Firefox */
     * {
-      scrollbar-width: thin;
-      scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+      scrollbar-width: none;
     }
   }
 
