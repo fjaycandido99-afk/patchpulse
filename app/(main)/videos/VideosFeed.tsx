@@ -28,13 +28,13 @@ import type { VideoWithGame } from './queries'
 type VideoType = 'trailer' | 'clips' | 'gameplay' | 'esports' | 'review' | 'other'
 
 const TYPE_CONFIG: Record<VideoType | 'all', { label: string; icon: React.ReactNode; color: string }> = {
-  all: { label: 'For You', icon: <Video className="w-4 h-4 md:w-3 md:h-3" />, color: 'bg-primary/20 text-primary' },
-  trailer: { label: 'Trailers', icon: <Film className="w-4 h-4 md:w-3 md:h-3" />, color: 'bg-red-500/20 text-red-400' },
-  clips: { label: 'Clips', icon: <Clapperboard className="w-4 h-4 md:w-3 md:h-3" />, color: 'bg-purple-500/20 text-purple-400' },
-  gameplay: { label: 'Gameplay', icon: <Gamepad2 className="w-4 h-4 md:w-3 md:h-3" />, color: 'bg-blue-500/20 text-blue-400' },
-  esports: { label: 'Esports', icon: <Trophy className="w-4 h-4 md:w-3 md:h-3" />, color: 'bg-amber-500/20 text-amber-400' },
-  review: { label: 'Reviews', icon: <Video className="w-4 h-4 md:w-3 md:h-3" />, color: 'bg-green-500/20 text-green-400' },
-  other: { label: 'Other', icon: <Video className="w-4 h-4 md:w-3 md:h-3" />, color: 'bg-zinc-500/20 text-zinc-400' },
+  all: { label: 'For You', icon: <Video className="w-4 h-4 md:w-3 md:h-3" />, color: 'bg-primary/70 text-white' },
+  trailer: { label: 'Trailers', icon: <Film className="w-4 h-4 md:w-3 md:h-3" />, color: 'bg-red-500/70 text-white' },
+  clips: { label: 'Clips', icon: <Clapperboard className="w-4 h-4 md:w-3 md:h-3" />, color: 'bg-purple-500/70 text-white' },
+  gameplay: { label: 'Gameplay', icon: <Gamepad2 className="w-4 h-4 md:w-3 md:h-3" />, color: 'bg-blue-500/70 text-white' },
+  esports: { label: 'Esports', icon: <Trophy className="w-4 h-4 md:w-3 md:h-3" />, color: 'bg-amber-500/70 text-white' },
+  review: { label: 'Reviews', icon: <Video className="w-4 h-4 md:w-3 md:h-3" />, color: 'bg-green-500/70 text-white' },
+  other: { label: 'Other', icon: <Video className="w-4 h-4 md:w-3 md:h-3" />, color: 'bg-zinc-500/70 text-white' },
 }
 
 function formatDuration(seconds: number): string {
