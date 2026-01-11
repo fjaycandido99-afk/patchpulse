@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import {
@@ -210,9 +211,9 @@ function VerticalVideoPlayer({
         </div>
       </div>
 
-      {/* Video Player - use fixed dimensions for iOS compatibility */}
-      <div className="absolute inset-0 flex items-center justify-center" style={{ top: '60px', bottom: '100px' }}>
-        <div className="relative w-full h-full max-w-3xl mx-4" style={{ maxHeight: 'calc(100vw * 9 / 16)' }}>
+      {/* Video Player */}
+      <div className="flex-1 flex items-center justify-center">
+        <div className="relative w-full max-w-3xl aspect-video mx-4">
           {hasEmbedFailed ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-900 rounded-xl">
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-600 flex items-center justify-center">
@@ -992,13 +993,14 @@ export function VideosFeed({
         </div>
       )}
 
-      {/* Vertical Video Player (TikTok/Shorts style) */}
-      {selectedVideoIndex !== null && (
+      {/* Vertical Video Player (TikTok/Shorts style) - rendered via portal to escape transform context */}
+      {selectedVideoIndex !== null && typeof document !== 'undefined' && createPortal(
         <VerticalVideoPlayer
           videos={displayVideos}
           initialIndex={selectedVideoIndex}
           onClose={() => setSelectedVideoIndex(null)}
-        />
+        />,
+        document.body
       )}
     </div>
   )
