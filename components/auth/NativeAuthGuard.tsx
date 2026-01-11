@@ -20,14 +20,17 @@ export function NativeAuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const [isChecking, setIsChecking] = useState(true)
   const [isAuthed, setIsAuthed] = useState(false)
+  const [isNative, setIsNative] = useState(false)
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const isNative = isNativePlatform()
+    // Check if native on client side only
+    const native = isNativePlatform()
+    setIsNative(native)
 
+    const checkAuth = async () => {
       // Only run client-side auth for native Capacitor apps
       // Web (including iOS Safari) is handled by server middleware
-      if (!isNative) {
+      if (!native) {
         setIsAuthed(true)
         setIsChecking(false)
         return
@@ -104,7 +107,7 @@ export function NativeAuthGuard({ children }: { children: React.ReactNode }) {
   }, [router])
 
   // Show loading for native apps while checking auth
-  if (isChecking && isNativePlatform()) {
+  if (isChecking && isNative) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
@@ -113,7 +116,7 @@ export function NativeAuthGuard({ children }: { children: React.ReactNode }) {
   }
 
   // Don't render until auth check complete for native apps
-  if (!isAuthed && isNativePlatform()) {
+  if (!isAuthed && isNative) {
     return null
   }
 
