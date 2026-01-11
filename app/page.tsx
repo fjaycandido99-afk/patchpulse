@@ -19,10 +19,14 @@ export default function LandingPage() {
 
       // For web: check session from cookies
       if (!isNative) {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (session) {
-          router.replace('/home')
-          return
+        try {
+          const { data: { session } } = await supabase.auth.getSession()
+          if (session) {
+            router.replace('/home')
+            return
+          }
+        } catch (e) {
+          console.error('Session check failed:', e)
         }
       }
 
@@ -32,15 +36,22 @@ export default function LandingPage() {
         try {
           const parsed = JSON.parse(storedSession)
           if (parsed?.refresh_token) {
-            const { data, error } = await supabase.auth.refreshSession({
+            // Add timeout for refresh to prevent hanging
+            const refreshPromise = supabase.auth.refreshSession({
               refresh_token: parsed.refresh_token,
             })
+            const timeoutPromise = new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('Refresh timeout')), 5000)
+            )
+
+            const { data, error } = await Promise.race([refreshPromise, timeoutPromise]) as any
             if (data?.session && !error) {
               router.replace('/home')
               return
             }
           }
-        } catch {
+        } catch (e) {
+          console.error('Auth refresh failed:', e)
           localStorage.removeItem('patchpulse-auth')
         }
       }
@@ -55,7 +66,12 @@ export default function LandingPage() {
       setChecking(false)
     }
 
-    checkAuth()
+    // Add overall timeout to prevent black screen forever
+    const timeout = setTimeout(() => {
+      setChecking(false)
+    }, 8000)
+
+    checkAuth().finally(() => clearTimeout(timeout))
   }, [router])
 
   // Show loading while checking auth
