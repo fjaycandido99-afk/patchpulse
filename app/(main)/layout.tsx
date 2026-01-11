@@ -109,7 +109,7 @@ export default async function MainLayout({
             <div className="flex min-h-screen">
               <DesktopSidebar counts={sidebarCounts} notificationStats={notificationStats} patchesStats={patchesStats} isGuest={isGuest} />
 
-            <main className="flex-1 pb-24 md:ml-64 md:pb-0">
+            <main className="flex-1 pb-24 md:ml-64 md:pb-0 overflow-x-hidden">
               {/* Guest banner - shown at top for guest users */}
               {isGuest && <GuestBanner />}
 
