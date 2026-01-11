@@ -216,7 +216,7 @@ function VerticalVideoPlayer({
 
       {/* Video Player */}
       <div className="flex-1 flex items-center justify-center">
-        <div className="relative w-full max-w-3xl aspect-video mx-4">
+        <div className="relative w-full max-w-6xl aspect-video mx-4">
           {hasEmbedFailed ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-900 rounded-xl">
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-600 flex items-center justify-center">
@@ -305,23 +305,6 @@ function VerticalVideoPlayer({
         <ChevronDown className="w-4 h-4" />
       </div>
 
-      {/* Video dots indicator */}
-      {videos.length <= 15 && (
-        <div className="absolute left-4 top-1/2 -translate-y-1/2 flex flex-col gap-1.5 z-20">
-          {videos.map((_, idx) => (
-            <button
-              type="button"
-              key={idx}
-              onClick={() => setCurrentIndex(idx)}
-              className={`w-1.5 h-1.5 rounded-full transition-all ${
-                idx === currentIndex
-                  ? 'bg-white h-4'
-                  : 'bg-white/30 hover:bg-white/50'
-              }`}
-            />
-          ))}
-        </div>
-      )}
     </div>
   )
 }
