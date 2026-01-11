@@ -9,76 +9,107 @@ import { createClient } from '@/lib/supabase/client'
 export default function LandingPage() {
   const router = useRouter()
   const [checking, setChecking] = useState(true)
+  const [showSkip, setShowSkip] = useState(false)
+
+  const skipAuth = () => {
+    localStorage.removeItem('patchpulse-auth')
+    setChecking(false)
+  }
 
   useEffect(() => {
+    // Show skip button after 3 seconds
+    const skipTimer = setTimeout(() => setShowSkip(true), 3000)
+
     const checkAuth = async () => {
-      const supabase = createClient()
-
-      // Check if native app
-      const isNative = !!(window as Window & { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.()
-
-      // For web: check session from cookies
-      if (!isNative) {
-        try {
-          const { data: { session } } = await supabase.auth.getSession()
-          if (session) {
-            router.replace('/home')
-            return
-          }
-        } catch (e) {
-          console.error('Session check failed:', e)
+      try {
+        // Check for guest mode first (fastest check)
+        const isGuest = localStorage.getItem('patchpulse-guest') === 'true'
+        if (isGuest) {
+          router.replace('/home')
+          return
         }
-      }
 
-      // For native: check localStorage
-      const storedSession = localStorage.getItem('patchpulse-auth')
-      if (storedSession) {
-        try {
-          const parsed = JSON.parse(storedSession)
-          if (parsed?.refresh_token) {
-            // Add timeout for refresh to prevent hanging
-            const refreshPromise = supabase.auth.refreshSession({
-              refresh_token: parsed.refresh_token,
-            })
+        // Check if native app
+        const isNative = !!(window as Window & { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.()
+
+        // For native: check localStorage for stored session
+        const storedSession = localStorage.getItem('patchpulse-auth')
+        if (storedSession) {
+          try {
+            const parsed = JSON.parse(storedSession)
+            if (parsed?.refresh_token) {
+              const supabase = createClient()
+              // Add timeout for refresh to prevent hanging
+              const refreshPromise = supabase.auth.refreshSession({
+                refresh_token: parsed.refresh_token,
+              })
+              const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Refresh timeout')), 4000)
+              )
+
+              const { data, error } = await Promise.race([refreshPromise, timeoutPromise]) as any
+              if (data?.session && !error) {
+                router.replace('/home')
+                return
+              }
+            }
+          } catch (e) {
+            console.error('Auth refresh failed:', e)
+            localStorage.removeItem('patchpulse-auth')
+          }
+        }
+
+        // For web only: check session from cookies
+        if (!isNative && !storedSession) {
+          try {
+            const supabase = createClient()
+            const sessionPromise = supabase.auth.getSession()
             const timeoutPromise = new Promise((_, reject) =>
-              setTimeout(() => reject(new Error('Refresh timeout')), 5000)
+              setTimeout(() => reject(new Error('Session timeout')), 4000)
             )
-
-            const { data, error } = await Promise.race([refreshPromise, timeoutPromise]) as any
-            if (data?.session && !error) {
+            const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise]) as any
+            if (session) {
               router.replace('/home')
               return
             }
+          } catch (e) {
+            console.error('Session check failed:', e)
           }
-        } catch (e) {
-          console.error('Auth refresh failed:', e)
-          localStorage.removeItem('patchpulse-auth')
         }
-      }
 
-      // Check for guest mode
-      const isGuest = localStorage.getItem('patchpulse-guest') === 'true'
-      if (isGuest) {
-        router.replace('/home')
-        return
+        setChecking(false)
+      } catch (e) {
+        console.error('Auth check error:', e)
+        setChecking(false)
       }
-
-      setChecking(false)
     }
 
     // Add overall timeout to prevent black screen forever
     const timeout = setTimeout(() => {
       setChecking(false)
-    }, 8000)
+    }, 6000)
 
     checkAuth().finally(() => clearTimeout(timeout))
+
+    return () => {
+      clearTimeout(skipTimer)
+      clearTimeout(timeout)
+    }
   }, [router])
 
   // Show loading while checking auth
   if (checking) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4">
         <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        {showSkip && (
+          <button
+            onClick={skipAuth}
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Taking too long? Tap to skip
+          </button>
+        )}
       </div>
     )
   }
