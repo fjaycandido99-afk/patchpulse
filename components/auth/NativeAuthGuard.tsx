@@ -33,70 +33,74 @@ export function NativeAuthGuard({ children }: { children: React.ReactNode }) {
         return
       }
 
-      const supabase = createClient()
+      try {
+        const supabase = createClient()
 
-      // First check current session
-      const { data: { session } } = await supabase.auth.getSession()
-
-      if (session?.user) {
-        setIsAuthed(true)
-        setIsChecking(false)
-        return
-      }
-
-      // Try to restore from localStorage
-      const storedSession = localStorage.getItem('patchpulse-auth')
-      if (storedSession) {
-        try {
-          const parsed = JSON.parse(storedSession)
-          if (parsed?.refresh_token) {
-            const { data, error } = await supabase.auth.refreshSession({
-              refresh_token: parsed.refresh_token,
-            })
-            if (data?.session && !error) {
-              setIsAuthed(true)
-              setIsChecking(false)
-              return
+        // Try to restore from localStorage (skip getSession - it hangs in WKWebView)
+        const storedSession = localStorage.getItem('patchpulse-auth')
+        if (storedSession) {
+          try {
+            const parsed = JSON.parse(storedSession)
+            if (parsed?.refresh_token) {
+              const { data, error } = await supabase.auth.refreshSession({
+                refresh_token: parsed.refresh_token,
+              })
+              if (data?.session && !error) {
+                setIsAuthed(true)
+                setIsChecking(false)
+                return
+              }
             }
+          } catch {
+            // Invalid stored session
           }
-        } catch {
-          // Invalid stored session
         }
-      }
 
-      // Try to restore from biometric credentials (no Face ID - like YouTube)
-      const biometricData = localStorage.getItem('patchpulse-biometric')
-      if (biometricData) {
-        try {
-          const parsed = JSON.parse(biometricData)
-          if (parsed?.refreshToken) {
-            const { data, error } = await supabase.auth.refreshSession({
-              refresh_token: parsed.refreshToken,
-            })
-            if (data?.session && !error) {
-              setIsAuthed(true)
-              setIsChecking(false)
-              return
+        // Try to restore from biometric credentials
+        const biometricData = localStorage.getItem('patchpulse-biometric')
+        if (biometricData) {
+          try {
+            const parsed = JSON.parse(biometricData)
+            if (parsed?.refreshToken) {
+              const { data, error } = await supabase.auth.refreshSession({
+                refresh_token: parsed.refreshToken,
+              })
+              if (data?.session && !error) {
+                setIsAuthed(true)
+                setIsChecking(false)
+                return
+              }
             }
+          } catch {
+            // Invalid biometric data
           }
-        } catch {
-          // Invalid biometric data
         }
-      }
 
-      // Check for guest mode
-      const isGuest = localStorage.getItem('patchpulse-guest') === 'true'
-      if (isGuest) {
-        setIsAuthed(true)
+        // Check for guest mode
+        const isGuest = localStorage.getItem('patchpulse-guest') === 'true'
+        if (isGuest) {
+          setIsAuthed(true)
+          setIsChecking(false)
+          return
+        }
+
+        // No valid session, redirect to login
+        router.replace('/login')
+      } catch (err) {
+        console.error('Auth check failed:', err)
+        router.replace('/login')
+      } finally {
         setIsChecking(false)
-        return
       }
-
-      // No valid session, redirect to login
-      router.replace('/login')
     }
 
-    checkAuth()
+    // Timeout to prevent infinite loading
+    const timeout = setTimeout(() => {
+      setIsChecking(false)
+      router.replace('/login')
+    }, 5000)
+
+    checkAuth().finally(() => clearTimeout(timeout))
   }, [router])
 
   // Show loading for native/iOS while checking auth

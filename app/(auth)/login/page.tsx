@@ -28,107 +28,18 @@ export default function LoginPage() {
   const [showBiometricPrompt, setShowBiometricPrompt] = useState(false)
   const [checkingState, setCheckingState] = useState(true)
 
-  // Check session and auto-login on mount
+  // Simple check on mount - no complex session restoration
   useEffect(() => {
-    // Check if running in native app
-    const isNative = typeof window !== 'undefined' &&
-      !!(window as Window & { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.()
+    const hasVisited = localStorage.getItem(HAS_VISITED_KEY) === 'true'
 
-    const checkState = async () => {
-      try {
-        const supabase = createClient()
-
-        // For native apps, skip server session check (cookies don't persist in WKWebView)
-        if (!isNative) {
-          const { data: { session } } = await supabase.auth.getSession()
-          if (session?.user) {
-            router.push('/home')
-            router.refresh()
-            return
-          }
-        }
-
-        // Try to restore from stored session (works for native)
-        const storedSession = localStorage.getItem('patchpulse-auth')
-        if (storedSession) {
-          try {
-            const parsed = JSON.parse(storedSession)
-            if (parsed?.refresh_token) {
-              const { data, error } = await supabase.auth.refreshSession({
-                refresh_token: parsed.refresh_token,
-              })
-              if (data?.session && !error) {
-                router.push('/home')
-                router.refresh()
-                return
-              }
-            }
-          } catch {
-            // Invalid stored session
-          }
-        }
-
-        // Try biometric stored credentials (no Face ID - like YouTube)
-        const biometricData = localStorage.getItem('patchpulse-biometric')
-        if (biometricData) {
-          try {
-            const parsed = JSON.parse(biometricData)
-            if (parsed?.refreshToken) {
-              const { data, error } = await supabase.auth.refreshSession({
-                refresh_token: parsed.refreshToken,
-              })
-              if (data?.session && !error) {
-                localStorage.setItem(HAS_VISITED_KEY, 'true')
-                router.push('/home')
-                router.refresh()
-                return
-              }
-            }
-          } catch {
-            // Invalid biometric data
-          }
-        }
-
-        // Check guest mode
-        const isGuest = localStorage.getItem('patchpulse-guest') === 'true'
-        if (isGuest) {
-          router.push('/home')
-          return
-        }
-
-        // Check if returning user
-        const hasVisited = localStorage.getItem(HAS_VISITED_KEY) === 'true'
-        const hasSessionData = Object.keys(localStorage).some(key =>
-          key.includes('supabase') || key.includes('sb-')
-        )
-        const hasBiometricEmail = localStorage.getItem('patchpulse-biometric-email') !== null
-        const hasCredential = hasStoredCredential()
-
-        const isReturningUser = hasVisited || hasCredential || hasSessionData || hasBiometricEmail
-
-        if (isReturningUser) {
-          setPageMode('login')
-          localStorage.setItem(HAS_VISITED_KEY, 'true')
-        } else {
-          setPageMode('landing')
-        }
-      } catch (err) {
-        console.error('Auth check failed:', err)
-        // On error, show login page
-        setPageMode('login')
-      } finally {
-        setCheckingState(false)
-      }
+    if (hasVisited) {
+      setPageMode('login')
+    } else {
+      setPageMode('landing')
     }
 
-    // Add timeout to prevent infinite loading
-    const timeout = setTimeout(() => {
-      setCheckingState(false)
-      setPageMode('login')
-    }, 5000)
-
-    checkState().finally(() => clearTimeout(timeout))
-  }, [router])
+    setCheckingState(false)
+  }, [])
 
   // Mark as visited when they proceed to login
   const markAsVisited = () => {
