@@ -1,7 +1,72 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { AppStoreBadge } from '@/components/AppStoreBadge'
+import { createClient } from '@/lib/supabase/client'
 
 export default function LandingPage() {
+  const router = useRouter()
+  const [checking, setChecking] = useState(true)
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const supabase = createClient()
+
+      // Check if native app
+      const isNative = !!(window as Window & { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.()
+
+      // For web: check session from cookies
+      if (!isNative) {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session) {
+          router.replace('/home')
+          return
+        }
+      }
+
+      // For native: check localStorage
+      const storedSession = localStorage.getItem('patchpulse-auth')
+      if (storedSession) {
+        try {
+          const parsed = JSON.parse(storedSession)
+          if (parsed?.refresh_token) {
+            const { data, error } = await supabase.auth.refreshSession({
+              refresh_token: parsed.refresh_token,
+            })
+            if (data?.session && !error) {
+              router.replace('/home')
+              return
+            }
+          }
+        } catch {
+          localStorage.removeItem('patchpulse-auth')
+        }
+      }
+
+      // Check for guest mode
+      const isGuest = localStorage.getItem('patchpulse-guest') === 'true'
+      if (isGuest) {
+        router.replace('/home')
+        return
+      }
+
+      setChecking(false)
+    }
+
+    checkAuth()
+  }, [router])
+
+  // Show loading while checking auth
+  if (checking) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center py-12">
       <div className="flex max-w-2xl flex-col items-center text-center">
