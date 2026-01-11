@@ -106,10 +106,11 @@ export function LiveToast({ notification, onDismiss, style }: Props) {
   const [isExiting, setIsExiting] = useState(false)
   const priorityStyles = getPriorityStyles(notification.priority)
   const link = getNotificationLink(notification)
+  const isHighPriority = notification.priority >= 4
 
   const handleDismiss = () => {
     setIsExiting(true)
-    setTimeout(onDismiss, 200)
+    setTimeout(onDismiss, 250)
   }
 
   const handleClick = () => {
@@ -118,13 +119,11 @@ export function LiveToast({ notification, onDismiss, style }: Props) {
 
   return (
     <div
-      className={`pointer-events-auto animate-in slide-in-from-bottom-4 fade-in duration-300 ${
-        isExiting ? 'animate-out slide-out-to-right fade-out duration-200' : ''
-      }`}
+      className={`pointer-events-auto ${isExiting ? 'toast-exit' : 'toast-enter'}`}
       style={style}
     >
       <div
-        className={`relative overflow-hidden rounded-2xl border ${priorityStyles.border} bg-card/95 backdrop-blur-xl shadow-2xl ${priorityStyles.glow}`}
+        className={`relative overflow-hidden rounded-2xl border ${priorityStyles.border} bg-card/95 backdrop-blur-xl shadow-2xl ${priorityStyles.glow} ${isHighPriority ? 'toast-glow' : ''}`}
       >
         {/* Priority indicator line */}
         {notification.priority >= 4 && (
