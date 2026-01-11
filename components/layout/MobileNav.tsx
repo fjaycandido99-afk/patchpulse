@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Home, Newspaper, Library, Brain, Crown, Bookmark, Video, Menu, X, Gamepad2, CalendarDays, ChevronRight, Tag, CalendarClock } from 'lucide-react'
+import { Home, Newspaper, Library, Brain, Crown, Bookmark, Video, Menu, X, Gamepad2, CalendarDays, ChevronRight, Tag, CalendarClock, User } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useScrollDirection } from '@/hooks/useScrollDirection'
@@ -35,6 +35,7 @@ const menuItems: NavItemConfig[] = [
   { icon: Gamepad2, label: 'Patches', href: '/patches' },
   { icon: CalendarClock, label: 'Upcoming', href: '/upcoming' },
   { icon: CalendarDays, label: 'Releases', href: '/releases' },
+  { icon: User, label: 'Profile', href: '/settings' },
 ]
 
 export function MobileNav({ badges, isGuest = false }: { badges?: Record<string, NavBadge>; isGuest?: boolean }) {
