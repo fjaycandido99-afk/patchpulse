@@ -72,10 +72,20 @@ export default function LoginPage() {
         return
       }
 
-      // Only show landing for first-time visitors with no session
+      // Only show landing for truly first-time visitors
+      // Check multiple signals to determine if they've used the app before
       const hasVisited = localStorage.getItem(HAS_VISITED_KEY) === 'true'
-      if (!hasVisited) {
+      const hadPreviousSession = localStorage.getItem('patchpulse-auth') !== null
+      const hadBiometric = localStorage.getItem('patchpulse-biometric') !== null
+      const wasGuest = localStorage.getItem('patchpulse-guest') !== null
+
+      const isReturningUser = hasVisited || hadPreviousSession || hadBiometric || wasGuest
+
+      if (!isReturningUser) {
         setPageMode('landing')
+      } else {
+        // Mark as visited for future
+        localStorage.setItem(HAS_VISITED_KEY, 'true')
       }
 
       setCheckingState(false)
