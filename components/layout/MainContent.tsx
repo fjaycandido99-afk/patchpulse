@@ -31,8 +31,8 @@ export function MainContent({ children }: { children: React.ReactNode }) {
       className="h-full pb-6 md:pt-6 md:px-8 lg:px-12 w-full overflow-x-hidden transition-[padding] duration-300"
       style={{
         paddingTop: isMobile ? mobilePadding : undefined,
-        paddingLeft: isMobile ? 'max(0.75rem, env(safe-area-inset-left, 0px))' : undefined,
-        paddingRight: isMobile ? 'max(0.75rem, env(safe-area-inset-right, 0px))' : undefined,
+        paddingLeft: isMobile ? 'env(safe-area-inset-left, 0px)' : undefined,
+        paddingRight: isMobile ? 'env(safe-area-inset-right, 0px)' : undefined,
       }}
     >
       {children}
