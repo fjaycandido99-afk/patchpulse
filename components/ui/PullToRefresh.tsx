@@ -21,10 +21,19 @@ export function PullToRefresh({
   const [pullDistance, setPullDistance] = useState(0)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
   const isPullingRef = useRef(false)
   const startYRef = useRef(0)
   const currentDistanceRef = useRef(0)
   const containerRef = useRef<HTMLDivElement>(null)
+
+  // Only enable on mobile
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   const canPull = useCallback(() => {
     const scrollTop = Math.max(
@@ -61,7 +70,7 @@ export function PullToRefresh({
     if (!container) return
 
     const handleTouchStart = (e: globalThis.TouchEvent) => {
-      if (disabled || isRefreshing) return
+      if (disabled || isRefreshing || !isMobile) return
       if (!canPull()) return
 
       startYRef.current = e.touches[0].clientY
@@ -112,7 +121,7 @@ export function PullToRefresh({
       container.removeEventListener('touchmove', handleTouchMove)
       container.removeEventListener('touchend', handleTouchEnd)
     }
-  }, [disabled, isRefreshing, canPull, threshold, handleRefresh])
+  }, [disabled, isRefreshing, isMobile, canPull, threshold, handleRefresh])
 
   const progress = Math.min(pullDistance / threshold, 1)
   const isReady = progress >= 1
@@ -122,13 +131,18 @@ export function PullToRefresh({
   const circumference = 2 * Math.PI * circleRadius
   const strokeDashoffset = circumference * (1 - progress)
 
+  // On desktop, just render children without pull-to-refresh
+  if (!isMobile) {
+    return <>{children}</>
+  }
+
   return (
     <div
       ref={containerRef}
       className="relative"
       style={{ touchAction: 'pan-y' }}
     >
-      {/* Pull indicator */}
+      {/* Pull indicator - mobile only */}
       <div
         className="absolute left-0 right-0 flex items-center justify-center overflow-hidden pointer-events-none z-50"
         style={{
