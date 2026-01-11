@@ -65,17 +65,9 @@ export default function LoginPage() {
       }))
     }
 
-    // Check if we should prompt for biometric setup
-    const available = await checkBiometricAvailable()
-    const hasCredential = hasStoredCredential()
-
-    if (available && !hasCredential) {
-      setShowBiometricPrompt(true)
-      setLoading(false)
-    } else {
-      router.push('/home')
-      router.refresh()
-    }
+    // Go straight to home
+    router.push('/home')
+    router.refresh()
   }
 
   const handleBiometricPromptComplete = () => {
