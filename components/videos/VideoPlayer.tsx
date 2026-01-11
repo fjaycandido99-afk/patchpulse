@@ -11,15 +11,7 @@ type VideoPlayerProps = {
 }
 
 export function VideoPlayer({ youtubeId, title, isOpen, onClose }: VideoPlayerProps) {
-  const [isBrowser, setIsBrowser] = useState(false)
   const [embedFailed, setEmbedFailed] = useState(false)
-
-  // Check if we're in a browser (not Capacitor native app)
-  useEffect(() => {
-    const isNative = typeof window !== 'undefined' &&
-      (window as Window & { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.()
-    setIsBrowser(!isNative)
-  }, [])
 
   // Reset embed failed state when video changes
   useEffect(() => {
@@ -43,7 +35,7 @@ export function VideoPlayer({ youtubeId, title, isOpen, onClose }: VideoPlayerPr
     }
   }, [isOpen, onClose])
 
-  if (!isBrowser || !isOpen) {
+  if (!isOpen) {
     return null
   }
 
@@ -112,9 +104,9 @@ export function VideoPlayer({ youtubeId, title, isOpen, onClose }: VideoPlayerPr
           ) : (
             /* YouTube embed iframe */
             <iframe
-              src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0&modestbranding=1`}
+              src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0&modestbranding=1&playsinline=1`}
               title={title}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               allowFullScreen
               className="absolute inset-0 w-full h-full"
               onError={() => setEmbedFailed(true)}
@@ -206,19 +198,6 @@ export function VideoCard({
   publishedAt,
   onPlay,
 }: VideoCardProps) {
-  const [isBrowser, setIsBrowser] = useState(false)
-
-  useEffect(() => {
-    const isNative = typeof window !== 'undefined' &&
-      (window as Window & { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.()
-    setIsBrowser(!isNative)
-  }, [])
-
-  // Don't render on native apps
-  if (!isBrowser) {
-    return null
-  }
-
   const typeInfo = TYPE_LABELS[videoType] || TYPE_LABELS.other
   const thumbnail = thumbnailUrl || `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`
 
