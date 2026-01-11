@@ -21,6 +21,7 @@ export function BiometricSettings({
   deviceName,
 }: BiometricSettingsProps) {
   const [isAvailable, setIsAvailable] = useState(false)
+  const [isNativeIOS, setIsNativeIOS] = useState(false)
   const [hasCredential, setHasCredential] = useState(initialHasCredential)
   const [isLoading, setIsLoading] = useState(false)
   const [isRemoving, setIsRemoving] = useState(false)
@@ -29,6 +30,11 @@ export function BiometricSettings({
 
   useEffect(() => {
     checkBiometricAvailable().then(setIsAvailable)
+
+    // Check if native iOS app
+    const native = !!(window as Window & { Capacitor?: { isNativePlatform?: () => boolean; getPlatform?: () => string } }).Capacitor?.isNativePlatform?.()
+    const platform = (window as Window & { Capacitor?: { getPlatform?: () => string } }).Capacitor?.getPlatform?.()
+    setIsNativeIOS(native && platform === 'ios')
   }, [])
 
   const handleEnable = async () => {
@@ -78,8 +84,8 @@ export function BiometricSettings({
     setIsRemoving(false)
   }
 
-  // Don't show if biometric is not available on this device
-  if (!isAvailable) {
+  // Don't show on native iOS app or if biometric is not available
+  if (isNativeIOS || !isAvailable) {
     return null
   }
 

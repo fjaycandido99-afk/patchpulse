@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { FileText, Shield, ChevronRight, User, UserPlus, LogIn, Sparkles } from 'lucide-react'
 import { isGuestModeFromCookies } from '@/lib/guest'
 import { ConnectedAccounts } from './ConnectedAccounts'
-import { BiometricSettings } from '@/components/auth/BiometricSettings'
+import { SecuritySection } from '@/components/profile/SecuritySection'
 import { LogoutButton } from '@/components/auth/LogoutButton'
 import {
   getConnectedAccounts,
@@ -239,15 +239,12 @@ export default async function ProfilePage() {
         <ConnectedAccounts accounts={accounts} />
       </section>
 
-      {/* Security Settings */}
-      <section className="rounded-xl border border-border bg-card p-6">
-        <h2 className="text-lg font-semibold mb-4">Security</h2>
-        <BiometricSettings
-          hasCredential={!!biometricCredential}
-          lastUsedAt={biometricCredential?.last_used_at ?? null}
-          deviceName={biometricCredential?.device_name ?? null}
-        />
-      </section>
+      {/* Security Settings - hidden on native iOS */}
+      <SecuritySection
+        hasCredential={!!biometricCredential}
+        lastUsedAt={biometricCredential?.last_used_at ?? null}
+        deviceName={biometricCredential?.device_name ?? null}
+      />
 
       {/* Account Actions */}
       <section className="rounded-xl border border-border bg-card p-6">
