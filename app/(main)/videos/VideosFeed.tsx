@@ -180,8 +180,11 @@ function VerticalVideoPlayer({
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Header */}
-      <div className="absolute top-0 left-0 right-0 z-20 p-4 bg-gradient-to-b from-black/80 to-transparent">
+      {/* Header - with safe area for iOS status bar */}
+      <div
+        className="absolute top-0 left-0 right-0 z-20 p-4 bg-gradient-to-b from-black/80 to-transparent"
+        style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 1rem)' }}
+      >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className={`px-2 py-1 rounded text-xs font-medium ${typeConfig.color}`}>
