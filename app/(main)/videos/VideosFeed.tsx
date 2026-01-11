@@ -210,9 +210,9 @@ function VerticalVideoPlayer({
         </div>
       </div>
 
-      {/* Video Player */}
-      <div className="flex-1 flex items-center justify-center">
-        <div className="relative w-full max-w-3xl aspect-video mx-4">
+      {/* Video Player - use fixed dimensions for iOS compatibility */}
+      <div className="absolute inset-0 flex items-center justify-center" style={{ top: '60px', bottom: '100px' }}>
+        <div className="relative w-full h-full max-w-3xl mx-4" style={{ maxHeight: 'calc(100vw * 9 / 16)' }}>
           {hasEmbedFailed ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-900 rounded-xl">
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-600 flex items-center justify-center">
