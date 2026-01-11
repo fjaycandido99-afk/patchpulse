@@ -22,13 +22,14 @@ export function MainContent({ children }: { children: React.ReactNode }) {
   }, [])
 
   // Only apply dynamic padding on mobile
+  // Header height: safe-area + py-3 (0.75rem) + content (~2.5rem) + py-3 = safe-area + ~4rem
   const mobilePadding = showHeader
-    ? 'calc(5rem + env(safe-area-inset-top, 0px))' // header + safe area when visible
-    : 'max(env(safe-area-inset-top, 0px), 0.5rem)' // safe area when hidden
+    ? 'calc(4rem + env(safe-area-inset-top, 0px))' // header height when visible
+    : '0.5rem' // minimal padding when header hidden (content scrolls freely)
 
   const content = (
     <div
-      className="h-full pb-6 md:pt-6 md:px-8 lg:px-12 w-full transition-[padding] duration-300"
+      className="h-full pb-6 md:pt-6 md:px-8 lg:px-12 w-full"
       style={{
         paddingTop: isMobile ? mobilePadding : undefined,
       }}

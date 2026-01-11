@@ -23,21 +23,14 @@ export function MobileHeader({
 
   return (
     <header
-      className="fixed inset-x-0 top-0 z-40 md:hidden transition-transform duration-300"
+      className="fixed inset-x-0 top-0 z-40 md:hidden transition-transform duration-300 bg-[rgba(9,9,11,0.98)] backdrop-blur-xl border-b border-white/10"
       style={{
-        transform: showHeader
-          ? 'translateY(0)'
-          : 'translateY(calc(-100% - env(safe-area-inset-top, 0px)))',
+        paddingTop: 'env(safe-area-inset-top, 0px)',
+        transform: showHeader ? 'translateY(0)' : 'translateY(-100%)',
       }}
     >
-      {/* Background that extends into safe area */}
       <div
-        className="absolute inset-0 bg-[rgba(9,9,11,0.98)] backdrop-blur-xl border-b border-white/10"
-        style={{ top: 'calc(-1 * env(safe-area-inset-top, 0))' }}
-      />
-      <div
-        className="relative flex items-center justify-between gap-2 px-4 py-3"
-        style={{ marginTop: 'env(safe-area-inset-top, 0)' }}
+        className="flex items-center justify-between gap-2 px-4 py-3"
       >
         <div className="flex items-center gap-3">
           <Link
