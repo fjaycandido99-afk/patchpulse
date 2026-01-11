@@ -3,8 +3,8 @@ import { Purchases, LOG_LEVEL } from '@revenuecat/purchases-capacitor'
 
 // Product IDs - must match App Store Connect & RevenueCat
 export const PRODUCT_IDS = {
-  monthly: 'pro_monthly',
-  yearly: 'pro_yearly',
+  monthly: 'com.patchpulse.pro.monthly',
+  yearly: 'com.patchpulse.pro.yearly',
 } as const
 
 type ProductId = typeof PRODUCT_IDS[keyof typeof PRODUCT_IDS]
@@ -127,7 +127,7 @@ export async function purchaseSubscription(productId: ProductId): Promise<Purcha
     const { customerInfo } = await Purchases.purchasePackage({ aPackage: pkg })
 
     // Check if purchase was successful
-    const isActive = customerInfo.entitlements.active['pro'] !== undefined
+    const isActive = customerInfo.entitlements.active['PatchPulse Pro'] !== undefined
 
     return { success: isActive }
   } catch (error: any) {
@@ -147,7 +147,7 @@ export async function restorePurchases(): Promise<boolean> {
 
   try {
     const { customerInfo } = await Purchases.restorePurchases()
-    const isActive = customerInfo.entitlements.active['pro'] !== undefined
+    const isActive = customerInfo.entitlements.active['PatchPulse Pro'] !== undefined
     return isActive
   } catch (error) {
     console.error('Restore failed:', error)
