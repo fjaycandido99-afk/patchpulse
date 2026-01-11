@@ -51,20 +51,20 @@ export function SwipeableNews({ children, prevId, nextId }: SwipeableNewsProps) 
     const isRightSwipe = distance < -minSwipeDistance
 
     if (isLeftSwipe && nextId) {
-      // Swipe left = go to next (newer) article
-      router.push(`/news/${nextId}`)
+      // Swipe left = go to next (newer) article - replace to avoid history buildup
+      router.replace(`/news/${nextId}`)
     } else if (isRightSwipe && prevId) {
-      // Swipe right = go to previous (older) article
-      router.push(`/news/${prevId}`)
+      // Swipe right = go to previous (older) article - replace to avoid history buildup
+      router.replace(`/news/${prevId}`)
     }
   }, [touchStart, touchEnd, prevId, nextId, router])
 
   const goToPrev = useCallback(() => {
-    if (prevId) router.push(`/news/${prevId}`)
+    if (prevId) router.replace(`/news/${prevId}`)
   }, [prevId, router])
 
   const goToNext = useCallback(() => {
-    if (nextId) router.push(`/news/${nextId}`)
+    if (nextId) router.replace(`/news/${nextId}`)
   }, [nextId, router])
 
   return (
