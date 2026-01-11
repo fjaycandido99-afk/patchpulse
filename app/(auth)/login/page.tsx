@@ -33,15 +33,20 @@ export default function LoginPage() {
     const checkAutoLogin = async () => {
       const supabase = createClient()
 
-      // First check if there's an existing session (from cookies on web)
-      const { data: { session: existingSession } } = await supabase.auth.getSession()
-      if (existingSession) {
-        // Already logged in - go straight to home
-        router.replace('/home')
-        return
+      // Check if native app (getSession hangs in WKWebView)
+      const isNative = !!(window as Window & { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.()
+
+      // For web: check existing session from cookies
+      // Skip for native - getSession() hangs in WKWebView
+      if (!isNative) {
+        const { data: { session: existingSession } } = await supabase.auth.getSession()
+        if (existingSession) {
+          router.replace('/home')
+          return
+        }
       }
 
-      // Check for stored session in localStorage (for native apps)
+      // Check for stored session in localStorage (works for both web and native)
       const storedSession = localStorage.getItem('patchpulse-auth')
       if (storedSession) {
         try {
@@ -51,13 +56,11 @@ export default function LoginPage() {
               refresh_token: parsed.refresh_token,
             })
             if (data?.session && !error) {
-              // Auto-login success - go straight to home
               router.replace('/home')
               return
             }
           }
         } catch {
-          // Invalid session, clear it
           localStorage.removeItem('patchpulse-auth')
         }
       }
