@@ -81,7 +81,7 @@ function getYouTubeThumbnail(youtubeId: string, quality: 'max' | 'sd' | 'hq' = '
   return `https://img.youtube.com/vi/${youtubeId}/${qualityMap[quality]}.jpg`
 }
 
-// Fullscreen vertical scroll video player (TikTok/Shorts style)
+// Fullscreen vertical scroll video player - simplified version matching HomeVideosSection
 function VerticalVideoPlayer({
   videos,
   initialIndex,
@@ -93,198 +93,229 @@ function VerticalVideoPlayer({
 }) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex)
   const [embedFailed, setEmbedFailed] = useState<Set<number>>(new Set())
-  const [isLoading, setIsLoading] = useState(true)
-  const [isTransitioning, setIsTransitioning] = useState(false)
-  const [showSwipeHint, setShowSwipeHint] = useState(true)
   const containerRef = useRef<HTMLDivElement>(null)
   const touchStartY = useRef<number | null>(null)
-  const swipeDebounce = useRef<number>(0)
 
   const currentVideo = videos[currentIndex]
   const typeConfig = TYPE_CONFIG[currentVideo.video_type as VideoType] || TYPE_CONFIG.other
-  const thumbnailUrl = currentVideo.thumbnail_url || `https://img.youtube.com/vi/${currentVideo.youtube_id}/maxresdefault.jpg`
-
-  useEffect(() => {
-    setIsLoading(true)
-    const timer = setTimeout(() => setIsLoading(false), 1500)
-    return () => clearTimeout(timer)
-  }, [currentIndex])
-
-  useEffect(() => {
-    if (currentIndex !== initialIndex) setShowSwipeHint(false)
-  }, [currentIndex, initialIndex])
 
   const goToNext = useCallback(() => {
-    const now = Date.now()
-    if (now - swipeDebounce.current < 400) return
     if (currentIndex < videos.length - 1) {
-      swipeDebounce.current = now
-      setIsTransitioning(true)
-      setTimeout(() => {
-        setCurrentIndex(prev => prev + 1)
-        setTimeout(() => setIsTransitioning(false), 150)
-      }, 150)
+      setCurrentIndex(prev => prev + 1)
     }
   }, [currentIndex, videos.length])
 
   const goToPrev = useCallback(() => {
-    const now = Date.now()
-    if (now - swipeDebounce.current < 400) return
     if (currentIndex > 0) {
-      swipeDebounce.current = now
-      setIsTransitioning(true)
-      setTimeout(() => {
-        setCurrentIndex(prev => prev - 1)
-        setTimeout(() => setIsTransitioning(false), 150)
-      }, 150)
+      setCurrentIndex(prev => prev - 1)
     }
   }, [currentIndex])
 
+  // Handle keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
       if (e.key === 'ArrowDown' || e.key === 'j') goToNext()
       if (e.key === 'ArrowUp' || e.key === 'k') goToPrev()
     }
+
     document.addEventListener('keydown', handleKeyDown)
     document.body.style.overflow = 'hidden'
-    document.body.style.overscrollBehavior = 'none'
-    document.documentElement.style.overflow = 'hidden'
+
     return () => {
       document.removeEventListener('keydown', handleKeyDown)
       document.body.style.overflow = ''
-      document.body.style.overscrollBehavior = ''
-      document.documentElement.style.overflow = ''
     }
   }, [onClose, goToNext, goToPrev])
 
-  const handleTouchStart = (e: React.TouchEvent) => { touchStartY.current = e.touches[0].clientY }
+  // Handle touch swipe
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY
+  }
+
   const handleTouchEnd = (e: React.TouchEvent) => {
     if (touchStartY.current === null) return
-    const diff = touchStartY.current - e.changedTouches[0].clientY
-    if (Math.abs(diff) > 50) { diff > 0 ? goToNext() : goToPrev() }
+
+    const touchEndY = e.changedTouches[0].clientY
+    const diff = touchStartY.current - touchEndY
+    const minSwipeDistance = 50
+
+    if (Math.abs(diff) > minSwipeDistance) {
+      if (diff > 0) {
+        goToNext()
+      } else {
+        goToPrev()
+      }
+    }
+
     touchStartY.current = null
   }
 
+  // Handle wheel scroll
   const handleWheel = useCallback((e: WheelEvent) => {
     e.preventDefault()
-    if (e.deltaY > 50) goToNext()
-    else if (e.deltaY < -50) goToPrev()
+    if (e.deltaY > 50) {
+      goToNext()
+    } else if (e.deltaY < -50) {
+      goToPrev()
+    }
   }, [goToNext, goToPrev])
 
   useEffect(() => {
     const container = containerRef.current
     if (container) {
       container.addEventListener('wheel', handleWheel, { passive: false })
-      const preventTouchScroll = (e: TouchEvent) => e.preventDefault()
-      container.addEventListener('touchmove', preventTouchScroll, { passive: false })
-      return () => {
-        container.removeEventListener('wheel', handleWheel)
-        container.removeEventListener('touchmove', preventTouchScroll)
-      }
+      return () => container.removeEventListener('wheel', handleWheel)
     }
   }, [handleWheel])
 
   const youtubeUrl = `https://www.youtube.com/watch?v=${currentVideo.youtube_id}`
   const hasEmbedFailed = embedFailed.has(currentIndex)
-  const progress = ((currentIndex + 1) / videos.length) * 100
 
   return (
-    <div ref={containerRef} className="fixed inset-0 z-50 bg-black flex flex-col select-none" style={{ touchAction: 'none' }} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
-      {/* Progress bar */}
-      <div className="absolute top-0 left-0 right-0 h-1 bg-white/10 z-30">
-        <div className="h-full bg-gradient-to-r from-primary to-violet-500 transition-all duration-300" style={{ width: `${progress}%` }} />
-      </div>
-
+    <div
+      ref={containerRef}
+      className="fixed inset-0 z-50 bg-black flex flex-col"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
       {/* Header */}
-      <div className="absolute top-0 left-0 right-0 z-20 p-4 bg-gradient-to-b from-black via-black/70 to-transparent" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 20px)' }}>
+      <div className="absolute top-0 left-0 right-0 z-20 p-4 bg-gradient-to-b from-black/80 to-transparent">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className={`px-3 py-1.5 rounded-full text-xs font-semibold ${typeConfig.color}`}>{typeConfig.label}</span>
-            <span className="text-sm text-white/70 font-medium tabular-nums">{currentIndex + 1} / {videos.length}</span>
+          <div className="flex items-center gap-2">
+            <span className={`px-2 py-1 rounded text-xs font-medium ${typeConfig.color}`}>
+              {typeConfig.label}
+            </span>
+            <span className="text-xs text-white/60">
+              {currentIndex + 1} / {videos.length}
+            </span>
           </div>
           <div className="flex items-center gap-2">
-            <a href={youtubeUrl} target="_blank" rel="noopener noreferrer" className="p-2.5 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 transition-all backdrop-blur-sm"><ExternalLink className="w-5 h-5 text-white" /></a>
-            <button onClick={onClose} className="p-2.5 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 transition-all backdrop-blur-sm"><X className="w-5 h-5 text-white" /></button>
+            <a
+              href={youtubeUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+            >
+              <ExternalLink className="w-5 h-5 text-white" />
+            </a>
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+            >
+              <X className="w-5 h-5 text-white" />
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Video with transitions */}
-      <div className={`flex-1 flex items-center justify-center transition-all duration-300 ${isTransitioning ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
-        <div className="relative w-full max-w-4xl aspect-video mx-4">
-          {/* Loading overlay - only show briefly, positioned behind iframe */}
-          {isLoading && !hasEmbedFailed && (
-            <div className="absolute inset-0 rounded-2xl overflow-hidden">
-              <img src={thumbnailUrl} alt="" className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center animate-pulse"><Play className="w-8 h-8 text-white fill-white ml-1" /></div>
-              </div>
-            </div>
-          )}
+      {/* Video Player */}
+      <div className="flex-1 flex items-center justify-center">
+        <div className="relative w-full max-w-3xl aspect-video mx-4">
           {hasEmbedFailed ? (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-900 rounded-2xl overflow-hidden">
-              <img src={thumbnailUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-30 blur-sm" />
-              <div className="relative z-10 text-center">
-                <div className="w-20 h-20 mx-auto mb-5 rounded-full bg-red-600 flex items-center justify-center shadow-lg shadow-red-600/30"><Play className="w-10 h-10 text-white fill-white ml-1" /></div>
-                <p className="text-white/80 mb-5">Video unavailable</p>
-                <a href={youtubeUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-8 py-3.5 bg-red-600 hover:bg-red-500 text-white font-semibold rounded-full">Watch on YouTube</a>
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-900 rounded-xl">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-600 flex items-center justify-center">
+                <Play className="w-8 h-8 text-white fill-white ml-1" />
               </div>
+              <p className="text-white/60 mb-4 text-center px-4">This video can&apos;t be embedded</p>
+              <a
+                href={youtubeUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-6 py-3 bg-red-600 hover:bg-red-500 text-white font-medium rounded-full transition-colors"
+              >
+                Watch on YouTube
+              </a>
             </div>
           ) : (
-            <iframe key={currentVideo.youtube_id} src={`https://www.youtube.com/embed/${currentVideo.youtube_id}?autoplay=1&rel=0&modestbranding=1`} title={currentVideo.title} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen className="absolute inset-0 w-full h-full rounded-2xl shadow-2xl z-10" onLoad={() => setIsLoading(false)} onError={() => setEmbedFailed(prev => new Set(prev).add(currentIndex))} />
+            <iframe
+              key={currentVideo.youtube_id}
+              src={`https://www.youtube.com/embed/${currentVideo.youtube_id}?autoplay=1&rel=0&modestbranding=1`}
+              title={currentVideo.title}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              className="absolute inset-0 w-full h-full rounded-xl"
+              onError={() => setEmbedFailed(prev => new Set(prev).add(currentIndex))}
+            />
           )}
-          {!hasEmbedFailed && !isLoading && <button onClick={() => setEmbedFailed(prev => new Set(prev).add(currentIndex))} className="absolute bottom-4 right-4 px-4 py-2 text-xs bg-black/60 hover:bg-black/80 text-white/80 rounded-full backdrop-blur-sm">Video not loading?</button>}
+
+          {/* Fallback button */}
+          {!hasEmbedFailed && (
+            <button
+              type="button"
+              onClick={() => setEmbedFailed(prev => new Set(prev).add(currentIndex))}
+              className="absolute bottom-4 right-4 px-3 py-1.5 text-xs bg-black/60 hover:bg-black/80 text-white/70 rounded-lg transition-colors z-20"
+            >
+              Video not loading?
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Footer */}
-      <div className="absolute bottom-0 left-0 right-0 z-20 p-4 bg-gradient-to-t from-black via-black/80 to-transparent" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 20px)' }}>
-        <div className="max-w-4xl mx-auto pr-16 md:pr-0">
-          {currentVideo.game && <span className="inline-block px-3 py-1 mb-2 text-xs font-medium bg-white/15 text-white rounded-full">{currentVideo.game.name}</span>}
-          <h3 className="text-white font-semibold text-base md:text-lg line-clamp-2 mb-2">{currentVideo.title}</h3>
-          <div className="flex items-center gap-2 text-white/60 text-sm">
-            <span className="font-medium">{currentVideo.channel_name || 'Gaming'}</span>
-            {currentVideo.view_count > 0 && <><span className="text-white/30">•</span><span>{formatViewCount(currentVideo.view_count)}</span></>}
-            {currentVideo.published_at && <><span className="text-white/30">•</span><span>{getRelativeTime(currentVideo.published_at)}</span></>}
-          </div>
+      {/* Footer with title */}
+      <div className="absolute bottom-0 left-0 right-0 z-20 p-4 bg-gradient-to-t from-black/80 to-transparent">
+        <div className="max-w-3xl mx-auto">
+          {currentVideo.game && (
+            <span className="inline-block px-2 py-1 mb-2 text-xs font-medium bg-white/15 text-white rounded-full">
+              {currentVideo.game.name}
+            </span>
+          )}
+          <h3 className="text-white font-medium text-lg line-clamp-2 mb-1">
+            {currentVideo.title}
+          </h3>
+          <p className="text-white/60 text-sm">
+            {currentVideo.channel_name || 'Gaming'}
+          </p>
         </div>
       </div>
 
-      {/* Side buttons */}
-      <div className="absolute right-3 bottom-32 md:right-6 md:bottom-auto md:top-1/2 md:-translate-y-1/2 flex flex-col gap-4 z-20">
-        <a href={youtubeUrl} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-1">
-          <div className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 active:scale-90 transition-all flex items-center justify-center backdrop-blur-sm">
-            <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
-          </div>
-          <span className="text-[10px] text-white/60 font-medium">YouTube</span>
-        </a>
-        <div className="md:hidden flex flex-col gap-2">
-          <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); goToPrev(); }} disabled={currentIndex === 0} className={`w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 active:scale-90 transition-all flex items-center justify-center backdrop-blur-sm ${currentIndex === 0 ? 'opacity-30' : ''}`}><ChevronUp className="w-6 h-6 text-white" /></button>
-          <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); goToNext(); }} disabled={currentIndex === videos.length - 1} className={`w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 active:scale-90 transition-all flex items-center justify-center backdrop-blur-sm ${currentIndex === videos.length - 1 ? 'opacity-30' : ''}`}><ChevronDown className="w-6 h-6 text-white" /></button>
-        </div>
+      {/* Navigation arrows - desktop */}
+      <div className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 flex-col gap-2 z-20">
+        <button
+          type="button"
+          onClick={goToPrev}
+          disabled={currentIndex === 0}
+          className={`p-3 rounded-full bg-white/10 hover:bg-white/20 transition-colors ${
+            currentIndex === 0 ? 'opacity-30 cursor-not-allowed' : ''
+          }`}
+        >
+          <ChevronUp className="w-6 h-6 text-white" />
+        </button>
+        <button
+          type="button"
+          onClick={goToNext}
+          disabled={currentIndex === videos.length - 1}
+          className={`p-3 rounded-full bg-white/10 hover:bg-white/20 transition-colors ${
+            currentIndex === videos.length - 1 ? 'opacity-30 cursor-not-allowed' : ''
+          }`}
+        >
+          <ChevronDown className="w-6 h-6 text-white" />
+        </button>
       </div>
 
-      {/* Desktop nav */}
-      <div className="hidden md:flex absolute right-20 top-1/2 -translate-y-1/2 flex-col gap-3 z-20">
-        <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); goToPrev(); }} disabled={currentIndex === 0} className={`p-3.5 rounded-full bg-white/10 hover:bg-white/20 active:scale-90 transition-all backdrop-blur-sm ${currentIndex === 0 ? 'opacity-30' : ''}`}><ChevronUp className="w-6 h-6 text-white" /></button>
-        <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); goToNext(); }} disabled={currentIndex === videos.length - 1} className={`p-3.5 rounded-full bg-white/10 hover:bg-white/20 active:scale-90 transition-all backdrop-blur-sm ${currentIndex === videos.length - 1 ? 'opacity-30' : ''}`}><ChevronDown className="w-6 h-6 text-white" /></button>
+      {/* Swipe hint - mobile */}
+      <div className="md:hidden absolute left-1/2 -translate-x-1/2 bottom-24 text-white/40 text-xs flex items-center gap-1">
+        <ChevronUp className="w-4 h-4" />
+        <span>Swipe for more</span>
+        <ChevronDown className="w-4 h-4" />
       </div>
 
-      {/* Swipe hint */}
-      {showSwipeHint && currentIndex === initialIndex && (
-        <div className="md:hidden absolute left-1/2 -translate-x-1/2 bottom-44 animate-bounce">
-          <div className="flex flex-col items-center gap-1 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm">
-            <ChevronUp className="w-4 h-4 text-white/70" />
-            <span className="text-xs text-white/70 font-medium">Swipe for more</span>
-          </div>
-        </div>
-      )}
-
-      {/* Progress dots */}
+      {/* Video dots indicator */}
       {videos.length <= 15 && (
-        <div className="hidden md:flex absolute left-6 top-1/2 -translate-y-1/2 flex-col gap-2 z-20">
-          {videos.map((_, idx) => <button key={idx} onClick={() => setCurrentIndex(idx)} className={`rounded-full transition-all ${idx === currentIndex ? 'w-2 h-6 bg-gradient-to-b from-primary to-violet-500' : 'w-2 h-2 bg-white/30 hover:bg-white/50'}`} />)}
+        <div className="absolute left-4 top-1/2 -translate-y-1/2 flex flex-col gap-1.5 z-20">
+          {videos.map((_, idx) => (
+            <button
+              type="button"
+              key={idx}
+              onClick={() => setCurrentIndex(idx)}
+              className={`w-1.5 h-1.5 rounded-full transition-all ${
+                idx === currentIndex
+                  ? 'bg-white h-4'
+                  : 'bg-white/30 hover:bg-white/50'
+              }`}
+            />
+          ))}
         </div>
       )}
     </div>
