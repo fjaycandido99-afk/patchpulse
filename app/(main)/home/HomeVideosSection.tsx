@@ -277,7 +277,7 @@ export function HomeVideosSection({ videos }: HomeVideosSectionProps) {
       <div className="px-4 md:px-0">
         <SectionHeader title="Videos" href="/videos" />
       </div>
-      <div className="grid grid-cols-1 gap-3">
+      <div className="grid grid-cols-1 gap-3 -mx-4 md:mx-0">
         {videos.map((video, index) => (
           <HomeVideoCard
             key={video.id}

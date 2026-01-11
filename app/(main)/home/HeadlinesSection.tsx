@@ -200,7 +200,7 @@ function RotatingHeadline({
 
   return (
     <div
-      className="relative mb-4"
+      className="relative mb-4 -mx-4 md:mx-0"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
@@ -208,7 +208,7 @@ function RotatingHeadline({
       <Link
         key={animationKey}
         href={`/news/${item.id}`}
-        className="group relative block overflow-hidden rounded-xl border border-white/10 bg-black/40 animate-soft-entry"
+        className="group relative block overflow-hidden md:rounded-xl border-y md:border border-white/10 bg-black/40 animate-soft-entry"
         style={{ opacity: 1 }}
       >
       <div className="relative aspect-[16/10] sm:aspect-[21/9]">
@@ -344,7 +344,7 @@ function NewsCardsGrid({
   const displayNews = visibleIndices.map(i => news[i]).filter(Boolean)
 
   return (
-    <div className="grid grid-cols-1 gap-3">
+    <div className="grid grid-cols-1 gap-3 -mx-4 md:mx-0">
       {displayNews.map((newsItem, slotIndex) => (
         <Link
           key={`${newsItem.id}-${slotIndex}`}
