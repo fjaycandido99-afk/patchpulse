@@ -546,7 +546,7 @@ function MobileVideoCard({
         )}
 
         {/* Type badge */}
-        <span className={`absolute top-1.5 left-1.5 px-2.5 py-1 text-xs font-bold rounded-md backdrop-blur-sm ${typeConfig.color} z-20`}>
+        <span className={`absolute top-1 left-0 px-2.5 py-1 text-xs font-bold rounded-md backdrop-blur-sm ${typeConfig.color} z-20`}>
           {typeConfig.label}
         </span>
 
