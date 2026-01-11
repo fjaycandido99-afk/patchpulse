@@ -1,11 +1,24 @@
 'use client'
 
-import { useState } from 'react'
-import { Check, Crown, Loader2, Sparkles, Bell, Brain, Zap } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Check, Crown, Loader2, Sparkles, Bell, Brain, Zap, Apple } from 'lucide-react'
 
 type Props = {
   currentPlan: 'free' | 'pro'
   isLoggedIn: boolean
+}
+
+// Check if running in native iOS app
+function useIsNativeIOS() {
+  const [isNative, setIsNative] = useState(false)
+
+  useEffect(() => {
+    const native = !!(window as Window & { Capacitor?: { isNativePlatform?: () => boolean; getPlatform?: () => string } }).Capacitor?.isNativePlatform?.()
+    const platform = (window as Window & { Capacitor?: { getPlatform?: () => string } }).Capacitor?.getPlatform?.()
+    setIsNative(native && platform === 'ios')
+  }, [])
+
+  return isNative
 }
 
 const FREE_FEATURES = [
@@ -28,6 +41,7 @@ const PRO_FEATURES = [
 export function PricingCards({ currentPlan, isLoggedIn }: Props) {
   const [interval, setInterval] = useState<'month' | 'year'>('month')
   const [isLoading, setIsLoading] = useState(false)
+  const isNativeIOS = useIsNativeIOS()
 
   const monthlyPrice = 4.99
   const yearlyPrice = 49.99
@@ -182,6 +196,16 @@ export function PricingCards({ currentPlan, isLoggedIn }: Props) {
             {currentPlan === 'pro' ? (
               <div className="w-full py-2.5 text-center text-sm text-muted-foreground">
                 Current plan
+              </div>
+            ) : isNativeIOS ? (
+              <div className="space-y-3">
+                <p className="text-xs text-center text-muted-foreground">
+                  In-app purchases coming soon
+                </p>
+                <div className="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-lg bg-muted text-muted-foreground font-medium">
+                  <Apple className="w-4 h-4" />
+                  Subscribe via App Store
+                </div>
               </div>
             ) : (
               <button
