@@ -20,13 +20,8 @@ export function BackButton({ defaultHref, defaultLabel, fromHomeLabel = 'Back to
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault()
 
-    // Use browser back to preserve scroll position
-    if (window.history.length > 1) {
-      router.back()
-    } else {
-      // Fallback if no history
-      router.push(isFromHome ? '/home' : defaultHref)
-    }
+    // If from home, go back to home, otherwise go to the default destination
+    router.push(isFromHome ? '/home' : defaultHref)
   }
 
   return (
