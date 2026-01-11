@@ -1,11 +1,9 @@
 'use client'
 
-import { useScrollDirection } from '@/hooks/useScrollDirection'
 import { PullToRefresh } from '@/components/ui/PullToRefresh'
 import { useEffect, useState } from 'react'
 
 export function MainContent({ children }: { children: React.ReactNode }) {
-  const { showHeader } = useScrollDirection()
   const [isMobile, setIsMobile] = useState(false)
   const [isNative, setIsNative] = useState(false)
 
@@ -21,11 +19,9 @@ export function MainContent({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
-  // Only apply dynamic padding on mobile
-  // Header height: safe-area + py-3 (0.75rem) + content (~2.5rem) + py-3 = safe-area + ~4rem
-  const mobilePadding = showHeader
-    ? 'calc(4rem + env(safe-area-inset-top, 0px))' // header height when visible
-    : '0.5rem' // minimal padding when header hidden (content scrolls freely)
+  // Fixed padding on mobile - doesn't change when header hides (Facebook-style)
+  // Header just slides in/out over this fixed space
+  const mobilePadding = 'calc(4rem + env(safe-area-inset-top, 0px))'
 
   const content = (
     <div
