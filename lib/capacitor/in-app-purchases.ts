@@ -28,9 +28,7 @@ export function isIAPAvailable(): boolean {
   return Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios'
 }
 
-export async function initializeIAP(
-  onPurchaseComplete?: () => void
-): Promise<boolean> {
+export async function initializeIAP(): Promise<boolean> {
   if (!isIAPAvailable()) return false
   if (isInitialized) return true
 
@@ -48,14 +46,6 @@ export async function initializeIAP(
 
     // Set log level for debugging
     await Purchases.setLogLevel({ level: LOG_LEVEL.DEBUG })
-
-    // Listen for customer info updates
-    Purchases.addCustomerInfoUpdateListener((info) => {
-      console.log('Customer info updated:', info)
-      if (onPurchaseComplete) {
-        onPurchaseComplete()
-      }
-    })
 
     isInitialized = true
     return true

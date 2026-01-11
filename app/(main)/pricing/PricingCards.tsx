@@ -67,11 +67,7 @@ export function PricingCards({ currentPlan, isLoggedIn }: Props) {
         setIapError('IAP not available on this device')
         return
       }
-      // RevenueCat handles receipt verification automatically
-      // Just reload to refresh subscription status when purchase completes
-      initializeIAP(() => {
-        window.location.reload()
-      }).then((success) => {
+      initializeIAP().then((success) => {
         setIapReady(success)
         if (!success) {
           setIapError('Failed to initialize store')
@@ -90,7 +86,10 @@ export function PricingCards({ currentPlan, isLoggedIn }: Props) {
     try {
       const productId = interval === 'year' ? PRODUCT_IDS.yearly : PRODUCT_IDS.monthly
       const result = await purchaseSubscription(productId)
-      if (!result.success && result.error) {
+      if (result.success) {
+        // Reload to refresh subscription status
+        window.location.reload()
+      } else if (result.error) {
         alert(result.error)
       }
     } catch (error) {
