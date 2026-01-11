@@ -199,7 +199,7 @@ function TopStoryCard({ story, isPrimary = false }: { story: TopStory; isPrimary
     >
       {/* Thumbnail with bleed on mobile only */}
       <div
-        className="relative overflow-hidden bg-zinc-900 w-[100vw] ml-[calc(-50vw+50%)] md:w-auto md:ml-0 md:rounded-xl"
+        className="relative overflow-hidden bg-zinc-900 -mx-4 md:mx-0 md:rounded-xl"
       >
         <div className={`relative ${isPrimary ? 'aspect-[16/9]' : 'aspect-video'}`}>
           {heroImage ? (

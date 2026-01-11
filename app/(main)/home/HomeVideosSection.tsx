@@ -319,7 +319,7 @@ function HomeVideoCard({
     >
       {/* Thumbnail - 16:9, bleed on mobile only */}
       <div
-        className="relative aspect-video overflow-hidden bg-zinc-900 w-[100vw] ml-[calc(-50vw+50%)] md:w-auto md:ml-0 md:rounded-xl"
+        className="relative aspect-video overflow-hidden bg-zinc-900 -mx-4 md:mx-0 md:rounded-xl"
       >
         <Image
           src={thumbnail}
