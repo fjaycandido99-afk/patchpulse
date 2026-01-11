@@ -76,7 +76,10 @@ export function VideoPlayer({ youtubeId, title, isOpen, onClose }: VideoPlayerPr
         </div>
 
         {/* Video Player - 16:9 aspect ratio, fills available space */}
-        <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-black shadow-2xl flex-1 min-h-0">
+        <div
+          className="relative w-full aspect-video rounded-xl bg-black shadow-2xl flex-1 min-h-0"
+          style={{ WebkitTransform: 'translateZ(0)', transform: 'translateZ(0)' }}
+        >
           {embedFailed ? (
             /* Fallback UI for age-restricted or unembeddable videos */
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900">
@@ -108,7 +111,13 @@ export function VideoPlayer({ youtubeId, title, isOpen, onClose }: VideoPlayerPr
               title={title}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               allowFullScreen
-              className="absolute inset-0 w-full h-full"
+              className="w-full h-full rounded-xl"
+              style={{
+                WebkitTransform: 'translateZ(0)',
+                transform: 'translateZ(0)',
+                position: 'relative',
+                zIndex: 1
+              }}
               onError={() => setEmbedFailed(true)}
             />
           )}
