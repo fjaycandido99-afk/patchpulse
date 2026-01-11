@@ -84,12 +84,17 @@ export async function sendAPNsPush(
   payload: APNsPayload,
   config?: Partial<APNsConfig>
 ): Promise<{ success: boolean; error?: string }> {
+  // APNS_PRODUCTION env var controls sandbox vs production
+  // Set to 'false' for TestFlight, 'true' (or omit) for App Store
+  const isProduction = process.env.APNS_PRODUCTION === 'true' ||
+    (process.env.APNS_PRODUCTION !== 'false' && process.env.NODE_ENV === 'production')
+
   const fullConfig: APNsConfig = {
     keyId: config?.keyId || process.env.APNS_KEY_ID || '',
     teamId: config?.teamId || process.env.APNS_TEAM_ID || '',
     key: config?.key || process.env.APNS_KEY || '',
     bundleId: config?.bundleId || process.env.APNS_BUNDLE_ID || 'app.patchpulse.ios',
-    production: config?.production ?? process.env.NODE_ENV === 'production',
+    production: config?.production ?? isProduction,
   }
 
   if (!fullConfig.keyId || !fullConfig.teamId || !fullConfig.key) {
