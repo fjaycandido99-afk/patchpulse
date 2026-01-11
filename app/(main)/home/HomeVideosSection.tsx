@@ -274,7 +274,9 @@ export function HomeVideosSection({ videos }: HomeVideosSectionProps) {
 
   return (
     <section className="space-y-4">
-      <SectionHeader title="Videos" href="/videos" />
+      <div className="px-4 md:px-0">
+        <SectionHeader title="Videos" href="/videos" />
+      </div>
       <div className="grid grid-cols-1 gap-3">
         {videos.map((video, index) => (
           <HomeVideoCard
@@ -317,9 +319,9 @@ function HomeVideoCard({
       onClick={onPlay}
       className="group block text-left w-full"
     >
-      {/* Thumbnail - 16:9, bleed on mobile only */}
+      {/* Thumbnail - 16:9, edge-to-edge on mobile */}
       <div
-        className="relative aspect-video overflow-hidden bg-zinc-900 -mx-4 md:mx-0 md:rounded-xl"
+        className="relative aspect-video overflow-hidden bg-zinc-900 md:rounded-xl"
       >
         <Image
           src={thumbnail}
@@ -352,7 +354,7 @@ function HomeVideoCard({
       </div>
 
       {/* Info below with padding */}
-      <div className="mt-2 px-1">
+      <div className="mt-2 px-4 md:px-0">
         <h3 className="text-sm font-medium line-clamp-2 leading-snug text-white group-hover:text-primary transition-colors">
           {video.title}
         </h3>

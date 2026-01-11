@@ -197,9 +197,9 @@ function TopStoryCard({ story, isPrimary = false }: { story: TopStory; isPrimary
       href={`/news/${story.id}`}
       className="group block"
     >
-      {/* Thumbnail with bleed on mobile only */}
+      {/* Thumbnail - edge-to-edge on mobile */}
       <div
-        className="relative overflow-hidden bg-zinc-900 -mx-4 md:mx-0 md:rounded-xl"
+        className="relative overflow-hidden bg-zinc-900 md:rounded-xl"
       >
         <div className={`relative ${isPrimary ? 'aspect-[16/9]' : 'aspect-video'}`}>
           {heroImage ? (

@@ -46,9 +46,9 @@ export default async function HomePage() {
   return (
     <>
       <InstallHint />
-      <div className="space-y-6 page-enter w-full max-w-full overflow-x-hidden">
+      <div className="space-y-6 page-enter w-full max-w-full">
         {/* Mobile: Compact "For You" header */}
-        <section className="flex items-center gap-2">
+        <section className="flex items-center gap-2 px-4 md:px-0">
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gradient-to-r from-violet-500/20 to-purple-500/20 border border-violet-500/30">
             <Sparkles className="w-3.5 h-3.5 text-violet-400" />
             <span className="text-xs font-medium text-violet-300">{isGuest ? 'Discover' : 'For You'}</span>
@@ -62,8 +62,10 @@ export default async function HomePage() {
         {/* New Releases */}
         {feed.newReleases.length > 0 && (
           <section className="mt-4">
-            <SectionHeader title="New Releases" href="/releases" />
-            <div className="mt-3">
+            <div className="px-4 md:px-0">
+              <SectionHeader title="New Releases" href="/releases" />
+            </div>
+            <div className="mt-3 px-4 md:px-0">
               <HomeGameStrip games={feed.newReleases} type="new" />
             </div>
           </section>
@@ -72,8 +74,10 @@ export default async function HomePage() {
         {/* Coming Soon */}
         {feed.upcomingGames.length > 0 && (
           <section className="mt-4">
-            <SectionHeader title="Coming Soon" href="/upcoming" />
-            <div className="mt-3">
+            <div className="px-4 md:px-0">
+              <SectionHeader title="Coming Soon" href="/upcoming" />
+            </div>
+            <div className="mt-3 px-4 md:px-0">
               <HomeGameStrip games={feed.upcomingGames} type="upcoming" />
             </div>
           </section>
@@ -92,14 +96,14 @@ export default async function HomePage() {
 
         {/* Your Patches - Cycling through all patches */}
         {patchesResult.items.length > 0 && (
-          <section className="space-y-4">
+          <section className="space-y-4 px-4 md:px-0">
             <SectionHeader title="Your Patches" href="/patches" glowLine />
             <CyclingPatches patches={patchesResult.items} visibleCount={6} cycleInterval={4000} />
           </section>
         )}
 
         {/* Main Content + Sidebar Layout for Desktop */}
-        <div className="lg:flex lg:gap-8">
+        <div className="lg:flex lg:gap-8 px-4 md:px-0">
           <div className="flex-1 space-y-6">
             {/* AI Return Suggestions */}
             {returnSuggestions.length > 0 && (

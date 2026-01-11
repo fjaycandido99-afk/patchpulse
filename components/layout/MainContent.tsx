@@ -28,11 +28,9 @@ export function MainContent({ children }: { children: React.ReactNode }) {
 
   const content = (
     <div
-      className="h-full pb-6 md:pt-6 md:px-8 lg:px-12 w-full transition-[padding] duration-300"
+      className="h-full pb-6 md:pt-6 md:px-8 lg:px-12 w-full"
       style={{
         paddingTop: isMobile ? mobilePadding : undefined,
-        paddingLeft: isMobile ? '1rem' : undefined,
-        paddingRight: isMobile ? '1rem' : undefined,
       }}
     >
       {children}

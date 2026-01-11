@@ -354,9 +354,9 @@ function NewsCardsGrid({
           }`}
           style={{ animationDelay: `${slotIndex * 80}ms` }}
         >
-          {/* Thumbnail - 16:9, bleed on mobile only */}
+          {/* Thumbnail - 16:9, edge-to-edge on mobile */}
           <div
-            className="relative aspect-video overflow-hidden bg-zinc-900 -mx-4 md:mx-0 md:rounded-xl"
+            className="relative aspect-video overflow-hidden bg-zinc-900 md:rounded-xl"
           >
             {getNewsImage(newsItem, seasonalImages) ? (
               <SafeImage
@@ -381,7 +381,7 @@ function NewsCardsGrid({
           </div>
 
           {/* Info below with padding */}
-          <div className="mt-2 px-1">
+          <div className="mt-2 px-4 md:px-0">
             <h3 className="text-sm font-medium line-clamp-2 leading-snug text-white">
               {newsItem.title}
             </h3>
@@ -404,7 +404,9 @@ export function HeadlinesSection({ userNews, latestNews, seasonalImages, gamePla
   return (
     <section className="relative">
       <div className="space-y-3">
-        <SectionHeader title="Latest News" href="/news" />
+        <div className="px-4 md:px-0">
+          <SectionHeader title="Latest News" href="/news" />
+        </div>
 
         {/* 3-card grid - same size as video cards */}
         <NewsCardsGrid
