@@ -40,10 +40,10 @@ const FREE_FEATURES = [
 const PRO_FEATURES = [
   'Unlimited backlog games',
   'Unlimited favorites & follows',
-  'Push notifications for patches',
-  'AI-powered patch summaries',
+  'Push notifications for game updates',
+  'AI-powered patch note summaries',
+  'Ad-free experience',
   'Early access to new features',
-  'Priority support',
 ]
 
 export function PricingCards({ currentPlan, isLoggedIn }: Props) {
