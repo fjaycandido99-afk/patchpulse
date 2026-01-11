@@ -51,6 +51,7 @@ export function PricingCards({ currentPlan, isLoggedIn }: Props) {
   const [isLoading, setIsLoading] = useState(false)
   const [iapReady, setIapReady] = useState(false)
   const [iapLoading, setIapLoading] = useState(false)
+  const [iapError, setIapError] = useState<string | null>(null)
   const [restoring, setRestoring] = useState(false)
   const isNativeIOS = useIsNativeIOS()
 
@@ -60,12 +61,24 @@ export function PricingCards({ currentPlan, isLoggedIn }: Props) {
 
   // Initialize IAP for iOS
   useEffect(() => {
-    if (isNativeIOS && isIAPAvailable()) {
+    if (isNativeIOS) {
+      const available = isIAPAvailable()
+      if (!available) {
+        setIapError('IAP not available on this device')
+        return
+      }
       // RevenueCat handles receipt verification automatically
       // Just reload to refresh subscription status when purchase completes
       initializeIAP(() => {
         window.location.reload()
-      }).then(setIapReady)
+      }).then((success) => {
+        setIapReady(success)
+        if (!success) {
+          setIapError('Failed to initialize store')
+        }
+      }).catch((err) => {
+        setIapError(err?.message || 'Unknown error initializing IAP')
+      })
     }
   }, [isNativeIOS])
 
@@ -269,7 +282,7 @@ export function PricingCards({ currentPlan, isLoggedIn }: Props) {
                   ) : (
                     <Apple className="w-4 h-4" />
                   )}
-                  {!isLoggedIn ? 'Sign in to Subscribe' : iapReady ? 'Subscribe with Apple' : 'Loading...'}
+                  {!isLoggedIn ? 'Sign in to Subscribe' : iapReady ? 'Subscribe with Apple' : iapError ? iapError : 'Loading...'}
                 </button>
                 <button
                   onClick={handleRestore}
