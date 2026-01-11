@@ -17,6 +17,7 @@
 	"packageClassList": [
 		"PushNotificationsPlugin",
 		"NativeBiometricPlugin",
-		"PurchasesPlugin"
+		"PurchasesPlugin",
+		"CDVPlugin"
 	]
 }

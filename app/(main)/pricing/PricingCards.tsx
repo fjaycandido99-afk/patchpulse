@@ -1,7 +1,15 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Check, Crown, Loader2, Sparkles, Bell, Brain, Zap, Apple } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
+import { Check, Crown, Loader2, Sparkles, Bell, Brain, Zap, Apple, RotateCcw } from 'lucide-react'
+import {
+  isIAPAvailable,
+  initializeIAP,
+  getProducts,
+  purchaseSubscription,
+  restorePurchases,
+  PRODUCT_IDS,
+} from '@/lib/capacitor/in-app-purchases'
 
 type Props = {
   currentPlan: 'free' | 'pro'
@@ -41,11 +49,63 @@ const PRO_FEATURES = [
 export function PricingCards({ currentPlan, isLoggedIn }: Props) {
   const [interval, setInterval] = useState<'month' | 'year'>('month')
   const [isLoading, setIsLoading] = useState(false)
+  const [iapReady, setIapReady] = useState(false)
+  const [iapLoading, setIapLoading] = useState(false)
+  const [restoring, setRestoring] = useState(false)
   const isNativeIOS = useIsNativeIOS()
 
   const monthlyPrice = 4.99
   const yearlyPrice = 49.99
   const yearlySavings = Math.round((1 - yearlyPrice / (monthlyPrice * 12)) * 100)
+
+  // Initialize IAP for iOS
+  useEffect(() => {
+    if (isNativeIOS && isIAPAvailable()) {
+      // RevenueCat handles receipt verification automatically
+      // Just reload to refresh subscription status when purchase completes
+      initializeIAP(() => {
+        window.location.reload()
+      }).then(setIapReady)
+    }
+  }, [isNativeIOS])
+
+  // Handle iOS purchase
+  const handleIOSPurchase = useCallback(async () => {
+    if (!iapReady) return
+
+    setIapLoading(true)
+    try {
+      const productId = interval === 'year' ? PRODUCT_IDS.yearly : PRODUCT_IDS.monthly
+      const result = await purchaseSubscription(productId)
+      if (!result.success && result.error) {
+        alert(result.error)
+      }
+    } catch (error) {
+      console.error('Purchase error:', error)
+      alert('Purchase failed. Please try again.')
+    } finally {
+      setIapLoading(false)
+    }
+  }, [iapReady, interval])
+
+  // Handle restore purchases
+  const handleRestore = useCallback(async () => {
+    setRestoring(true)
+    try {
+      const isActive = await restorePurchases()
+      if (isActive) {
+        alert('Subscription restored successfully!')
+        window.location.reload()
+      } else {
+        alert('No active subscription found. If you believe this is an error, please contact support.')
+      }
+    } catch (error) {
+      console.error('Restore error:', error)
+      alert('Failed to restore purchases. Please try again.')
+    } finally {
+      setRestoring(false)
+    }
+  }, [])
 
   const handleUpgrade = async () => {
     if (!isLoggedIn) {
@@ -199,13 +259,30 @@ export function PricingCards({ currentPlan, isLoggedIn }: Props) {
               </div>
             ) : isNativeIOS ? (
               <div className="space-y-3">
-                <p className="text-xs text-center text-muted-foreground">
-                  In-app purchases coming soon
-                </p>
-                <div className="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-lg bg-muted text-muted-foreground font-medium">
-                  <Apple className="w-4 h-4" />
-                  Subscribe via App Store
-                </div>
+                <button
+                  onClick={handleIOSPurchase}
+                  disabled={!iapReady || iapLoading || !isLoggedIn}
+                  className="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
+                >
+                  {iapLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Apple className="w-4 h-4" />
+                  )}
+                  {!isLoggedIn ? 'Sign in to Subscribe' : iapReady ? 'Subscribe with Apple' : 'Loading...'}
+                </button>
+                <button
+                  onClick={handleRestore}
+                  disabled={restoring || !iapReady}
+                  className="w-full inline-flex items-center justify-center gap-2 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+                >
+                  {restoring ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <RotateCcw className="w-3 h-3" />
+                  )}
+                  Restore Purchases
+                </button>
               </div>
             ) : (
               <button
