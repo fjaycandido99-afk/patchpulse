@@ -179,21 +179,30 @@ export async function setupPushListeners(): Promise<void> {
 export async function isNativePushEnabled(): Promise<boolean> {
   if (!isNative()) return false
 
-  try {
-    const PushNotifications = await getPushNotifications()
-    const permStatus = await PushNotifications.checkPermissions()
+  // Add timeout to prevent hanging forever
+  const timeoutPromise = new Promise<boolean>((resolve) => {
+    setTimeout(() => resolve(false), 5000) // 5 second timeout
+  })
 
-    if (permStatus.receive !== 'granted') return false
+  const checkPromise = async (): Promise<boolean> => {
+    try {
+      const PushNotifications = await getPushNotifications()
+      const permStatus = await PushNotifications.checkPermissions()
 
-    // Also check if we have a token saved on backend
-    const response = await fetch('/api/push/device/status')
-    const data = await response.json()
+      if (permStatus.receive !== 'granted') return false
 
-    return data.enabled === true
-  } catch (error) {
-    console.error('Failed to check push status:', error)
-    return false
+      // Also check if we have a token saved on backend
+      const response = await fetch('/api/push/device/status')
+      const data = await response.json()
+
+      return data.enabled === true
+    } catch (error) {
+      console.error('Failed to check push status:', error)
+      return false
+    }
   }
+
+  return Promise.race([checkPromise(), timeoutPromise])
 }
 
 /**
