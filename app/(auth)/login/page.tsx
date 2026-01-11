@@ -26,15 +26,43 @@ export default function LoginPage() {
   const [loginMode, setLoginMode] = useState<LoginMode>('password')
   const [pageMode, setPageMode] = useState<PageMode>('login')
   const [showBiometricPrompt, setShowBiometricPrompt] = useState(false)
-  const [checkingState, setCheckingState] = useState(false)
+  const [checkingState, setCheckingState] = useState(true)
 
-  // Check if first-time visitor on mount
+  // Check for auto-login or first-time visitor
   useEffect(() => {
-    const hasVisited = localStorage.getItem(HAS_VISITED_KEY) === 'true'
-    if (!hasVisited) {
-      setPageMode('landing')
+    const checkAutoLogin = async () => {
+      // Check for stored session - auto-login
+      const storedSession = localStorage.getItem('patchpulse-auth')
+      if (storedSession) {
+        try {
+          const parsed = JSON.parse(storedSession)
+          if (parsed?.refresh_token) {
+            const supabase = createClient()
+            const { data, error } = await supabase.auth.refreshSession({
+              refresh_token: parsed.refresh_token,
+            })
+            if (data?.session && !error) {
+              // Auto-login success - go straight to home
+              router.push('/home')
+              return
+            }
+          }
+        } catch {
+          // Invalid session, continue to login
+        }
+      }
+
+      // Check if first-time visitor
+      const hasVisited = localStorage.getItem(HAS_VISITED_KEY) === 'true'
+      if (!hasVisited) {
+        setPageMode('landing')
+      }
+
+      setCheckingState(false)
     }
-  }, [])
+
+    checkAutoLogin()
+  }, [router])
 
   // Mark as visited when they proceed to login
   const markAsVisited = () => {
