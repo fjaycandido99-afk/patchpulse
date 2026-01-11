@@ -6,7 +6,7 @@ import { createServerClient } from '@supabase/ssr'
 const protectedRoutes = ['/home', '/backlog', '/patches', '/news', '/videos', '/insights', '/bookmarks', '/deals', '/upcoming', '/releases', '/settings', '/notifications']
 
 // Routes that should redirect to home if already authenticated
-const authRoutes = ['/login', '/signup']
+const authRoutes = ['/', '/login', '/signup']
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
