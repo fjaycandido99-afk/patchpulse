@@ -30,20 +30,25 @@ export default function LoginPage() {
 
   // Check session and auto-login on mount
   useEffect(() => {
+    // Check if running in native app
+    const isNative = typeof window !== 'undefined' &&
+      !!(window as Window & { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.()
+
     const checkState = async () => {
       try {
         const supabase = createClient()
 
-        // First, check if there's already a valid session
-        const { data: { session } } = await supabase.auth.getSession()
-
-        if (session?.user) {
-          router.push('/home')
-          router.refresh()
-          return
+        // For native apps, skip server session check (cookies don't persist in WKWebView)
+        if (!isNative) {
+          const { data: { session } } = await supabase.auth.getSession()
+          if (session?.user) {
+            router.push('/home')
+            router.refresh()
+            return
+          }
         }
 
-        // On native, try to restore from stored session
+        // Try to restore from stored session (works for native)
         const storedSession = localStorage.getItem('patchpulse-auth')
         if (storedSession) {
           try {
