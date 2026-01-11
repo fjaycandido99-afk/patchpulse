@@ -35,7 +35,7 @@ const menuItems: NavItemConfig[] = [
   { icon: Gamepad2, label: 'Patches', href: '/patches' },
   { icon: CalendarClock, label: 'Upcoming', href: '/upcoming' },
   { icon: CalendarDays, label: 'Releases', href: '/releases' },
-  { icon: User, label: 'Profile', href: '/settings' },
+  { icon: User, label: 'Profile', href: '/profile' },
 ]
 
 export function MobileNav({ badges, isGuest = false }: { badges?: Record<string, NavBadge>; isGuest?: boolean }) {
