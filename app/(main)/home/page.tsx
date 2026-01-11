@@ -40,7 +40,7 @@ export default async function HomePage() {
     isGuest ? [] : getStalePlayingGames(14),
     isGuest ? [] : getReturnSuggestions(),
     isGuest ? { items: [], total: 0 } : getPatchesList({ page: 1, followedOnly: true, pageSize: 18 }),
-    getRandomVideos(3), // Random videos for home page
+    getRandomVideos(30), // Fetch more for player, display 3 on page
   ])
 
   return (
