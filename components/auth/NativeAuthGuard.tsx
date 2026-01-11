@@ -64,6 +64,26 @@ export function NativeAuthGuard({ children }: { children: React.ReactNode }) {
         }
       }
 
+      // Try to restore from biometric credentials (no Face ID - like YouTube)
+      const biometricData = localStorage.getItem('patchpulse-biometric')
+      if (biometricData) {
+        try {
+          const parsed = JSON.parse(biometricData)
+          if (parsed?.refreshToken) {
+            const { data, error } = await supabase.auth.refreshSession({
+              refresh_token: parsed.refreshToken,
+            })
+            if (data?.session && !error) {
+              setIsAuthed(true)
+              setIsChecking(false)
+              return
+            }
+          }
+        } catch {
+          // Invalid biometric data
+        }
+      }
+
       // Check for guest mode
       const isGuest = localStorage.getItem('patchpulse-guest') === 'true'
       if (isGuest) {

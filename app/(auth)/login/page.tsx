@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { BiometricLogin } from '@/components/auth/BiometricLogin'
 import { BiometricPrompt } from '@/components/auth/BiometricPrompt'
-import { hasStoredCredential, checkBiometricAvailable, authenticateWithBiometric } from '@/lib/biometric'
+import { hasStoredCredential, checkBiometricAvailable } from '@/lib/biometric'
 import { createClient } from '@/lib/supabase/client'
 import { Gamepad2, ArrowRight, Zap, TrendingUp, Bell, Sparkles, User, Eye, EyeOff, ChevronRight } from 'lucide-react'
 import { enableGuestMode, disableGuestMode } from '@/lib/guest'
@@ -65,44 +65,48 @@ export default function LoginPage() {
         }
       }
 
+      // Try to restore from biometric stored credentials (no Face ID needed - like YouTube)
+      const biometricData = localStorage.getItem('patchpulse-biometric')
+      if (biometricData) {
+        try {
+          const parsed = JSON.parse(biometricData)
+          if (parsed?.refreshToken) {
+            const { data, error } = await supabase.auth.refreshSession({
+              refresh_token: parsed.refreshToken,
+            })
+            if (data?.session && !error) {
+              // Session restored - go straight to home (no Face ID)
+              localStorage.setItem(HAS_VISITED_KEY, 'true')
+              router.push('/home')
+              router.refresh()
+              return
+            }
+          }
+        } catch {
+          // Invalid biometric data, continue
+        }
+      }
+
+      // Check guest mode
+      const isGuest = localStorage.getItem('patchpulse-guest') === 'true'
+      if (isGuest) {
+        router.push('/home')
+        return
+      }
+
       // Check if returning user - multiple signals
       const hasVisited = localStorage.getItem(HAS_VISITED_KEY) === 'true'
-
-      // Also check for any Supabase session data (indicates previous login)
       const hasSessionData = Object.keys(localStorage).some(key =>
         key.includes('supabase') || key.includes('sb-')
       )
-
-      // Check for biometric email (indicates previous setup)
       const hasBiometricEmail = localStorage.getItem('patchpulse-biometric-email') !== null
-
-      // Check biometric availability
-      const available = await checkBiometricAvailable()
       const hasCredential = hasStoredCredential()
 
-      // Any of these signals indicate a returning user
       const isReturningUser = hasVisited || hasCredential || hasSessionData || hasBiometricEmail
 
       if (isReturningUser) {
-        // Returning user - check if we can auto-login with biometric
-        if (available && hasCredential) {
-          // Try auto Face ID login
-          const result = await authenticateWithBiometric()
-          if (result.success) {
-            // Auto-login successful - go to home
-            localStorage.setItem(HAS_VISITED_KEY, 'true')
-            router.push('/home')
-            router.refresh()
-            return
-          }
-          // Face ID failed/cancelled - show biometric login page
-          setLoginMode('biometric')
-        }
-
         setPageMode('login')
-        if (!hasVisited) {
-          localStorage.setItem(HAS_VISITED_KEY, 'true')
-        }
+        localStorage.setItem(HAS_VISITED_KEY, 'true')
       } else {
         // First time visitor - show landing
         setPageMode('landing')
