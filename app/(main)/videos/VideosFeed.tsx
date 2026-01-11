@@ -260,15 +260,15 @@ function VerticalVideoPlayer({
           <span className="text-[10px] text-white/60 font-medium">YouTube</span>
         </a>
         <div className="md:hidden flex flex-col gap-2">
-          <button onClick={goToPrev} disabled={currentIndex === 0} className={`w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 active:scale-90 transition-all flex items-center justify-center backdrop-blur-sm ${currentIndex === 0 ? 'opacity-30' : ''}`}><ChevronUp className="w-6 h-6 text-white" /></button>
-          <button onClick={goToNext} disabled={currentIndex === videos.length - 1} className={`w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 active:scale-90 transition-all flex items-center justify-center backdrop-blur-sm ${currentIndex === videos.length - 1 ? 'opacity-30' : ''}`}><ChevronDown className="w-6 h-6 text-white" /></button>
+          <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); goToPrev(); }} disabled={currentIndex === 0} className={`w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 active:scale-90 transition-all flex items-center justify-center backdrop-blur-sm ${currentIndex === 0 ? 'opacity-30' : ''}`}><ChevronUp className="w-6 h-6 text-white" /></button>
+          <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); goToNext(); }} disabled={currentIndex === videos.length - 1} className={`w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 active:scale-90 transition-all flex items-center justify-center backdrop-blur-sm ${currentIndex === videos.length - 1 ? 'opacity-30' : ''}`}><ChevronDown className="w-6 h-6 text-white" /></button>
         </div>
       </div>
 
       {/* Desktop nav */}
       <div className="hidden md:flex absolute right-20 top-1/2 -translate-y-1/2 flex-col gap-3 z-20">
-        <button onClick={goToPrev} disabled={currentIndex === 0} className={`p-3.5 rounded-full bg-white/10 hover:bg-white/20 active:scale-90 transition-all backdrop-blur-sm ${currentIndex === 0 ? 'opacity-30' : ''}`}><ChevronUp className="w-6 h-6 text-white" /></button>
-        <button onClick={goToNext} disabled={currentIndex === videos.length - 1} className={`p-3.5 rounded-full bg-white/10 hover:bg-white/20 active:scale-90 transition-all backdrop-blur-sm ${currentIndex === videos.length - 1 ? 'opacity-30' : ''}`}><ChevronDown className="w-6 h-6 text-white" /></button>
+        <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); goToPrev(); }} disabled={currentIndex === 0} className={`p-3.5 rounded-full bg-white/10 hover:bg-white/20 active:scale-90 transition-all backdrop-blur-sm ${currentIndex === 0 ? 'opacity-30' : ''}`}><ChevronUp className="w-6 h-6 text-white" /></button>
+        <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); goToNext(); }} disabled={currentIndex === videos.length - 1} className={`p-3.5 rounded-full bg-white/10 hover:bg-white/20 active:scale-90 transition-all backdrop-blur-sm ${currentIndex === videos.length - 1 ? 'opacity-30' : ''}`}><ChevronDown className="w-6 h-6 text-white" /></button>
       </div>
 
       {/* Swipe hint */}
