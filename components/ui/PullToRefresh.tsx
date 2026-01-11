@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect, ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
-import { RefreshCw } from 'lucide-react'
+import { RefreshCw, Check } from 'lucide-react'
 
 type PullToRefreshProps = {
   children: ReactNode
@@ -20,13 +20,13 @@ export function PullToRefresh({
   const router = useRouter()
   const [pullDistance, setPullDistance] = useState(0)
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [showSuccess, setShowSuccess] = useState(false)
   const isPullingRef = useRef(false)
   const startYRef = useRef(0)
   const currentDistanceRef = useRef(0)
   const containerRef = useRef<HTMLDivElement>(null)
 
   const canPull = useCallback(() => {
-    // Check if we're at the top of the page
     const scrollTop = Math.max(
       window.scrollY,
       document.documentElement.scrollTop,
@@ -46,7 +46,11 @@ export function PullToRefresh({
         router.refresh()
         await new Promise((resolve) => setTimeout(resolve, 800))
       }
+      // Show success state
+      setShowSuccess(true)
+      await new Promise((resolve) => setTimeout(resolve, 600))
     } finally {
+      setShowSuccess(false)
       setIsRefreshing(false)
       setPullDistance(0)
     }
@@ -72,18 +76,16 @@ export function PullToRefresh({
       const diff = currentY - startYRef.current
 
       if (diff > 0 && canPull()) {
-        // Apply resistance
-        const resistance = 0.5
+        // Apply rubber-band resistance (gets harder to pull as you go)
+        const resistance = Math.max(0.3, 0.6 - (diff / 500))
         const distance = Math.min(diff * resistance, threshold * 1.5)
         currentDistanceRef.current = distance
         setPullDistance(distance)
 
-        // Prevent scrolling while pulling
         if (distance > 10) {
           e.preventDefault()
         }
       } else if (diff < 0) {
-        // User is scrolling up, cancel pull
         isPullingRef.current = false
         setPullDistance(0)
       }
@@ -101,7 +103,6 @@ export function PullToRefresh({
       }
     }
 
-    // Use passive: false to allow preventDefault
     container.addEventListener('touchstart', handleTouchStart, { passive: true })
     container.addEventListener('touchmove', handleTouchMove, { passive: false })
     container.addEventListener('touchend', handleTouchEnd, { passive: true })
@@ -116,6 +117,11 @@ export function PullToRefresh({
   const progress = Math.min(pullDistance / threshold, 1)
   const isReady = progress >= 1
 
+  // Circle progress calculation
+  const circleRadius = 14
+  const circumference = 2 * Math.PI * circleRadius
+  const strokeDashoffset = circumference * (1 - progress)
+
   return (
     <div
       ref={containerRef}
@@ -126,41 +132,106 @@ export function PullToRefresh({
       <div
         className="absolute left-0 right-0 flex items-center justify-center overflow-hidden pointer-events-none z-50"
         style={{
-          height: pullDistance,
+          height: Math.max(pullDistance, isRefreshing ? threshold * 0.6 : 0),
           top: 0,
-          transform: `translateY(-${Math.max(0, threshold * 0.6 - pullDistance)}px)`,
         }}
       >
         <div
           className={`
-            flex flex-col items-center gap-1 transition-opacity duration-200
-            ${pullDistance > 20 ? 'opacity-100' : 'opacity-0'}
+            flex flex-col items-center gap-2 transition-all duration-300
+            ${pullDistance > 15 || isRefreshing ? 'opacity-100 scale-100' : 'opacity-0 scale-75'}
           `}
+          style={{
+            transform: `translateY(${Math.min(pullDistance * 0.3, 20)}px)`,
+          }}
         >
+          {/* Animated circle with icon */}
           <div
             className={`
-              flex items-center justify-center w-8 h-8 rounded-full
-              bg-white/10 border border-white/20 backdrop-blur-sm
-              ${isRefreshing ? 'pull-spinner' : ''}
+              relative flex items-center justify-center w-11 h-11 rounded-full
+              transition-all duration-300 ease-out
+              ${showSuccess
+                ? 'bg-emerald-500/20 border-2 border-emerald-500 scale-110'
+                : isReady
+                  ? 'bg-primary/20 border-2 border-primary scale-105'
+                  : 'bg-white/5 border-2 border-white/20'
+              }
             `}
-            style={{
-              transform: isRefreshing ? undefined : `rotate(${progress * 180}deg)`,
-            }}
           >
-            <RefreshCw className="w-4 h-4 text-primary" />
+            {/* Progress ring */}
+            {!isRefreshing && !showSuccess && (
+              <svg
+                className="absolute inset-0 -rotate-90"
+                viewBox="0 0 44 44"
+              >
+                <circle
+                  cx="22"
+                  cy="22"
+                  r={circleRadius}
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  className={`transition-all duration-150 ${isReady ? 'text-primary' : 'text-white/40'}`}
+                  style={{
+                    strokeDasharray: circumference,
+                    strokeDashoffset: strokeDashoffset,
+                  }}
+                />
+              </svg>
+            )}
+
+            {/* Icon */}
+            <div
+              className={`
+                transition-all duration-300
+                ${isRefreshing ? 'animate-spin' : ''}
+                ${showSuccess ? 'scale-110' : ''}
+              `}
+              style={{
+                transform: !isRefreshing && !showSuccess ? `rotate(${progress * 180}deg)` : undefined,
+              }}
+            >
+              {showSuccess ? (
+                <Check className="w-5 h-5 text-emerald-400" strokeWidth={3} />
+              ) : (
+                <RefreshCw
+                  className={`w-5 h-5 transition-colors duration-200 ${isReady ? 'text-primary' : 'text-white/70'}`}
+                />
+              )}
+            </div>
           </div>
 
-          <span className="text-xs text-muted-foreground">
-            {isRefreshing ? 'Refreshing...' : isReady ? 'Release to refresh' : 'Pull to refresh'}
+          {/* Status text */}
+          <span
+            className={`
+              text-xs font-medium transition-all duration-200
+              ${showSuccess
+                ? 'text-emerald-400'
+                : isReady
+                  ? 'text-primary'
+                  : 'text-muted-foreground'
+              }
+            `}
+          >
+            {showSuccess
+              ? 'Updated!'
+              : isRefreshing
+                ? 'Refreshing...'
+                : isReady
+                  ? 'Release to refresh'
+                  : 'Pull to refresh'
+            }
           </span>
         </div>
       </div>
 
       {/* Content with pull offset */}
       <div
+        className="pull-content"
         style={{
           transform: `translateY(${pullDistance}px)`,
-          transition: isPullingRef.current ? 'none' : 'transform 0.3s ease-out',
+          transition: isPullingRef.current ? 'none' : 'transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
         }}
       >
         {children}
