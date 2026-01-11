@@ -19,9 +19,9 @@ export function MainContent({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
-  // Fixed padding on mobile - doesn't change when header hides (Facebook-style)
-  // Header just slides in/out over this fixed space
-  const mobilePadding = 'calc(4rem + env(safe-area-inset-top, 0px))'
+  // Fixed padding on mobile - matches header height exactly (safe-area + py-3 + content + py-3)
+  // Header slides in/out over this fixed space
+  const mobilePadding = 'calc(3rem + env(safe-area-inset-top, 0px))'
 
   const content = (
     <div
