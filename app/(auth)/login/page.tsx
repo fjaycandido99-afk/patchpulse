@@ -24,21 +24,16 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [loginMode, setLoginMode] = useState<LoginMode>('password')
-  const [pageMode, setPageMode] = useState<PageMode | null>(null)
+  const [pageMode, setPageMode] = useState<PageMode>('login')
   const [showBiometricPrompt, setShowBiometricPrompt] = useState(false)
-  const [checkingState, setCheckingState] = useState(true)
+  const [checkingState, setCheckingState] = useState(false)
 
-  // Simple check on mount - no complex session restoration
+  // Check if first-time visitor on mount
   useEffect(() => {
     const hasVisited = localStorage.getItem(HAS_VISITED_KEY) === 'true'
-
-    if (hasVisited) {
-      setPageMode('login')
-    } else {
+    if (!hasVisited) {
       setPageMode('landing')
     }
-
-    setCheckingState(false)
   }, [])
 
   // Mark as visited when they proceed to login
@@ -102,7 +97,7 @@ export default function LoginPage() {
   }
 
   // Show loading while checking state
-  if (checkingState || pageMode === null) {
+  if (checkingState) {
     return (
       <div className="flex min-h-screen items-center justify-center px-4">
         <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
