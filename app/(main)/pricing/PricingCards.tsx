@@ -18,7 +18,7 @@ type Props = {
 
 // Check if running in native iOS app
 function useIsNativeIOS() {
-  const [isNative, setIsNative] = useState(false)
+  const [isNative, setIsNative] = useState<boolean | null>(null)
 
   useEffect(() => {
     const native = !!(window as Window & { Capacitor?: { isNativePlatform?: () => boolean; getPlatform?: () => string } }).Capacitor?.isNativePlatform?.()
@@ -59,24 +59,25 @@ export function PricingCards({ currentPlan, isLoggedIn }: Props) {
   const yearlyPrice = 49.99
   const yearlySavings = Math.round((1 - yearlyPrice / (monthlyPrice * 12)) * 100)
 
-  // Initialize IAP for iOS
+  // Initialize IAP for iOS - only run once when confirmed iOS
   useEffect(() => {
-    if (isNativeIOS) {
-      const available = isIAPAvailable()
-      if (!available) {
-        setIapError('IAP not available on this device')
-        return
-      }
-      initializeIAP().then((success) => {
-        setIapReady(success)
-        if (!success) {
-          setIapError('Failed to initialize store')
-        }
-      }).catch((err) => {
-        setIapError(err?.message || 'Unknown error initializing IAP')
-      })
+    if (isNativeIOS !== true) return
+    if (iapReady || iapError) return // Already initialized or errored
+
+    const available = isIAPAvailable()
+    if (!available) {
+      setIapError('IAP not available on this device')
+      return
     }
-  }, [isNativeIOS])
+    initializeIAP().then((success) => {
+      setIapReady(success)
+      if (!success) {
+        setIapError('Failed to initialize store')
+      }
+    }).catch((err) => {
+      setIapError(err?.message || 'Unknown error initializing IAP')
+    })
+  }, [isNativeIOS, iapReady, iapError])
 
   // Handle iOS purchase
   const handleIOSPurchase = useCallback(async () => {
@@ -269,7 +270,15 @@ export function PricingCards({ currentPlan, isLoggedIn }: Props) {
               <div className="w-full py-2.5 text-center text-sm text-muted-foreground">
                 Current plan
               </div>
-            ) : isNativeIOS ? (
+            ) : isNativeIOS === null ? (
+              <button
+                disabled
+                className="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-lg bg-primary text-primary-foreground font-medium disabled:opacity-50"
+              >
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Loading...
+              </button>
+            ) : isNativeIOS === true ? (
               <div className="space-y-3">
                 <button
                   onClick={handleIOSPurchase}
