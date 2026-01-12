@@ -182,6 +182,23 @@ export async function GET(req: Request) {
     }
   }
 
+  // Run at 3 UTC: sync-libraries (daily sync of Steam/Xbox libraries)
+  if (currentHour === 3) {
+    console.log('[MASTER CRON] Running sync-libraries (daily task)...')
+    taskStart = Date.now()
+    try {
+      const res = await fetch(`${baseUrl}/api/cron/sync-libraries`, {
+        headers: internalHeaders,
+      })
+      results.syncLibraries = await res.json()
+      timings.syncLibraries = Date.now() - taskStart
+      console.log(`[MASTER CRON] sync-libraries completed in ${timings.syncLibraries}ms:`, JSON.stringify(results.syncLibraries).slice(0, 200))
+    } catch (e) {
+      results.syncLibraries = { error: String(e) }
+      console.error('[MASTER CRON] sync-libraries FAILED:', e)
+    }
+  }
+
   const totalTime = Date.now() - startTime
   console.log(`[MASTER CRON] ========== Completed in ${totalTime}ms ==========`)
   console.log('[MASTER CRON] Results summary:', JSON.stringify({ timings, tasksRun: Object.keys(results) }))
