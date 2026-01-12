@@ -4,6 +4,7 @@ import {
   applyPriorityAlertRules,
   getDefaultNotificationPrefs
 } from '@/lib/ai/smart-notifications'
+import { sendAPNsPushBatch } from '@/lib/apns'
 
 type ContentType = 'patch' | 'news'
 
@@ -203,10 +204,65 @@ async function processNotificationTask(task: NotificationTask): Promise<ProcessR
 
     if (!insertError) {
       notified++
+
+      // Send push notification for high priority notifications
+      if (priority >= 4) {
+        await sendPushToUser(supabase, userId, {
+          title: payload.title,
+          body: generateNotificationBody(entity_type as ContentType, payload, gameName),
+          type: notificationType,
+          gameId: payload.game_id,
+          patchId: entity_type === 'patch' ? entity_id : undefined,
+        })
+      }
     }
   }
 
   return { taskId: task.id, notified, skipped }
+}
+
+/**
+ * Send push notification to a user's devices
+ */
+async function sendPushToUser(
+  supabase: ReturnType<typeof createAdminClient>,
+  userId: string,
+  payload: {
+    title: string
+    body: string
+    type?: string
+    gameId?: string
+    patchId?: string
+  }
+): Promise<void> {
+  try {
+    // Get user's device tokens
+    const { data: deviceTokens } = await supabase
+      .from('device_tokens')
+      .select('token, platform')
+      .eq('user_id', userId)
+
+    if (!deviceTokens || deviceTokens.length === 0) return
+
+    // Send to iOS devices via APNs
+    const iosTokens = deviceTokens
+      .filter(d => d.platform === 'ios')
+      .map(d => d.token)
+
+    if (iosTokens.length > 0) {
+      const result = await sendAPNsPushBatch(iosTokens, payload)
+
+      // Remove invalid tokens
+      if (result.invalidTokens.length > 0) {
+        await supabase
+          .from('device_tokens')
+          .delete()
+          .in('token', result.invalidTokens)
+      }
+    }
+  } catch (error) {
+    console.error('Failed to send push notification:', error)
+  }
 }
 
 /**

@@ -26,6 +26,7 @@ type ToastNotification = {
 type ToastContextType = {
   showToast: (notification: ToastNotification) => void
   dismissToast: (id: string) => void
+  testToast: () => void // For development testing
 }
 
 const ToastContext = createContext<ToastContextType | null>(null)
@@ -67,16 +68,131 @@ export function ToastProvider({ children, userId }: Props) {
     setToasts(prev => prev.filter(t => t.id !== id))
   }, [])
 
-  // Subscribe to real-time notifications
-  useEffect(() => {
-    // Skip for guest users or if already subscribed
-    if (!userId || userId === 'guest' || isSubscribed) return
+  // Test function to manually trigger a toast (for development)
+  const testToast = useCallback(() => {
+    const testNotification: ToastNotification = {
+      id: `test-${Date.now()}`,
+      user_id: userId || 'test',
+      type: 'new_patch',
+      title: 'Test Notification',
+      body: 'This is a test notification to verify toasts are working.',
+      priority: 5,
+      game_id: null,
+      patch_id: null,
+      news_id: null,
+      created_at: new Date().toISOString(),
+      game: {
+        id: 'test',
+        name: 'Test Game',
+        slug: 'test-game',
+        cover_url: null,
+      },
+    }
+    console.log('[ToastProvider] Showing test toast:', testNotification)
+    showToast(testNotification)
+    playNotificationSound()
+  }, [userId, showToast])
 
+  // Expose testToast on window for easy development testing
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as unknown as { testToast: () => void }).testToast = testToast
+      console.log('[ToastProvider] Test toast available via window.testToast()')
+    }
+  }, [testToast])
+
+  // Subscribe to real-time content updates (news, patches, notifications)
+  useEffect(() => {
     const supabase = createClient()
 
-    // Subscribe to new notifications (filter client-side for reliability)
+    console.log('[ToastProvider] Setting up realtime subscriptions...')
+
+    // Single channel for all content subscriptions
     const channel = supabase
-      .channel(`live-notifications-${userId}`)
+      .channel('live-content-updates')
+      // Subscribe to new patches
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'patch_notes',
+        },
+        async (payload) => {
+          console.log('[ToastProvider] New patch detected:', payload.new)
+          const patch = payload.new as { id: string; game_id: string; title: string; impact_score?: number }
+
+          // Fetch game data
+          let game = null
+          if (patch.game_id) {
+            const { data } = await supabase
+              .from('games')
+              .select('id, name, slug, cover_url')
+              .eq('id', patch.game_id)
+              .single()
+            game = data
+          }
+
+          const notification: ToastNotification = {
+            id: `patch-${patch.id}`,
+            user_id: userId || 'anonymous',
+            type: 'new_patch',
+            title: patch.title || 'New Patch Available',
+            body: game ? `${game.name} has been updated` : 'A game has been updated',
+            priority: patch.impact_score && patch.impact_score >= 7 ? 5 : 4,
+            game_id: patch.game_id,
+            patch_id: patch.id,
+            news_id: null,
+            created_at: new Date().toISOString(),
+            game,
+          }
+
+          showToast(notification)
+          playNotificationSound()
+        }
+      )
+      // Subscribe to new news
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'news_items',
+        },
+        async (payload) => {
+          console.log('[ToastProvider] New news detected:', payload.new)
+          const news = payload.new as { id: string; game_id: string | null; title: string; source_name?: string }
+
+          // Fetch game data if exists
+          let game = null
+          if (news.game_id) {
+            const { data } = await supabase
+              .from('games')
+              .select('id, name, slug, cover_url')
+              .eq('id', news.game_id)
+              .single()
+            game = data
+          }
+
+          const notification: ToastNotification = {
+            id: `news-${news.id}`,
+            user_id: userId || 'anonymous',
+            type: 'new_news',
+            title: news.title || 'Gaming News',
+            body: news.source_name ? `From ${news.source_name}` : (game ? `News about ${game.name}` : 'New gaming news'),
+            priority: 4,
+            game_id: news.game_id,
+            patch_id: null,
+            news_id: news.id,
+            created_at: new Date().toISOString(),
+            game,
+          }
+
+          showToast(notification)
+          playNotificationSound()
+        }
+      )
+      // Subscribe to user notifications (for logged-in users)
       .on(
         'postgres_changes',
         {
@@ -85,10 +201,11 @@ export function ToastProvider({ children, userId }: Props) {
           table: 'notifications',
         },
         async (payload) => {
+          console.log('[ToastProvider] Received notification:', payload.new)
           const notification = payload.new as ToastNotification
 
           // Filter client-side for this user
-          if (notification.user_id !== userId) return
+          if (userId && notification.user_id !== userId) return
 
           // Fetch game data if game_id exists
           if (notification.game_id) {
@@ -108,20 +225,35 @@ export function ToastProvider({ children, userId }: Props) {
           }
         }
       )
-      .subscribe((status) => {
+      .subscribe((status, err) => {
+        console.log('[ToastProvider] Subscription status:', status)
+        if (err) {
+          console.error('[ToastProvider] Subscription error:', err)
+        }
         if (status === 'SUBSCRIBED') {
           setIsSubscribed(true)
+          console.log('[ToastProvider] Successfully subscribed to all content updates')
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('[ToastProvider] Channel error:', err)
+        } else if (status === 'TIMED_OUT') {
+          console.error('[ToastProvider] Subscription timed out')
+        } else if (status === 'CLOSED') {
+          console.log('[ToastProvider] Channel closed')
         }
       })
 
+    // Log channel state for debugging
+    console.log('[ToastProvider] Channel created, waiting for subscription...')
+
     return () => {
+      console.log('[ToastProvider] Cleaning up subscriptions')
       supabase.removeChannel(channel)
       setIsSubscribed(false)
     }
-  }, [userId, isSubscribed, showToast])
+  }, [userId, showToast])
 
   return (
-    <ToastContext.Provider value={{ showToast, dismissToast }}>
+    <ToastContext.Provider value={{ showToast, dismissToast, testToast }}>
       {children}
 
       {/* Toast Container */}
@@ -139,6 +271,16 @@ export function ToastProvider({ children, userId }: Props) {
           />
         ))}
       </div>
+
+      {/* Dev Test Button - only in development */}
+      {process.env.NODE_ENV === 'development' && (
+        <button
+          onClick={testToast}
+          className="fixed bottom-4 left-4 z-[200] px-3 py-2 bg-primary text-primary-foreground text-xs font-medium rounded-lg shadow-lg hover:bg-primary/90 transition-colors"
+        >
+          Test Toast
+        </button>
+      )}
     </ToastContext.Provider>
   )
 }

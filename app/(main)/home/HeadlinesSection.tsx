@@ -344,7 +344,7 @@ function NewsCardsGrid({
   const displayNews = visibleIndices.map(i => news[i]).filter(Boolean)
 
   return (
-    <div className="grid grid-cols-1 gap-3 -mx-4 md:mx-0">
+    <div className="grid grid-cols-1 gap-3">
       {displayNews.map((newsItem, slotIndex) => (
         <Link
           key={`${newsItem.id}-${slotIndex}`}
@@ -356,7 +356,7 @@ function NewsCardsGrid({
         >
           {/* Thumbnail - 16:9, edge-to-edge on mobile */}
           <div
-            className="relative aspect-video overflow-hidden bg-zinc-900 md:rounded-xl"
+            className="relative aspect-video overflow-hidden bg-zinc-900 rounded-xl"
           >
             {getNewsImage(newsItem, seasonalImages) ? (
               <SafeImage
@@ -381,7 +381,7 @@ function NewsCardsGrid({
           </div>
 
           {/* Info below with padding */}
-          <div className="mt-2 px-4 md:px-0">
+          <div className="mt-2">
             <h3 className="text-sm font-medium line-clamp-2 leading-snug text-white">
               {newsItem.title}
             </h3>
@@ -410,10 +410,10 @@ export function HeadlinesSection({ userNews, latestNews, seasonalImages, gamePla
 
         {/* 3-card grid - same size as video cards */}
         <NewsCardsGrid
-          news={allNews}
-          seasonalImages={seasonalImages}
-          gamePlatforms={gamePlatforms}
-        />
+            news={allNews}
+            seasonalImages={seasonalImages}
+            gamePlatforms={gamePlatforms}
+          />
       </div>
     </section>
   )

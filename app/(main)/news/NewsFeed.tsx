@@ -127,7 +127,7 @@ function MobileNewsCard({ item, getNewsImage }: { item: NewsItem; getNewsImage: 
   return (
     <Link href={`/news/${item.id}`} className="block group">
       {/* Edge-to-edge image container */}
-      <div className="relative -mx-4 w-[calc(100%+2rem)] bg-zinc-900">
+      <div className="relative bg-zinc-900 rounded-xl overflow-hidden">
         <div className="relative aspect-[16/10]">
           {imageUrl ? (
             <SafeImage
@@ -199,7 +199,7 @@ function TopStoryCard({ story, isPrimary = false }: { story: TopStory; isPrimary
     >
       {/* Thumbnail - edge-to-edge on mobile */}
       <div
-        className="relative bg-zinc-900 md:rounded-xl"
+        className="relative bg-zinc-900 rounded-xl overflow-hidden"
       >
         <div className={`relative ${isPrimary ? 'aspect-[16/9]' : 'aspect-video'}`}>
           {heroImage ? (

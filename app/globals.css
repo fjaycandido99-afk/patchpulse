@@ -115,6 +115,20 @@
 }
 
 @layer utilities {
+  /* Full-bleed element - extends to viewport edges on mobile */
+  .full-bleed {
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+  }
+
+  @media (min-width: 768px) {
+    .full-bleed {
+      width: 100%;
+      margin-left: 0;
+    }
+  }
+
+  
   /* iOS safe area padding */
   .safe-area-pb {
     padding-bottom: env(safe-area-inset-bottom, 0);

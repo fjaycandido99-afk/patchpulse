@@ -503,13 +503,13 @@ function MobileVideoCard({
   return (
     <div>
       {/* Thumbnail container - edge-to-edge when bleed, rounded otherwise */}
-      <div className={`relative bg-zinc-900 ${bleed ? '-mx-4 w-[calc(100%+2rem)]' : 'rounded-xl'}`}>
+      <div className="relative bg-zinc-900 rounded-xl overflow-hidden">
         <button
           onClick={handleClick}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
           onTouchCancel={handleTouchEnd}
-          className="relative aspect-video w-full"
+          className="relative aspect-video w-full overflow-hidden rounded-xl"
         >
         {/* YouTube Preview - shows on press and hold */}
         {showPreview && (
@@ -655,7 +655,7 @@ function DesktopVideoCard({
         tabIndex={0}
         onClick={onPlay}
         onKeyDown={(e) => e.key === 'Enter' && onPlay()}
-        className="relative w-full aspect-video overflow-hidden bg-zinc-800 cursor-pointer"
+        className="relative w-full aspect-video overflow-hidden bg-zinc-800 cursor-pointer rounded-xl"
       >
         {/* YouTube Preview - shows after hover delay */}
         {showPreview && (
