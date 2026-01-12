@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
@@ -10,17 +10,20 @@ function isNativePlatform(): boolean {
   return !!(window as Window & { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.()
 }
 
-// Check if on iOS device (for fallback auth handling)
-function isIOSDevice(): boolean {
-  if (typeof window === 'undefined') return false
-  return /iPhone|iPad|iPod/.test(navigator.userAgent)
-}
-
 export function NativeAuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const [isChecking, setIsChecking] = useState(true)
   const [isAuthed, setIsAuthed] = useState(false)
   const [isNative, setIsNative] = useState(false)
+
+  // Clear all auth data and redirect to login
+  const clearAuthAndRedirect = useCallback(() => {
+    localStorage.removeItem('patchpulse-auth')
+    localStorage.removeItem('patchpulse-biometric')
+    setIsAuthed(false)
+    setIsChecking(false)
+    router.replace('/login')
+  }, [router])
 
   useEffect(() => {
     // Check if native on client side only
@@ -39,27 +42,54 @@ export function NativeAuthGuard({ children }: { children: React.ReactNode }) {
       try {
         const supabase = createClient()
 
-        // Try to restore from localStorage (skip getSession - it hangs in WKWebView)
+        // Check for guest mode first (fastest)
+        const isGuest = localStorage.getItem('patchpulse-guest') === 'true'
+        if (isGuest) {
+          setIsAuthed(true)
+          setIsChecking(false)
+          return
+        }
+
+        // Try to restore from localStorage
         const storedSession = localStorage.getItem('patchpulse-auth')
         if (storedSession) {
           try {
             const parsed = JSON.parse(storedSession)
             if (parsed?.refresh_token) {
-              const { data, error } = await supabase.auth.refreshSession({
+              // Add timeout to prevent hanging
+              const refreshPromise = supabase.auth.refreshSession({
                 refresh_token: parsed.refresh_token,
               })
+              const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Refresh timeout')), 4000)
+              )
+
+              const { data, error } = await Promise.race([refreshPromise, timeoutPromise]) as any
+              
               if (data?.session && !error) {
+                // Update stored session with new tokens
+                localStorage.setItem('patchpulse-auth', JSON.stringify({
+                  access_token: data.session.access_token,
+                  refresh_token: data.session.refresh_token,
+                  expires_at: data.session.expires_at,
+                }))
                 setIsAuthed(true)
                 setIsChecking(false)
                 return
+              } else {
+                // Refresh failed - clear bad data
+                console.log('Session refresh failed, clearing auth data')
+                localStorage.removeItem('patchpulse-auth')
               }
             }
-          } catch {
-            // Invalid stored session
+          } catch (e) {
+            // Invalid stored session - clear it
+            console.error('Auth parse/refresh error:', e)
+            localStorage.removeItem('patchpulse-auth')
           }
         }
 
-        // Try to restore from biometric credentials
+        // Try biometric credentials as fallback
         const biometricData = localStorage.getItem('patchpulse-biometric')
         if (biometricData) {
           try {
@@ -69,6 +99,12 @@ export function NativeAuthGuard({ children }: { children: React.ReactNode }) {
                 refresh_token: parsed.refreshToken,
               })
               if (data?.session && !error) {
+                // Save new session
+                localStorage.setItem('patchpulse-auth', JSON.stringify({
+                  access_token: data.session.access_token,
+                  refresh_token: data.session.refresh_token,
+                  expires_at: data.session.expires_at,
+                }))
                 setIsAuthed(true)
                 setIsChecking(false)
                 return
@@ -76,35 +112,26 @@ export function NativeAuthGuard({ children }: { children: React.ReactNode }) {
             }
           } catch {
             // Invalid biometric data
+            localStorage.removeItem('patchpulse-biometric')
           }
         }
 
-        // Check for guest mode
-        const isGuest = localStorage.getItem('patchpulse-guest') === 'true'
-        if (isGuest) {
-          setIsAuthed(true)
-          setIsChecking(false)
-          return
-        }
-
-        // No valid session, redirect to login
-        router.replace('/login')
+        // No valid session found - redirect to login
+        clearAuthAndRedirect()
       } catch (err) {
         console.error('Auth check failed:', err)
-        router.replace('/login')
-      } finally {
-        setIsChecking(false)
+        clearAuthAndRedirect()
       }
     }
 
     // Timeout to prevent infinite loading
     const timeout = setTimeout(() => {
-      setIsChecking(false)
-      router.replace('/login')
+      console.log('Auth check timed out')
+      clearAuthAndRedirect()
     }, 5000)
 
     checkAuth().finally(() => clearTimeout(timeout))
-  }, [router])
+  }, [router, clearAuthAndRedirect])
 
   // Show loading for native apps while checking auth
   if (isChecking && isNative) {
