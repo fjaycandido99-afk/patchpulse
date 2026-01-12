@@ -187,7 +187,8 @@ function VerticalVideoPlayer({
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className={`px-2 py-1 rounded text-xs font-medium ${typeConfig.color}`}>
+            <span className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${typeConfig.color}`}>
+              {typeConfig.icon}
               {typeConfig.label}
             </span>
             <span className="text-xs text-white/60">
@@ -385,7 +386,8 @@ function HeroCarousel({
                   <Play className="w-9 h-9 text-white fill-white ml-1" />
                 </div>
               </div>
-              <span className={`absolute top-4 left-4 px-3 py-1 text-sm font-medium rounded-full ${typeConfig.color} backdrop-blur-sm`}>
+              <span className={`flex items-center gap-1.5 absolute top-4 left-4 px-3 py-1 text-sm font-medium rounded-full ${typeConfig.color} backdrop-blur-sm`}>
+                {typeConfig.icon}
                 {typeConfig.label}
               </span>
               {video.duration_seconds > 0 && (
@@ -546,7 +548,8 @@ function MobileVideoCard({
         )}
 
         {/* Type badge */}
-        <span className={`absolute top-2 left-4 px-2.5 py-1 text-xs font-bold rounded-md backdrop-blur-sm ${typeConfig.color} z-20`}>
+        <span className={`flex items-center gap-1 absolute top-2 left-4 px-2.5 py-1 text-xs font-bold rounded-md backdrop-blur-sm ${typeConfig.color} z-20`}>
+          {typeConfig.icon}
           {typeConfig.label}
         </span>
 
@@ -702,7 +705,8 @@ function DesktopVideoCard({
         )}
 
         {/* Type badge */}
-        <span className={`absolute top-2 left-2 px-2.5 py-1 text-xs font-semibold rounded-md ${typeConfig.color} backdrop-blur-sm shadow-lg z-20`}>
+        <span className={`flex items-center gap-1 absolute top-2 left-2 px-2.5 py-1 text-xs font-semibold rounded-md ${typeConfig.color} backdrop-blur-sm shadow-lg z-20`}>
+          {typeConfig.icon}
           {typeConfig.label}
         </span>
 
