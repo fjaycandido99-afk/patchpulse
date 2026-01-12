@@ -31,13 +31,13 @@ export function useScrollDirection(threshold = 10) {
       if (diff > threshold) {
         // Scrolling down
         setScrollDirection('down')
-        lastScrollY = scrollY
       } else if (diff < -threshold) {
         // Scrolling up
         setScrollDirection('up')
-        lastScrollY = scrollY
       }
 
+      // Always update lastScrollY for responsive tracking
+      lastScrollY = scrollY
       ticking = false
     }
 
