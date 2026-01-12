@@ -150,8 +150,25 @@ export default async function ProfilePage() {
     )
   }
 
-  // At this point, user must exist (we redirect if !user && !isGuest, and isGuest returns early)
-  if (!user && !isNativeApp) {
+  // Native apps without server session - show loading state, auth handled client-side
+  if (!user && isNativeApp) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Profile</h1>
+          <p className="mt-2 text-muted-foreground">
+            Manage your account settings and gaming preferences.
+          </p>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-pulse text-muted-foreground">Loading...</div>
+        </div>
+      </div>
+    )
+  }
+
+  // At this point, user must exist
+  if (!user) {
     redirect('/login')
   }
 
