@@ -27,9 +27,10 @@ export async function middleware(request: NextRequest) {
 
   // Also treat ANY iPhone/iPad request as potential native app
   // This is a fallback since WKWebView detection can be unreliable
-  const isIOSDevice = userAgent.includes('iPhone') || userAgent.includes('iPad')
 
-  const isNativeApp = isIOSWebView || isAndroidWebView || hasNativeAppCookie || isIOSDevice
+  // Only detect actual native apps (WKWebView/WebView) or those with native cookie
+  // Don't treat all iOS devices as native - Safari mobile should work normally
+  const isNativeApp = isIOSWebView || isAndroidWebView || hasNativeAppCookie
 
   // Create response to potentially modify
   let response = NextResponse.next({

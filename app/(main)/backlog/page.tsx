@@ -76,6 +76,28 @@ export default async function LibraryPage() {
     )
   }
 
+  // Native apps without server session - show loading state, auth handled client-side
+  if (!user && isNativeApp) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Library</h1>
+          <p className="mt-1 text-muted-foreground">
+            Your games collection and progress tracker
+          </p>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-pulse text-muted-foreground">Loading...</div>
+        </div>
+      </div>
+    )
+  }
+
+  // At this point, user must exist
+  if (!user) {
+    redirect('/login')
+  }
+
   const [board, followedGamesForPicker, followedGames, followedGamesWithActivity, backlogGames, subscriptionInfo] = await Promise.all([
     getBacklogBoard(),
     getFollowedGamesForBacklogPicker(),
