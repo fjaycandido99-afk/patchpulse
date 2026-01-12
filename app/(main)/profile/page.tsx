@@ -65,7 +65,7 @@ export default async function ProfilePage() {
               Create Account
             </Link>
             <Link
-              href="/login"
+              href="/"
               className="inline-flex items-center justify-center gap-2 rounded-lg border border-border px-6 py-2.5 text-sm font-medium hover:bg-accent transition-colors"
             >
               <LogIn className="w-4 h-4" />
