@@ -150,7 +150,7 @@ export default async function ProfilePage() {
     )
   }
 
-  // Native apps without server session - show loading state, auth handled client-side
+  // Native apps without server session - show minimal UI with logout option
   if (!user && isNativeApp) {
     return (
       <div className="space-y-6">
@@ -160,9 +160,41 @@ export default async function ProfilePage() {
             Manage your account settings and gaming preferences.
           </p>
         </div>
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-pulse text-muted-foreground">Loading...</div>
+
+        <div className="rounded-xl border border-border bg-card p-6">
+          <p className="text-muted-foreground text-center mb-4">
+            Session loading...
+          </p>
+          <div className="flex justify-center">
+            <LogoutButton />
+          </div>
         </div>
+
+        <section className="rounded-xl border border-border bg-card p-6">
+          <h2 className="text-lg font-semibold mb-4">Legal</h2>
+          <div className="space-y-1">
+            <Link
+              href="/privacy"
+              className="flex items-center justify-between p-3 -mx-3 rounded-lg hover:bg-white/5 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <Shield className="w-5 h-5 text-muted-foreground" />
+                <span>Privacy Policy</span>
+              </div>
+              <ChevronRight className="w-4 h-4 text-muted-foreground" />
+            </Link>
+            <Link
+              href="/terms"
+              className="flex items-center justify-between p-3 -mx-3 rounded-lg hover:bg-white/5 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <FileText className="w-5 h-5 text-muted-foreground" />
+                <span>Terms of Service</span>
+              </div>
+              <ChevronRight className="w-4 h-4 text-muted-foreground" />
+            </Link>
+          </div>
+        </section>
       </div>
     )
   }
