@@ -1,9 +1,13 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { verifyCronAuth } from '@/lib/cron-auth'
+import { acquireCronLock, releaseCronLock } from '@/lib/cron-lock'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
+
+const SYNC_LIBRARIES_LOCK = 'sync-libraries'
+const LOCK_DURATION_MINUTES = 30 // Allow 30 min for large libraries
 
 type SteamGame = {
   appid: number
@@ -279,6 +283,17 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  // Acquire lock to prevent overlapping runs
+  const lockAcquired = await acquireCronLock(SYNC_LIBRARIES_LOCK, LOCK_DURATION_MINUTES)
+  if (!lockAcquired) {
+    console.log('[SYNC-LIBRARIES] Previous run still in progress, skipping')
+    return NextResponse.json({
+      ok: false,
+      skipped: true,
+      reason: 'Previous run still in progress',
+    })
+  }
+
   const startTime = Date.now()
   console.log('[SYNC-LIBRARIES] Starting daily library sync...')
 
@@ -333,6 +348,9 @@ export async function GET(req: Request) {
   const duration = Date.now() - startTime
 
   console.log(`[SYNC-LIBRARIES] Completed in ${duration}ms: ${successCount} success, ${failCount} failed, ${totalGames} total games`)
+
+  // Release lock
+  await releaseCronLock(SYNC_LIBRARIES_LOCK)
 
   return NextResponse.json({
     ok: true,

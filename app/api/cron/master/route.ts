@@ -1,8 +1,12 @@
 import { NextResponse } from 'next/server'
 import { verifyCronAuth } from '@/lib/cron-auth'
+import { acquireCronLock, releaseCronLock } from '@/lib/cron-lock'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
+
+const MASTER_CRON_LOCK = 'master-cron'
+const LOCK_DURATION_MINUTES = 12 // Slightly less than 15 min interval
 
 // Master cron that runs all tasks
 // Runs every 15 minutes - handles frequent tasks
@@ -23,6 +27,17 @@ export async function GET(req: Request) {
   }
 
   console.log('[MASTER CRON] Auth successful')
+
+  // Acquire lock to prevent overlapping runs
+  const lockAcquired = await acquireCronLock(MASTER_CRON_LOCK, LOCK_DURATION_MINUTES)
+  if (!lockAcquired) {
+    console.log('[MASTER CRON] Previous run still in progress, skipping')
+    return NextResponse.json({
+      ok: false,
+      skipped: true,
+      reason: 'Previous run still in progress',
+    })
+  }
 
   // Use production URL for internal calls, not deployment-specific URL
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL
@@ -202,6 +217,9 @@ export async function GET(req: Request) {
   const totalTime = Date.now() - startTime
   console.log(`[MASTER CRON] ========== Completed in ${totalTime}ms ==========`)
   console.log('[MASTER CRON] Results summary:', JSON.stringify({ timings, tasksRun: Object.keys(results) }))
+
+  // Release lock before returning
+  await releaseCronLock(MASTER_CRON_LOCK)
 
   return NextResponse.json({
     ok: true,
