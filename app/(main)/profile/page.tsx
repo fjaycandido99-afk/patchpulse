@@ -2,7 +2,8 @@ import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { FileText, Shield, ChevronRight, User, UserPlus, LogIn, Sparkles } from 'lucide-react'
+import { FileText, Shield, ChevronRight, User, UserPlus, Sparkles } from 'lucide-react'
+import { GuestSignInButton } from '@/components/auth/GuestSignInButton'
 import { isGuestModeFromCookies } from '@/lib/guest'
 import { ConnectedAccounts } from './ConnectedAccounts'
 import { SecuritySection } from '@/components/profile/SecuritySection'
@@ -64,13 +65,7 @@ export default async function ProfilePage() {
               <UserPlus className="w-4 h-4" />
               Create Account
             </Link>
-            <Link
-              href="/"
-              className="inline-flex items-center justify-center gap-2 rounded-lg border border-border px-6 py-2.5 text-sm font-medium hover:bg-accent transition-colors"
-            >
-              <LogIn className="w-4 h-4" />
-              Sign In
-            </Link>
+            <GuestSignInButton />
           </div>
         </div>
 
