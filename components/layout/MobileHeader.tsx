@@ -23,11 +23,13 @@ export function MobileHeader({
 
   return (
     <header
-      className="fixed inset-x-0 top-0 z-40 md:hidden transition-transform duration-300"
+      className="fixed inset-x-0 top-0 z-40 md:hidden"
       style={{
         transform: showHeader
           ? 'translateY(0)'
           : 'translateY(calc(-100% - env(safe-area-inset-top, 0px)))',
+        transition: 'transform 250ms cubic-bezier(0.4, 0, 0.2, 1)',
+        willChange: 'transform',
       }}
     >
       {/* Background that extends into safe area */}

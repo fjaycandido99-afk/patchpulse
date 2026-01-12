@@ -1,20 +1,21 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 type ScrollDirection = 'up' | 'down' | null
 
-export function useScrollDirection(threshold = 10) {
+export function useScrollDirection(threshold = 5) {
   const [scrollDirection, setScrollDirection] = useState<ScrollDirection>(null)
   const [isAtTop, setIsAtTop] = useState(true)
+  const lastScrollY = useRef(0)
+  const ticking = useRef(false)
 
   useEffect(() => {
-    let lastScrollY = window.scrollY
-    let ticking = false
+    lastScrollY.current = window.scrollY
 
     const updateScrollDirection = () => {
       const scrollY = window.scrollY
-      const diff = scrollY - lastScrollY
+      const diff = scrollY - lastScrollY.current
 
       // Update isAtTop
       setIsAtTop(scrollY < 10)
@@ -22,29 +23,26 @@ export function useScrollDirection(threshold = 10) {
       // If at top, reset direction
       if (scrollY < 10) {
         setScrollDirection(null)
-        lastScrollY = scrollY
-        ticking = false
+        lastScrollY.current = scrollY
+        ticking.current = false
         return
       }
 
       // Only update if scrolled more than threshold
       if (diff > threshold) {
-        // Scrolling down
         setScrollDirection('down')
       } else if (diff < -threshold) {
-        // Scrolling up
         setScrollDirection('up')
       }
 
-      // Always update lastScrollY for responsive tracking
-      lastScrollY = scrollY
-      ticking = false
+      lastScrollY.current = scrollY
+      ticking.current = false
     }
 
     const onScroll = () => {
-      if (!ticking) {
+      if (!ticking.current) {
         window.requestAnimationFrame(updateScrollDirection)
-        ticking = true
+        ticking.current = true
       }
     }
 
@@ -52,7 +50,6 @@ export function useScrollDirection(threshold = 10) {
     return () => window.removeEventListener('scroll', onScroll)
   }, [threshold])
 
-  // Header/nav visible when scrolling up, at top, or direction is null
   const showBars = scrollDirection !== 'down' || isAtTop
 
   return {

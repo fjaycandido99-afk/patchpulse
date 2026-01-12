@@ -123,9 +123,14 @@ export function MobileNav({ badges, isGuest = false }: { badges?: Record<string,
       )}
 
       {/* Bottom Navigation - Hides on scroll down */}
-      <nav className={`fixed bottom-0 inset-x-0 z-50 glass-nav md:hidden safe-area-pb transition-transform duration-300 ${
-        showBottomNav || isMenuOpen ? 'translate-y-0' : 'translate-y-full'
-      }`}>
+      <nav
+        className="fixed bottom-0 inset-x-0 z-50 glass-nav md:hidden safe-area-pb"
+        style={{
+          transform: showBottomNav || isMenuOpen ? 'translateY(0)' : 'translateY(100%)',
+          transition: 'transform 250ms cubic-bezier(0.4, 0, 0.2, 1)',
+          willChange: 'transform',
+        }}
+      >
         <div className="flex items-center justify-around">
           {navItems.map((item) => (
             <NavItem
