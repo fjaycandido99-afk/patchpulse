@@ -126,7 +126,7 @@ function TopStoryCard({ story, isPrimary = false }: { story: TopStory; isPrimary
   return (
     <Link
       href={`/news/${story.id}`}
-      className="group relative overflow-hidden rounded-2xl border border-white/10 bg-black/40 block"
+      className="group relative rounded-2xl border border-white/10 bg-black/40 block"
     >
       <div className={`relative ${isPrimary ? 'aspect-[16/9] sm:aspect-[21/9]' : 'aspect-[16/9]'}`}>
         {heroImage ? (

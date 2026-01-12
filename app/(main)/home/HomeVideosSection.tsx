@@ -315,7 +315,7 @@ function HomeVideoCard({
     >
       {/* Thumbnail - 16:9, edge-to-edge on mobile */}
       <div
-        className="relative aspect-video overflow-hidden bg-zinc-900 md:rounded-xl"
+        className="relative aspect-video bg-zinc-900 md:rounded-xl"
       >
         <Image
           src={thumbnail}

@@ -208,7 +208,7 @@ function RotatingHeadline({
       <Link
         key={animationKey}
         href={`/news/${item.id}`}
-        className="group relative block overflow-hidden md:rounded-xl border-y md:border border-white/10 bg-black/40 animate-soft-entry"
+        className="group relative block md:rounded-xl border-y md:border border-white/10 bg-black/40 animate-soft-entry"
         style={{ opacity: 1 }}
       >
       <div className="relative aspect-[16/10] sm:aspect-[21/9]">
