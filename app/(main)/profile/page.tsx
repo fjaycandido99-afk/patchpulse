@@ -22,6 +22,7 @@ import { getSubscriptionInfo } from '@/lib/subscriptions/limits'
 export default async function ProfilePage() {
   const cookieStore = await cookies()
   const hasGuestCookie = isGuestModeFromCookies(cookieStore)
+  const isNativeApp = cookieStore.get('patchpulse-native-app')?.value === 'true'
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -30,7 +31,8 @@ export default async function ProfilePage() {
   const isGuest = !user && hasGuestCookie
 
   // Redirect to login if not logged in and not a guest
-  if (!user && !isGuest) {
+  // Don't redirect native apps - they handle auth client-side
+  if (!user && !isGuest && !isNativeApp) {
     redirect('/login')
   }
 
@@ -149,7 +151,7 @@ export default async function ProfilePage() {
   }
 
   // At this point, user must exist (we redirect if !user && !isGuest, and isGuest returns early)
-  if (!user) {
+  if (!user && !isNativeApp) {
     redirect('/login')
   }
 

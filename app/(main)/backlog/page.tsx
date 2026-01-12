@@ -16,13 +16,15 @@ import { getSubscriptionInfo } from '@/lib/subscriptions/limits'
 export default async function LibraryPage() {
   const cookieStore = await cookies()
   const hasGuestCookie = isGuestModeFromCookies(cookieStore)
+  const isNativeApp = cookieStore.get('patchpulse-native-app')?.value === 'true'
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   const isGuest = !user && hasGuestCookie
 
-  if (!user && !isGuest) {
+  // Don't redirect native apps - they handle auth client-side
+  if (!user && !isGuest && !isNativeApp) {
     redirect('/login')
   }
 

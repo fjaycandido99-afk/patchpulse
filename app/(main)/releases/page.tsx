@@ -27,6 +27,7 @@ export default async function ReleasesPage({
 }) {
   const cookieStore = await cookies()
   const hasGuestCookie = isGuestModeFromCookies(cookieStore)
+  const isNativeApp = cookieStore.get('patchpulse-native-app')?.value === 'true'
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -34,7 +35,8 @@ export default async function ReleasesPage({
   // User is only a guest if they have the cookie AND are not logged in
   const isGuest = !user && hasGuestCookie
 
-  if (!user && !isGuest) {
+  // Don't redirect native apps - they handle auth client-side
+  if (!user && !isGuest && !isNativeApp) {
     redirect('/login')
   }
 
