@@ -1,7 +1,8 @@
 // Guest mode utilities
 // Guests can browse content but cannot save/follow/bookmark anything
 
-const GUEST_COOKIE_NAME = 'patchpulse_guest_mode'
+const GUEST_COOKIE_NAME = 'patchpulse-guest'
+const GUEST_LOCALSTORAGE_KEY = 'patchpulse-guest'
 
 // Guest plan limits - no features that require saving data
 export const GUEST_LIMITS = {
@@ -16,22 +17,26 @@ export const GUEST_LIMITS = {
 // Check if guest mode is enabled (client-side)
 export function isGuestMode(): boolean {
   if (typeof window === 'undefined') return false
-  return document.cookie.includes(`${GUEST_COOKIE_NAME}=true`)
+  return document.cookie.includes(`${GUEST_COOKIE_NAME}=true`) ||
+         localStorage.getItem(GUEST_LOCALSTORAGE_KEY) === 'true'
 }
 
 // Enable guest mode (client-side)
 export function enableGuestMode(): void {
   if (typeof window === 'undefined') return
-  // Set cookie for 30 days
+  // Set cookie for 30 days (for server-side checks)
   const expires = new Date()
   expires.setDate(expires.getDate() + 30)
   document.cookie = `${GUEST_COOKIE_NAME}=true; path=/; expires=${expires.toUTCString()}`
+  // Also set localStorage (for client-side checks in native apps)
+  localStorage.setItem(GUEST_LOCALSTORAGE_KEY, 'true')
 }
 
 // Disable guest mode (client-side)
 export function disableGuestMode(): void {
   if (typeof window === 'undefined') return
   document.cookie = `${GUEST_COOKIE_NAME}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`
+  localStorage.removeItem(GUEST_LOCALSTORAGE_KEY)
 }
 
 // Check guest mode from cookies (server-side)
