@@ -355,6 +355,25 @@ export function PricingCards({ currentPlan, isLoggedIn }: Props) {
           </p>
         </div>
       </div>
+
+      {/* Legal Links - Required for App Store */}
+      <div className="max-w-4xl mx-auto mt-8 text-center text-xs text-muted-foreground">
+        <p>
+          By subscribing, you agree to our{' '}
+          <a href="/terms" className="underline hover:text-foreground">
+            Terms of Service
+          </a>{' '}
+          and{' '}
+          <a href="/privacy" className="underline hover:text-foreground">
+            Privacy Policy
+          </a>
+          .
+        </p>
+        <p className="mt-2">
+          Subscriptions auto-renew unless cancelled at least 24 hours before the end of the current period.
+          Manage your subscription in your account settings or through the App Store.
+        </p>
+      </div>
     </div>
   )
 }
