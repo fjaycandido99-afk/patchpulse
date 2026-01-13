@@ -4,6 +4,7 @@ import { CreateGameForm } from './CreateGameForm'
 import { EditGameButton } from './EditGameButton'
 import { DeleteGameButton } from './DeleteGameButton'
 import { EnrichGamesButton } from './EnrichGamesButton'
+import { RefreshImagesButton, RefreshGameImageButton } from './RefreshImagesButton'
 
 export default async function AdminGamesPage() {
   const games = await getGames()
@@ -67,6 +68,7 @@ export default async function AdminGamesPage() {
                 </div>
 
                 <div className="flex items-center gap-1">
+                  <RefreshGameImageButton gameId={game.id} gameName={game.name} />
                   <EditGameButton game={game} />
                   <DeleteGameButton gameId={game.id} gameName={game.name} />
                 </div>
