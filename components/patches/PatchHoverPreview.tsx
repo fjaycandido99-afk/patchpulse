@@ -125,7 +125,7 @@ export function PatchHoverPreview({ children, patch, className = '' }: PatchHove
           </div>
 
           {/* Summary */}
-          {patch.summary ? (
+          {patch.summary && !patch.summary.toLowerCase().includes('pending') ? (
             <p className="text-xs text-zinc-400 leading-relaxed line-clamp-3">
               {patch.summary}
             </p>

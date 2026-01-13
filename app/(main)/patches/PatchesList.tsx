@@ -213,7 +213,7 @@ export function PatchesList({ initialPatches, followedGameIds = [], backlogGameI
                     </span>
                   </div>
 
-                  {patch.summary_tldr && (
+                  {patch.summary_tldr && !patch.summary_tldr.toLowerCase().includes('pending') && (
                     <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
                       {patch.summary_tldr}
                     </p>
