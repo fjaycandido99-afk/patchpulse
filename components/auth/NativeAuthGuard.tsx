@@ -42,15 +42,7 @@ export function NativeAuthGuard({ children }: { children: React.ReactNode }) {
       try {
         const supabase = createClient()
 
-        // Check for guest mode first (fastest)
-        const isGuest = localStorage.getItem('patchpulse-guest') === 'true'
-        if (isGuest) {
-          setIsAuthed(true)
-          setIsChecking(false)
-          return
-        }
-
-        // Try to restore from localStorage
+        // Try to restore session from localStorage FIRST (prioritize real auth over guest)
         const storedSession = localStorage.getItem('patchpulse-auth')
         if (storedSession) {
           try {
@@ -116,7 +108,15 @@ export function NativeAuthGuard({ children }: { children: React.ReactNode }) {
           }
         }
 
-        // No valid session found - redirect to login
+        // No valid session found - check for guest mode as last resort
+        const isGuest = localStorage.getItem('patchpulse-guest') === 'true'
+        if (isGuest) {
+          setIsAuthed(true)
+          setIsChecking(false)
+          return
+        }
+
+        // No session and not guest - redirect to login
         clearAuthAndRedirect()
       } catch (err) {
         console.error('Auth check failed:', err)
