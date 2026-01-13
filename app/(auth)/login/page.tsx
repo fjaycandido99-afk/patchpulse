@@ -12,6 +12,7 @@ import { Gamepad2, ArrowRight, Zap, TrendingUp, Bell, Sparkles, User, Eye, EyeOf
 import { enableGuestMode, disableGuestMode } from '@/lib/guest'
 
 const HAS_VISITED_KEY = 'patchpulse-has-visited'
+const REMEMBER_EMAIL_KEY = 'patchpulse-remember-email'
 
 type LoginMode = 'biometric' | 'password'
 type PageMode = 'landing' | 'login'
@@ -21,12 +22,22 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [rememberEmail, setRememberEmail] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [loginMode, setLoginMode] = useState<LoginMode>('password')
   const [pageMode, setPageMode] = useState<PageMode>('login')
   const [showBiometricPrompt, setShowBiometricPrompt] = useState(false)
   const [checkingState, setCheckingState] = useState(true)
+
+  // Load remembered email on mount
+  useEffect(() => {
+    const savedEmail = localStorage.getItem(REMEMBER_EMAIL_KEY)
+    if (savedEmail) {
+      setEmail(savedEmail)
+      setRememberEmail(true)
+    }
+  }, [])
 
   // Check for auto-login or first-time visitor
   useEffect(() => {
@@ -115,6 +126,13 @@ export default function LoginPage() {
     // Login successful
     disableGuestMode()
     markAsVisited()
+
+    // Save or remove remembered email
+    if (rememberEmail) {
+      localStorage.setItem(REMEMBER_EMAIL_KEY, email)
+    } else {
+      localStorage.removeItem(REMEMBER_EMAIL_KEY)
+    }
 
     // Save session to localStorage for native app persistence
     if (result?.session) {
@@ -332,6 +350,17 @@ export default function LoginPage() {
                     </button>
                   </div>
                 </div>
+
+                {/* Remember Email Checkbox */}
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={rememberEmail}
+                    onChange={(e) => setRememberEmail(e.target.checked)}
+                    className="w-4 h-4 rounded border-input bg-background text-primary focus:ring-2 focus:ring-ring focus:ring-offset-0 cursor-pointer"
+                  />
+                  <span className="text-sm text-muted-foreground">Remember my email</span>
+                </label>
               </div>
 
               <button
