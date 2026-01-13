@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useMemo } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { FileText, ChevronRight, Flame, Filter, Plus, Loader2, Check } from 'lucide-react'
@@ -21,7 +21,7 @@ type Patch = {
   }
 }
 
-type FilterType = 'all' | 'high_impact' | 'recent'
+type FilterType = 'all' | 'your_patches' | 'high_impact' | 'recent'
 
 function getRelativeTime(date: string): string {
   const now = new Date()
@@ -56,12 +56,14 @@ function getImpactBg(score: number) {
 type Props = {
   initialPatches: Patch[]
   followedGameIds?: string[]
+  backlogGameIds?: string[]
 }
 
-export function PatchesList({ initialPatches, followedGameIds = [] }: Props) {
+export function PatchesList({ initialPatches, followedGameIds = [], backlogGameIds = [] }: Props) {
   const [patches] = useState(initialPatches)
   const [filter, setFilter] = useState<FilterType>('all')
   const [followedIds, setFollowedIds] = useState<Set<string>>(new Set(followedGameIds))
+  const yourGameIds = useMemo(() => new Set([...followedGameIds, ...backlogGameIds]), [followedGameIds, backlogGameIds])
   const [pendingGameId, setPendingGameId] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
@@ -87,6 +89,7 @@ export function PatchesList({ initialPatches, followedGameIds = [] }: Props) {
   }
 
   const filteredPatches = patches.filter(p => {
+    if (filter === 'your_patches') return yourGameIds.has(p.game.id)
     if (filter === 'high_impact') return p.impact_score >= 8
     if (filter === 'recent') {
       const hourAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
@@ -97,6 +100,7 @@ export function PatchesList({ initialPatches, followedGameIds = [] }: Props) {
 
   const filters: { id: FilterType; label: string; count?: number }[] = [
     { id: 'all', label: 'All', count: patches.length },
+    { id: 'your_patches', label: 'Your Patches', count: patches.filter(p => yourGameIds.has(p.game.id)).length },
     { id: 'high_impact', label: 'Major', count: patches.filter(p => p.impact_score >= 8).length },
     { id: 'recent', label: 'Last 24h', count: patches.filter(p => new Date(p.published_at) > new Date(Date.now() - 24 * 60 * 60 * 1000)).length },
   ]
