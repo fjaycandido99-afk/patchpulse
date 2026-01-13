@@ -124,17 +124,6 @@ export function PatchHoverPreview({ children, patch, className = '' }: PatchHove
             </div>
           </div>
 
-          {/* Summary */}
-          {patch.summary && !patch.summary.toLowerCase().includes('pending') ? (
-            <p className="text-xs text-zinc-400 leading-relaxed line-clamp-3">
-              {patch.summary}
-            </p>
-          ) : (
-            <p className="text-xs text-zinc-500 italic">
-              No summary available
-            </p>
-          )}
-
           {/* Hint */}
           <div className="mt-3 pt-2 border-t border-white/5">
             <p className="text-[10px] text-muted-foreground/60">
