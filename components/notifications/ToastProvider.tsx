@@ -101,6 +101,86 @@ export function ToastProvider({ children, userId }: Props) {
     }
   }, [testToast])
 
+
+  // Check for missed important content on mount (notifications + news)
+  useEffect(() => {
+    if (!userId || userId === 'guest') return
+
+    // Only show once per session
+    const sessionKey = 'patchpulse-missed-content-shown'
+    if (sessionStorage.getItem(sessionKey)) return
+
+    const checkMissedContent = async () => {
+      const supabase = createClient()
+
+      try {
+        // Get unread high-priority notifications count
+        const { count: unreadNotifications } = await supabase
+          .from('notifications')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', userId)
+          .eq('is_read', false)
+          .gte('priority', 4)
+
+        // Get last news visit time
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('last_news_visit_at')
+          .eq('id', userId)
+          .single()
+
+        // Get new news count since last visit
+        let unreadNews = 0
+        if (profile?.last_news_visit_at) {
+          const { count } = await supabase
+            .from('news_items')
+            .select('id', { count: 'exact', head: true })
+            .gte('published_at', profile.last_news_visit_at)
+
+          unreadNews = count || 0
+        }
+
+        // Show summary toast if there's missed content
+        const hasNotifications = (unreadNotifications || 0) > 0
+        const hasNews = unreadNews > 0
+
+        if (hasNotifications || hasNews) {
+          const parts: string[] = []
+          if (hasNotifications) {
+            parts.push(`${unreadNotifications} important notification${unreadNotifications !== 1 ? 's' : ''}`)
+          }
+          if (hasNews) {
+            parts.push(`${unreadNews} new article${unreadNews !== 1 ? 's' : ''}`)
+          }
+
+          const summaryToast: ToastNotification = {
+            id: `missed-content-${Date.now()}`,
+            user_id: userId,
+            type: 'system',
+            title: 'While you were away...',
+            body: `You have ${parts.join(' and ')}`,
+            priority: 4,
+            game_id: null,
+            patch_id: null,
+            news_id: null,
+            created_at: new Date().toISOString(),
+            game: null,
+          }
+
+          // Small delay to let the app settle before showing
+          setTimeout(() => {
+            showToast(summaryToast)
+            sessionStorage.setItem(sessionKey, 'true')
+          }, 1500)
+        }
+      } catch (err) {
+        console.error('[ToastProvider] Error checking missed content:', err)
+      }
+    }
+
+    checkMissedContent()
+  }, [userId, showToast])
+
   // Subscribe to real-time content updates (news, patches, notifications)
   useEffect(() => {
     const supabase = createClient()

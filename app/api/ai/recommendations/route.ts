@@ -42,20 +42,30 @@ export async function GET(request: Request) {
 
       const savedGameIds = new Set(savedRecs?.map(r => r.entity_id) || [])
 
-      // Get expired/stale recommendations for this user
-      const { data: staleRecs } = await supabase
+      // Get all recommendations for this user, then filter stale ones in JS
+      // (avoids PostgREST date parsing issues with .or() and ISO timestamps)
+      const { data: allRecs } = await supabase
         .from('play_recommendations')
-        .select('id, game_id')
+        .select('id, game_id, expires_at, created_at')
         .eq('user_id', user.id)
-        .or(`expires_at.is.null,expires_at.lt.${now.toISOString()},created_at.lt.${twentyFourHoursAgo}`)
+
+      // Filter stale records: no expiry, expired, or older than 24 hours
+      const staleIds = (allRecs || [])
+        .filter(r => {
+          if (!r.expires_at) return true
+          if (new Date(r.expires_at) < now) return true
+          if (new Date(r.created_at) < new Date(twentyFourHoursAgo)) return true
+          return false
+        })
+        .filter(r => !savedGameIds.has(r.game_id))
+        .map(r => r.id)
 
       // Delete only non-saved stale recommendations
-      const idsToDelete = staleRecs?.filter(r => !savedGameIds.has(r.game_id)).map(r => r.id) || []
-      if (idsToDelete.length > 0) {
+      if (staleIds.length > 0) {
         await supabase
           .from('play_recommendations')
           .delete()
-          .in('id', idsToDelete)
+          .in('id', staleIds)
       }
 
       // Query recommendations with game data embedded in context (more reliable than join)

@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server'
 function createRedirectWithClearedGuest(url: URL): NextResponse {
   const response = NextResponse.redirect(url)
   // Clear guest mode cookie on successful auth
-  response.cookies.set('patchpulse_guest_mode', '', {
+  response.cookies.set('patchpulse-guest', '', {
     path: '/',
     expires: new Date(0),
   })

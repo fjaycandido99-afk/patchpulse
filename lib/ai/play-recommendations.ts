@@ -1,5 +1,6 @@
 import { generateJSON } from './client'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 type PlayContext = {
   availableTime?: number  // minutes
@@ -567,7 +568,8 @@ export async function getPlayRecommendations(
       }))
 
       // Insert new recommendations (old ones are already deleted in API route before calling this)
-      const { error: saveError } = await supabase.from('play_recommendations').insert(toInsert)
+      const adminClient = createAdminClient()
+      const { error: saveError } = await adminClient.from('play_recommendations').insert(toInsert)
 
       if (saveError) {
         console.error('[Recommendations] Failed to save:', saveError)

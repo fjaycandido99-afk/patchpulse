@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { X, FileText, Newspaper, Sparkles, Bell, Zap, Rocket, Bookmark, Tag } from 'lucide-react'
@@ -104,9 +104,17 @@ function getPriorityStyles(priority: number): { border: string; glow: string; ba
 
 export function LiveToast({ notification, onDismiss, style }: Props) {
   const [isExiting, setIsExiting] = useState(false)
+  const [swipeOffset, setSwipeOffset] = useState(0)
+  const [isSwiping, setIsSwiping] = useState(false)
+  const touchStartX = useRef(0)
+  const touchStartY = useRef(0)
+  const isHorizontalSwipe = useRef(false)
+
   const priorityStyles = getPriorityStyles(notification.priority)
   const link = getNotificationLink(notification)
   const isHighPriority = notification.priority >= 4
+
+  const SWIPE_THRESHOLD = 80
 
   const handleDismiss = () => {
     setIsExiting(true)
@@ -114,16 +122,56 @@ export function LiveToast({ notification, onDismiss, style }: Props) {
   }
 
   const handleClick = () => {
+    if (Math.abs(swipeOffset) > 10) return
     handleDismiss()
   }
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX
+    touchStartY.current = e.touches[0].clientY
+    isHorizontalSwipe.current = false
+    setIsSwiping(true)
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isSwiping) return
+    const deltaX = e.touches[0].clientX - touchStartX.current
+    const deltaY = e.touches[0].clientY - touchStartY.current
+    if (!isHorizontalSwipe.current && (Math.abs(deltaX) > 10 || Math.abs(deltaY) > 10)) {
+      isHorizontalSwipe.current = Math.abs(deltaX) > Math.abs(deltaY)
+    }
+    if (isHorizontalSwipe.current) {
+      setSwipeOffset(deltaX)
+    }
+  }
+
+  const handleTouchEnd = () => {
+    setIsSwiping(false)
+    if (Math.abs(swipeOffset) > SWIPE_THRESHOLD) {
+      setSwipeOffset(swipeOffset > 0 ? 400 : -400)
+      setTimeout(onDismiss, 200)
+    } else {
+      setSwipeOffset(0)
+    }
+  }
+
+  const swipeOpacity = Math.max(0.3, 1 - Math.abs(swipeOffset) / 200)
 
   return (
     <div
       className={`pointer-events-auto ${isExiting ? 'toast-exit' : 'toast-enter'}`}
       style={style}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
       <div
         className={`relative overflow-hidden rounded-2xl border ${priorityStyles.border} bg-card/95 backdrop-blur-xl shadow-2xl ${priorityStyles.glow} ${isHighPriority ? 'toast-glow' : ''}`}
+        style={{
+          transform: `translateX(${swipeOffset}px)`,
+          opacity: swipeOpacity,
+          transition: isSwiping ? 'none' : 'transform 0.2s ease-out, opacity 0.2s ease-out',
+        }}
       >
         {/* Priority indicator line */}
         {notification.priority >= 4 && (
