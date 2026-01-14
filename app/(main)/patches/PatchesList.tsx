@@ -214,7 +214,7 @@ export function PatchesList({ initialPatches, followedGameIds = [], backlogGameI
                   </div>
 
                   <div className="flex items-center justify-between mt-3">
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs text-muted-foreground" suppressHydrationWarning>
                       {getRelativeTime(patch.published_at)}
                     </span>
                     <div className="flex items-center gap-2">

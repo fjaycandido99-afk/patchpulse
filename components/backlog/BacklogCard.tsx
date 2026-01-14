@@ -181,7 +181,7 @@ export function BacklogCard({
             {steamStats?.last_played_at && (
               <div className="flex items-center gap-1">
                 <Calendar className="h-3 w-3" />
-                <span>{formatLastPlayed(steamStats.last_played_at)}</span>
+                <span suppressHydrationWarning>{formatLastPlayed(steamStats.last_played_at)}</span>
               </div>
             )}
           </div>
@@ -194,7 +194,7 @@ export function BacklogCard({
             {latestPatch ? (
               <div className="flex items-center gap-1.5 text-xs text-blue-400/80 truncate">
                 <FileText className="h-3 w-3 flex-shrink-0" />
-                <span className="font-medium">{formatPatchDate(latestPatch.published_at)}</span>
+                <span className="font-medium" suppressHydrationWarning>{formatPatchDate(latestPatch.published_at)}</span>
                 {patchCount > 1 && (
                   <span className="text-muted-foreground/60">+{patchCount - 1} more</span>
                 )}

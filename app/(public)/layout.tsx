@@ -19,7 +19,7 @@ export default function PublicLayout({
       </main>
       <footer className="border-t border-border bg-card mt-auto">
         <div className="max-w-3xl mx-auto px-4 py-6 text-center text-sm text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} PatchPulse. All rights reserved.</p>
+          <p suppressHydrationWarning>&copy; {new Date().getFullYear()} PatchPulse. All rights reserved.</p>
           <div className="flex justify-center gap-4 mt-2">
             <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
             <Link href="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link>
