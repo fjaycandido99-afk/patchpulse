@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { signInWithEmail } from '../actions'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -17,7 +17,20 @@ const REMEMBER_EMAIL_KEY = 'patchpulse-remember-email'
 type LoginMode = 'biometric' | 'password'
 type PageMode = 'landing' | 'login'
 
+// Wrapper component with Suspense for useSearchParams
 export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center px-4">
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    }>
+      <LoginPageContent />
+    </Suspense>
+  )
+}
+
+function LoginPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
