@@ -97,17 +97,33 @@ export default function LandingPage() {
             PatchPulse tracks every update so you&apos;re never caught off guard.
           </p>
 
-          {/* CTA Buttons */}
-          <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
+          {/* App Store - Primary CTA */}
+          <div className="mt-10 flex justify-center">
+            <a
+              href="https://apps.apple.com/app/id6757092034"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block transition-all hover:scale-105"
+            >
+              <img
+                src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg"
+                alt="Download on the App Store"
+                className="h-14 sm:h-16"
+              />
+            </a>
+          </div>
+
+          {/* Secondary CTAs */}
+          <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
             <Link
               href="/signup"
-              className="inline-flex items-center justify-center rounded-xl bg-primary px-8 py-4 text-lg font-semibold text-primary-foreground transition-all hover:bg-primary/90 hover:scale-105 shadow-lg shadow-primary/25"
+              className="inline-flex items-center justify-center rounded-xl border-2 border-border bg-card px-6 py-3 text-base font-semibold transition-all hover:bg-accent hover:border-accent"
             >
-              Get Started Free
+              Use Web App
             </Link>
             <Link
               href="/login?guest=true"
-              className="inline-flex items-center justify-center rounded-xl border-2 border-border bg-card px-8 py-4 text-lg font-semibold transition-all hover:bg-accent hover:border-accent"
+              className="inline-flex items-center justify-center rounded-xl border-2 border-border bg-card px-6 py-3 text-base font-semibold transition-all hover:bg-accent hover:border-accent"
             >
               Try Without Account
             </Link>
@@ -203,9 +219,9 @@ export default function LandingPage() {
               <div className="w-12 h-12 rounded-full bg-primary text-primary-foreground text-xl font-bold flex items-center justify-center mx-auto mb-4">
                 1
               </div>
-              <h3 className="font-semibold mb-2">Sign Up Free</h3>
+              <h3 className="font-semibold mb-2">Download the App</h3>
               <p className="text-sm text-muted-foreground">
-                Create an account or try as guest
+                Free on the App Store
               </p>
             </div>
             <div className="text-center">
@@ -266,17 +282,24 @@ export default function LandingPage() {
             Join gamers who stay ahead of the meta
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              href="/signup"
-              className="inline-flex items-center justify-center rounded-xl bg-primary px-8 py-4 text-lg font-semibold text-primary-foreground transition-all hover:bg-primary/90 hover:scale-105 shadow-lg shadow-primary/25"
+          {/* App Store - Primary */}
+          <div className="flex justify-center mb-6">
+            <a
+              href="https://apps.apple.com/app/id6757092034"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block transition-all hover:scale-105"
             >
-              Get Started Free
-            </Link>
+              <img
+                src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg"
+                alt="Download on the App Store"
+                className="h-14"
+              />
+            </a>
           </div>
 
-          <p className="mt-6 text-sm text-muted-foreground">
-            No credit card required. Works on web, iOS, and Android.
+          <p className="text-sm text-muted-foreground">
+            Also available on <Link href="/signup" className="text-primary hover:underline">web</Link>
           </p>
         </div>
       </section>
