@@ -22,6 +22,14 @@ export default function LandingPage() {
 
     const checkAuth = async () => {
       try {
+        // CLEANUP: Remove old guest mode data from localStorage (we now use sessionStorage)
+        // This fixes users who had guest mode stuck from before the migration
+        const oldGuestValue = localStorage.getItem('patchpulse-guest')
+        if (oldGuestValue) {
+          localStorage.removeItem('patchpulse-guest')
+          document.cookie = 'patchpulse-guest=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+        }
+
         // Check for guest mode first (fastest check)
         // Use sessionStorage - guest mode shouldn't persist across browser sessions
         const isGuest = sessionStorage.getItem('patchpulse-guest') === 'true'

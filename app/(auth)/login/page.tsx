@@ -42,6 +42,14 @@ export default function LoginPage() {
   // Check for auto-login or first-time visitor
   useEffect(() => {
     const checkAutoLogin = async () => {
+      // CLEANUP: Remove old guest mode data from localStorage (we now use sessionStorage)
+      // This fixes users who had guest mode stuck from before the migration
+      const oldGuestValue = localStorage.getItem('patchpulse-guest')
+      if (oldGuestValue) {
+        localStorage.removeItem('patchpulse-guest')
+        document.cookie = 'patchpulse-guest=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+      }
+
       const supabase = createClient()
 
       // Check if native app (getSession hangs in WKWebView)

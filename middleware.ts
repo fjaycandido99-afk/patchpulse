@@ -71,6 +71,18 @@ export async function middleware(request: NextRequest) {
   // Get user session
   const { data: { user } } = await supabase.auth.getUser()
 
+  // If user has a valid session, clear any old guest cookies
+  // This ensures logged-in users don't accidentally get treated as guests
+  if (user) {
+    const guestCookie = request.cookies.get('patchpulse-guest')
+    if (guestCookie) {
+      response.cookies.set('patchpulse-guest', '', {
+        path: '/',
+        expires: new Date(0),
+      })
+    }
+  }
+
   // Check if accessing a protected route
   const isProtectedRoute = protectedRoutes.some(route =>
     pathname === route || pathname.startsWith(route + '/')
