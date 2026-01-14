@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 
 // Generic short URL: patchpulse.app/go
-export async function GET() {
+export default function GoRedirect() {
   redirect('/lp')
 }
