@@ -109,7 +109,8 @@ export function NativeAuthGuard({ children }: { children: React.ReactNode }) {
         }
 
         // No valid session found - check for guest mode as last resort
-        const isGuest = localStorage.getItem('patchpulse-guest') === 'true'
+        // Use sessionStorage (not localStorage) so guest mode doesn't persist across sessions
+        const isGuest = sessionStorage.getItem('patchpulse-guest') === 'true'
         if (isGuest) {
           setIsAuthed(true)
           setIsChecking(false)

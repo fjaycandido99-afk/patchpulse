@@ -18,24 +18,26 @@ export const GUEST_LIMITS = {
 export function isGuestMode(): boolean {
   if (typeof window === 'undefined') return false
   return document.cookie.includes(`${GUEST_COOKIE_NAME}=true`) ||
-         localStorage.getItem(GUEST_LOCALSTORAGE_KEY) === 'true'
+         sessionStorage.getItem(GUEST_LOCALSTORAGE_KEY) === 'true'
 }
 
 // Enable guest mode (client-side)
 export function enableGuestMode(): void {
   if (typeof window === 'undefined') return
-  // Set cookie for 30 days (for server-side checks)
-  const expires = new Date()
-  expires.setDate(expires.getDate() + 30)
-  document.cookie = `${GUEST_COOKIE_NAME}=true; path=/; expires=${expires.toUTCString()}`
-  // Also set localStorage (for client-side checks in native apps)
-  localStorage.setItem(GUEST_LOCALSTORAGE_KEY, 'true')
+  // Set session cookie (expires when browser closes) - guest mode should not persist
+  // This ensures users must explicitly choose guest mode each session
+  document.cookie = `${GUEST_COOKIE_NAME}=true; path=/`
+  // Also set sessionStorage instead of localStorage (for client-side checks in native apps)
+  // Using sessionStorage ensures guest mode doesn't persist across sessions
+  sessionStorage.setItem(GUEST_LOCALSTORAGE_KEY, 'true')
 }
 
 // Disable guest mode (client-side)
 export function disableGuestMode(): void {
   if (typeof window === 'undefined') return
   document.cookie = `${GUEST_COOKIE_NAME}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`
+  // Clear from both sessionStorage and localStorage (for backwards compatibility)
+  sessionStorage.removeItem(GUEST_LOCALSTORAGE_KEY)
   localStorage.removeItem(GUEST_LOCALSTORAGE_KEY)
 }
 

@@ -76,8 +76,8 @@ export default function LoginPage() {
         }
       }
 
-      // Check for guest mode
-      const isGuest = localStorage.getItem('patchpulse-guest') === 'true'
+      // Check for guest mode (use sessionStorage - guest mode shouldn't persist)
+      const isGuest = sessionStorage.getItem('patchpulse-guest') === 'true'
       if (isGuest) {
         router.replace('/home')
         return

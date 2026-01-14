@@ -23,7 +23,8 @@ export default function LandingPage() {
     const checkAuth = async () => {
       try {
         // Check for guest mode first (fastest check)
-        const isGuest = localStorage.getItem('patchpulse-guest') === 'true'
+        // Use sessionStorage - guest mode shouldn't persist across browser sessions
+        const isGuest = sessionStorage.getItem('patchpulse-guest') === 'true'
         if (isGuest) {
           router.replace('/home')
           return
