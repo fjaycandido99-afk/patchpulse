@@ -3,56 +3,37 @@
  * Verifies requests come from Vercel cron or have valid CRON_SECRET
  */
 export function verifyCronAuth(req: Request): boolean {
-  // Vercel automatically adds this header for scheduled cron jobs
+  // Vercel automatically sets x-vercel-cron header to "1" for scheduled cron jobs
+  // Only accept the exact value "1" - not any truthy value
   const vercelCron = req.headers.get('x-vercel-cron')
-  console.log('[CRON AUTH] x-vercel-cron header:', vercelCron)
-
-  // Check x-vercel-cron header (any truthy value)
-  if (vercelCron && vercelCron !== '0' && vercelCron !== 'false') {
-    console.log('[CRON AUTH] Authorized via Vercel cron header')
+  if (vercelCron === '1') {
     return true
   }
 
-  // Also check user-agent for Vercel cron
-  const userAgent = req.headers.get('user-agent') || ''
-  if (userAgent.toLowerCase().includes('vercel')) {
-    console.log('[CRON AUTH] Authorized via user-agent containing vercel')
-    return true
-  }
-
-  // On Vercel production, allow requests that look like internal cron calls
-  if (process.env.VERCEL === '1' && process.env.NODE_ENV === 'production') {
-    // Check if it's a serverless function calling another (internal request)
-    const host = req.headers.get('host') || ''
-    if (host.includes('vercel.app') || host.includes('patchpulse')) {
-      console.log('[CRON AUTH] Authorized as internal Vercel request')
-      return true
-    }
-  }
-
+  // Get CRON_SECRET from environment
   const cronSecretEnv = process.env.CRON_SECRET?.trim()
+  if (!cronSecretEnv) {
+    // No secret configured - deny all non-Vercel requests
+    return false
+  }
 
-  // Check Authorization header (Bearer token)
+  // Check Authorization header (Bearer token) - preferred method
   const authHeader = req.headers.get('authorization')
   if (authHeader) {
     const token = authHeader.replace('Bearer ', '').trim()
-    if (token === cronSecretEnv) {
+    if (token && token === cronSecretEnv) {
       return true
     }
   }
 
-  // Check x-cron-secret header
+  // Check x-cron-secret header - alternative method
   const cronSecret = req.headers.get('x-cron-secret')?.trim()
-  if (cronSecret === cronSecretEnv) {
+  if (cronSecret && cronSecret === cronSecretEnv) {
     return true
   }
 
-  // Check query param (for manual testing)
-  const url = new URL(req.url)
-  const querySecret = url.searchParams.get('secret')?.trim()
-  if (querySecret === cronSecretEnv) {
-    return true
-  }
+  // NOTE: Query param auth removed for security (secrets in URLs can be logged)
+  // Use Authorization header or x-cron-secret header instead
 
   return false
 }

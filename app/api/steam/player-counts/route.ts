@@ -1,7 +1,14 @@
 import { NextResponse } from 'next/server'
 import { getSteamPlayerCounts, formatPlayerCount } from '@/lib/fetchers/steam-stats'
+import { checkRateLimit, rateLimitResponse, RATE_LIMITS } from '@/lib/rate-limit'
 
 export async function GET(request: Request) {
+  // Rate limit: 30 requests per minute (calls external Steam API)
+  const rateLimit = checkRateLimit(request, RATE_LIMITS.standard)
+  if (!rateLimit.success) {
+    return rateLimitResponse(rateLimit)
+  }
+
   const { searchParams } = new URL(request.url)
   const appIdsParam = searchParams.get('appIds')
 

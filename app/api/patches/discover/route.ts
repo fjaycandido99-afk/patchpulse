@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { checkRateLimit, rateLimitResponse, RATE_LIMITS } from '@/lib/rate-limit'
 
 type Patch = {
   id: string
@@ -22,6 +23,12 @@ type DiscoverPatchesStats = {
 
 // GET /api/patches/discover - Fetch patches from games the user does NOT follow
 export async function GET(request: Request) {
+  // Rate limit: 30 requests per minute
+  const rateLimit = checkRateLimit(request, RATE_LIMITS.standard)
+  if (!rateLimit.success) {
+    return rateLimitResponse(rateLimit)
+  }
+
   const supabase = await createClient()
   const { searchParams } = new URL(request.url)
   const limit = parseInt(searchParams.get('limit') || '10')
