@@ -97,7 +97,6 @@ export function ToastProvider({ children, userId }: Props) {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       (window as unknown as { testToast: () => void }).testToast = testToast
-      console.log('[ToastProvider] Test toast available via window.testToast()')
     }
   }, [testToast])
 
@@ -185,8 +184,6 @@ export function ToastProvider({ children, userId }: Props) {
   useEffect(() => {
     const supabase = createClient()
 
-    console.log('[ToastProvider] Setting up realtime subscriptions...')
-
     // Single channel for all content subscriptions
     const channel = supabase
       .channel('live-content-updates')
@@ -199,7 +196,6 @@ export function ToastProvider({ children, userId }: Props) {
           table: 'patch_notes',
         },
         async (payload) => {
-          console.log('[ToastProvider] New patch detected:', payload.new)
           const patch = payload.new as { id: string; game_id: string; title: string; impact_score?: number }
 
           // Fetch game data
@@ -240,7 +236,6 @@ export function ToastProvider({ children, userId }: Props) {
           table: 'news_items',
         },
         async (payload) => {
-          console.log('[ToastProvider] New news detected:', payload.new)
           const news = payload.new as { id: string; game_id: string | null; title: string; source_name?: string }
 
           // Fetch game data if exists
@@ -281,7 +276,6 @@ export function ToastProvider({ children, userId }: Props) {
           table: 'notifications',
         },
         async (payload) => {
-          console.log('[ToastProvider] Received notification:', payload.new)
           const notification = payload.new as ToastNotification
 
           // Filter client-side for this user
@@ -306,27 +300,19 @@ export function ToastProvider({ children, userId }: Props) {
         }
       )
       .subscribe((status, err) => {
-        console.log('[ToastProvider] Subscription status:', status)
-        if (err) {
-          console.error('[ToastProvider] Subscription error:', err)
-        }
         if (status === 'SUBSCRIBED') {
           setIsSubscribed(true)
-          console.log('[ToastProvider] Successfully subscribed to all content updates')
         } else if (status === 'CHANNEL_ERROR') {
-          console.error('[ToastProvider] Channel error:', err)
+          // Realtime not available - app still works, just no live toasts
+          // This can happen if realtime is not enabled for tables in Supabase
+          console.warn('[ToastProvider] Realtime unavailable - live notifications disabled')
         } else if (status === 'TIMED_OUT') {
-          console.error('[ToastProvider] Subscription timed out')
-        } else if (status === 'CLOSED') {
-          console.log('[ToastProvider] Channel closed')
+          console.warn('[ToastProvider] Realtime connection timed out')
         }
+        // Don't log CLOSED status - it's normal during cleanup
       })
 
-    // Log channel state for debugging
-    console.log('[ToastProvider] Channel created, waiting for subscription...')
-
     return () => {
-      console.log('[ToastProvider] Cleaning up subscriptions')
       supabase.removeChannel(channel)
       setIsSubscribed(false)
     }
