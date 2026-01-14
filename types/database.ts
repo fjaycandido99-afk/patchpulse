@@ -48,6 +48,7 @@ export interface Database {
           name: string
           slug: string
           cover_url: string | null
+          hero_url: string | null
           platforms: string[]
           release_date: string | null
           created_at: string
@@ -57,6 +58,7 @@ export interface Database {
           name: string
           slug: string
           cover_url?: string | null
+          hero_url?: string | null
           platforms?: string[]
           release_date?: string | null
           created_at?: string
@@ -66,6 +68,7 @@ export interface Database {
           name?: string
           slug?: string
           cover_url?: string | null
+          hero_url?: string | null
           platforms?: string[]
           release_date?: string | null
           created_at?: string

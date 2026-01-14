@@ -73,6 +73,9 @@ type StoreLink = {
   icon: React.ComponentType<{ className?: string }>
 }
 
+// Riot Games titles (not on Steam)
+const RIOT_GAMES = ['valorant', 'league of legends', 'teamfight tactics', 'legends of runeterra', 'wild rift']
+
 export function getStoreLinks(
   gameName: string,
   platforms: string[] = [],
@@ -80,9 +83,22 @@ export function getStoreLinks(
 ): StoreLink[] {
   const encodedName = encodeURIComponent(gameName)
   const platformLower = platforms.map(p => p.toLowerCase()).join(' ')
+  const gameNameLower = gameName.toLowerCase()
   const links: StoreLink[] = []
 
-  if (platformLower.includes('pc') || platformLower.includes('steam') || platformLower.includes('windows') || platforms.length === 0) {
+  // Check if this is a Riot Games title
+  const isRiotGame = RIOT_GAMES.some(riotGame => gameNameLower.includes(riotGame))
+
+  if (isRiotGame) {
+    // Riot games use the Riot Client, not Steam
+    links.push({
+      platform: 'riot',
+      url: 'https://www.riotgames.com/',
+      label: 'Riot Games',
+      color: 'bg-[#d13639] hover:bg-[#b52d30]',
+      icon: RiotIcon,
+    })
+  } else if (platformLower.includes('pc') || platformLower.includes('steam') || platformLower.includes('windows') || platforms.length === 0) {
     links.push({
       platform: 'steam',
       url: steamAppId
@@ -124,8 +140,8 @@ export function getStoreLinks(
     })
   }
 
-  // Default to Steam if no platforms
-  if (links.length === 0) {
+  // Default to Steam if no platforms (but not for Riot games)
+  if (links.length === 0 && !isRiotGame) {
     links.push({
       platform: 'steam',
       url: `https://store.steampowered.com/search/?term=${encodedName}`,
