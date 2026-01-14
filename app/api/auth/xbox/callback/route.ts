@@ -8,7 +8,12 @@ type XboxProfile = {
   avatarUrl: string | null
 }
 
-async function exchangeCodeForToken(code: string, redirectUri: string): Promise<string> {
+type MicrosoftTokens = {
+  access_token: string
+  refresh_token: string
+}
+
+async function exchangeCodeForToken(code: string, redirectUri: string): Promise<MicrosoftTokens> {
   const clientId = process.env.XBOX_CLIENT_ID!
   const clientSecret = process.env.XBOX_CLIENT_SECRET!
 
@@ -30,7 +35,10 @@ async function exchangeCodeForToken(code: string, redirectUri: string): Promise<
   }
 
   const data = await response.json()
-  return data.access_token
+  return {
+    access_token: data.access_token,
+    refresh_token: data.refresh_token,
+  }
 }
 
 async function getXboxUserToken(microsoftToken: string): Promise<string> {
@@ -141,11 +149,11 @@ export async function GET(request: Request) {
   }
 
   try {
-    // Step 1: Exchange code for Microsoft token
-    const microsoftToken = await exchangeCodeForToken(code, callbackUrl)
+    // Step 1: Exchange code for Microsoft tokens (access + refresh)
+    const microsoftTokens = await exchangeCodeForToken(code, callbackUrl)
 
     // Step 2: Get Xbox user token
-    const userToken = await getXboxUserToken(microsoftToken)
+    const userToken = await getXboxUserToken(microsoftTokens.access_token)
 
     // Step 3: Get XSTS token with user info
     const xsts = await getXstsToken(userToken)
@@ -191,7 +199,8 @@ export async function GET(request: Request) {
         external_user_id: xsts.xuid,
         display_name: displayName,
         avatar_url: avatarUrl,
-        access_token: xsts.token, // Store for API calls
+        access_token: microsoftTokens.access_token, // Microsoft OAuth token for Xbox auth
+        refresh_token: microsoftTokens.refresh_token, // For token refresh
         updated_at: new Date().toISOString(),
       }, {
         onConflict: 'user_id,provider',

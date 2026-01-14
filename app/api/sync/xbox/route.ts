@@ -59,6 +59,58 @@ async function refreshXboxToken(
   }
 }
 
+// Get Xbox Live user token from Microsoft OAuth token
+async function getXboxUserToken(accessToken: string): Promise<string | null> {
+  const response = await fetch('https://user.auth.xboxlive.com/user/authenticate', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-xbl-contract-version': '1',
+    },
+    body: JSON.stringify({
+      RelyingParty: 'http://auth.xboxlive.com',
+      TokenType: 'JWT',
+      Properties: {
+        AuthMethod: 'RPS',
+        SiteName: 'user.auth.xboxlive.com',
+        RpsTicket: `d=${accessToken}`,
+      },
+    }),
+  })
+
+  if (!response.ok) return null
+
+  const data = await response.json()
+  return data.Token
+}
+
+// Get XSTS token from Xbox user token
+async function getXstsToken(userToken: string): Promise<{ token: string; userHash: string } | null> {
+  const response = await fetch('https://xsts.auth.xboxlive.com/xsts/authorize', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-xbl-contract-version': '1',
+    },
+    body: JSON.stringify({
+      RelyingParty: 'http://xboxlive.com',
+      TokenType: 'JWT',
+      Properties: {
+        SandboxId: 'RETAIL',
+        UserTokens: [userToken],
+      },
+    }),
+  })
+
+  if (!response.ok) return null
+
+  const data = await response.json()
+  return {
+    token: data.Token,
+    userHash: data.DisplayClaims?.xui?.[0]?.uhs || '',
+  }
+}
+
 export async function GET() {
   const returnUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
@@ -90,72 +142,34 @@ export async function GET() {
   }
 
   try {
-    // Get Xbox Live user token
-    const userTokenResponse = await fetch('https://user.auth.xboxlive.com/user/authenticate', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-xbl-contract-version': '1',
-      },
-      body: JSON.stringify({
-        RelyingParty: 'http://auth.xboxlive.com',
-        TokenType: 'JWT',
-        Properties: {
-          AuthMethod: 'RPS',
-          SiteName: 'user.auth.xboxlive.com',
-          RpsTicket: `d=${accessToken}`,
-        },
-      }),
-    })
+    // Try to get Xbox user token
+    let userToken = await getXboxUserToken(accessToken)
 
-    if (!userTokenResponse.ok) {
-      // Token expired, try to refresh
-      if (xboxAccount.refresh_token) {
-        const newToken = await refreshXboxToken(supabase, user.id, xboxAccount.refresh_token)
-        if (newToken) {
-          accessToken = newToken
-        } else {
-          return NextResponse.redirect(`${returnUrl}/profile?error=xbox_reauth_required`)
-        }
-      } else {
-        return NextResponse.redirect(`${returnUrl}/profile?error=xbox_reauth_required`)
+    // If failed, try refreshing the Microsoft OAuth token
+    if (!userToken && xboxAccount.refresh_token) {
+      const newToken = await refreshXboxToken(supabase, user.id, xboxAccount.refresh_token)
+      if (newToken) {
+        accessToken = newToken
+        userToken = await getXboxUserToken(accessToken)
       }
     }
 
-    const userTokenData = await userTokenResponse.json()
-    const userToken = userTokenData.Token
-
-    // Get XSTS token
-    const xstsResponse = await fetch('https://xsts.auth.xboxlive.com/xsts/authorize', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-xbl-contract-version': '1',
-      },
-      body: JSON.stringify({
-        RelyingParty: 'http://xboxlive.com',
-        TokenType: 'JWT',
-        Properties: {
-          SandboxId: 'RETAIL',
-          UserTokens: [userToken],
-        },
-      }),
-    })
-
-    if (!xstsResponse.ok) {
-      throw new Error('Failed to get XSTS token')
+    if (!userToken) {
+      return NextResponse.redirect(`${returnUrl}/profile?error=xbox_reauth_required`)
     }
 
-    const xstsData = await xstsResponse.json()
-    const xstsToken = xstsData.Token
-    const userHash = xstsData.DisplayClaims?.xui?.[0]?.uhs || ''
+    // Get XSTS token
+    const xsts = await getXstsToken(userToken)
+    if (!xsts) {
+      throw new Error('Failed to get XSTS token')
+    }
 
     // Fetch title history (games played)
     const gamesResponse = await fetch(
       `https://titlehub.xboxlive.com/users/xuid(${xuid})/titles/titlehistory/decoration/achievement,image`,
       {
         headers: {
-          'Authorization': `XBL3.0 x=${userHash};${xstsToken}`,
+          'Authorization': `XBL3.0 x=${xsts.userHash};${xsts.token}`,
           'x-xbl-contract-version': '2',
           'Accept-Language': 'en-US',
         },
