@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { signInWithEmail } from '../actions'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { BiometricLogin } from '@/components/auth/BiometricLogin'
 import { BiometricPrompt } from '@/components/auth/BiometricPrompt'
 import { hasStoredCredential, checkBiometricAvailable } from '@/lib/biometric'
@@ -19,6 +19,7 @@ type PageMode = 'landing' | 'login'
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -42,6 +43,14 @@ export default function LoginPage() {
   // Check for auto-login or first-time visitor
   useEffect(() => {
     const checkAutoLogin = async () => {
+      // Handle ?guest=true from landing page - immediately enable guest mode
+      if (searchParams.get('guest') === 'true') {
+        localStorage.setItem(HAS_VISITED_KEY, 'true')
+        enableGuestMode()
+        router.replace('/home')
+        return
+      }
+
       // CLEANUP: Remove old guest mode data from localStorage (we now use sessionStorage)
       // This fixes users who had guest mode stuck from before the migration
       const oldGuestValue = localStorage.getItem('patchpulse-guest')
@@ -111,7 +120,7 @@ export default function LoginPage() {
     }
 
     checkAutoLogin()
-  }, [router])
+  }, [router, searchParams])
 
   // Mark as visited when they proceed to login
   const markAsVisited = () => {
