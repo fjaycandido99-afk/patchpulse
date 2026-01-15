@@ -19,14 +19,14 @@ export function LogoutButton() {
       localStorage.removeItem('patchpulse-biometric')
       localStorage.removeItem('patchpulse-was-verified')
       sessionStorage.removeItem('patchpulse-guest')
-      // Clear was-verified cookie
+      // Clear all auth cookies
       document.cookie = 'patchpulse-was-verified=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
       document.cookie = 'patchpulse-guest=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
-      router.push('/login')
-      router.refresh()
+      document.cookie = 'patchpulse-native-app=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+      // Hard redirect to ensure full page refresh
+      window.location.href = '/login'
     } catch (error) {
       console.error('Logout failed:', error)
-    } finally {
       setIsLoading(false)
     }
   }
@@ -41,14 +41,14 @@ export function LogoutButton() {
       localStorage.removeItem('patchpulse-biometric')
       localStorage.removeItem('patchpulse-was-verified')
       sessionStorage.removeItem('patchpulse-guest')
-      // Clear was-verified cookie
+      // Clear all auth cookies
       document.cookie = 'patchpulse-was-verified=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
       document.cookie = 'patchpulse-guest=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
-      router.push('/login')
-      router.refresh()
+      document.cookie = 'patchpulse-native-app=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+      // Hard redirect to ensure full page refresh
+      window.location.href = '/login'
     } catch (error) {
       console.error('Switch user failed:', error)
-    } finally {
       setIsLoading(false)
     }
   }
