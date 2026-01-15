@@ -97,7 +97,7 @@ export default async function HomePage() {
         {/* Your Patches - Cycling through all patches */}
         {patchesResult.items.length > 0 && (
           <section className="space-y-4 px-4 md:px-0">
-            <SectionHeader title="Your Patches" href="/patches" glowLine />
+            <SectionHeader title="Your Patches" href="/patches?filter=your_patches" badge={patchesResult.total} glowLine />
             <CyclingPatches patches={patchesResult.items} visibleCount={6} cycleInterval={4000} />
           </section>
         )}

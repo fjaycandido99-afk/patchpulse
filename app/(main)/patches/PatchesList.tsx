@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useTransition, useMemo } from 'react'
+import { useState, useTransition, useMemo, useEffect } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { FileText, ChevronRight, Flame, Filter, Plus, Loader2, Check } from 'lucide-react'
@@ -60,12 +61,32 @@ type Props = {
 }
 
 export function PatchesList({ initialPatches, followedGameIds = [], backlogGameIds = [] }: Props) {
+  const searchParams = useSearchParams()
+  const router = useRouter()
   const [patches] = useState(initialPatches)
-  const [filter, setFilter] = useState<FilterType>('all')
+
+  // Get initial filter from URL or default to 'all'
+  const urlFilter = searchParams.get('filter') as FilterType | null
+  const [filter, setFilter] = useState<FilterType>(
+    urlFilter && ['all', 'your_patches', 'high_impact', 'recent'].includes(urlFilter) ? urlFilter : 'all'
+  )
+
   const [followedIds, setFollowedIds] = useState<Set<string>>(new Set(followedGameIds))
   const yourGameIds = useMemo(() => new Set([...followedGameIds, ...backlogGameIds]), [followedGameIds, backlogGameIds])
   const [pendingGameId, setPendingGameId] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+
+  // Update URL when filter changes
+  const handleFilterChange = (newFilter: FilterType) => {
+    setFilter(newFilter)
+    const params = new URLSearchParams(searchParams.toString())
+    if (newFilter === 'all') {
+      params.delete('filter')
+    } else {
+      params.set('filter', newFilter)
+    }
+    router.replace(`/patches${params.toString() ? `?${params.toString()}` : ''}`, { scroll: false })
+  }
 
   async function handleFollow(gameId: string, e: React.MouseEvent) {
     e.preventDefault()
@@ -113,7 +134,7 @@ export function PatchesList({ initialPatches, followedGameIds = [], backlogGameI
         {filters.map(f => (
           <button
             key={f.id}
-            onClick={() => setFilter(f.id)}
+            onClick={() => handleFilterChange(f.id)}
             className={`px-3 py-1.5 text-sm font-medium rounded-lg whitespace-nowrap transition-colors ${
               filter === f.id
                 ? 'bg-primary text-primary-foreground'
@@ -141,7 +162,7 @@ export function PatchesList({ initialPatches, followedGameIds = [], backlogGameI
             </p>
             {filter !== 'all' && (
               <button
-                onClick={() => setFilter('all')}
+                onClick={() => handleFilterChange('all')}
                 className="mt-4 px-4 py-2 text-sm font-medium text-primary bg-primary/10 rounded-lg hover:bg-primary/20"
               >
                 View all patches
