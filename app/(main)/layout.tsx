@@ -22,6 +22,7 @@ import { KeyboardShortcuts, KeyboardHint } from '@/components/keyboard'
 import { PushNotificationInit } from '@/components/notifications/PushNotificationInit'
 import { MobileHeader } from '@/components/layout/MobileHeader'
 import { NativeAuthGuard } from '@/components/auth/NativeAuthGuard'
+import { SessionKeeper } from '@/components/auth/SessionKeeper'
 import { OfflineIndicator } from '@/components/ui/OfflineIndicator'
 
 export default async function MainLayout({
@@ -101,6 +102,7 @@ export default async function MainLayout({
 
   return (
     <NativeAuthGuard>
+      <SessionKeeper />
       <GuestProvider initialIsGuest={isGuest}>
         <ToastProvider userId={userId}>
           <ToastUIProvider>

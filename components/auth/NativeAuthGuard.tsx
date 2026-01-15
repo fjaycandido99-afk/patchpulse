@@ -20,6 +20,8 @@ export function NativeAuthGuard({ children }: { children: React.ReactNode }) {
   const clearAuthAndRedirect = useCallback(() => {
     localStorage.removeItem('patchpulse-auth')
     localStorage.removeItem('patchpulse-biometric')
+    localStorage.removeItem('patchpulse-was-verified')
+    sessionStorage.removeItem('patchpulse-guest')
     setIsAuthed(false)
     setIsChecking(false)
     router.replace('/login')
@@ -74,6 +76,8 @@ export function NativeAuthGuard({ children }: { children: React.ReactNode }) {
                   refresh_token: data.session.refresh_token,
                   expires_at: data.session.expires_at,
                 }))
+                // Mark user as verified so they don't fall back to guest on session expiry
+                localStorage.setItem('patchpulse-was-verified', 'true')
                 setIsAuthed(true)
                 setIsChecking(false)
                 return
@@ -106,6 +110,8 @@ export function NativeAuthGuard({ children }: { children: React.ReactNode }) {
                   refresh_token: data.session.refresh_token,
                   expires_at: data.session.expires_at,
                 }))
+                // Mark user as verified so they don't fall back to guest on session expiry
+                localStorage.setItem('patchpulse-was-verified', 'true')
                 setIsAuthed(true)
                 setIsChecking(false)
                 return
@@ -117,7 +123,19 @@ export function NativeAuthGuard({ children }: { children: React.ReactNode }) {
           }
         }
 
-        // No valid session found - check for guest mode as last resort
+        // Check if user was previously verified (had a real account)
+        // If so, they should sign in again, not fall back to guest mode
+        const wasVerified = localStorage.getItem('patchpulse-was-verified') === 'true'
+        if (wasVerified) {
+          // Previously verified user - clear the marker and redirect to login
+          console.log('Previously verified user, redirecting to login')
+          localStorage.removeItem('patchpulse-was-verified')
+          sessionStorage.removeItem('patchpulse-guest')
+          clearAuthAndRedirect()
+          return
+        }
+
+        // No valid session found - check for guest mode as last resort (only for never-verified users)
         // Use sessionStorage (not localStorage) so guest mode doesn't persist across sessions
         const isGuest = sessionStorage.getItem('patchpulse-guest') === 'true'
         if (isGuest) {

@@ -22,6 +22,8 @@ export function createClient() {
     return createBrowserClient(supabaseUrl, supabaseAnonKey, {
       auth: {
         persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
         storageKey: 'patchpulse-auth',
         storage: {
           getItem: (key: string) => {
@@ -43,5 +45,12 @@ export function createClient() {
     })
   }
 
-  return createBrowserClient(supabaseUrl, supabaseAnonKey)
+  // Web browser client with auto-refresh enabled
+  return createBrowserClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: true,
+    },
+  })
 }

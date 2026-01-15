@@ -97,6 +97,8 @@ function LoginPageContent() {
               refresh_token: parsed.refresh_token,
             })
             if (data?.session && !error) {
+              // Mark user as verified on successful session restore
+              localStorage.setItem('patchpulse-was-verified', 'true')
               router.replace('/home')
               return
             }
@@ -170,6 +172,9 @@ function LoginPageContent() {
         refresh_token: result.session.refresh_token,
       }))
     }
+
+    // Mark user as verified so they don't fall back to guest on session expiry
+    localStorage.setItem('patchpulse-was-verified', 'true')
 
     // Go straight to home
     router.push('/home')
@@ -381,7 +386,7 @@ function LoginPageContent() {
                   </div>
                 </div>
 
-                {/* Remember Email Checkbox */}
+                {/* Remember Me Checkbox */}
                 <label className="flex items-center gap-2 cursor-pointer select-none">
                   <input
                     type="checkbox"
@@ -389,7 +394,7 @@ function LoginPageContent() {
                     onChange={(e) => setRememberEmail(e.target.checked)}
                     className="w-4 h-4 rounded border-input bg-background text-primary focus:ring-2 focus:ring-ring focus:ring-offset-0 cursor-pointer"
                   />
-                  <span className="text-sm text-muted-foreground">Remember my email</span>
+                  <span className="text-sm text-muted-foreground">Remember me</span>
                 </label>
               </div>
 

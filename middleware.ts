@@ -71,7 +71,7 @@ export async function middleware(request: NextRequest) {
   // Get user session
   const { data: { user } } = await supabase.auth.getUser()
 
-  // If user has a valid session, clear any old guest cookies
+  // If user has a valid session, clear any old guest cookies and mark them as "was verified"
   // This ensures logged-in users don't accidentally get treated as guests
   if (user) {
     const guestCookie = request.cookies.get('patchpulse-guest')
@@ -79,6 +79,16 @@ export async function middleware(request: NextRequest) {
       response.cookies.set('patchpulse-guest', '', {
         path: '/',
         expires: new Date(0),
+      })
+    }
+    // Set a marker that this user was authenticated (used to prevent guest fallback on session expiry)
+    const wasVerified = request.cookies.get('patchpulse-was-verified')
+    if (!wasVerified) {
+      response.cookies.set('patchpulse-was-verified', 'true', {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24 * 365, // 1 year
       })
     }
   }
@@ -107,7 +117,30 @@ export async function middleware(request: NextRequest) {
 
   // For web: redirect to login if accessing protected route without session
   if (!user && isProtectedRoute && !isNativeApp) {
-    // Check for guest mode cookie
+    // Check if user was previously verified - if so, they should sign in again, not fall back to guest
+    const wasVerified = request.cookies.get('patchpulse-was-verified')
+    if (wasVerified) {
+      // Previously authenticated user - clear the was-verified cookie and redirect to login
+      const redirectResponse = NextResponse.redirect(new URL('/login', request.url))
+      redirectResponse.cookies.set('patchpulse-was-verified', '', {
+        path: '/',
+        expires: new Date(0),
+      })
+      // Also clear any stale guest cookies
+      redirectResponse.cookies.set('patchpulse-guest', '', {
+        path: '/',
+        expires: new Date(0),
+      })
+      // Copy any Supabase cookies that were set
+      response.cookies.getAll().forEach(cookie => {
+        if (cookie.name.startsWith('sb-')) {
+          redirectResponse.cookies.set(cookie.name, cookie.value)
+        }
+      })
+      return redirectResponse
+    }
+
+    // Check for guest mode cookie (only for users who were never verified)
     const guestCookie = request.cookies.get('patchpulse-guest')
     if (!guestCookie) {
       return NextResponse.redirect(new URL('/login', request.url))
@@ -116,7 +149,14 @@ export async function middleware(request: NextRequest) {
 
   // Redirect to home if accessing auth routes while logged in
   if (user && isAuthRoute) {
-    return NextResponse.redirect(new URL('/home', request.url))
+    const redirectResponse = NextResponse.redirect(new URL('/home', request.url))
+    // Copy Supabase cookies (including refreshed tokens) to redirect response
+    response.cookies.getAll().forEach(cookie => {
+      if (cookie.name.startsWith('sb-') || cookie.name.startsWith('patchpulse-')) {
+        redirectResponse.cookies.set(cookie.name, cookie.value)
+      }
+    })
+    return redirectResponse
   }
 
   return response

@@ -14,6 +14,14 @@ export function LogoutButton() {
     try {
       const supabase = createClient()
       await supabase.auth.signOut()
+      // Clear all auth-related local storage and cookies
+      localStorage.removeItem('patchpulse-auth')
+      localStorage.removeItem('patchpulse-biometric')
+      localStorage.removeItem('patchpulse-was-verified')
+      sessionStorage.removeItem('patchpulse-guest')
+      // Clear was-verified cookie
+      document.cookie = 'patchpulse-was-verified=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+      document.cookie = 'patchpulse-guest=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
       router.push('/login')
       router.refresh()
     } catch (error) {
@@ -28,6 +36,14 @@ export function LogoutButton() {
     try {
       const supabase = createClient()
       await supabase.auth.signOut()
+      // Clear all auth-related local storage and cookies
+      localStorage.removeItem('patchpulse-auth')
+      localStorage.removeItem('patchpulse-biometric')
+      localStorage.removeItem('patchpulse-was-verified')
+      sessionStorage.removeItem('patchpulse-guest')
+      // Clear was-verified cookie
+      document.cookie = 'patchpulse-was-verified=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+      document.cookie = 'patchpulse-guest=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
       router.push('/login')
       router.refresh()
     } catch (error) {

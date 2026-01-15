@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
+import { cookies } from 'next/headers'
 
 export async function signInWithEmail(email: string, password: string) {
   const supabase = await createClient()
@@ -57,6 +58,17 @@ export async function signOut() {
   if (error) {
     return { error: error.message }
   }
+
+  // Clear was-verified and guest cookies on logout
+  const cookieStore = await cookies()
+  cookieStore.set('patchpulse-was-verified', '', {
+    path: '/',
+    expires: new Date(0),
+  })
+  cookieStore.set('patchpulse-guest', '', {
+    path: '/',
+    expires: new Date(0),
+  })
 
   revalidatePath('/', 'layout')
   redirect('/login')
