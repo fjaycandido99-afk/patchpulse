@@ -25,7 +25,8 @@ export async function registerPushNotifications(): Promise<PushSubscription | nu
   }
 
   try {
-    // Get service worker registration
+    // Wait for the main service worker to be ready
+    // Push handlers are injected into sw.js during build
     const registration = await navigator.serviceWorker.ready
 
     // Check existing subscription

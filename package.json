@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build && node scripts/inject-push-handlers.js",
     "start": "next start",
     "lint": "next lint",
     "cap:init": "mkdir -p out && cap sync",

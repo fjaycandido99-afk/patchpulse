@@ -9,15 +9,23 @@ let vapidConfigured = false
 function configureWebPush() {
   if (vapidConfigured) return true
 
-  // Strip padding (=) from keys for URL-safe Base64
-  const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY?.replace(/=/g, '')
-  const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY?.replace(/=/g, '')
+  // Strip padding and any whitespace/quotes from VAPID keys
+  const rawPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || ''
+  const rawPrivateKey = process.env.VAPID_PRIVATE_KEY || ''
+
+  const VAPID_PUBLIC_KEY = rawPublicKey.trim().replace(/[="'\s]/g, '')
+  const VAPID_PRIVATE_KEY = rawPrivateKey.trim().replace(/[="'\s]/g, '')
   const VAPID_SUBJECT = process.env.VAPID_SUBJECT || 'mailto:hello@patchpulse.app'
 
   if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
-    webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY)
-    vapidConfigured = true
-    return true
+    try {
+      webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY)
+      vapidConfigured = true
+      return true
+    } catch (error) {
+      console.error('Failed to configure VAPID:', error)
+      return false
+    }
   }
   return false
 }

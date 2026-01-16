@@ -5,8 +5,8 @@ const withPWA = require('@ducanh2912/next-pwa').default({
   disable: process.env.NODE_ENV === 'development',
   register: true,
   skipWaiting: true,
-  customWorkerSrc: 'worker',
-  customWorkerDest: 'public',
+  // Note: Push notification handlers are injected via scripts/inject-push-handlers.js
+  // which runs after next build (see package.json build script)
 })
 
 /** @type {import('next').NextConfig} */

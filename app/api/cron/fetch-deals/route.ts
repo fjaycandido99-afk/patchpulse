@@ -318,8 +318,11 @@ export async function GET(req: Request) {
             if (matchedUsers.length === 0) {
               const dealTitleLower = deal.title.toLowerCase()
               for (const [key, users] of gameToUsers.entries()) {
-                if (dealTitleLower.includes(key) || key.includes(dealTitleLower)) {
-                  matchedUsers = [...matchedUsers, ...users]
+                // Only do string matching for name keys (skip numeric steam_app_id keys)
+                if (typeof key === 'string' && !/^\d+$/.test(key)) {
+                  if (dealTitleLower.includes(key) || key.includes(dealTitleLower)) {
+                    matchedUsers = [...matchedUsers, ...users]
+                  }
                 }
               }
             }

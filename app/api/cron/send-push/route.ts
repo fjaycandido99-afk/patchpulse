@@ -19,15 +19,26 @@ function getSupabase() {
 function configureVapid(): boolean {
   if (vapidConfigured) return true
 
-  const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY?.replace(/=/g, '')
-  const privateKey = process.env.VAPID_PRIVATE_KEY?.replace(/=/g, '')
+  // Strip padding and any whitespace/quotes from VAPID keys
+  const rawPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || ''
+  const rawPrivateKey = process.env.VAPID_PRIVATE_KEY || ''
+
+  const publicKey = rawPublicKey.trim().replace(/[="'\s]/g, '')
+  const privateKey = rawPrivateKey.trim().replace(/[="'\s]/g, '')
   const subject = process.env.VAPID_SUBJECT || 'mailto:hello@patchpulse.app'
 
   if (publicKey && privateKey) {
-    webpush.setVapidDetails(subject, publicKey, privateKey)
-    vapidConfigured = true
-    return true
+    try {
+      webpush.setVapidDetails(subject, publicKey, privateKey)
+      vapidConfigured = true
+      return true
+    } catch (error) {
+      console.error('Failed to configure VAPID:', error)
+      console.error('Public key length:', publicKey.length, 'Private key length:', privateKey.length)
+      return false
+    }
   }
+  console.error('VAPID keys not found in environment')
   return false
 }
 
