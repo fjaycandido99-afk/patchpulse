@@ -56,9 +56,9 @@ export function ToastUIProvider({ children }: { children: ReactNode }) {
     <ToastContext.Provider value={{ toast }}>
       {children}
 
-      {/* Toast container */}
+      {/* Toast container - show max 3 on screen */}
       <div className="fixed top-4 right-4 z-[200] flex flex-col gap-2 pointer-events-none">
-        {toasts.map((t) => (
+        {toasts.slice(0, 3).map((t) => (
           <div
             key={t.id}
             className={`pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl border shadow-lg backdrop-blur-sm animate-in slide-in-from-right duration-200 ${
