@@ -173,6 +173,7 @@ export async function searchGameVideos(
       order: orderBy,
       publishedAfter: publishedAfter.toISOString(),
       videoCategoryId: '20', // Gaming category
+      relevanceLanguage: 'en', // English videos only
       key: apiKey,
     })
 
@@ -429,6 +430,7 @@ export async function fetchViralGamingVideos(): Promise<{ success: boolean; adde
         videoDuration: 'short', // Short videos for clips
         publishedAfter: oneMonthAgo.toISOString(),
         videoCategoryId: '20', // Gaming category
+        relevanceLanguage: 'en', // English videos only
         key: apiKey,
       })
 
@@ -537,6 +539,7 @@ export async function fetchOfficialTrailers(): Promise<{ success: boolean; added
         order: 'date',
         publishedAfter: twoWeeksAgo.toISOString(),
         videoCategoryId: '20', // Gaming category
+        relevanceLanguage: 'en', // English videos only
         // Don't filter by duration - trailers can be 1-5 min
         key: apiKey,
       })
