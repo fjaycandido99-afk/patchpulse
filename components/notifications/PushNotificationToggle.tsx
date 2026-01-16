@@ -73,8 +73,17 @@ export function PushNotificationToggle() {
           const result = await registerNativePush()
           if (result.success) {
             setStatus('enabled')
-          } else if (result.error?.includes('denied')) {
+          } else if (result.error?.toLowerCase().includes('denied')) {
             setStatus('denied')
+          } else if (result.error?.toLowerCase().includes('timeout')) {
+            // Timeout usually means push notifications aren't properly configured
+            // or the app needs push notification entitlements
+            console.error('Push registration timeout:', result.error)
+            alert('Push notification setup timed out. Please check that notifications are enabled in iOS Settings > PatchPulse.')
+            setStatus('disabled')
+          } else {
+            console.error('Push registration failed:', result.error)
+            setStatus('disabled')
           }
         }
       } else {

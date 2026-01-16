@@ -65,42 +65,57 @@ export async function registerNativePush(): Promise<{
     const PushNotifications = await getPushNotifications()
 
     // Request permission first
+    console.log('[Push] Requesting permission...')
     const hasPermission = await requestNativePushPermission()
     if (!hasPermission) {
+      console.log('[Push] Permission denied')
       return { success: false, error: 'Permission denied' }
     }
+    console.log('[Push] Permission granted, registering with APNs...')
 
     // Register with APNs/FCM
     await PushNotifications.register()
+    console.log('[Push] Register called, waiting for token...')
 
     // Wait for registration event
     return new Promise((resolve) => {
+      let resolved = false
+
       // Success - got token
       PushNotifications.addListener('registration', async (token) => {
-        console.log('Push registration success, token:', token.value)
+        if (resolved) return
+        resolved = true
+        console.log('[Push] Got token:', token.value?.substring(0, 20) + '...')
 
         // Save token to backend
         try {
           await saveDeviceToken(token.value, getPlatform())
+          console.log('[Push] Token saved to backend')
           resolve({ success: true, token: token.value })
         } catch (err) {
+          console.error('[Push] Failed to save token:', err)
           resolve({ success: false, error: 'Failed to save token' })
         }
       })
 
       // Error
       PushNotifications.addListener('registrationError', (error) => {
-        console.error('Push registration error:', error)
-        resolve({ success: false, error: error.error })
+        if (resolved) return
+        resolved = true
+        console.error('[Push] Registration error:', error)
+        resolve({ success: false, error: error.error || 'Registration failed' })
       })
 
       // Timeout after 10 seconds
       setTimeout(() => {
-        resolve({ success: false, error: 'Registration timeout' })
+        if (resolved) return
+        resolved = true
+        console.error('[Push] Registration timed out after 10 seconds')
+        resolve({ success: false, error: 'Registration timeout - check iOS Settings' })
       }, 10000)
     })
   } catch (error: any) {
-    console.error('Native push registration failed:', error)
+    console.error('[Push] Native push registration failed:', error)
     return { success: false, error: error.message || 'Registration failed' }
   }
 }
