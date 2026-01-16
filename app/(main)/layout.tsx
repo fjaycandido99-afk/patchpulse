@@ -20,6 +20,7 @@ import { ScrollToTop } from '@/components/ui/ScrollToTop'
 import { MainContent } from '@/components/layout/MainContent'
 import { KeyboardShortcuts, KeyboardHint } from '@/components/keyboard'
 import { PushNotificationInit } from '@/components/notifications/PushNotificationInit'
+import { StartupNotifications } from '@/components/notifications/StartupNotifications'
 import { MobileHeader } from '@/components/layout/MobileHeader'
 import { NativeAuthGuard } from '@/components/auth/NativeAuthGuard'
 import { SessionKeeper } from '@/components/auth/SessionKeeper'
@@ -148,6 +149,7 @@ export default async function MainLayout({
               <KeyboardShortcuts />
               <KeyboardHint />
               <PushNotificationInit />
+              <StartupNotifications />
               <OfflineIndicator />
             </div>
           </DealSpotlightProvider>
