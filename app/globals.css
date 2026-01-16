@@ -31,9 +31,20 @@
     @apply border-border;
   }
 
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     @apply bg-background text-foreground antialiased;
     overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Smooth scrolling for all scrollable elements */
+  *, *::before, *::after {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
   }
 
   /* Hide scrollbar on desktop - users can scroll with mouse wheel */
