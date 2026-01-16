@@ -97,10 +97,10 @@ export function StartupNotifications() {
         setNotifications(notifs)
         setIsVisible(true)
 
-        // Auto-hide after 8 seconds
+        // Auto-hide after 5 seconds
         setTimeout(() => {
           setIsVisible(false)
-        }, 8000)
+        }, 5000)
       }
     }
 
