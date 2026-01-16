@@ -24,6 +24,10 @@ type PatchData = {
 async function getPatches(limit = 50): Promise<PatchData[]> {
   const supabase = await createClient()
 
+  // Only show patches from the last 2 months to stay relevant
+  const twoMonthsAgo = new Date()
+  twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2)
+
   const { data, error } = await supabase
     .from('patch_notes')
     .select(`
@@ -39,6 +43,7 @@ async function getPatches(limit = 50): Promise<PatchData[]> {
         cover_url
       )
     `)
+    .gte('published_at', twoMonthsAgo.toISOString())
     .order('published_at', { ascending: false })
     .limit(limit)
 
@@ -86,7 +91,11 @@ async function getFollowedGamesPatches(): Promise<PatchData[]> {
 
   if (uniqueGameIds.length === 0) return []
 
-  // Fetch ALL patches for followed games (limit 200 for performance)
+  // Only show patches from the last 2 months to stay relevant
+  const twoMonthsAgo = new Date()
+  twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2)
+
+  // Fetch patches for followed games (limit 200 for performance)
   const { data, error } = await supabase
     .from('patch_notes')
     .select(`
@@ -103,6 +112,7 @@ async function getFollowedGamesPatches(): Promise<PatchData[]> {
       )
     `)
     .in('game_id', uniqueGameIds)
+    .gte('published_at', twoMonthsAgo.toISOString())
     .order('published_at', { ascending: false })
     .limit(200)
 
