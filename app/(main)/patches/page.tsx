@@ -7,7 +7,21 @@ export const metadata: Metadata = {
   description: 'Browse all game patches and updates',
 }
 
-async function getPatches(limit = 50) {
+type PatchData = {
+  id: string
+  title: string
+  published_at: string
+  summary_tldr: string | null
+  impact_score: number
+  game: {
+    id: string
+    name: string
+    slug: string
+    cover_url: string | null
+  }
+}
+
+async function getPatches(limit = 50): Promise<PatchData[]> {
   const supabase = await createClient()
 
   const { data, error } = await supabase
@@ -30,6 +44,70 @@ async function getPatches(limit = 50) {
 
   if (error) {
     console.error('Error fetching patches:', error)
+    return []
+  }
+
+  return (data || []).map((patch) => {
+    const gameData = patch.games as unknown as {
+      id: string
+      name: string
+      slug: string
+      cover_url: string | null
+    }
+    return {
+      id: patch.id,
+      title: patch.title,
+      published_at: patch.published_at,
+      summary_tldr: patch.summary_tldr,
+      impact_score: patch.impact_score,
+      game: gameData,
+    }
+  })
+}
+
+// Fetch ALL patches for user's followed games (no limit)
+async function getFollowedGamesPatches(): Promise<PatchData[]> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) return []
+
+  // Get all followed game IDs (from both user_games and backlog_items)
+  const [followedResult, backlogResult] = await Promise.all([
+    supabase.from('user_games').select('game_id').eq('user_id', user.id),
+    supabase.from('backlog_items').select('game_id').eq('user_id', user.id),
+  ])
+
+  const gameIds = [
+    ...(followedResult.data || []).map(ug => ug.game_id),
+    ...(backlogResult.data || []).map(bi => bi.game_id),
+  ]
+  const uniqueGameIds = [...new Set(gameIds)]
+
+  if (uniqueGameIds.length === 0) return []
+
+  // Fetch ALL patches for followed games (limit 200 for performance)
+  const { data, error } = await supabase
+    .from('patch_notes')
+    .select(`
+      id,
+      title,
+      published_at,
+      summary_tldr,
+      impact_score,
+      games!inner(
+        id,
+        name,
+        slug,
+        cover_url
+      )
+    `)
+    .in('game_id', uniqueGameIds)
+    .order('published_at', { ascending: false })
+    .limit(200)
+
+  if (error) {
+    console.error('Error fetching followed games patches:', error)
     return []
   }
 
@@ -80,11 +158,18 @@ async function getBacklogGameIds(): Promise<string[]> {
 }
 
 export default async function PatchesPage() {
-  const [patches, followedGameIds, backlogGameIds] = await Promise.all([
-    getPatches(),
+  const [patches, followedGamesPatches, followedGameIds, backlogGameIds] = await Promise.all([
+    getPatches(100), // Get more general patches
+    getFollowedGamesPatches(), // Get ALL patches for followed games
     getFollowedGameIds(),
     getBacklogGameIds(),
   ])
+
+  // Merge patches - followed games patches take priority, then fill with general patches
+  const followedPatchIds = new Set(followedGamesPatches.map(p => p.id))
+  const uniqueGeneralPatches = patches.filter(p => !followedPatchIds.has(p.id))
+  const allPatches = [...followedGamesPatches, ...uniqueGeneralPatches]
+    .sort((a, b) => new Date(b.published_at).getTime() - new Date(a.published_at).getTime())
 
   return (
     <div className="space-y-6">
@@ -101,7 +186,7 @@ export default async function PatchesPage() {
         </div>
       </div>
 
-      <PatchesList initialPatches={patches} followedGameIds={followedGameIds} backlogGameIds={backlogGameIds} />
+      <PatchesList initialPatches={allPatches} followedGameIds={followedGameIds} backlogGameIds={backlogGameIds} />
     </div>
   )
 }
