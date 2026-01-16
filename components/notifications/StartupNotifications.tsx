@@ -122,7 +122,7 @@ export function StartupNotifications() {
   if (!isVisible || notifications.length === 0) return null
 
   return (
-    <div className="fixed top-4 right-4 z-[200] flex flex-col gap-2 max-w-sm">
+    <div className="fixed top-16 right-4 z-[199] flex flex-col gap-2 max-w-sm">
       {notifications.map((notif) => (
         <div
           key={notif.id}
