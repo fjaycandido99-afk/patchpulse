@@ -28,8 +28,8 @@ export default async function AdminLayout({
   }
 
   return (
-    <html lang="en" className="dark">
-      <body className="bg-zinc-950 text-white antialiased min-h-screen">
+    <html lang="en" className="dark" suppressHydrationWarning>
+      <body className="bg-zinc-950 text-white antialiased min-h-screen" suppressHydrationWarning>
         <div className="mx-auto w-full max-w-4xl px-4 sm:px-6 py-6">
           {children}
         </div>
