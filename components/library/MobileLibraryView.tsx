@@ -138,7 +138,7 @@ export function MobileLibraryView({
   }
 
   return (
-    <div className="md:hidden pb-24">
+    <div className="md:hidden pb-20">
       {/* Mobile Header */}
       <MobileLibraryHeader
         title="Library"
@@ -294,7 +294,7 @@ function DiscoverMode({
   )
 }
 
-// Add game modal
+// Add game modal with keyboard-aware positioning
 function AddGameModal({
   followedGamesForPicker,
   onClose,
@@ -302,17 +302,48 @@ function AddGameModal({
   followedGamesForPicker: FollowedGame[]
   onClose: () => void
 }) {
+  const [keyboardHeight, setKeyboardHeight] = useState(0)
+
+  useEffect(() => {
+    // Handle iOS keyboard by detecting viewport changes
+    const handleResize = () => {
+      if (typeof window !== 'undefined' && window.visualViewport) {
+        const viewportHeight = window.visualViewport.height
+        const windowHeight = window.innerHeight
+        const keyboardH = windowHeight - viewportHeight
+        setKeyboardHeight(keyboardH > 0 ? keyboardH : 0)
+      }
+    }
+
+    if (typeof window !== 'undefined' && window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleResize)
+      handleResize() // Initial check
+    }
+
+    return () => {
+      if (typeof window !== 'undefined' && window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleResize)
+      }
+    }
+  }, [])
+
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center animate-in fade-in duration-150">
       <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-h-[80vh] bg-card border-t border-border rounded-t-2xl overflow-hidden animate-in slide-in-from-bottom duration-200">
+      <div
+        className="relative w-full bg-card border-t border-border rounded-t-2xl overflow-hidden animate-in slide-in-from-bottom duration-200"
+        style={{
+          maxHeight: keyboardHeight > 0 ? `calc(100vh - ${keyboardHeight}px)` : '80vh',
+          marginBottom: keyboardHeight > 0 ? keyboardHeight : 0,
+        }}
+      >
         <div className="flex items-center justify-between p-4 border-b border-border">
           <h2 className="font-semibold">Add Game</h2>
           <button onClick={onClose} className="p-2 rounded-lg hover:bg-muted">
             <X className="h-5 w-5" />
           </button>
         </div>
-        <div className="p-4 overflow-y-auto max-h-[60vh]">
+        <div className="p-4 overflow-y-auto" style={{ maxHeight: keyboardHeight > 0 ? `calc(100vh - ${keyboardHeight + 80}px)` : '60vh' }}>
           <DiscoverMode followedGamesForPicker={followedGamesForPicker} onClose={onClose} />
         </div>
       </div>
