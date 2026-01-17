@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { Gamepad2, Plus, Search, X, Eye, FileText, Clock, Users } from 'lucide-react'
+import { Gamepad2, Plus, Search, X, Eye, FileText, Clock, Users, Crown } from 'lucide-react'
 import { MobileLibraryHeader } from './MobileLibraryHeader'
 import { SegmentedControl } from './SegmentedControl'
 import { FloatingActionButton } from './FloatingActionButton'
@@ -75,18 +75,28 @@ type FollowedGameWithActivity = {
   steamStats?: SteamStatsData | null
 }
 
+type SubscriptionInfo = {
+  plan: 'free' | 'pro'
+  usage: {
+    backlog: { used: number; limit: number }
+    followed: { used: number; limit: number }
+  }
+}
+
 type MobileLibraryViewProps = {
   board: Record<BacklogStatus, BacklogItem[]>
   followedGames: GameData[]
   followedGamesWithActivity: FollowedGameWithActivity[]
   backlogGames: GameData[]
   followedGamesForPicker: FollowedGame[]
+  subscriptionInfo?: SubscriptionInfo
 }
 
 export function MobileLibraryView({
   board,
   followedGamesWithActivity,
   followedGamesForPicker,
+  subscriptionInfo,
 }: MobileLibraryViewProps) {
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -117,6 +127,13 @@ export function MobileLibraryView({
     ...board.finished,
     ...board.dropped,
   ]
+
+  // Check if user is at followed games limit
+  const totalFollowedGames = followedGamesWithActivity.length
+  const isFollowedAtLimit = subscriptionInfo?.plan === 'free' &&
+    totalFollowedGames >= (subscriptionInfo?.usage.followed.limit || 5)
+  const isBacklogAtLimit = subscriptionInfo?.plan === 'free' &&
+    allBacklogItems.length >= (subscriptionInfo?.usage.backlog.limit || 5)
 
   // Collect all Steam app IDs for player count fetching
   const allSteamAppIds = [
@@ -160,6 +177,25 @@ export function MobileLibraryView({
 
       {mode === 'my-games' ? (
         <div className="px-4">
+          {/* Backlog limit indicator for free users */}
+          {subscriptionInfo?.plan === 'free' && (
+            <div className="flex items-center justify-between mb-3">
+              <span className={`text-xs font-medium ${
+                isBacklogAtLimit ? 'text-amber-400' : 'text-muted-foreground'
+              }`}>
+                {allBacklogItems.length}/{subscriptionInfo.usage.backlog.limit} games
+              </span>
+              {isBacklogAtLimit && (
+                <Link
+                  href="/pricing"
+                  className="flex items-center gap-1 text-xs text-primary font-medium"
+                >
+                  <Crown className="h-3 w-3" />
+                  Upgrade
+                </Link>
+              )}
+            </div>
+          )}
           {filteredItems.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-sm font-medium text-muted-foreground">No games in your library</p>
@@ -188,6 +224,25 @@ export function MobileLibraryView({
         </div>
       ) : (
         <div className="px-4">
+          {/* Watchlist limit indicator for free users */}
+          {subscriptionInfo?.plan === 'free' && (
+            <div className="flex items-center justify-between mb-3">
+              <span className={`text-xs font-medium ${
+                isFollowedAtLimit ? 'text-amber-400' : 'text-muted-foreground'
+              }`}>
+                {totalFollowedGames}/{subscriptionInfo.usage.followed.limit} followed
+              </span>
+              {isFollowedAtLimit && (
+                <Link
+                  href="/pricing"
+                  className="flex items-center gap-1 text-xs text-primary font-medium"
+                >
+                  <Crown className="h-3 w-3" />
+                  Upgrade for unlimited
+                </Link>
+              )}
+            </div>
+          )}
           <MobileWatchlistGrid games={followedGamesWithActivity.filter(g => !g.inBacklog)} playerCounts={playerCounts} />
         </div>
       )}

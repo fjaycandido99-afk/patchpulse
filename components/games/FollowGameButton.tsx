@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 import { Plus, Check, Loader2 } from 'lucide-react'
 import { followGame } from '@/app/(main)/actions/games'
+import { useToastUI } from '@/components/ui/toast'
 
 type FollowGameButtonProps = {
   gameId: string
@@ -21,6 +22,7 @@ export function FollowGameButton({
 }: FollowGameButtonProps) {
   const [isFollowing, setIsFollowing] = useState(initialFollowing)
   const [isPending, startTransition] = useTransition()
+  const { toast } = useToastUI()
 
   async function handleClick(e: React.MouseEvent) {
     e.preventDefault()
@@ -31,9 +33,14 @@ export function FollowGameButton({
         const result = await followGame(gameId)
         if (result.success) {
           setIsFollowing(result.following ?? false)
+        } else if (result.error === 'limit_reached') {
+          toast.error(`Limit reached: ${result.maxCount} games. Upgrade to Pro for unlimited.`)
+        } else if (result.error) {
+          toast.error(result.error)
         }
       } catch (error) {
         console.error('Failed to follow game:', error)
+        toast.error('Failed to follow game')
       }
     })
   }

@@ -135,6 +135,10 @@ export default async function LibraryPage() {
           followedGamesWithActivity={followedGamesWithActivity}
           backlogGames={backlogGames}
           followedGamesForPicker={followedGamesForPicker}
+          subscriptionInfo={{
+            plan: subscriptionInfo.plan,
+            usage: subscriptionInfo.usage,
+          }}
         />
       </div>
 

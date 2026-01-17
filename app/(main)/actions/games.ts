@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { backfillPatchesForGame, needsBackfill } from '@/lib/fetchers/backfill-patches'
+import { canFollowGame } from '@/lib/subscriptions/limits'
 
 export async function followGame(gameId: string) {
   const supabase = await createClient()
@@ -39,6 +40,17 @@ export async function followGame(gameId: string) {
     revalidatePath('/', 'layout')
     return { success: true, following: false }
   } else {
+    // Check if user can follow more games (subscription limit)
+    const limitCheck = await canFollowGame(user.id)
+    if (!limitCheck.allowed) {
+      return {
+        error: 'limit_reached',
+        message: `You've reached your limit of ${limitCheck.maxCount} followed games. Upgrade to Pro for unlimited games.`,
+        currentCount: limitCheck.currentCount,
+        maxCount: limitCheck.maxCount,
+      }
+    }
+
     // Not following - follow
     const { error } = await supabase
       .from('user_games')

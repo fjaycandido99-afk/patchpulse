@@ -1,10 +1,11 @@
 'use client'
 
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Newspaper, Zap, SlidersHorizontal, X, Check } from 'lucide-react'
+import { Capacitor } from '@capacitor/core'
 import { MediaCard } from '@/components/media/MediaCard'
 import { Badge } from '@/components/ui/badge'
 import { MetaRow } from '@/components/ui/MetaRow'
@@ -12,6 +13,7 @@ import { formatDate, relativeDaysText } from '@/lib/dates'
 import { markNewsAsVisited } from './actions'
 
 const SCROLL_KEY = 'news-scroll-position'
+const NAVIGATION_KEY = 'news-navigated-away'
 
 type NewsItem = {
   id: string
@@ -120,12 +122,12 @@ const IMPORTANCE_STYLES = {
 }
 
 // Mobile News Card - edge-to-edge with larger text
-function MobileNewsCard({ item, getNewsImage }: { item: NewsItem; getNewsImage: (item: NewsItem) => string | null }) {
+function MobileNewsCard({ item, getNewsImage, onClick }: { item: NewsItem; getNewsImage: (item: NewsItem) => string | null; onClick?: () => void }) {
   const imageUrl = getNewsImage(item)
   const displaySummary = item.why_it_matters || item.summary
 
   return (
-    <Link href={`/news/${item.id}`} className="block group">
+    <Link href={`/news/${item.id}`} className="block group" onClick={onClick}>
       {/* Edge-to-edge image container */}
       <div className="relative bg-zinc-900 rounded-xl overflow-hidden">
         <div className="relative aspect-[16/10]">
@@ -186,7 +188,7 @@ function MobileNewsCard({ item, getNewsImage }: { item: NewsItem; getNewsImage: 
 }
 
 // Top Story Hero Card - with mobile bleed
-function TopStoryCard({ story, isPrimary = false }: { story: TopStory; isPrimary?: boolean }) {
+function TopStoryCard({ story, isPrimary = false, onClick }: { story: TopStory; isPrimary?: boolean; onClick?: () => void }) {
   const heroImage = story.image_url || story.game?.hero_url || story.game?.cover_url
   const brandColor = story.game?.brand_color || '#6366f1'
   const importance = getImportanceLevel(story.topics)
@@ -196,6 +198,7 @@ function TopStoryCard({ story, isPrimary = false }: { story: TopStory; isPrimary
     <Link
       href={`/news/${story.id}`}
       className="group block"
+      onClick={onClick}
     >
       {/* Thumbnail - edge-to-edge on mobile */}
       <div
@@ -276,37 +279,35 @@ function getNewsImage(item: NewsItem): string | null {
 }
 
 export function NewsFeed({ news, topStories, includeRumors, sources, selectedSource }: NewsFeedProps) {
-  const hasRestoredScroll = useRef(false)
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const router = useRouter()
+
+  // Save scroll position before navigating (native app only)
+  const handleNewsClick = useCallback(() => {
+    if (typeof window === 'undefined' || !Capacitor.isNativePlatform()) return
+    sessionStorage.setItem(SCROLL_KEY, window.scrollY.toString())
+    sessionStorage.setItem(NAVIGATION_KEY, 'true')
+  }, [])
 
   useEffect(() => {
     markNewsAsVisited()
   }, [])
 
-  // Restore scroll position on mount
+  // Restore scroll position for native app only (web uses Next.js scrollRestoration)
   useEffect(() => {
-    if (hasRestoredScroll.current) return
+    if (!Capacitor.isNativePlatform()) return
 
+    const navigatedAway = sessionStorage.getItem(NAVIGATION_KEY)
     const savedPosition = sessionStorage.getItem(SCROLL_KEY)
-    if (savedPosition) {
+
+    if (navigatedAway === 'true' && savedPosition) {
       const pos = parseInt(savedPosition, 10)
-      // Small delay to ensure content is rendered
-      setTimeout(() => {
-        window.scrollTo(0, pos)
-      }, 50)
-      hasRestoredScroll.current = true
-    }
-  }, [])
-
-  // Save scroll position before navigating away
-  useEffect(() => {
-    const handleScroll = () => {
-      sessionStorage.setItem(SCROLL_KEY, window.scrollY.toString())
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: pos, behavior: 'instant' })
+      })
     }
 
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    return () => window.removeEventListener('scroll', handleScroll)
+    sessionStorage.removeItem(NAVIGATION_KEY)
   }, [])
 
   // Filter out top story IDs from the main news list to avoid duplicates
@@ -343,7 +344,7 @@ export function NewsFeed({ news, topStories, includeRumors, sources, selectedSou
                 className="animate-soft-entry"
                 style={{ animationDelay: `${index * 50}ms` }}
               >
-                <TopStoryCard story={story} isPrimary={topStories.length === 1} />
+                <TopStoryCard story={story} isPrimary={topStories.length === 1} onClick={handleNewsClick} />
               </div>
             ))}
           </div>
@@ -486,11 +487,10 @@ export function NewsFeed({ news, topStories, includeRumors, sources, selectedSou
         {filteredNews.map((item, index) => (
           <div
             key={item.id}
-            data-keyboard-nav
             className="animate-soft-entry"
             style={{ animationDelay: `${index * 30}ms` }}
           >
-            <MobileNewsCard item={item} getNewsImage={getNewsImage} />
+            <MobileNewsCard item={item} getNewsImage={getNewsImage} onClick={handleNewsClick} />
           </div>
         ))}
       </div>
@@ -500,7 +500,6 @@ export function NewsFeed({ news, topStories, includeRumors, sources, selectedSou
         {filteredNews.map((item, index) => (
           <div
             key={item.id}
-            data-keyboard-nav
             className="animate-soft-entry h-full"
             style={{ animationDelay: `${index * 30}ms` }}
           >
@@ -511,6 +510,7 @@ export function NewsFeed({ news, topStories, includeRumors, sources, selectedSou
               whyItMatters={item.why_it_matters}
               imageUrl={getNewsImage(item)}
               variant="vertical-large"
+              onClick={handleNewsClick}
               game={
                 item.game
                   ? {

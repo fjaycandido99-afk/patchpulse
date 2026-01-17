@@ -21,7 +21,7 @@ const LIMIT_MESSAGES = {
     subtitle: 'Upgrade to Pro to favorite more games',
   },
   followed: {
-    title: "You're following 10 games",
+    title: "You're following 5 games",
     subtitle: 'Upgrade to Pro for unlimited follows',
   },
 }
