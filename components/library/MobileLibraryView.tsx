@@ -107,6 +107,12 @@ export function MobileLibraryView({
 
   const [searchQuery, setSearchQuery] = useState('')
   const [showAddModal, setShowAddModal] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  // Avoid hydration mismatch by waiting for mount
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Update URL when tab changes (without full page reload)
   const setMode = (newMode: 'my-games' | 'watchlist') => {
@@ -181,7 +187,7 @@ export function MobileLibraryView({
       {mode === 'my-games' ? (
         <div className="px-4">
           {/* Backlog limit indicator for free users */}
-          {subscriptionInfo?.plan === 'free' && (
+          {mounted && subscriptionInfo?.plan === 'free' && (
             <div className="flex items-center justify-between mb-3">
               <span className={`text-xs font-medium ${
                 isBacklogAtLimit ? 'text-amber-400' : 'text-muted-foreground'
@@ -228,7 +234,7 @@ export function MobileLibraryView({
       ) : (
         <div className="px-4">
           {/* Watchlist limit indicator for free users */}
-          {subscriptionInfo?.plan === 'free' && (
+          {mounted && subscriptionInfo?.plan === 'free' && (
             <div className="flex items-center justify-between mb-3">
               <span className={`text-xs font-medium ${
                 isFollowedAtLimit ? 'text-amber-400' : 'text-muted-foreground'
