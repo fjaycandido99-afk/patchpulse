@@ -100,7 +100,7 @@ export async function canAddToBacklog(userId?: string): Promise<LimitCheckResult
   }
 }
 
-// Check if user can follow more games
+// Check if user can follow more games (watchlist only - games NOT in backlog)
 export async function canFollowGame(userId?: string): Promise<LimitCheckResult> {
   const supabase = await createClient()
 
@@ -112,16 +112,27 @@ export async function canFollowGame(userId?: string): Promise<LimitCheckResult> 
   const plan = await getUserPlan(targetUserId)
   const limit = PLAN_LIMITS[plan].followed
 
-  const { count } = await supabase
+  // Get all followed game IDs
+  const { data: followedGames } = await supabase
     .from('user_games')
-    .select('*', { count: 'exact', head: true })
+    .select('game_id')
     .eq('user_id', targetUserId)
 
-  const currentCount = count || 0
+  // Get all backlog game IDs
+  const { data: backlogGames } = await supabase
+    .from('backlog_items')
+    .select('game_id')
+    .eq('user_id', targetUserId)
+
+  const followedIds = new Set((followedGames || []).map(g => g.game_id))
+  const backlogIds = new Set((backlogGames || []).map(g => g.game_id))
+
+  // Count followed games that are NOT in backlog (watchlist-only)
+  const watchlistOnlyCount = [...followedIds].filter(id => !backlogIds.has(id)).length
 
   return {
-    allowed: currentCount < limit,
-    currentCount,
+    allowed: watchlistOnlyCount < limit,
+    currentCount: watchlistOnlyCount,
     maxCount: limit === Infinity ? -1 : limit,
     plan,
   }
@@ -143,17 +154,24 @@ export async function getSubscriptionInfo(userId?: string): Promise<Subscription
     .eq('user_id', targetUserId)
     .single()
 
-  // Get usage counts
-  const [backlogCount, followedCount] = await Promise.all([
+  // Get usage counts - need to calculate watchlist-only count
+  const [backlogResult, followedResult] = await Promise.all([
     supabase
       .from('backlog_items')
-      .select('*', { count: 'exact', head: true })
+      .select('game_id')
       .eq('user_id', targetUserId),
     supabase
       .from('user_games')
-      .select('*', { count: 'exact', head: true })
+      .select('game_id')
       .eq('user_id', targetUserId),
   ])
+
+  const backlogIds = new Set((backlogResult.data || []).map(g => g.game_id))
+  const followedIds = (followedResult.data || []).map(g => g.game_id)
+
+  // Watchlist = followed games NOT in backlog
+  const watchlistOnlyCount = followedIds.filter(id => !backlogIds.has(id)).length
+  const backlogCount = backlogIds.size
 
   const plan: Plan = subscription?.plan === 'pro' && subscription?.status === 'active' ? 'pro' : 'free'
   const limits = PLAN_LIMITS[plan]
@@ -168,11 +186,11 @@ export async function getSubscriptionInfo(userId?: string): Promise<Subscription
     cancelAtPeriodEnd: subscription?.cancel_at_period_end || false,
     usage: {
       backlog: {
-        used: backlogCount.count || 0,
+        used: backlogCount,
         limit: limits.backlog === Infinity ? -1 : limits.backlog,
       },
       followed: {
-        used: followedCount.count || 0,
+        used: watchlistOnlyCount,
         limit: limits.followed === Infinity ? -1 : limits.followed,
       },
     },

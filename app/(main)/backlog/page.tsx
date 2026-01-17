@@ -121,10 +121,11 @@ export default async function LibraryPage() {
     0
   )
 
-  const totalFollowedGames = followedGamesWithActivity.length
+  // Use watchlist-only count (games NOT in backlog) for the followed limit
+  const watchlistOnlyCount = watchlistGames.length
 
   const isBacklogAtLimit = subscriptionInfo.plan === 'free' && allBacklogItems.length >= subscriptionInfo.usage.backlog.limit
-  const isFollowedAtLimit = subscriptionInfo.plan === 'free' && totalFollowedGames >= subscriptionInfo.usage.followed.limit
+  const isFollowedAtLimit = subscriptionInfo.plan === 'free' && watchlistOnlyCount >= subscriptionInfo.usage.followed.limit
 
   return (
     <>
@@ -203,7 +204,7 @@ export default async function LibraryPage() {
                     ? 'bg-amber-500/20 text-amber-400'
                     : 'bg-muted text-muted-foreground'
                 }`}>
-                  {totalFollowedGames}/{subscriptionInfo.usage.followed.limit}
+                  {watchlistOnlyCount}/{subscriptionInfo.usage.followed.limit}
                 </span>
               ) : (
                 <span className="px-1.5 py-0.5 rounded-full bg-muted text-xs font-medium text-muted-foreground">

@@ -128,10 +128,13 @@ export function MobileLibraryView({
     ...board.dropped,
   ]
 
-  // Check if user is at followed games limit
-  const totalFollowedGames = followedGamesWithActivity.length
+  // Watchlist = followed games NOT in backlog
+  const watchlistGames = followedGamesWithActivity.filter(g => !g.inBacklog)
+  const watchlistOnlyCount = watchlistGames.length
+
+  // Check if user is at limits (backlog and watchlist are separate limits)
   const isFollowedAtLimit = subscriptionInfo?.plan === 'free' &&
-    totalFollowedGames >= (subscriptionInfo?.usage.followed.limit || 5)
+    watchlistOnlyCount >= (subscriptionInfo?.usage.followed.limit || 5)
   const isBacklogAtLimit = subscriptionInfo?.plan === 'free' &&
     allBacklogItems.length >= (subscriptionInfo?.usage.backlog.limit || 5)
 
@@ -230,7 +233,7 @@ export function MobileLibraryView({
               <span className={`text-xs font-medium ${
                 isFollowedAtLimit ? 'text-amber-400' : 'text-muted-foreground'
               }`}>
-                {totalFollowedGames}/{subscriptionInfo.usage.followed.limit} followed
+                {watchlistOnlyCount}/{subscriptionInfo.usage.followed.limit} watchlist
               </span>
               {isFollowedAtLimit && (
                 <Link
@@ -243,7 +246,7 @@ export function MobileLibraryView({
               )}
             </div>
           )}
-          <MobileWatchlistGrid games={followedGamesWithActivity.filter(g => !g.inBacklog)} playerCounts={playerCounts} />
+          <MobileWatchlistGrid games={watchlistGames} playerCounts={playerCounts} />
         </div>
       )}
 
