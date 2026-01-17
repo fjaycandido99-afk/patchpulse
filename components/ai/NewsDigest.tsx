@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Loader2, Sparkles, RefreshCw, Newspaper } from 'lucide-react'
+import Link from 'next/link'
 
 type DigestResult = {
   summary: string
@@ -13,12 +14,15 @@ export function NewsDigest() {
   const [loading, setLoading] = useState(true)
   const [digest, setDigest] = useState<DigestResult | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [needsUpgrade, setNeedsUpgrade] = useState(false)
 
   useEffect(() => {
     fetchDigest()
   }, [digestType])
 
   const fetchDigest = async (forceRefresh = false) => {
+    if (needsUpgrade) return // Don't re-fetch if we know it needs upgrade
+
     setLoading(true)
     setError(null)
 
@@ -27,6 +31,11 @@ export function NewsDigest() {
       if (forceRefresh) params.set('refresh', 'true')
       const response = await fetch(`/api/ai/digest?${params}`)
       const data = await response.json()
+
+      if (response.status === 403 && data.upgrade) {
+        setNeedsUpgrade(true)
+        return
+      }
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to get digest')
@@ -41,6 +50,30 @@ export function NewsDigest() {
     } finally {
       setLoading(false)
     }
+  }
+
+  if (needsUpgrade) {
+    return (
+      <div className="rounded-xl border border-border bg-card p-4 sm:p-6">
+        <div className="flex items-start gap-4">
+          <div className="rounded-lg bg-primary/10 p-2">
+            <Sparkles className="h-5 w-5 text-primary" />
+          </div>
+          <div className="flex-1">
+            <h3 className="font-semibold">News Summary</h3>
+            <p className="text-sm text-muted-foreground mt-1">
+              Get AI-powered digests of news from your followed games.
+            </p>
+            <Link
+              href="/pricing"
+              className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+            >
+              Upgrade to Pro to unlock
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (

@@ -60,6 +60,7 @@ export function BacklogHealth() {
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState<BacklogHealthData | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [needsUpgrade, setNeedsUpgrade] = useState(false)
   const [expandedState, setExpandedState] = useState<StateKey | null>(null)
 
   useEffect(() => {
@@ -70,6 +71,11 @@ export function BacklogHealth() {
     try {
       const response = await fetch('/api/ai/backlog-health')
       const result = await response.json()
+
+      if (response.status === 403 && result.upgrade) {
+        setNeedsUpgrade(true)
+        return
+      }
 
       if (!response.ok) {
         throw new Error(result.error || 'Failed to get backlog health')
@@ -92,6 +98,30 @@ export function BacklogHealth() {
       <div className="rounded-xl border border-border bg-card p-4 sm:p-6">
         <div className="flex items-center justify-center py-8">
           <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        </div>
+      </div>
+    )
+  }
+
+  if (needsUpgrade) {
+    return (
+      <div className="rounded-xl border border-border bg-card p-4 sm:p-6">
+        <div className="flex items-start gap-4">
+          <div className="rounded-lg bg-primary/10 p-2">
+            <Activity className="h-5 w-5 text-primary" />
+          </div>
+          <div className="flex-1">
+            <h3 className="font-semibold">Backlog Health</h3>
+            <p className="text-sm text-muted-foreground mt-1">
+              See which games in your backlog are active, dormant, or resurfacing.
+            </p>
+            <Link
+              href="/pricing"
+              className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+            >
+              Upgrade to Pro to unlock
+            </Link>
+          </div>
         </div>
       </div>
     )

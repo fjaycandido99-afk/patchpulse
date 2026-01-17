@@ -85,6 +85,7 @@ export function PlayRecommendations() {
   const [initialLoading, setInitialLoading] = useState(true)
   const [result, setResult] = useState<RecommendationResult | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [needsUpgrade, setNeedsUpgrade] = useState(false)
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set())
   const [dismissingId, setDismissingId] = useState<string | null>(null)
 
@@ -97,6 +98,15 @@ export function PlayRecommendations() {
           fetch('/api/ai/recommendations/dismiss'),
           fetch('/api/ai/recommendations'),
         ])
+
+        // Check for 403 (Pro required)
+        if (recsRes.status === 403) {
+          const data = await recsRes.json()
+          if (data.upgrade) {
+            setNeedsUpgrade(true)
+            return
+          }
+        }
 
         // Load dismissed IDs
         if (dismissedRes.ok) {
@@ -125,6 +135,8 @@ export function PlayRecommendations() {
   }, [])
 
   const fetchRecommendations = async (refresh: boolean) => {
+    if (needsUpgrade) return // Don't fetch if we know it needs upgrade
+
     setLoading(true)
     setError(null)
 
@@ -144,6 +156,11 @@ export function PlayRecommendations() {
       const response = await fetch(`/api/ai/recommendations?${params}`)
       const data = await response.json()
 
+      if (response.status === 403 && data.upgrade) {
+        setNeedsUpgrade(true)
+        return
+      }
+
       if (!response.ok) {
         throw new Error(data.error || 'Failed to get recommendations')
       }
@@ -158,6 +175,30 @@ export function PlayRecommendations() {
     } finally {
       setLoading(false)
     }
+  }
+
+  if (needsUpgrade) {
+    return (
+      <div className="rounded-xl border border-border bg-card p-4 sm:p-6">
+        <div className="flex items-start gap-4">
+          <div className="rounded-lg bg-primary/10 p-2">
+            <Sparkles className="h-5 w-5 text-primary" />
+          </div>
+          <div className="flex-1">
+            <h3 className="font-semibold">What Should I Play?</h3>
+            <p className="text-sm text-muted-foreground mt-1">
+              Get personalized game recommendations based on your mood and available time.
+            </p>
+            <Link
+              href="/pricing"
+              className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+            >
+              Upgrade to Pro to unlock
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   const handleDismiss = async (gameId: string, e: React.MouseEvent) => {
