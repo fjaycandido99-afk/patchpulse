@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
+import { PLAN_LIMITS } from '@/lib/subscriptions/limits'
 
 export async function searchGames(query: string) {
   if (!query || query.trim().length < 2) {
@@ -55,7 +56,11 @@ export async function saveOnboarding(data: SaveOnboardingData) {
     return { error: 'Invalid playstyle' }
   }
 
-  const userGamesData = data.selectedGameIds.map((gameId) => ({
+  // Enforce free tier limit on onboarding game selections
+  const maxGames = PLAN_LIMITS.free.followed
+  const limitedGameIds = data.selectedGameIds.slice(0, maxGames)
+
+  const userGamesData = limitedGameIds.map((gameId) => ({
     user_id: user.id,
     game_id: gameId,
   }))
