@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useEffect } from 'react'
 import Image from 'next/image'
 import { X, Calendar, Gamepad2, Bell, Plus, Sparkles, Info, Clock, Loader2, Check } from 'lucide-react'
-import { followGame } from '@/app/(main)/actions/games'
+import { followGame, isFollowingGame } from '@/app/(main)/actions/games'
 import { toggleGameReminder } from '@/app/(main)/actions/reminders'
 import { StoreLinkButtons } from '@/components/ui/StoreLinkButtons'
 
@@ -37,9 +37,27 @@ type GameSpotlightPanelProps = {
 
 export function GameSpotlightPanel({ game, isOpen, onClose, type, initialHasReminder = false }: GameSpotlightPanelProps) {
   const [isFollowing, setIsFollowing] = useState(false)
+  const [isLoadingFollowStatus, setIsLoadingFollowStatus] = useState(true)
   const [hasReminder, setHasReminder] = useState(initialHasReminder)
   const [isPending, startTransition] = useTransition()
   const [isReminderPending, startReminderTransition] = useTransition()
+
+  // Fetch actual follow status when panel opens
+  useEffect(() => {
+    if (isOpen && game?.id) {
+      setIsLoadingFollowStatus(true)
+      isFollowingGame(game.id)
+        .then((following) => {
+          setIsFollowing(following)
+        })
+        .catch(() => {
+          setIsFollowing(false)
+        })
+        .finally(() => {
+          setIsLoadingFollowStatus(false)
+        })
+    }
+  }, [isOpen, game?.id])
 
   if (!isOpen) return null
 
@@ -364,19 +382,19 @@ export function GameSpotlightPanel({ game, isOpen, onClose, type, initialHasRemi
             <div className="flex gap-3">
               <button
                 onClick={handleFollow}
-                disabled={isPending}
+                disabled={isPending || isLoadingFollowStatus}
                 className={`flex-1 flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-medium transition-colors disabled:opacity-50 ${
                   isFollowing
                     ? 'bg-primary text-primary-foreground'
                     : 'bg-primary/10 text-primary hover:bg-primary/20'
                 }`}
               >
-                {isPending ? (
+                {isPending || isLoadingFollowStatus ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <Plus className={`h-4 w-4 ${isFollowing ? 'rotate-45' : ''} transition-transform`} />
                 )}
-                {isFollowing ? 'Following' : 'Follow for Updates'}
+                {isLoadingFollowStatus ? 'Loading...' : isFollowing ? 'Following' : 'Follow for Updates'}
               </button>
 
               {isUpcoming && (
