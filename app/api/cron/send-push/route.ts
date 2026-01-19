@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import webpush from 'web-push'
 import { verifyCronAuth } from '@/lib/cron-auth'
 import { sendAPNsPush } from '@/lib/apns'
+import { sendPushToUsers } from '@/lib/onesignal'
 
 export const runtime = 'nodejs'
 export const maxDuration = 30 // 30 seconds max for push notifications
@@ -217,11 +218,48 @@ export async function GET(request: Request) {
       }
     }
 
+    // --- OneSignal Push (handles both web and iOS) ---
+    let oneSignalSent = 0
+    let oneSignalFailed = 0
+
+    // Group by notification to send efficiently
+    for (const [userId, userNotifs] of userNotifications) {
+      if (!userNotifs || userNotifs.length === 0) continue
+
+      const notif = userNotifs[0] // Most recent notification
+
+      let url = 'https://patchpulse.app/notifications'
+      if (notif.patch_id) {
+        url = `https://patchpulse.app/patches/${notif.patch_id}`
+      } else if (notif.news_id) {
+        url = `https://patchpulse.app/news/${notif.news_id}`
+      }
+
+      const result = await sendPushToUsers(
+        [userId],
+        notif.title,
+        notif.body || '',
+        url,
+        {
+          notificationId: notif.id,
+          type: notif.type,
+          gameId: notif.game_id || '',
+        }
+      )
+
+      if (result.success) {
+        oneSignalSent += result.recipients || 1
+      } else {
+        oneSignalFailed++
+      }
+    }
+
     return NextResponse.json({
       message: 'Push notifications processed',
       notifications: notifications.length,
-      web: { subscriptions: subscriptions.length, sent: webSent, failed: webFailed },
+      web: { subscriptions: subscriptions?.length || 0, sent: webSent, failed: webFailed },
       ios: { devices: deviceTokens?.length || 0, sent: iosSent, failed: iosFailed },
+      oneSignal: { sent: oneSignalSent, failed: oneSignalFailed },
     })
   } catch (error) {
     console.error('Error in push cron:', error)
