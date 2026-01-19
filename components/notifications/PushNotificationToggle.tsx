@@ -3,107 +3,72 @@
 import { useState, useEffect } from 'react'
 import { Bell, BellOff, Loader2, Smartphone, Globe } from 'lucide-react'
 
-// Check if running in native app
-function isNativePlatform(): boolean {
-  if (typeof window === 'undefined') return false
-
-  // Method 1: Check user agent for Capacitor/iOS standalone
-  const ua = navigator.userAgent || ''
-  const isCapacitorUA = /Capacitor/i.test(ua)
-  const isIOSStandalone = (navigator as Navigator & { standalone?: boolean }).standalone === true
-  const isIOSWebView = /iPhone|iPad|iPod/.test(ua) && !/Safari/.test(ua)
-
-  if (isCapacitorUA || isIOSStandalone || isIOSWebView) {
-    console.log('[PushToggle] Detected native via UA/standalone:', { isCapacitorUA, isIOSStandalone, isIOSWebView })
-    return true
-  }
-
-  // Method 2: Check window.Capacitor
-  const win = window as Window & {
-    Capacitor?: {
-      isNativePlatform?: () => boolean
-      getPlatform?: () => string
-    }
-  }
-
-  if (typeof win.Capacitor?.isNativePlatform === 'function') {
-    return win.Capacitor.isNativePlatform()
-  }
-
-  if (typeof win.Capacitor?.getPlatform === 'function') {
-    const platform = win.Capacitor.getPlatform()
-    return platform === 'ios' || platform === 'android'
-  }
-
-  // Method 3: Check for iOS-specific webkit messageHandlers (used by Capacitor)
-  const webkit = (window as Window & { webkit?: { messageHandlers?: unknown } }).webkit
-  if (webkit?.messageHandlers) {
-    console.log('[PushToggle] Detected native via webkit messageHandlers')
-    return true
-  }
-
-  return false
-}
-
 type PushStatus = 'loading' | 'enabled' | 'disabled' | 'denied' | 'unsupported'
+type PushMode = 'native' | 'web' | 'unknown'
 
 export function PushNotificationToggle() {
   const [status, setStatus] = useState<PushStatus>('loading')
   const [isToggling, setIsToggling] = useState(false)
-  const [isNative, setIsNative] = useState(false)
+  const [mode, setMode] = useState<PushMode>('unknown')
 
   useEffect(() => {
     let mounted = true
 
-    // Timeout fallback - if check takes too long, default to disabled
+    // Timeout fallback
     const timeout = setTimeout(() => {
       if (mounted && status === 'loading') {
-        console.log('[PushToggle] Status check timed out, defaulting to disabled')
+        console.log('[PushToggle] Timed out, showing toggle')
         setStatus('disabled')
       }
-    }, 8000)
+    }, 5000)
 
     const checkStatus = async () => {
-      // Small delay to let Capacitor bridge initialize when loading from remote URL
-      await new Promise(resolve => setTimeout(resolve, 500))
-
-      const native = isNativePlatform()
-      console.log('[PushToggle] isNativePlatform:', native, 'window.Capacitor:', typeof (window as any).Capacitor)
+      // Wait a bit for environment to settle
+      await new Promise(resolve => setTimeout(resolve, 300))
       if (!mounted) return
-      setIsNative(native)
 
-      if (native) {
-        // Check native push status
-        try {
-          console.log('[PushToggle] Checking native push status...')
-          const { isNativePushEnabled } = await import('@/lib/capacitor/push-notifications')
+      // Try to detect and check native push first
+      try {
+        const { isNative, isNativePushEnabled } = await import('@/lib/capacitor/push-notifications')
+
+        if (isNative()) {
+          console.log('[PushToggle] Native platform detected')
+          setMode('native')
+
           const enabled = await isNativePushEnabled()
           console.log('[PushToggle] Native push enabled:', enabled)
-          setStatus(enabled ? 'enabled' : 'disabled')
-        } catch (err) {
-          console.error('[PushToggle] Native push check error:', err)
-          setStatus('disabled') // Default to disabled instead of unsupported so user can try
-        }
-      } else {
-        // Check web push status
-        if (!('Notification' in window) || !('serviceWorker' in navigator)) {
-          setStatus('unsupported')
+          if (mounted) setStatus(enabled ? 'enabled' : 'disabled')
           return
         }
+      } catch (err) {
+        console.log('[PushToggle] Native check failed:', err)
+      }
 
-        if (Notification.permission === 'denied') {
-          setStatus('denied')
-          return
-        }
+      // Fall back to web push
+      console.log('[PushToggle] Using web push')
+      setMode('web')
 
-        // Check if we have an active subscription
-        try {
-          const registration = await navigator.serviceWorker.ready
-          const subscription = await registration.pushManager.getSubscription()
-          setStatus(subscription ? 'enabled' : 'disabled')
-        } catch {
-          setStatus('disabled')
-        }
+      if (typeof window === 'undefined') {
+        setStatus('unsupported')
+        return
+      }
+
+      if (!('Notification' in window) || !('serviceWorker' in navigator)) {
+        setStatus('unsupported')
+        return
+      }
+
+      if (Notification.permission === 'denied') {
+        setStatus('denied')
+        return
+      }
+
+      try {
+        const registration = await navigator.serviceWorker.ready
+        const subscription = await registration.pushManager.getSubscription()
+        if (mounted) setStatus(subscription ? 'enabled' : 'disabled')
+      } catch {
+        if (mounted) setStatus('disabled')
       }
     }
 
@@ -121,7 +86,7 @@ export function PushNotificationToggle() {
     setIsToggling(true)
 
     try {
-      if (isNative) {
+      if (mode === 'native') {
         // Toggle native push
         if (status === 'enabled') {
           const { unregisterNativePush } = await import('@/lib/capacitor/push-notifications')
@@ -135,9 +100,6 @@ export function PushNotificationToggle() {
           } else if (result.error?.toLowerCase().includes('denied')) {
             setStatus('denied')
           } else if (result.error?.toLowerCase().includes('timeout')) {
-            // Timeout usually means push notifications aren't properly configured
-            // or the app needs push notification entitlements
-            console.error('Push registration timeout:', result.error)
             alert('Push notification setup timed out. Please check that notifications are enabled in iOS Settings > PatchPulse.')
             setStatus('disabled')
           } else {
@@ -152,7 +114,6 @@ export function PushNotificationToggle() {
           await unregisterPushNotifications()
           setStatus('disabled')
         } else {
-          // Request permission first
           const permission = await Notification.requestPermission()
           if (permission === 'denied') {
             setStatus('denied')
@@ -215,7 +176,7 @@ export function PushNotificationToggle() {
           <div className="flex-1">
             <p className="font-medium">Push Notifications</p>
             <p className="text-sm text-muted-foreground">
-              Permission denied. Enable in {isNative ? 'Settings > PatchPulse > Notifications' : 'browser settings'}.
+              Permission denied. Enable in {mode === 'native' ? 'Settings > PatchPulse > Notifications' : 'browser settings'}.
             </p>
           </div>
         </div>
@@ -226,7 +187,6 @@ export function PushNotificationToggle() {
   const enabledClass = status === 'enabled' ? 'bg-primary/10' : 'bg-zinc-500/10'
   const toggleBgClass = status === 'enabled' ? 'bg-primary' : 'bg-zinc-700'
   const togglePosClass = status === 'enabled' ? 'translate-x-5' : 'translate-x-0'
-  const notifTypeText = isNative ? 'native' : 'browser'
 
   return (
     <div className="rounded-xl border border-white/10 bg-card p-4">
@@ -242,7 +202,7 @@ export function PushNotificationToggle() {
           <div>
             <div className="flex items-center gap-2">
               <p className="font-medium">Push Notifications</p>
-              {isNative ? (
+              {mode === 'native' ? (
                 <Smartphone className="w-3.5 h-3.5 text-muted-foreground" />
               ) : (
                 <Globe className="w-3.5 h-3.5 text-muted-foreground" />
@@ -250,7 +210,7 @@ export function PushNotificationToggle() {
             </div>
             <p className="text-sm text-muted-foreground">
               {status === 'enabled'
-                ? `Receiving ${notifTypeText} notifications`
+                ? `Receiving ${mode} notifications`
                 : 'Get notified about patches and updates'}
             </p>
           </div>
