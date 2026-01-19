@@ -10,7 +10,6 @@ export function PushNotificationToggle() {
   const [status, setStatus] = useState<PushStatus>('loading')
   const [isToggling, setIsToggling] = useState(false)
   const [mode, setMode] = useState<PushMode>('unknown')
-  const [debugInfo, setDebugInfo] = useState<string>('')
 
   useEffect(() => {
     let mounted = true
@@ -24,37 +23,29 @@ export function PushNotificationToggle() {
     }, 5000)
 
     const checkStatus = async () => {
-      // Wait a bit for environment to settle
-      await new Promise(resolve => setTimeout(resolve, 300))
+      // Wait a bit for native injection
+      await new Promise(resolve => setTimeout(resolve, 500))
       if (!mounted) return
 
-      // Collect debug info
-      const win = window as Window & { Capacitor?: { isNativePlatform?: () => boolean; getPlatform?: () => string }; webkit?: { messageHandlers?: unknown } }
-      const debug = {
-        hasCapacitor: !!win.Capacitor,
-        capIsNative: win.Capacitor?.isNativePlatform?.() ?? 'N/A',
-        capPlatform: win.Capacitor?.getPlatform?.() ?? 'N/A',
-        hasWebkit: !!win.webkit?.messageHandlers,
-        ua: navigator.userAgent.slice(0, 50),
-      }
-      setDebugInfo(JSON.stringify(debug))
-      console.log('[PushToggle] Debug:', debug)
+      // Check if we're in native app (via localStorage set by iOS)
+      const isNativeApp = localStorage.getItem('isNativeApp') === 'true'
+      const nativeToken = localStorage.getItem('nativePushToken')
 
-      // Try to detect and check native push first
-      try {
-        const { isNative, isNativePushEnabled } = await import('@/lib/capacitor/push-notifications')
+      console.log('[PushToggle] isNativeApp:', isNativeApp, 'hasToken:', !!nativeToken)
 
-        if (isNative()) {
-          console.log('[PushToggle] Native platform detected')
-          setMode('native')
+      if (isNativeApp || nativeToken) {
+        // Native iOS app
+        setMode('native')
 
-          const enabled = await isNativePushEnabled()
-          console.log('[PushToggle] Native push enabled:', enabled)
-          if (mounted) setStatus(enabled ? 'enabled' : 'disabled')
-          return
+        // Check if token is saved to backend
+        try {
+          const response = await fetch('/api/push/device/status')
+          const data = await response.json()
+          if (mounted) setStatus(data.enabled ? 'enabled' : 'disabled')
+        } catch {
+          if (mounted) setStatus(nativeToken ? 'disabled' : 'unsupported')
         }
-      } catch (err) {
-        console.log('[PushToggle] Native check failed:', err)
+        return
       }
 
       // Fall back to web push
@@ -85,11 +76,20 @@ export function PushNotificationToggle() {
       }
     }
 
+    // Listen for native token injection
+    const handleNativeToken = (event: Event) => {
+      const customEvent = event as CustomEvent
+      console.log('[PushToggle] Received native token event:', customEvent.detail)
+      checkStatus()
+    }
+    window.addEventListener('nativePushTokenReady', handleNativeToken)
+
     checkStatus()
 
     return () => {
       mounted = false
       clearTimeout(timeout)
+      window.removeEventListener('nativePushTokenReady', handleNativeToken)
     }
   }, [])
 
@@ -101,23 +101,35 @@ export function PushNotificationToggle() {
     try {
       if (mode === 'native') {
         // Toggle native push
+        const nativeToken = localStorage.getItem('nativePushToken')
+
+        if (!nativeToken) {
+          alert('Push notifications not available. Please allow notifications in iOS Settings > PatchPulse.')
+          setIsToggling(false)
+          return
+        }
+
         if (status === 'enabled') {
-          const { unregisterNativePush } = await import('@/lib/capacitor/push-notifications')
-          await unregisterNativePush()
-          setStatus('disabled')
+          // Disable - remove token from backend
+          const response = await fetch('/api/push/device', {
+            method: 'DELETE',
+          })
+          if (response.ok) {
+            setStatus('disabled')
+          }
         } else {
-          const { registerNativePush } = await import('@/lib/capacitor/push-notifications')
-          const result = await registerNativePush()
-          if (result.success) {
+          // Enable - save token to backend
+          const response = await fetch('/api/push/device', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: nativeToken, platform: 'ios' }),
+          })
+          if (response.ok) {
             setStatus('enabled')
-          } else if (result.error?.toLowerCase().includes('denied')) {
-            setStatus('denied')
-          } else if (result.error?.toLowerCase().includes('timeout')) {
-            alert('Push notification setup timed out. Please check that notifications are enabled in iOS Settings > PatchPulse.')
-            setStatus('disabled')
           } else {
-            console.error('Push registration failed:', result.error)
-            setStatus('disabled')
+            const data = await response.json()
+            console.error('Failed to save token:', data.error)
+            alert('Failed to enable push notifications. Please try again.')
           }
         }
       } else {
@@ -155,9 +167,6 @@ export function PushNotificationToggle() {
           <div>
             <p className="font-medium">Push Notifications</p>
             <p className="text-sm text-muted-foreground">Checking status...</p>
-            {debugInfo && (
-              <p className="text-xs text-muted-foreground/50 mt-1 break-all">{debugInfo}</p>
-            )}
           </div>
         </div>
       </div>
