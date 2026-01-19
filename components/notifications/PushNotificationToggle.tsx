@@ -2,15 +2,31 @@
 
 import { useState, useEffect } from 'react'
 import { Bell, BellOff, Loader2, Smartphone, Globe } from 'lucide-react'
-import { Capacitor } from '@capacitor/core'
 
-// Check if running in native app
+// Check if running in native app - must use window.Capacitor for remote URL loading
 function isNativePlatform(): boolean {
-  try {
-    return Capacitor.isNativePlatform()
-  } catch {
-    return false
+  if (typeof window === 'undefined') return false
+
+  // Check window.Capacitor which is injected by native shell
+  const win = window as Window & {
+    Capacitor?: {
+      isNativePlatform?: () => boolean
+      getPlatform?: () => string
+    }
   }
+
+  // Try isNativePlatform first
+  if (typeof win.Capacitor?.isNativePlatform === 'function') {
+    return win.Capacitor.isNativePlatform()
+  }
+
+  // Fallback: check platform
+  if (typeof win.Capacitor?.getPlatform === 'function') {
+    const platform = win.Capacitor.getPlatform()
+    return platform === 'ios' || platform === 'android'
+  }
+
+  return false
 }
 
 type PushStatus = 'loading' | 'enabled' | 'disabled' | 'denied' | 'unsupported'
@@ -32,8 +48,11 @@ export function PushNotificationToggle() {
     }, 8000)
 
     const checkStatus = async () => {
+      // Small delay to let Capacitor bridge initialize when loading from remote URL
+      await new Promise(resolve => setTimeout(resolve, 500))
+
       const native = isNativePlatform()
-      console.log('[PushToggle] isNativePlatform:', native)
+      console.log('[PushToggle] isNativePlatform:', native, 'window.Capacitor:', typeof (window as any).Capacitor)
       if (!mounted) return
       setIsNative(native)
 
