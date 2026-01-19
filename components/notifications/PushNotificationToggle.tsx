@@ -3,11 +3,22 @@
 import { useState, useEffect } from 'react'
 import { Bell, BellOff, Loader2, Smartphone, Globe } from 'lucide-react'
 
-// Check if running in native app - must use window.Capacitor for remote URL loading
+// Check if running in native app
 function isNativePlatform(): boolean {
   if (typeof window === 'undefined') return false
 
-  // Check window.Capacitor which is injected by native shell
+  // Method 1: Check user agent for Capacitor/iOS standalone
+  const ua = navigator.userAgent || ''
+  const isCapacitorUA = /Capacitor/i.test(ua)
+  const isIOSStandalone = (navigator as Navigator & { standalone?: boolean }).standalone === true
+  const isIOSWebView = /iPhone|iPad|iPod/.test(ua) && !/Safari/.test(ua)
+
+  if (isCapacitorUA || isIOSStandalone || isIOSWebView) {
+    console.log('[PushToggle] Detected native via UA/standalone:', { isCapacitorUA, isIOSStandalone, isIOSWebView })
+    return true
+  }
+
+  // Method 2: Check window.Capacitor
   const win = window as Window & {
     Capacitor?: {
       isNativePlatform?: () => boolean
@@ -15,15 +26,20 @@ function isNativePlatform(): boolean {
     }
   }
 
-  // Try isNativePlatform first
   if (typeof win.Capacitor?.isNativePlatform === 'function') {
     return win.Capacitor.isNativePlatform()
   }
 
-  // Fallback: check platform
   if (typeof win.Capacitor?.getPlatform === 'function') {
     const platform = win.Capacitor.getPlatform()
     return platform === 'ios' || platform === 'android'
+  }
+
+  // Method 3: Check for iOS-specific webkit messageHandlers (used by Capacitor)
+  const webkit = (window as Window & { webkit?: { messageHandlers?: unknown } }).webkit
+  if (webkit?.messageHandlers) {
+    console.log('[PushToggle] Detected native via webkit messageHandlers')
+    return true
   }
 
   return false
