@@ -19,6 +19,9 @@ const config: CapacitorConfig = {
       // Set via environment variable in Vercel
       // NEXT_PUBLIC_REVENUECAT_API_KEY=appl_xxxxx
     },
+    OneSignal: {
+      appId: '06b63fd2-b5f5-4146-9c4e-9d28c58862eb',
+    },
   },
 };
 

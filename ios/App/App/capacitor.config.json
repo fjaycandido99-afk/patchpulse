@@ -12,7 +12,10 @@
 		"scheme": "patchpulse"
 	},
 	"plugins": {
-		"PurchasesPlugin": {}
+		"PurchasesPlugin": {},
+		"OneSignal": {
+			"appId": "06b63fd2-b5f5-4146-9c4e-9d28c58862eb"
+		}
 	},
 	"packageClassList": [
 		"PushNotificationsPlugin",
