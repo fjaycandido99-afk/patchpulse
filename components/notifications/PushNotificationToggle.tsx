@@ -2,21 +2,15 @@
 
 import { useState, useEffect } from 'react'
 import { Bell, BellOff, Loader2, Smartphone, Globe } from 'lucide-react'
+import { Capacitor } from '@capacitor/core'
 
-// Check if running in native app - with retry for remote URL loading
-async function waitForCapacitor(maxWait = 2000): Promise<boolean> {
-  if (typeof window === 'undefined') return false
-
-  const start = Date.now()
-  while (Date.now() - start < maxWait) {
-    const cap = (window as Window & { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor
-    if (cap?.isNativePlatform?.()) {
-      return true
-    }
-    // Wait 100ms before checking again
-    await new Promise(resolve => setTimeout(resolve, 100))
+// Check if running in native app
+function isNativePlatform(): boolean {
+  try {
+    return Capacitor.isNativePlatform()
+  } catch {
+    return false
   }
-  return false
 }
 
 type PushStatus = 'loading' | 'enabled' | 'disabled' | 'denied' | 'unsupported'
@@ -27,19 +21,33 @@ export function PushNotificationToggle() {
   const [isNative, setIsNative] = useState(false)
 
   useEffect(() => {
+    let mounted = true
+
+    // Timeout fallback - if check takes too long, default to disabled
+    const timeout = setTimeout(() => {
+      if (mounted && status === 'loading') {
+        console.log('[PushToggle] Status check timed out, defaulting to disabled')
+        setStatus('disabled')
+      }
+    }, 8000)
+
     const checkStatus = async () => {
-      // Wait for Capacitor to be available (needed when loading from remote URL)
-      const native = await waitForCapacitor()
+      const native = isNativePlatform()
+      console.log('[PushToggle] isNativePlatform:', native)
+      if (!mounted) return
       setIsNative(native)
 
       if (native) {
         // Check native push status
         try {
+          console.log('[PushToggle] Checking native push status...')
           const { isNativePushEnabled } = await import('@/lib/capacitor/push-notifications')
           const enabled = await isNativePushEnabled()
+          console.log('[PushToggle] Native push enabled:', enabled)
           setStatus(enabled ? 'enabled' : 'disabled')
-        } catch {
-          setStatus('unsupported')
+        } catch (err) {
+          console.error('[PushToggle] Native push check error:', err)
+          setStatus('disabled') // Default to disabled instead of unsupported so user can try
         }
       } else {
         // Check web push status
@@ -65,6 +73,11 @@ export function PushNotificationToggle() {
     }
 
     checkStatus()
+
+    return () => {
+      mounted = false
+      clearTimeout(timeout)
+    }
   }, [])
 
   const handleToggle = async () => {
