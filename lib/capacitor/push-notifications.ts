@@ -1,17 +1,52 @@
 'use client'
 
-import { Capacitor } from '@capacitor/core'
+// Type for window.Capacitor injected by native app
+type CapacitorGlobal = {
+  isNativePlatform?: () => boolean
+  getPlatform?: () => string
+  Plugins?: Record<string, unknown>
+}
+
+declare global {
+  interface Window {
+    Capacitor?: CapacitorGlobal
+  }
+}
 
 // Check if running in Capacitor (native iOS/Android)
 export function isNative(): boolean {
-  return Capacitor.isNativePlatform()
+  if (typeof window === 'undefined') return false
+
+  // Check window.Capacitor which is injected by native app
+  const cap = window.Capacitor
+  if (cap?.isNativePlatform) {
+    return cap.isNativePlatform()
+  }
+
+  // Fallback: check if Capacitor plugins are available
+  if (cap?.Plugins && Object.keys(cap.Plugins).length > 0) {
+    return true
+  }
+
+  // Fallback: check webkit messageHandlers (iOS WKWebView)
+  const webkit = (window as Window & { webkit?: { messageHandlers?: unknown } }).webkit
+  if (webkit?.messageHandlers) {
+    return true
+  }
+
+  return false
 }
 
 // Check platform
 export function getPlatform(): 'ios' | 'android' | 'web' {
-  const platform = Capacitor.getPlatform()
-  if (platform === 'ios') return 'ios'
-  if (platform === 'android') return 'android'
+  if (typeof window === 'undefined') return 'web'
+
+  const cap = window.Capacitor
+  if (cap?.getPlatform) {
+    const platform = cap.getPlatform()
+    if (platform === 'ios') return 'ios'
+    if (platform === 'android') return 'android'
+  }
   return 'web'
 }
 
