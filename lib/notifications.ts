@@ -42,13 +42,13 @@ export type NotificationStats = {
   high_priority_count: number
 }
 
-export async function getNotifications(limit = 20): Promise<Notification[]> {
+export async function getNotifications(limit = 20, since?: string): Promise<Notification[]> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) return []
 
-  const { data, error } = await supabase
+  let query = supabase
     .from('notifications')
     .select(`
       id,
@@ -73,6 +73,13 @@ export async function getNotifications(limit = 20): Promise<Notification[]> {
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
     .limit(limit)
+
+  // Filter by timestamp if polling for new notifications
+  if (since) {
+    query = query.gt('created_at', since)
+  }
+
+  const { data, error } = await query
 
   if (error) {
     console.error('Error fetching notifications:', error)

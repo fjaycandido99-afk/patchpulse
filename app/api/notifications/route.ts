@@ -6,13 +6,14 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const limit = parseInt(searchParams.get('limit') || '20')
   const statsOnly = searchParams.get('stats') === 'true'
+  const since = searchParams.get('since') // ISO timestamp for polling
 
   if (statsOnly) {
     const stats = await getNotificationStats()
     return NextResponse.json(stats)
   }
 
-  const notifications = await getNotifications(limit)
+  const notifications = await getNotifications(limit, since || undefined)
   const stats = await getNotificationStats()
 
   return NextResponse.json({

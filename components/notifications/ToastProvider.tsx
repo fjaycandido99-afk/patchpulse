@@ -180,6 +180,39 @@ export function ToastProvider({ children, userId }: Props) {
     checkMissedContent()
   }, [userId, showToast])
 
+  // Poll for new notifications (fallback for when Realtime doesn't work)
+  useEffect(() => {
+    if (!userId || userId === 'guest') return
+
+    let lastCheckTime = new Date().toISOString()
+
+    const checkNewNotifications = async () => {
+      try {
+        const response = await fetch(`/api/notifications?since=${encodeURIComponent(lastCheckTime)}&limit=5`)
+        if (!response.ok) return
+
+        const data = await response.json()
+        const newNotifications = data.notifications || []
+
+        for (const notification of newNotifications) {
+          if (notification.priority >= 4) {
+            showToast(notification)
+            playNotificationSound()
+          }
+        }
+
+        lastCheckTime = new Date().toISOString()
+      } catch (err) {
+        // Silent fail - polling is best effort
+      }
+    }
+
+    // Poll every 30 seconds
+    const interval = setInterval(checkNewNotifications, 30000)
+
+    return () => clearInterval(interval)
+  }, [userId, showToast])
+
   // Subscribe to real-time content updates (news, patches, notifications)
   useEffect(() => {
     const supabase = createClient()
