@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import webpush from 'web-push'
 import { verifyCronAuth } from '@/lib/cron-auth'
+import { sendAPNsPush } from '@/lib/apns'
 
 export const runtime = 'nodejs'
 export const maxDuration = 30 // 30 seconds max for push notifications
@@ -107,15 +108,25 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Failed to fetch subscriptions' }, { status: 500 })
     }
 
-    if (!subscriptions || subscriptions.length === 0) {
-      return NextResponse.json({ message: 'No subscriptions found', sent: 0 })
+    // Get iOS device tokens
+    const { data: deviceTokens, error: deviceError } = await supabase
+      .from('device_tokens')
+      .select('*')
+      .in('user_id', userIds)
+      .eq('platform', 'ios')
+
+    if ((!subscriptions || subscriptions.length === 0) && (!deviceTokens || deviceTokens.length === 0)) {
+      return NextResponse.json({ message: 'No subscriptions or devices found', sent: 0 })
     }
 
     // Send push notifications
-    let sent = 0
-    let failed = 0
+    let webSent = 0
+    let webFailed = 0
+    let iosSent = 0
+    let iosFailed = 0
 
-    for (const sub of subscriptions) {
+    // --- Web Push ---
+    for (const sub of (subscriptions || [])) {
       const userNotifs = userNotifications.get(sub.user_id)
       if (!userNotifs || userNotifs.length === 0) continue
 
@@ -151,7 +162,7 @@ export async function GET(request: Request) {
 
       try {
         await webpush.sendNotification(pushSubscription, JSON.stringify(payload))
-        sent++
+        webSent++
       } catch (error: unknown) {
         const pushError = error as { statusCode?: number }
         // If subscription is invalid, remove it
@@ -161,16 +172,56 @@ export async function GET(request: Request) {
             .delete()
             .eq('endpoint', sub.endpoint)
         }
-        failed++
+        webFailed++
+      }
+    }
+
+    // --- iOS Push (APNs) ---
+    if (!deviceError && deviceTokens && deviceTokens.length > 0) {
+      for (const device of deviceTokens) {
+        const userNotifs = userNotifications.get(device.user_id)
+        if (!userNotifs || userNotifs.length === 0) continue
+
+        const notif = userNotifs[0]
+
+        // Build notification URL
+        let url = '/notifications'
+        if (notif.patch_id) {
+          url = `/patches/${notif.patch_id}`
+        } else if (notif.news_id) {
+          url = `/news/${notif.news_id}`
+        }
+
+        const result = await sendAPNsPush(device.token, {
+          title: notif.title,
+          body: notif.body || '',
+          url,
+          notificationId: notif.id,
+          type: notif.type,
+          gameId: notif.game_id,
+          patchId: notif.patch_id,
+        })
+
+        if (result.success) {
+          iosSent++
+        } else {
+          iosFailed++
+          // Remove invalid tokens
+          if (result.error === 'invalid_token') {
+            await supabase
+              .from('device_tokens')
+              .delete()
+              .eq('token', device.token)
+          }
+        }
       }
     }
 
     return NextResponse.json({
       message: 'Push notifications processed',
       notifications: notifications.length,
-      subscriptions: subscriptions.length,
-      sent,
-      failed,
+      web: { subscriptions: subscriptions.length, sent: webSent, failed: webFailed },
+      ios: { devices: deviceTokens?.length || 0, sent: iosSent, failed: iosFailed },
     })
   } catch (error) {
     console.error('Error in push cron:', error)
