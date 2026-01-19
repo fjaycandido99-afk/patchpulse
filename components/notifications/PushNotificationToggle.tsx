@@ -3,10 +3,20 @@
 import { useState, useEffect } from 'react'
 import { Bell, BellOff, Loader2, Smartphone, Globe } from 'lucide-react'
 
-// Check if running in native app
-function isNativePlatform(): boolean {
+// Check if running in native app - with retry for remote URL loading
+async function waitForCapacitor(maxWait = 2000): Promise<boolean> {
   if (typeof window === 'undefined') return false
-  return !!(window as Window & { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.()
+
+  const start = Date.now()
+  while (Date.now() - start < maxWait) {
+    const cap = (window as Window & { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor
+    if (cap?.isNativePlatform?.()) {
+      return true
+    }
+    // Wait 100ms before checking again
+    await new Promise(resolve => setTimeout(resolve, 100))
+  }
+  return false
 }
 
 type PushStatus = 'loading' | 'enabled' | 'disabled' | 'denied' | 'unsupported'
@@ -18,7 +28,8 @@ export function PushNotificationToggle() {
 
   useEffect(() => {
     const checkStatus = async () => {
-      const native = isNativePlatform()
+      // Wait for Capacitor to be available (needed when loading from remote URL)
+      const native = await waitForCapacitor()
       setIsNative(native)
 
       if (native) {
