@@ -10,6 +10,7 @@ export function PushNotificationToggle() {
   const [status, setStatus] = useState<PushStatus>('loading')
   const [isToggling, setIsToggling] = useState(false)
   const [mode, setMode] = useState<PushMode>('unknown')
+  const [debugInfo, setDebugInfo] = useState<string>('')
 
   useEffect(() => {
     let mounted = true
@@ -26,6 +27,18 @@ export function PushNotificationToggle() {
       // Wait a bit for environment to settle
       await new Promise(resolve => setTimeout(resolve, 300))
       if (!mounted) return
+
+      // Collect debug info
+      const win = window as Window & { Capacitor?: { isNativePlatform?: () => boolean; getPlatform?: () => string }; webkit?: { messageHandlers?: unknown } }
+      const debug = {
+        hasCapacitor: !!win.Capacitor,
+        capIsNative: win.Capacitor?.isNativePlatform?.() ?? 'N/A',
+        capPlatform: win.Capacitor?.getPlatform?.() ?? 'N/A',
+        hasWebkit: !!win.webkit?.messageHandlers,
+        ua: navigator.userAgent.slice(0, 50),
+      }
+      setDebugInfo(JSON.stringify(debug))
+      console.log('[PushToggle] Debug:', debug)
 
       // Try to detect and check native push first
       try {
@@ -142,6 +155,9 @@ export function PushNotificationToggle() {
           <div>
             <p className="font-medium">Push Notifications</p>
             <p className="text-sm text-muted-foreground">Checking status...</p>
+            {debugInfo && (
+              <p className="text-xs text-muted-foreground/50 mt-1 break-all">{debugInfo}</p>
+            )}
           </div>
         </div>
       </div>
