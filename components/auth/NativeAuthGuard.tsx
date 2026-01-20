@@ -170,9 +170,19 @@ export function NativeAuthGuard({ children }: { children: React.ReactNode }) {
     )
   }
 
-  // Don't render until auth check complete for native apps
-  if (!isAuthed && isNative) {
-    return null
+  // For native apps without auth, show login prompt instead of blank screen
+  if (!isAuthed && isNative && !isChecking) {
+    return (
+      <div className="flex min-h-screen items-center justify-center p-4">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold mb-2">Session Expired</h2>
+          <p className="text-muted-foreground mb-4">Please sign in to continue</p>
+          <a href="/login" className="inline-block px-4 py-2 bg-primary text-primary-foreground rounded-lg">
+            Sign In
+          </a>
+        </div>
+      </div>
+    )
   }
 
   return <>{children}</>
