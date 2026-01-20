@@ -1,24 +1,31 @@
 import UIKit
 import Capacitor
 import UserNotifications
+
+// Import OneSignal safely
+#if canImport(OneSignalFramework)
 import OneSignalFramework
+#endif
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
 
-    // OneSignal App ID
-    let oneSignalAppId = "06b63fd2-b5f5-4146-9c4e-9d28c58862eb"
-
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Initialize OneSignal
+
+        // Initialize OneSignal safely
+        #if canImport(OneSignalFramework)
+        let oneSignalAppId = "06b63fd2-b5f5-4146-9c4e-9d28c58862eb"
         OneSignal.initialize(oneSignalAppId, withLaunchOptions: launchOptions)
 
-        // Request push permission
-        OneSignal.Notifications.requestPermission({ accepted in
-            print("[PatchPulse] OneSignal permission accepted: \(accepted)")
-        }, fallbackToSettings: true)
+        // Request push permission after a delay to not block app launch
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            OneSignal.Notifications.requestPermission({ accepted in
+                print("[PatchPulse] OneSignal permission accepted: \(accepted)")
+            }, fallbackToSettings: true)
+        }
+        #endif
 
         return true
     }
