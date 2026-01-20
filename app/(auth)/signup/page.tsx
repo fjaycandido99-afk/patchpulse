@@ -25,8 +25,22 @@ export default function SignupPage() {
     if (result?.error) {
       setError(result.error)
       setLoading(false)
+      return
     }
-    // Successful signup will redirect to /onboarding via the server action
+
+    if (result?.success) {
+      // Store session in localStorage for native app persistence
+      if (result.session) {
+        localStorage.setItem('patchpulse-auth', JSON.stringify({
+          access_token: result.session.access_token,
+          refresh_token: result.session.refresh_token,
+        }))
+        // Mark as verified user (not guest)
+        localStorage.setItem('patchpulse-was-verified', 'true')
+      }
+      // Redirect to onboarding
+      router.push('/onboarding')
+    }
   }
 
   const handleContinueAsGuest = () => {

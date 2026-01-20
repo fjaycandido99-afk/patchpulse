@@ -47,7 +47,16 @@ export async function signUpWithEmail(email: string, password: string) {
 
   // Profile is created automatically by database trigger (handle_new_user)
   revalidatePath('/', 'layout')
-  redirect('/onboarding')
+
+  // Return session for client to store (needed for native app persistence)
+  // Client will redirect to onboarding after storing session
+  return {
+    success: true,
+    session: data.session ? {
+      access_token: data.session.access_token,
+      refresh_token: data.session.refresh_token,
+    } : null
+  }
 }
 
 export async function signOut() {
