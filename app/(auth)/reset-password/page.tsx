@@ -1,13 +1,14 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { Gamepad2, Eye, EyeOff, CheckCircle } from 'lucide-react'
 
-export default function ResetPasswordPage() {
+function ResetPasswordContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -20,41 +21,53 @@ export default function ResetPasswordPage() {
 
   useEffect(() => {
     const supabase = createClient()
+    const code = searchParams.get('code')
 
-    const checkSession = async () => {
-      // First check existing session
-      const { data: { session } } = await supabase.auth.getSession()
-      if (session) {
+    const setupSession = async () => {
+      // If we have a code, exchange it for a session
+      if (code) {
+        console.log('[ResetPassword] Exchanging code for session...')
+        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
+
+        if (exchangeError) {
+          console.error('[ResetPassword] Code exchange failed:', exchangeError)
+          // Redirect to forgot-password with error
+          router.replace('/forgot-password?error=' + encodeURIComponent('Reset link has expired. Please request a new one.'))
+          return
+        }
+
+        console.log('[ResetPassword] Code exchange successful')
         setValidSession(true)
         setChecking(false)
+
+        // Clean up URL
+        window.history.replaceState({}, '', '/reset-password')
         return
       }
 
-      // Give a moment for auth state to settle (URL hash processing)
-      await new Promise(resolve => setTimeout(resolve, 500))
-
-      // Check again
-      const { data: { session: retrySession } } = await supabase.auth.getSession()
-      if (retrySession) {
+      // No code - check for existing session
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
         setValidSession(true)
       }
       setChecking(false)
     }
 
-    // Listen for auth state changes (handles token from URL)
+    // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
+      console.log('[ResetPassword] Auth event:', event, !!session)
+      if (session && (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN')) {
         setValidSession(true)
         setChecking(false)
       }
     })
 
-    checkSession()
+    setupSession()
 
     return () => {
       subscription.unsubscribe()
     }
-  }, [])
+  }, [searchParams, router])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -231,5 +244,17 @@ export default function ResetPasswordPage() {
         </form>
       </div>
     </div>
+  )
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center px-4">
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    }>
+      <ResetPasswordContent />
+    </Suspense>
   )
 }

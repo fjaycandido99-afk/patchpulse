@@ -1,4 +1,3 @@
-import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
 export async function GET(request: Request) {
@@ -15,18 +14,11 @@ export async function GET(request: Request) {
   }
 
   if (code) {
-    const supabase = await createClient()
-    const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
-
-    if (!exchangeError) {
-      // Successfully exchanged code, redirect to reset password page
-      return NextResponse.redirect(new URL('/reset-password', origin))
-    } else {
-      // Code exchange failed - likely expired
-      const errorUrl = new URL('/forgot-password', origin)
-      errorUrl.searchParams.set('error', 'Reset link has expired. Please request a new one.')
-      return NextResponse.redirect(errorUrl)
-    }
+    // Pass code to client-side reset-password page to exchange
+    // This ensures the session is set in the browser
+    const resetUrl = new URL('/reset-password', origin)
+    resetUrl.searchParams.set('code', code)
+    return NextResponse.redirect(resetUrl)
   }
 
   // No code provided
