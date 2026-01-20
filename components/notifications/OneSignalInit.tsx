@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import Script from 'next/script'
 
 declare global {
@@ -33,10 +33,23 @@ type Props = {
 
 export function OneSignalInit({ userId }: Props) {
   const appId = process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID
+  const [isIOSNative, setIsIOSNative] = useState(false)
 
   useEffect(() => {
+    // Check if iOS native app (WKWebView - has iPhone/iPad but no Safari/)
+    const isNative = typeof window !== 'undefined' &&
+      /iPhone|iPad/.test(navigator.userAgent) &&
+      !navigator.userAgent.includes('Safari/')
+    setIsIOSNative(isNative)
+
     if (!appId) {
       console.log('[OneSignal] No app ID configured')
+      return
+    }
+
+    // Skip OneSignal on native iOS apps - they handle push natively
+    if (isNative) {
+      console.log('[OneSignal] Skipping on native iOS app')
       return
     }
 
@@ -67,7 +80,8 @@ export function OneSignalInit({ userId }: Props) {
     })
   }, [appId, userId])
 
-  if (!appId) return null
+  // Don't load OneSignal SDK on native iOS apps or if no app ID
+  if (!appId || isIOSNative) return null
 
   return (
     <Script
