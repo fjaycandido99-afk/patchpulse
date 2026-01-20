@@ -65,7 +65,7 @@ export async function resetPassword(email: string) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://patchpulse.app'
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${siteUrl}/auth/callback?type=recovery`,
+    redirectTo: `${siteUrl}/auth/recovery`,
   })
 
   if (error) {
