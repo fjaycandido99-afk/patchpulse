@@ -22,6 +22,12 @@ export async function GET(request: Request) {
 
   // Handle errors from Supabase
   if (error) {
+    // For recovery errors, redirect to forgot-password with error
+    if (type === 'recovery') {
+      const errorUrl = new URL('/forgot-password', origin)
+      errorUrl.searchParams.set('error', error_description || error)
+      return NextResponse.redirect(errorUrl)
+    }
     const errorUrl = new URL('/auth/error', origin)
     errorUrl.searchParams.set('error', error)
     if (error_description) {
@@ -57,6 +63,13 @@ export async function GET(request: Request) {
       }
 
       return createRedirectWithClearedGuest(new URL(next, origin))
+    } else {
+      // Code exchange failed
+      if (type === 'recovery') {
+        const errorUrl = new URL('/forgot-password', origin)
+        errorUrl.searchParams.set('error', 'Reset link has expired. Please request a new one.')
+        return NextResponse.redirect(errorUrl)
+      }
     }
   }
 
