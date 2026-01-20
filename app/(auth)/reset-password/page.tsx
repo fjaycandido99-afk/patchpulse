@@ -22,23 +22,59 @@ function ResetPasswordContent() {
   useEffect(() => {
     const supabase = createClient()
     const code = searchParams.get('code')
+    const token_hash = searchParams.get('token_hash')
+    const type = searchParams.get('type')
 
     const setupSession = async () => {
-      // If we have a code, exchange it on the client (PKCE verifier is here)
+      // Handle token_hash (non-PKCE flow) using verifyOtp
+      if (token_hash && type === 'recovery') {
+        console.log('[ResetPassword] Verifying token_hash...')
+        const { error: verifyError } = await supabase.auth.verifyOtp({
+          token_hash,
+          type: 'recovery',
+        })
+
+        if (verifyError) {
+          console.error('[ResetPassword] Token verification failed:', verifyError.message)
+          router.replace('/forgot-password?error=' + encodeURIComponent('Email link is invalid or has expired'))
+          return
+        }
+
+        console.log('[ResetPassword] Token verified successfully')
+        setValidSession(true)
+        setChecking(false)
+        window.history.replaceState({}, '', '/reset-password')
+        return
+      }
+
+      // Check URL hash for token (implicit flow)
+      const hash = window.location.hash
+      if (hash && hash.includes('access_token')) {
+        console.log('[ResetPassword] Found token in hash...')
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session) {
+          setValidSession(true)
+          setChecking(false)
+          window.history.replaceState({}, '', '/reset-password')
+          return
+        }
+      }
+
+      // If we have a code, exchange it on the client (PKCE flow)
       if (code) {
         console.log('[ResetPassword] Exchanging code for session...')
         const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
 
         if (exchangeError) {
           console.error('[ResetPassword] Code exchange failed:', exchangeError.message)
-          router.replace('/forgot-password?error=' + encodeURIComponent('Reset link has expired. Please request a new one.'))
+          router.replace('/forgot-password?error=' + encodeURIComponent('Email link is invalid or has expired'))
           return
         }
 
         console.log('[ResetPassword] Code exchange successful')
         setValidSession(true)
         setChecking(false)
-        // Clean up URL
         window.history.replaceState({}, '', '/reset-password')
         return
       }
