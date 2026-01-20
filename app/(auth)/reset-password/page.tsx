@@ -21,53 +21,52 @@ function ResetPasswordContent() {
 
   useEffect(() => {
     const supabase = createClient()
-    const code = searchParams.get('code')
+    const verified = searchParams.get('verified')
 
-    const setupSession = async () => {
-      // If we have a code, exchange it for a session
-      if (code) {
-        console.log('[ResetPassword] Exchanging code for session...')
-        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
-
-        if (exchangeError) {
-          console.error('[ResetPassword] Code exchange failed:', exchangeError)
-          // Redirect to forgot-password with error
-          router.replace('/forgot-password?error=' + encodeURIComponent('Reset link has expired. Please request a new one.'))
-          return
-        }
-
-        console.log('[ResetPassword] Code exchange successful')
-        setValidSession(true)
-        setChecking(false)
-
+    const checkSession = async () => {
+      // If verified=true, server already exchanged the code
+      // Just need to wait for session to be available
+      if (verified === 'true') {
         // Clean up URL
         window.history.replaceState({}, '', '/reset-password')
-        return
       }
 
-      // No code - check for existing session
-      const { data: { session } } = await supabase.auth.getSession()
-      if (session) {
-        setValidSession(true)
+      // Poll for session - might take a moment for cookies to be readable
+      let attempts = 0
+      const maxAttempts = 10
+
+      while (attempts < maxAttempts) {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session) {
+          console.log('[ResetPassword] Session found')
+          setValidSession(true)
+          setChecking(false)
+          return
+        }
+        attempts++
+        await new Promise(resolve => setTimeout(resolve, 300))
       }
+
+      // No session found after retries
+      console.log('[ResetPassword] No session found after retries')
       setChecking(false)
     }
 
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log('[ResetPassword] Auth event:', event, !!session)
-      if (session && (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN')) {
+      if (session) {
         setValidSession(true)
         setChecking(false)
       }
     })
 
-    setupSession()
+    checkSession()
 
     return () => {
       subscription.unsubscribe()
     }
-  }, [searchParams, router])
+  }, [searchParams])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
