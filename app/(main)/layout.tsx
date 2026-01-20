@@ -26,6 +26,7 @@ import { MobileHeader } from '@/components/layout/MobileHeader'
 import { NativeAuthGuard } from '@/components/auth/NativeAuthGuard'
 import { SessionKeeper } from '@/components/auth/SessionKeeper'
 import { OfflineIndicator } from '@/components/ui/OfflineIndicator'
+import { DesktopDownloadBanner } from '@/components/DesktopDownloadBanner'
 
 export default async function MainLayout({
   children,
@@ -153,6 +154,7 @@ export default async function MainLayout({
               <OneSignalInit userId={userId} />
               <StartupNotifications />
               <OfflineIndicator />
+              <DesktopDownloadBanner />
             </div>
           </DealSpotlightProvider>
           </SpotlightProvider>
