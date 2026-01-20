@@ -288,7 +288,8 @@ function RotatingHeadline({
   )
 }
 
-// Rotating 3-card news grid with random swap animation
+// Rotating news grid with random swap animation
+// Mobile: 3 items in 1 column, Desktop: 6 items in 2 columns
 function NewsCardsGrid({
   news,
   seasonalImages,
@@ -297,18 +298,18 @@ function NewsCardsGrid({
   seasonalImages: Map<string, SeasonalImage>
   gamePlatforms: Map<string, Platform[]>
 }) {
-  // Track which 3 news items are currently visible
-  const [visibleIndices, setVisibleIndices] = useState<number[]>([0, 1, 2])
+  // Track which 6 news items are currently visible (3 for mobile, 6 for desktop)
+  const [visibleIndices, setVisibleIndices] = useState<number[]>([0, 1, 2, 3, 4, 5])
   // Track which slot is currently fading (for animation)
   const [fadingSlot, setFadingSlot] = useState<number | null>(null)
 
   // Auto-rotate: swap one random card every 5 seconds
   useEffect(() => {
-    if (news.length <= 3) return // No rotation needed if we have 3 or fewer items
+    if (news.length <= 6) return // No rotation needed if we have 6 or fewer items
 
     const interval = setInterval(() => {
-      // Pick a random slot to swap (0, 1, or 2)
-      const slotToSwap = Math.floor(Math.random() * 3)
+      // Pick a random slot to swap (0-5)
+      const slotToSwap = Math.floor(Math.random() * 6)
 
       // Start fade out
       setFadingSlot(slotToSwap)
@@ -324,7 +325,7 @@ function NewsCardsGrid({
 
           if (availableIndices.length === 0) {
             // All items shown, reset to beginning but with different order
-            return [0, 1, 2].map(i => (prev[i] + 3) % news.length)
+            return [0, 1, 2, 3, 4, 5].map(i => (prev[i] + 6) % news.length)
           }
 
           // Pick random available index
@@ -344,17 +345,17 @@ function NewsCardsGrid({
   const displayNews = visibleIndices.map(i => news[i]).filter(Boolean)
 
   return (
-    <div className="grid grid-cols-1 gap-3">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4 px-4 md:px-0">
       {displayNews.map((newsItem, slotIndex) => (
         <Link
           key={`${newsItem.id}-${slotIndex}`}
           href={`/news/${newsItem.id}`}
           className={`group block transition-opacity duration-300 ${
             fadingSlot === slotIndex ? 'opacity-0' : 'opacity-100'
-          }`}
+          } ${slotIndex >= 3 ? 'hidden lg:block' : ''}`}
           style={{ animationDelay: `${slotIndex * 80}ms` }}
         >
-          {/* Thumbnail - 16:9, edge-to-edge on mobile */}
+          {/* Thumbnail - 16:9 */}
           <div
             className="relative aspect-video overflow-hidden bg-zinc-900 rounded-xl"
           >
@@ -364,7 +365,7 @@ function NewsCardsGrid({
                 alt={newsItem.title}
                 fill
                 className="object-cover transition-transform group-hover:scale-105"
-                sizes="100vw"
+                sizes="(max-width: 1024px) 100vw, 50vw"
               />
             ) : (
               <div className="absolute inset-0 bg-gradient-to-br from-zinc-700 via-zinc-800 to-zinc-900 flex items-center justify-center">

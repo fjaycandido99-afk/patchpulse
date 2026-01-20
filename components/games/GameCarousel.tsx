@@ -100,20 +100,20 @@ export function GameCarousel({
     : 'bg-emerald-500/80 text-white'
 
   return (
-    <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-5 gap-2 md:gap-4 lg:gap-6">
+    <div className="grid grid-cols-4 md:grid-cols-5 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-4 lg:gap-5 xl:gap-6">
       {slots.map((gameIndex, slotIndex) => {
         const game = games[gameIndex % games.length]
         const isFading = fadingSlot === slotIndex
 
-        // Hide slots 4 and 5 on mobile (only show on md+), hide slot 5 on lg (5 columns)
+        // Hide slot 4 and 5 on mobile (4 cols), hide slot 5 on md/lg (5 cols)
         const isDesktopOnly = slotIndex >= 4
-        const isExtraSlot = slotIndex >= 5
+        const isXLOnly = slotIndex >= 5
 
         return (
           <button
             key={`slot-${slotIndex}`}
             onClick={() => handleClick(game)}
-            className={`active:scale-[0.97] text-left ${isDesktopOnly ? 'hidden md:block' : ''} ${isExtraSlot ? 'lg:hidden' : ''}`}
+            className={`active:scale-[0.97] text-left ${isDesktopOnly ? 'hidden md:block' : ''} ${isXLOnly ? 'hidden xl:block' : ''}`}
             style={{
               opacity: isFading ? 0 : 1,
               transform: isFading ? 'scale(0.95)' : 'scale(1)',

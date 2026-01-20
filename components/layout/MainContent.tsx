@@ -6,10 +6,12 @@ import { useEffect, useState } from 'react'
 
 export function MainContent({ children }: { children: React.ReactNode }) {
   const { showHeader } = useScrollDirection()
+  const [mounted, setMounted] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const [isNative, setIsNative] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
     const checkMobile = () => setIsMobile(window.innerWidth < 768)
     checkMobile()
     window.addEventListener('resize', checkMobile)
@@ -21,24 +23,26 @@ export function MainContent({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
-  // Only apply dynamic padding on mobile
-  const mobilePadding = showHeader
-    ? 'calc(5rem + env(safe-area-inset-top, 0px))' // header + safe area when visible
-    : 'max(env(safe-area-inset-top, 0px), 0.5rem)' // safe area when hidden
+  // Only apply dynamic padding on mobile after mount
+  const mobilePadding = mounted && isMobile
+    ? (showHeader
+        ? 'calc(5rem + env(safe-area-inset-top, 0px))' // header + safe area when visible
+        : 'max(env(safe-area-inset-top, 0px), 0.5rem)') // safe area when hidden
+    : undefined
 
   const content = (
     <div
-      className="h-full pb-6 md:pt-6 md:px-8 lg:px-12 w-full"
+      className="h-full pb-6 md:pt-6 lg:px-2 xl:px-3 w-full"
       style={{
-        paddingTop: isMobile ? mobilePadding : undefined,
+        paddingTop: mobilePadding,
       }}
     >
       {children}
     </div>
   )
 
-  // Only enable pull to refresh on native mobile
-  if (isNative && isMobile) {
+  // Only enable pull to refresh on native mobile (after mount to avoid hydration mismatch)
+  if (mounted && isNative && isMobile) {
     return <PullToRefresh>{content}</PullToRefresh>
   }
 

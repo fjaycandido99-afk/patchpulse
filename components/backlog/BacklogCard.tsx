@@ -1,6 +1,10 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { FileText, Sparkles, Play, Pause, Clock, Check, X, Gamepad2, Calendar } from 'lucide-react'
+import { FileText, Sparkles, Play, Pause, Clock, Check, X, Gamepad2, Calendar, Users, ExternalLink } from 'lucide-react'
 
 type LatestPatch = {
   id: string
@@ -28,6 +32,7 @@ type BacklogCardProps = {
   hasAISuggestion?: boolean
   steamAppId?: number | null
   steamStats?: SteamStatsData | null
+  genre?: string | null
 }
 
 const STATUS_CONFIG: Record<BacklogStatus, {
@@ -43,6 +48,10 @@ const STATUS_CONFIG: Record<BacklogStatus, {
   finished: { icon: Check, color: 'text-purple-400', bg: 'bg-purple-500/15 border-purple-500/30', label: 'Done', cardGradient: 'from-purple-500/8 via-purple-500/3 to-transparent' },
   dropped: { icon: X, color: 'text-zinc-400', bg: 'bg-zinc-500/15 border-zinc-500/30', label: 'Dropped', cardGradient: 'from-zinc-500/5 via-transparent to-transparent' },
 }
+
+// Simple client-side cache for player counts
+const playerCountCache = new Map<number, { count: string; timestamp: number }>()
+const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
 
 function getInitials(text: string): string {
   return text
@@ -96,8 +105,8 @@ function StatusPill({ status }: { status: BacklogStatus }) {
   const Icon = config.icon
 
   return (
-    <div className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border backdrop-blur-sm transition-all duration-200 ${config.bg} ${config.color}`}>
-      <Icon className="h-3 w-3" />
+    <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border backdrop-blur-sm ${config.bg} ${config.color}`}>
+      <Icon className="h-2.5 w-2.5" />
       <span>{config.label}</span>
     </div>
   )
@@ -115,7 +124,11 @@ export function BacklogCard({
   hasAISuggestion,
   steamAppId,
   steamStats,
+  genre,
 }: BacklogCardProps) {
+  const router = useRouter()
+  const [playerCount, setPlayerCount] = useState<string | null>(null)
+
   const statusConfig = status ? STATUS_CONFIG[status] : null
   const statusBorderColor = status === 'playing'
     ? 'hover:border-green-500/50'
@@ -127,11 +140,54 @@ export function BacklogCard({
   const cardGradient = statusConfig ? `bg-gradient-to-r ${statusConfig.cardGradient}` : 'bg-card'
 
   const hasSteamData = steamAppId && (steamStats?.playtime_minutes || steamStats?.last_played_at)
+  const hasNewUpdate = latestPatch !== null
+
+  // Fetch player count
+  useEffect(() => {
+    if (!steamAppId) return
+
+    // Check cache first
+    const cached = playerCountCache.get(steamAppId)
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      setPlayerCount(cached.count)
+      return
+    }
+
+    const fetchPlayerCount = async () => {
+      try {
+        const response = await fetch(`/api/steam/player-counts?appIds=${steamAppId}`)
+        if (response.ok) {
+          const data = await response.json()
+          const count = data[steamAppId.toString()]?.formatted
+          if (count) {
+            playerCountCache.set(steamAppId, { count, timestamp: Date.now() })
+            setPlayerCount(count)
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch player count:', error)
+      }
+    }
+
+    fetchPlayerCount()
+  }, [steamAppId])
+
+  const handlePlayClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (steamAppId) {
+      window.location.href = `steam://run/${steamAppId}`
+    }
+  }
+
+  const handleCardClick = () => {
+    router.push(href)
+  }
 
   return (
-    <Link
-      href={href}
-      className={`group flex gap-3 sm:gap-4 rounded-2xl border border-white/10 p-3 sm:p-4 transition-all duration-300 h-[140px] sm:h-auto backdrop-blur-sm ${cardGradient} ${statusBorderColor} hover:shadow-lg hover:shadow-primary/5 active:scale-[0.98]`}
+    <div
+      onClick={handleCardClick}
+      className={`group flex gap-3 sm:gap-4 rounded-2xl border border-white/10 p-3 sm:p-4 transition-all duration-300 backdrop-blur-sm cursor-pointer ${cardGradient} ${statusBorderColor} hover:shadow-lg hover:shadow-primary/5 active:scale-[0.98]`}
     >
       {/* Cover image - locked 3:4 ratio for consistency */}
       <div className="relative w-[88px] sm:w-24 flex-shrink-0 overflow-hidden rounded-lg shadow-lg aspect-[3/4]">
@@ -169,9 +225,14 @@ export function BacklogCard({
           {status && <StatusPill status={status} />}
         </div>
 
+        {/* Genre */}
+        {genre && (
+          <p className="text-[11px] text-muted-foreground mt-1 truncate">{genre}</p>
+        )}
+
         {/* Playtime & Last Played */}
         {hasSteamData && (
-          <div className="mt-1.5 flex items-center gap-3 text-xs text-muted-foreground">
+          <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
             {steamStats?.playtime_minutes && steamStats.playtime_minutes > 0 && (
               <div className="flex items-center gap-1">
                 <Gamepad2 className="h-3 w-3" />
@@ -187,10 +248,18 @@ export function BacklogCard({
           </div>
         )}
 
-        {/* Metadata - fixed height footer */}
-        <div className="mt-auto">
-          {/* Fixed height metadata row - always renders to maintain height */}
-          <div className="h-5 mt-1 flex items-center">
+        {/* Player count */}
+        {playerCount && (
+          <div className="mt-1 flex items-center gap-1 text-xs text-emerald-400">
+            <Users className="h-3 w-3" />
+            <span>{playerCount} playing</span>
+          </div>
+        )}
+
+        {/* Footer with patch info and play button */}
+        <div className="mt-auto pt-2 flex items-center justify-between gap-2">
+          {/* Patch info */}
+          <div className="flex-1 min-w-0">
             {latestPatch ? (
               <div className="flex items-center gap-1.5 text-xs text-blue-400/80 truncate">
                 <FileText className="h-3 w-3 flex-shrink-0" />
@@ -210,9 +279,24 @@ export function BacklogCard({
               </p>
             ) : null}
           </div>
+
+          {/* Play button - desktop only (can't play Steam games on mobile) */}
+          {steamAppId && (
+            <button
+              onClick={handlePlayClick}
+              className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                hasNewUpdate
+                  ? 'bg-green-500 text-white hover:bg-green-600 shadow-md shadow-green-500/20'
+                  : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
+              }`}
+            >
+              <ExternalLink className="h-3 w-3" />
+              <span>Play</span>
+            </button>
+          )}
         </div>
       </div>
-    </Link>
+    </div>
   )
 }
 

@@ -180,11 +180,11 @@ export function GlobalAchievements({ steamAppId }: GlobalAchievementsProps) {
 
       {/* Achievement list */}
       <div className={`px-4 pb-4 space-y-1 transition-opacity duration-300 ${isAnimating ? 'opacity-0' : 'opacity-100'}`}>
-        {displayAchievements.map((achievement) => {
+        {displayAchievements.map((achievement, index) => {
           const rarity = getRarity(achievement.percent)
           return (
             <div
-              key={achievement.id}
+              key={`${achievement.id}-${currentIndex}-${index}`}
               className={`flex items-center gap-2.5 p-2 rounded-lg transition-colors ${rarity.bg}`}
             >
               {/* Achievement icon with glow for rare */}

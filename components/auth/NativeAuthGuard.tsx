@@ -12,13 +12,10 @@ function isIOSWebView(): boolean {
 }
 
 export function NativeAuthGuard({ children }: { children: React.ReactNode }) {
-  const [isReady, setIsReady] = useState(false)
-
   useEffect(() => {
     const setupAuth = async () => {
       // Only do special handling for iOS WKWebView
       if (!isIOSWebView()) {
-        setIsReady(true)
         return
       }
 
@@ -43,21 +40,12 @@ export function NativeAuthGuard({ children }: { children: React.ReactNode }) {
           console.error('[NativeAuthGuard] Failed to restore session:', e)
         }
       }
-
-      setIsReady(true)
     }
 
     setupAuth()
   }, [])
 
-  // Brief loading state while setting up auth
-  if (!isReady) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-      </div>
-    )
-  }
-
+  // Always render children to avoid hydration mismatch
+  // Auth restoration happens in background
   return <>{children}</>
 }

@@ -336,8 +336,8 @@ export function NewsFeed({ news, topStories, includeRumors, sources, selectedSou
             <h2 className="font-semibold text-sm uppercase tracking-wide">Top Stories</h2>
           </div>
 
-          {/* Stack vertically on mobile for bleed, grid on desktop */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {/* Stack vertically on mobile for bleed, 2 columns on desktop for bigger cards */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {topStories.map((story, index) => (
               <div
                 key={story.id}
@@ -495,8 +495,8 @@ export function NewsFeed({ news, topStories, includeRumors, sources, selectedSou
         ))}
       </div>
 
-      {/* Tablet+: Grid layout */}
-      <div className="hidden sm:grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 auto-rows-fr">
+      {/* Tablet+: Grid layout - 3 columns max */}
+      <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-4 auto-rows-fr">
         {filteredNews.map((item, index) => (
           <div
             key={item.id}

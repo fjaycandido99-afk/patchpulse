@@ -356,8 +356,8 @@ function HeroCarousel({
         {videos.map((video) => {
           const hasFailed = failedImages.has(video.youtube_id)
           const thumbnail = hasFailed
-            ? getYouTubeThumbnail(video.youtube_id, 'sd')
-            : getYouTubeThumbnail(video.youtube_id, 'max')
+            ? getYouTubeThumbnail(video.youtube_id, 'hq')
+            : getYouTubeThumbnail(video.youtube_id, 'sd')
           const typeConfig = TYPE_CONFIG[video.video_type] || TYPE_CONFIG.other
 
           return (
@@ -472,10 +472,10 @@ function MobileVideoCard({
   const didPreviewRef = useRef(false)
 
   const typeConfig = TYPE_CONFIG[video.video_type] || TYPE_CONFIG.other
-  // Fallback chain: stored thumbnail -> YouTube maxres -> YouTube hq
+  // Fallback chain: stored thumbnail -> YouTube sddefault (reliable) -> YouTube hqdefault
   const thumbnail = imgError
     ? `https://img.youtube.com/vi/${video.youtube_id}/hqdefault.jpg`
-    : (video.thumbnail_url || `https://img.youtube.com/vi/${video.youtube_id}/maxresdefault.jpg`)
+    : (video.thumbnail_url || `https://img.youtube.com/vi/${video.youtube_id}/sddefault.jpg`)
 
   const handleTouchStart = () => {
     didPreviewRef.current = false
@@ -620,10 +620,10 @@ function DesktopVideoCard({
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const typeConfig = TYPE_CONFIG[video.video_type] || TYPE_CONFIG.other
-  // Fallback chain: stored thumbnail -> YouTube maxres -> YouTube hq
+  // Fallback chain: stored thumbnail -> YouTube sddefault (reliable) -> YouTube hqdefault
   const thumbnail = imgError
     ? `https://img.youtube.com/vi/${video.youtube_id}/hqdefault.jpg`
-    : (video.thumbnail_url || `https://img.youtube.com/vi/${video.youtube_id}/maxresdefault.jpg`)
+    : (video.thumbnail_url || `https://img.youtube.com/vi/${video.youtube_id}/sddefault.jpg`)
 
   const handleMouseEnter = () => {
     setIsHovering(true)
@@ -856,44 +856,40 @@ export function VideosFeed({
 
   return (
     <div className="space-y-6">
-      {/* Filter Chips - Icon only on mobile, show label when active */}
-      <div style={{ top: "calc(4rem + env(safe-area-inset-top, 0px))" }} className="sticky z-30 -mx-4 px-2 py-2 bg-background/95 backdrop-blur-md border-b border-white/5 md:relative md:mx-0 md:px-0 md:py-0 md:bg-transparent md:backdrop-blur-none md:border-0">
-        <div className="flex justify-center gap-1.5 md:justify-start md:gap-2">
-          <button
-            onClick={() => updateFilters(null)}
-            className={`flex items-center justify-center gap-1.5 py-2 px-3 md:py-1.5 md:px-3 text-[11px] md:text-xs font-medium rounded-full transition-all ${
-              !selectedType
-                ? 'bg-primary text-primary-foreground shadow-sm'
-                : 'bg-zinc-800 text-zinc-400 active:bg-zinc-700'
-            }`}
-          >
-            <Video className="w-4 h-4 md:w-3 md:h-3" />
-            {/* Show label on mobile only when active, always on desktop */}
-            <span className={!selectedType ? 'inline' : 'hidden md:inline'}>For You</span>
-          </button>
+      {/* Filter Chips */}
+      <div className="flex flex-wrap gap-2">
+        <button
+          onClick={() => updateFilters(null)}
+          className={`flex items-center gap-1.5 py-2 px-4 text-sm font-medium rounded-full transition-all ${
+            !selectedType
+              ? 'bg-primary text-primary-foreground'
+              : 'bg-zinc-800/80 text-zinc-300 hover:bg-zinc-700'
+          }`}
+        >
+          <Video className="w-4 h-4" />
+          <span>For You</span>
+        </button>
 
-          {videoTypes
-            .filter(({ type }) => ['trailer', 'clips', 'gameplay', 'esports'].includes(type))
-            .map(({ type }) => {
-              const config = TYPE_CONFIG[type]
-              const isActive = selectedType === type
-              return (
-                <button
-                  key={type}
-                  onClick={() => updateFilters(type)}
-                  className={`flex items-center justify-center gap-1.5 py-2 px-3 md:py-1.5 md:px-3 text-[11px] md:text-xs font-medium rounded-full transition-all ${
-                    isActive
-                      ? 'bg-primary text-primary-foreground shadow-sm'
-                      : 'bg-zinc-800 text-zinc-400 active:bg-zinc-700'
-                  }`}
-                >
-                  {config.icon}
-                  {/* Show label on mobile only when active, always on desktop */}
-                  <span className={isActive ? 'inline' : 'hidden md:inline'}>{config.label}</span>
-                </button>
-              )
-            })}
-        </div>
+        {videoTypes
+          .filter(({ type }) => ['trailer', 'clips', 'gameplay', 'esports'].includes(type))
+          .map(({ type }) => {
+            const config = TYPE_CONFIG[type]
+            const isActive = selectedType === type
+            return (
+              <button
+                key={type}
+                onClick={() => updateFilters(type)}
+                className={`flex items-center gap-1.5 py-2 px-4 text-sm font-medium rounded-full transition-all ${
+                  isActive
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-zinc-800/80 text-zinc-300 hover:bg-zinc-700'
+                }`}
+              >
+                {config.icon}
+                <span>{config.label}</span>
+              </button>
+            )
+          })}
       </div>
 
       {/* Mobile: YouTube-style vertical list */}

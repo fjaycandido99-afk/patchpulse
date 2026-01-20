@@ -262,21 +262,22 @@ export function HomeVideosSection({ videos }: HomeVideosSectionProps) {
 
   if (videos.length === 0) return null
 
-  // Show only 3 cards on home page, but all videos in player
-  const displayVideos = videos.slice(0, 3)
+  // Show 3 on mobile, 6 on desktop (2 columns x 3 rows)
+  const displayVideos = videos.slice(0, 6)
 
   return (
     <section className="space-y-4">
       <div className="px-4 md:px-0">
         <SectionHeader title="Videos" href="/videos" />
       </div>
-      <div className="grid grid-cols-1 gap-3">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4 px-4 md:px-0">
         {displayVideos.map((video, index) => (
           <HomeVideoCard
             key={video.id}
             video={video}
             index={index}
             onPlay={() => setSelectedIndex(index)}
+            hideOnMobile={index >= 3}
           />
         ))}
       </div>
@@ -299,10 +300,12 @@ function HomeVideoCard({
   video,
   index,
   onPlay,
+  hideOnMobile = false,
 }: {
   video: Video
   index: number
   onPlay: () => void
+  hideOnMobile?: boolean
 }) {
   const config = VIDEO_TYPE_CONFIG[video.video_type as keyof typeof VIDEO_TYPE_CONFIG] || VIDEO_TYPE_CONFIG.other
   const Icon = config.icon
@@ -311,7 +314,7 @@ function HomeVideoCard({
   return (
     <button
       onClick={onPlay}
-      className="group block text-left w-full"
+      className={`group block text-left w-full ${hideOnMobile ? 'hidden lg:block' : ''}`}
     >
       {/* Thumbnail - 16:9, edge-to-edge on mobile */}
       <div
@@ -322,7 +325,7 @@ function HomeVideoCard({
           alt={video.title}
           fill
           className="object-cover"
-          sizes="100vw"
+          sizes="(max-width: 1024px) 100vw, 50vw"
           unoptimized
         />
 
@@ -347,8 +350,8 @@ function HomeVideoCard({
         )}
       </div>
 
-      {/* Info below with padding */}
-      <div className="mt-2 px-4 md:px-0">
+      {/* Info below */}
+      <div className="mt-2">
         <h3 className="text-sm font-medium line-clamp-2 leading-snug text-white group-hover:text-primary transition-colors">
           {video.title}
         </h3>

@@ -127,7 +127,7 @@ export default async function MainLayout({
 
               {/* Desktop search in header area - transparent to show hero behind */}
               <header className="hidden md:block sticky top-0 z-40 bg-transparent backdrop-blur-sm">
-                <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
+                <div className="pl-4 pr-1 py-3">
                   <div className="flex items-center justify-end gap-3">
                     <SearchBar />
                     <ProfileAvatar
