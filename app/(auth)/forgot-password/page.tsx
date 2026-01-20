@@ -26,10 +26,17 @@ function ForgotPasswordContent() {
     setError(null)
     setLoading(true)
 
-    const result = await resetPassword(email)
+    // Call resetPasswordForEmail from client to ensure PKCE code verifier is stored
+    const { createClient } = await import('@/lib/supabase/client')
+    const supabase = createClient()
 
-    if (result?.error) {
-      setError(result.error)
+    const siteUrl = window.location.origin
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${siteUrl}/auth/recovery`,
+    })
+
+    if (resetError) {
+      setError(resetError.message)
       setLoading(false)
       return
     }

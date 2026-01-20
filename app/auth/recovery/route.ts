@@ -1,4 +1,3 @@
-import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
 export async function GET(request: Request) {
@@ -15,21 +14,10 @@ export async function GET(request: Request) {
   }
 
   if (code) {
-    const supabase = await createClient()
-
-    // Exchange code for session - this sets auth cookies
-    const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
-
-    if (!exchangeError) {
-      // Success - redirect to reset password page
-      // The session is now stored in cookies
-      return NextResponse.redirect(new URL('/reset-password?verified=true', origin))
-    }
-
-    console.error('[Recovery] Code exchange failed:', exchangeError.message)
-    const errorUrl = new URL('/forgot-password', origin)
-    errorUrl.searchParams.set('error', 'Reset link has expired. Please request a new one.')
-    return NextResponse.redirect(errorUrl)
+    // Pass code to client for exchange (PKCE verifier is stored client-side)
+    const resetUrl = new URL('/reset-password', origin)
+    resetUrl.searchParams.set('code', code)
+    return NextResponse.redirect(resetUrl)
   }
 
   // No code provided

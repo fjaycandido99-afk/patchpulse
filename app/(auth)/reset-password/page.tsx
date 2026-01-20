@@ -21,34 +21,33 @@ function ResetPasswordContent() {
 
   useEffect(() => {
     const supabase = createClient()
-    const verified = searchParams.get('verified')
+    const code = searchParams.get('code')
 
-    const checkSession = async () => {
-      // If verified=true, server already exchanged the code
-      // Just need to wait for session to be available
-      if (verified === 'true') {
-        // Clean up URL
-        window.history.replaceState({}, '', '/reset-password')
-      }
+    const setupSession = async () => {
+      // If we have a code, exchange it on the client (PKCE verifier is here)
+      if (code) {
+        console.log('[ResetPassword] Exchanging code for session...')
+        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
 
-      // Poll for session - might take a moment for cookies to be readable
-      let attempts = 0
-      const maxAttempts = 10
-
-      while (attempts < maxAttempts) {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (session) {
-          console.log('[ResetPassword] Session found')
-          setValidSession(true)
-          setChecking(false)
+        if (exchangeError) {
+          console.error('[ResetPassword] Code exchange failed:', exchangeError.message)
+          router.replace('/forgot-password?error=' + encodeURIComponent('Reset link has expired. Please request a new one.'))
           return
         }
-        attempts++
-        await new Promise(resolve => setTimeout(resolve, 300))
+
+        console.log('[ResetPassword] Code exchange successful')
+        setValidSession(true)
+        setChecking(false)
+        // Clean up URL
+        window.history.replaceState({}, '', '/reset-password')
+        return
       }
 
-      // No session found after retries
-      console.log('[ResetPassword] No session found after retries')
+      // No code - check for existing session
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
+        setValidSession(true)
+      }
       setChecking(false)
     }
 
@@ -61,12 +60,12 @@ function ResetPasswordContent() {
       }
     })
 
-    checkSession()
+    setupSession()
 
     return () => {
       subscription.unsubscribe()
     }
-  }, [searchParams])
+  }, [searchParams, router])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
