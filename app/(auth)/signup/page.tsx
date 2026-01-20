@@ -38,8 +38,8 @@ export default function SignupPage() {
         // Mark as verified user (not guest)
         localStorage.setItem('patchpulse-was-verified', 'true')
       }
-      // Redirect to onboarding
-      router.push('/onboarding')
+      // Redirect to onboarding - use window.location for reliability in WKWebView
+      window.location.href = '/onboarding'
     }
   }
 

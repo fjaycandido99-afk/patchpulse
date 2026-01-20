@@ -169,6 +169,7 @@ function LoginPageContent() {
     // Save session to localStorage for native app persistence
     if (result?.session) {
       localStorage.setItem('patchpulse-auth', JSON.stringify({
+        access_token: result.session.access_token,
         refresh_token: result.session.refresh_token,
       }))
     }
@@ -176,9 +177,8 @@ function LoginPageContent() {
     // Mark user as verified so they don't fall back to guest on session expiry
     localStorage.setItem('patchpulse-was-verified', 'true')
 
-    // Go straight to home
-    router.push('/home')
-    router.refresh()
+    // Go straight to home - use window.location for reliability in WKWebView
+    window.location.href = '/home'
   }
 
   const handleBiometricPromptComplete = () => {
