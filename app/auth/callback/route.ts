@@ -16,6 +16,7 @@ export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
   const next = searchParams.get('next') ?? '/onboarding'
+  const type = searchParams.get('type') // 'recovery' for password reset
   const error = searchParams.get('error')
   const error_description = searchParams.get('error_description')
 
@@ -34,6 +35,11 @@ export async function GET(request: Request) {
     const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
 
     if (!exchangeError) {
+      // If this is a password recovery, redirect to reset-password page
+      if (type === 'recovery') {
+        return createRedirectWithClearedGuest(new URL('/reset-password', origin))
+      }
+
       // Check if user has completed onboarding
       const { data: { user } } = await supabase.auth.getUser()
 
