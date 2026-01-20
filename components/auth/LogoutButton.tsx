@@ -11,46 +11,57 @@ export function LogoutButton() {
 
   const handleLogout = async () => {
     setIsLoading(true)
+
+    // Clear all auth-related local storage and cookies FIRST
+    localStorage.removeItem('patchpulse-auth')
+    localStorage.removeItem('patchpulse-biometric')
+    localStorage.removeItem('patchpulse-was-verified')
+    sessionStorage.removeItem('patchpulse-guest')
+    document.cookie = 'patchpulse-was-verified=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+    document.cookie = 'patchpulse-guest=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+    document.cookie = 'patchpulse-native-app=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+
+    // Try to sign out from Supabase (may fail/hang in WKWebView)
     try {
       const supabase = createClient()
-      await supabase.auth.signOut()
-      // Clear all auth-related local storage and cookies
-      localStorage.removeItem('patchpulse-auth')
-      localStorage.removeItem('patchpulse-biometric')
-      localStorage.removeItem('patchpulse-was-verified')
-      sessionStorage.removeItem('patchpulse-guest')
-      // Clear all auth cookies
-      document.cookie = 'patchpulse-was-verified=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
-      document.cookie = 'patchpulse-guest=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
-      document.cookie = 'patchpulse-native-app=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
-      // Hard redirect to ensure full page refresh
-      window.location.href = '/login'
+      // Add timeout to prevent hanging
+      await Promise.race([
+        supabase.auth.signOut(),
+        new Promise((_, reject) => setTimeout(() => reject('timeout'), 2000))
+      ])
     } catch (error) {
-      console.error('Logout failed:', error)
-      setIsLoading(false)
+      console.log('Supabase signOut skipped:', error)
     }
+
+    // Hard redirect to ensure full page refresh
+    window.location.href = '/login'
   }
 
   const handleSwitchUser = async () => {
     setIsLoading(true)
+
+    // Clear all auth-related local storage and cookies FIRST
+    localStorage.removeItem('patchpulse-auth')
+    localStorage.removeItem('patchpulse-biometric')
+    localStorage.removeItem('patchpulse-was-verified')
+    sessionStorage.removeItem('patchpulse-guest')
+    document.cookie = 'patchpulse-was-verified=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+    document.cookie = 'patchpulse-guest=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+    document.cookie = 'patchpulse-native-app=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+
+    // Try to sign out from Supabase (may fail/hang in WKWebView)
     try {
       const supabase = createClient()
-      await supabase.auth.signOut()
-      // Clear all auth-related local storage and cookies
-      localStorage.removeItem('patchpulse-auth')
-      localStorage.removeItem('patchpulse-biometric')
-      localStorage.removeItem('patchpulse-was-verified')
-      sessionStorage.removeItem('patchpulse-guest')
-      // Clear all auth cookies
-      document.cookie = 'patchpulse-was-verified=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
-      document.cookie = 'patchpulse-guest=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
-      document.cookie = 'patchpulse-native-app=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
-      // Hard redirect to ensure full page refresh
-      window.location.href = '/login'
+      await Promise.race([
+        supabase.auth.signOut(),
+        new Promise((_, reject) => setTimeout(() => reject('timeout'), 2000))
+      ])
     } catch (error) {
-      console.error('Switch user failed:', error)
-      setIsLoading(false)
+      console.log('Supabase signOut skipped:', error)
     }
+
+    // Hard redirect to ensure full page refresh
+    window.location.href = '/login'
   }
 
   return (
