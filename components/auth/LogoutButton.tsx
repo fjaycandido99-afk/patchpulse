@@ -13,19 +13,20 @@ export function LogoutButton() {
       console.error('Clear storage failed:', e)
     }
 
-    // Clear cookies
+    // Clear ALL cookies including Supabase auth cookies
     document.cookie.split(';').forEach(c => {
       const name = c.split('=')[0].trim()
+      // Clear with multiple path variations
       document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`
+      document.cookie = `${name}=; path=/; domain=${window.location.hostname}; expires=Thu, 01 Jan 1970 00:00:00 GMT`
     })
 
-    // Redirect immediately - don't wait for Supabase
-    window.location.replace('/login')
+    // Redirect to server-side logout endpoint that properly clears session
+    window.location.replace('/api/auth/logout')
   }
 
   const handleSwitchUser = () => {
     console.log('[SwitchUser] Button clicked')
-    // Clear all auth data immediately (synchronous)
     try {
       localStorage.clear()
       sessionStorage.clear()
@@ -33,14 +34,13 @@ export function LogoutButton() {
       console.error('Clear storage failed:', e)
     }
 
-    // Clear cookies
     document.cookie.split(';').forEach(c => {
       const name = c.split('=')[0].trim()
       document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`
+      document.cookie = `${name}=; path=/; domain=${window.location.hostname}; expires=Thu, 01 Jan 1970 00:00:00 GMT`
     })
 
-    // Redirect immediately
-    window.location.replace('/login')
+    window.location.replace('/api/auth/logout')
   }
 
   return (
