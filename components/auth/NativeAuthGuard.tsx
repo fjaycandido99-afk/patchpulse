@@ -1,186 +1,60 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
-// Check if running in native app
-function isNativePlatform(): boolean {
+// Check if running in iOS WKWebView (native app)
+function isIOSWebView(): boolean {
   if (typeof window === 'undefined') return false
-  return !!(window as Window & { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.()
+  const ua = navigator.userAgent
+  // iOS WKWebView: has Mobile and AppleWebKit but NOT "Safari/"
+  return /iPhone|iPad/.test(ua) && ua.includes('AppleWebKit') && !ua.includes('Safari/')
 }
 
 export function NativeAuthGuard({ children }: { children: React.ReactNode }) {
-  const router = useRouter()
-  const [isChecking, setIsChecking] = useState(true)
-  const [isAuthed, setIsAuthed] = useState(false)
-  const [isNative, setIsNative] = useState(false)
-
-  // Clear all auth data and redirect to login
-  const clearAuthAndRedirect = useCallback(() => {
-    localStorage.removeItem('patchpulse-auth')
-    localStorage.removeItem('patchpulse-biometric')
-    localStorage.removeItem('patchpulse-was-verified')
-    sessionStorage.removeItem('patchpulse-guest')
-    setIsAuthed(false)
-    setIsChecking(false)
-    router.replace('/login')
-  }, [router])
+  const [isReady, setIsReady] = useState(false)
 
   useEffect(() => {
-    // Check if native on client side only
-    const native = isNativePlatform()
-    setIsNative(native)
-
-    const checkAuth = async () => {
-      // Only run client-side auth for native Capacitor apps
-      // Web (including iOS Safari) is handled by server middleware
-      if (!native) {
-        setIsAuthed(true)
-        setIsChecking(false)
+    const setupAuth = async () => {
+      // Only do special handling for iOS WKWebView
+      if (!isIOSWebView()) {
+        setIsReady(true)
         return
       }
 
-      // CLEANUP: Remove old guest mode data from localStorage (we now use sessionStorage)
-      // This fixes iOS users who had guest mode stuck from before the migration
-      const oldGuestValue = localStorage.getItem('patchpulse-guest')
-      if (oldGuestValue) {
-        localStorage.removeItem('patchpulse-guest')
-        // Also clear old guest cookie
-        document.cookie = 'patchpulse-guest=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+      // Check if we have stored auth in localStorage
+      const storedSession = localStorage.getItem('patchpulse-auth')
+      if (storedSession) {
+        try {
+          const parsed = JSON.parse(storedSession)
+          if (parsed?.refresh_token) {
+            // Try to set the session in Supabase client
+            const supabase = createClient()
+            const { error } = await supabase.auth.setSession({
+              access_token: parsed.access_token || '',
+              refresh_token: parsed.refresh_token,
+            })
+
+            if (!error) {
+              console.log('[NativeAuthGuard] Session restored from localStorage')
+            }
+          }
+        } catch (e) {
+          console.error('[NativeAuthGuard] Failed to restore session:', e)
+        }
       }
 
-      try {
-        const supabase = createClient()
-
-        // Try to restore session from localStorage FIRST (prioritize real auth over guest)
-        const storedSession = localStorage.getItem('patchpulse-auth')
-        if (storedSession) {
-          try {
-            const parsed = JSON.parse(storedSession)
-            if (parsed?.refresh_token) {
-              // Add timeout to prevent hanging
-              const refreshPromise = supabase.auth.refreshSession({
-                refresh_token: parsed.refresh_token,
-              })
-              const timeoutPromise = new Promise((_, reject) =>
-                setTimeout(() => reject(new Error('Refresh timeout')), 4000)
-              )
-
-              const { data, error } = await Promise.race([refreshPromise, timeoutPromise]) as any
-              
-              if (data?.session && !error) {
-                // Update stored session with new tokens
-                localStorage.setItem('patchpulse-auth', JSON.stringify({
-                  access_token: data.session.access_token,
-                  refresh_token: data.session.refresh_token,
-                  expires_at: data.session.expires_at,
-                }))
-                // Mark user as verified so they don't fall back to guest on session expiry
-                localStorage.setItem('patchpulse-was-verified', 'true')
-                setIsAuthed(true)
-                setIsChecking(false)
-                return
-              } else {
-                // Refresh failed - clear bad data
-                console.log('Session refresh failed, clearing auth data')
-                localStorage.removeItem('patchpulse-auth')
-              }
-            }
-          } catch (e) {
-            // Invalid stored session - clear it
-            console.error('Auth parse/refresh error:', e)
-            localStorage.removeItem('patchpulse-auth')
-          }
-        }
-
-        // Try biometric credentials as fallback
-        const biometricData = localStorage.getItem('patchpulse-biometric')
-        if (biometricData) {
-          try {
-            const parsed = JSON.parse(biometricData)
-            if (parsed?.refreshToken) {
-              const { data, error } = await supabase.auth.refreshSession({
-                refresh_token: parsed.refreshToken,
-              })
-              if (data?.session && !error) {
-                // Save new session
-                localStorage.setItem('patchpulse-auth', JSON.stringify({
-                  access_token: data.session.access_token,
-                  refresh_token: data.session.refresh_token,
-                  expires_at: data.session.expires_at,
-                }))
-                // Mark user as verified so they don't fall back to guest on session expiry
-                localStorage.setItem('patchpulse-was-verified', 'true')
-                setIsAuthed(true)
-                setIsChecking(false)
-                return
-              }
-            }
-          } catch {
-            // Invalid biometric data
-            localStorage.removeItem('patchpulse-biometric')
-          }
-        }
-
-        // Check if user was previously verified (had a real account)
-        // If so, they should sign in again, not fall back to guest mode
-        const wasVerified = localStorage.getItem('patchpulse-was-verified') === 'true'
-        if (wasVerified) {
-          // Previously verified user - clear the marker and redirect to login
-          console.log('Previously verified user, redirecting to login')
-          localStorage.removeItem('patchpulse-was-verified')
-          sessionStorage.removeItem('patchpulse-guest')
-          clearAuthAndRedirect()
-          return
-        }
-
-        // No valid session found - check for guest mode as last resort (only for never-verified users)
-        // Use sessionStorage (not localStorage) so guest mode doesn't persist across sessions
-        const isGuest = sessionStorage.getItem('patchpulse-guest') === 'true'
-        if (isGuest) {
-          setIsAuthed(true)
-          setIsChecking(false)
-          return
-        }
-
-        // No session and not guest - redirect to login
-        clearAuthAndRedirect()
-      } catch (err) {
-        console.error('Auth check failed:', err)
-        clearAuthAndRedirect()
-      }
+      setIsReady(true)
     }
 
-    // Timeout to prevent infinite loading
-    const timeout = setTimeout(() => {
-      console.log('Auth check timed out')
-      clearAuthAndRedirect()
-    }, 5000)
+    setupAuth()
+  }, [])
 
-    checkAuth().finally(() => clearTimeout(timeout))
-  }, [router, clearAuthAndRedirect])
-
-  // Show loading for native apps while checking auth
-  if (isChecking && isNative) {
+  // Brief loading state while setting up auth
+  if (!isReady) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-      </div>
-    )
-  }
-
-  // For native apps without auth, show login prompt instead of blank screen
-  if (!isAuthed && isNative && !isChecking) {
-    return (
-      <div className="flex min-h-screen items-center justify-center p-4">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold mb-2">Session Expired</h2>
-          <p className="text-muted-foreground mb-4">Please sign in to continue</p>
-          <a href="/login" className="inline-block px-4 py-2 bg-primary text-primary-foreground rounded-lg">
-            Sign In
-          </a>
-        </div>
       </div>
     )
   }
